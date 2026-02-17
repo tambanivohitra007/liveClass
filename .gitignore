@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.local
+.env.production
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -23,4 +28,4 @@ dist-ssr
 *.sln
 *.sw?
 CLAUDE.md
-LiveClass_PRD_Firebase_PWA.md
+
