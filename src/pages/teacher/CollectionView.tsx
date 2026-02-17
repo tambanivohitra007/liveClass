@@ -7,6 +7,7 @@ import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete } from '../../lib/swal';
 import { SkeletonCard } from '../../components/Skeleton';
 import { ArrowLeft, Pencil, Trash2, X as XIcon, Play, Eye, HelpCircle } from 'lucide-react';
+import { EmptyCollection } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
 import type { Collection, Quiz, CollectionColor } from '../../types/models';
 
@@ -217,7 +218,8 @@ export default function CollectionView() {
       {/* Quiz Grid */}
       {quizzes.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-400">No quizzes in this collection yet.</p>
+          <EmptyCollection />
+          <p className="text-gray-400 mt-4">No quizzes in this collection yet.</p>
           <p className="text-sm text-gray-400 mt-1">Assign quizzes from the Dashboard or Quiz Editor.</p>
         </div>
       ) : (

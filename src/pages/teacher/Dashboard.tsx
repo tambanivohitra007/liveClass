@@ -6,7 +6,8 @@ import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete } from '../../lib/swal';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
-import { BookOpen, Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye, FolderOpen, X as XIcon } from 'lucide-react';
+import { Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye, FolderOpen, X as XIcon } from 'lucide-react';
+import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
 import type { Quiz, Collection, CollectionColor } from '../../types/models';
 
@@ -349,11 +350,9 @@ export default function Dashboard() {
 
       {/* Quiz Grid */}
       {quizzes.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-20 h-20 bg-brand/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-10 h-10 text-brand" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No quizzes yet</h3>
+        <div className="text-center py-16">
+          <EmptyQuizzes />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 mt-4">No quizzes yet</h3>
           <p className="text-gray-500 mb-6">Create your first quiz to get started</p>
           <button
             onClick={() => navigate('/quiz/new')}
@@ -364,8 +363,8 @@ export default function Dashboard() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
-          <Search className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No quizzes match "{searchQuery}"</p>
+          <EmptySearch />
+          <p className="text-gray-500 mt-4">No quizzes match "{searchQuery}"</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
