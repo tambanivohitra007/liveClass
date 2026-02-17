@@ -44,8 +44,8 @@ const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
 const FUNCTION_CONFIG = {
     region: REGION,
-    memory: "512MiB",
-    minInstances: 1,
+    memory: "256MiB",
+    minInstances: 0,
     maxInstances: 20,
 };
 function generatePin() {
@@ -422,7 +422,7 @@ exports.reportViolation = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) =
 exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({
     schedule: "every 6 hours",
     region: REGION,
-    memory: "512MiB",
+    memory: "256MiB",
 }, async () => {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const expiredSessions = await db

@@ -11,8 +11,8 @@ const NUM_SHARDS = 10;
 
 const FUNCTION_CONFIG = {
   region: REGION,
-  memory: "512MiB" as const,
-  minInstances: 1,
+  memory: "256MiB" as const,
+  minInstances: 0,
   maxInstances: 20,
 };
 
@@ -506,7 +506,7 @@ export const cleanupExpiredSessions = onSchedule(
   {
     schedule: "every 6 hours",
     region: REGION,
-    memory: "512MiB",
+    memory: "256MiB",
   },
   async () => {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
