@@ -172,7 +172,48 @@ export default function HostSession() {
   );
 
   return (
-    <div className="min-h-screen bg-surface-dark text-white">
+    <div className="min-h-screen bg-surface-dark text-white relative overflow-hidden">
+      {/* Geometric background — lobby only */}
+      {session.status === 'lobby' && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          {/* Large circle top-right */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full border border-white/[0.04] animate-float" />
+          <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full border border-brand/10" style={{ animationDelay: '1s', animation: 'float 6s ease-in-out infinite 1s' }} />
+
+          {/* Diamond left */}
+          <div className="absolute top-1/3 -left-8 w-40 h-40 border border-accent/10 rotate-45" style={{ animation: 'float 5s ease-in-out infinite 0.5s' }} />
+
+          {/* Small squares scattered */}
+          <div className="absolute top-[15%] left-[20%] w-6 h-6 border border-white/[0.06] rotate-12" style={{ animation: 'float 4s ease-in-out infinite 0.2s' }} />
+          <div className="absolute top-[70%] left-[15%] w-10 h-10 border border-brand/[0.08] rotate-45" style={{ animation: 'float 7s ease-in-out infinite 2s' }} />
+          <div className="absolute top-[25%] right-[10%] w-8 h-8 border border-accent/[0.08] -rotate-12" style={{ animation: 'float 5.5s ease-in-out infinite 1.5s' }} />
+
+          {/* Triangle bottom-right (CSS border trick) */}
+          <div className="absolute bottom-[10%] right-[18%] w-0 h-0" style={{ borderLeft: '30px solid transparent', borderRight: '30px solid transparent', borderBottom: '52px solid rgba(212,86,107,0.06)', animation: 'float 6s ease-in-out infinite 0.8s' }} />
+
+          {/* Large ring bottom-left */}
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full border-2 border-white/[0.03]" style={{ animation: 'float 8s ease-in-out infinite 3s' }} />
+
+          {/* Dots grid */}
+          <svg className="absolute top-[45%] right-[5%] w-32 h-32 opacity-[0.04]">
+            {Array.from({ length: 25 }).map((_, i) => (
+              <circle key={i} cx={(i % 5) * 30 + 10} cy={Math.floor(i / 5) * 30 + 10} r="2" fill="white" />
+            ))}
+          </svg>
+
+          {/* Hexagon top-left */}
+          <svg className="absolute top-[8%] left-[8%] w-20 h-20 opacity-[0.06]" viewBox="0 0 100 100" style={{ animation: 'float 7s ease-in-out infinite 2.5s' }}>
+            <polygon points="50,2 93,25 93,75 50,98 7,75 7,25" fill="none" stroke="white" strokeWidth="2" />
+          </svg>
+
+          {/* Cross/plus */}
+          <svg className="absolute bottom-[25%] left-[35%] w-10 h-10 opacity-[0.05]" viewBox="0 0 40 40" style={{ animation: 'float 5s ease-in-out infinite 1.2s' }}>
+            <line x1="20" y1="5" x2="20" y2="35" stroke="white" strokeWidth="2" />
+            <line x1="5" y1="20" x2="35" y2="20" stroke="white" strokeWidth="2" />
+          </svg>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <span className="font-bold text-lg">LiveClass</span>
