@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
+import { confirmAction } from '../../lib/swal';
 import { ChevronUp, ChevronDown, Copy, Trash2, Check, Eye } from 'lucide-react';
 import type { Quiz, Question, QuestionType } from '../../types/models';
 
@@ -69,7 +70,15 @@ export default function QuizEditor() {
     updateQuestion(index, updates);
   };
 
-  const removeQuestion = (index: number) => setQuestions(questions.filter((_, i) => i !== index));
+  const removeQuestion = async (index: number) => {
+    const { isConfirmed } = await confirmAction(
+      'Remove question?',
+      `Question ${index + 1} will be removed from the list.`,
+      'Yes, remove'
+    );
+    if (!isConfirmed) return;
+    setQuestions(questions.filter((_, i) => i !== index));
+  };
 
   const moveQuestion = (index: number, direction: -1 | 1) => {
     const newIndex = index + direction;

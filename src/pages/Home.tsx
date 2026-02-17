@@ -308,12 +308,17 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-surface-dark text-white/50 py-8">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="LiveClass" className="w-6 h-6 rounded" />
-            <span>LiveClass</span>
+        <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-3 text-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
+            <div className="flex items-center gap-2">
+              <img src={logo} alt="LiveClass" className="w-6 h-6 rounded" />
+              <span>LiveClass</span>
+            </div>
+            <p>Built with care for educators everywhere.</p>
           </div>
-          <p>Built with care for educators everywhere.</p>
+          <div className="border-t border-white/10 w-full pt-3 text-center text-xs text-white/30">
+            Designed & developed by Rindra Razafinjatovo
+          </div>
         </div>
       </footer>
     </div>

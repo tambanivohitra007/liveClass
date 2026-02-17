@@ -3,6 +3,7 @@ import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs } from 'f
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
+import { confirmDelete } from '../../lib/swal';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
 import { BookOpen, Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye } from 'lucide-react';
@@ -23,7 +24,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const handleDelete = async (quizId: string, quizTitle: string) => {
-    if (!confirm(`Delete "${quizTitle || 'Untitled Quiz'}"? This will also delete all its questions.`)) return;
+    const { isConfirmed } = await confirmDelete(quizTitle || 'Untitled Quiz');
+    if (!isConfirmed) return;
     setDeleting(quizId);
     try {
       const questionsSnap = await getDocs(query(collection(db, 'questions'), where('quizId', '==', quizId)));

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
+import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
 import type { Session, SessionPlayer, Question } from '../../types/models';
@@ -67,6 +68,12 @@ export default function HostSession() {
 
   const endQuestion = async () => {
     if (!session) return;
+    const { isConfirmed } = await confirmAction(
+      'End this question?',
+      'Students will no longer be able to submit answers.',
+      'Yes, end it'
+    );
+    if (!isConfirmed) return;
     await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
   };
 
