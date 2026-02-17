@@ -43,6 +43,8 @@ export interface Session {
   joinLocked: boolean;
   startedAt: number | null;
   endedAt: number | null;
+  top10Snapshot?: { playerId: string; totalPoints: number; rank: number }[];
+  questionStartedAt?: number | null;
 }
 
 export interface SessionPlayer {

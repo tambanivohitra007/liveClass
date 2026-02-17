@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
+import ImageUpload from '../../components/ImageUpload';
 import type { Quiz, Question, QuestionType } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
@@ -24,19 +25,32 @@ export default function QuizEditor() {
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState<(Omit<Question, 'id'> & { id?: string })[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   useEffect(() => {
     if (isNew || !quizId) return;
 
-    const loadQuiz = async () => {
+    const loadQuizAndQuestions = async () => {
+      setLoadingQuestions(true);
+
       const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
       if (quizDoc.exists()) {
         const data = quizDoc.data() as Quiz;
         setTitle(data.title);
         setDescription(data.description);
       }
+
+      const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
+      const snapshot = await getDocs(q);
+      const loadedQuestions = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as (Question & { id: string })[];
+      setQuestions(loadedQuestions);
+
+      setLoadingQuestions(false);
     };
-    loadQuiz();
+    loadQuizAndQuestions();
   }, [quizId, isNew]);
 
   const addQuestion = () => {
@@ -64,6 +78,21 @@ export default function QuizEditor() {
 
   const removeQuestion = (index: number) => {
     setQuestions(questions.filter((_, i) => i !== index));
+  };
+
+  const moveQuestion = (index: number, direction: -1 | 1) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= questions.length) return;
+    const reordered = [...questions];
+    [reordered[index], reordered[newIndex]] = [reordered[newIndex], reordered[index]];
+    setQuestions(reordered);
+  };
+
+  const duplicateQuestion = (index: number) => {
+    const copy = { ...questions[index], id: undefined };
+    const updated = [...questions];
+    updated.splice(index + 1, 0, copy);
+    setQuestions(updated);
   };
 
   const handleSave = async () => {
@@ -119,6 +148,8 @@ export default function QuizEditor() {
     }
   };
 
+  if (loadingQuestions) return <p>Loading quiz...</p>;
+
   return (
     <div>
       <h1>{isNew ? 'Create Quiz' : 'Edit Quiz'}</h1>
@@ -132,9 +163,19 @@ export default function QuizEditor() {
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Quiz description" />
       </div>
 
-      <h2>Questions</h2>
+      <h2>Questions ({questions.length})</h2>
       {questions.map((q, i) => (
-        <div key={i} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
+        <div key={q.id || i} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong>Question {i + 1}</strong>
+            <div>
+              <button onClick={() => moveQuestion(i, -1)} disabled={i === 0}>Up</button>
+              <button onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1}>Down</button>
+              <button onClick={() => duplicateQuestion(i)}>Duplicate</button>
+              <button onClick={() => removeQuestion(i)}>Remove</button>
+            </div>
+          </div>
+
           <div>
             <label>Type</label>
             <select value={q.type} onChange={(e) => updateQuestionType(i, e.target.value as QuestionType)}>
@@ -148,6 +189,12 @@ export default function QuizEditor() {
             <label>Question Text</label>
             <input value={q.text} onChange={(e) => updateQuestion(i, { text: e.target.value })} placeholder="Enter question" />
           </div>
+
+          <ImageUpload
+            currentUrl={q.imageUrl}
+            onUpload={(url) => updateQuestion(i, { imageUrl: url })}
+            path={`questions/${quizId || 'new'}`}
+          />
 
           <div>
             <label>Time Limit (seconds)</label>
@@ -198,8 +245,6 @@ export default function QuizEditor() {
               />
             </div>
           )}
-
-          <button onClick={() => removeQuestion(i)}>Remove Question</button>
         </div>
       ))}
 

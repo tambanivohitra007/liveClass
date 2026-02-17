@@ -33,6 +33,7 @@ export default function Dashboard() {
     <div>
       <h1>Teacher Dashboard</h1>
       <button onClick={() => navigate('/quiz/new')}>Create New Quiz</button>
+      <button onClick={() => navigate('/assignment/new')}>Create Assignment</button>
       <h2>My Quizzes</h2>
       {quizzes.length === 0 ? (
         <p>No quizzes yet. Create your first one!</p>

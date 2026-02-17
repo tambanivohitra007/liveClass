@@ -7,7 +7,8 @@
       "Bash(npx --yes create-vite@latest temp-scaffold --template react-ts:*)",
       "Bash(xcopy /E /Y \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\temp-scaffold\\\\*\" \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\"\" 2>&1 && rmdir /S /Q \"C:UsersrindraProjectskahoottemp-scaffold \")",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

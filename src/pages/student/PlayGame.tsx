@@ -4,6 +4,7 @@ import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/fir
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
+import Leaderboard from '../../components/Leaderboard';
 import type { Session, Question } from '../../types/models';
 
 export default function PlayGame() {
@@ -57,7 +58,7 @@ export default function PlayGame() {
     if (!sessionId || !playerId || !currentQuestion || submitted) return;
     setSubmitted(true);
 
-    const startTime = (currentQuestion.timeLimitSec - timeLeft) * 1000;
+    const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
     const fn = httpsCallable<
       { sessionId: string; questionId: string; playerId: string; selection: string; timeMs: number },
       { correct: boolean; pointsAwarded: number }
@@ -69,7 +70,7 @@ export default function PlayGame() {
         questionId: currentQuestion.id,
         playerId,
         selection: selectedAnswer,
-        timeMs: startTime,
+        timeMs: elapsedMs,
       });
       setFeedback({ correct: result.data.correct, points: result.data.pointsAwarded });
     } catch (err) {
@@ -93,6 +94,7 @@ export default function PlayGame() {
       <div>
         <h1>Game Over!</h1>
         <p>Thanks for playing!</p>
+        {sessionId && <Leaderboard sessionId={sessionId} />}
       </div>
     );
   }
@@ -103,10 +105,13 @@ export default function PlayGame() {
         <h2>Results</h2>
         {feedback && (
           <div>
-            <p>{feedback.correct ? 'Correct!' : 'Wrong!'}</p>
+            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              {feedback.correct ? 'Correct!' : 'Wrong!'}
+            </p>
             <p>+{feedback.points} points</p>
           </div>
         )}
+        {sessionId && <Leaderboard sessionId={sessionId} compact />}
         <p>Waiting for next question...</p>
       </div>
     );
@@ -117,8 +122,13 @@ export default function PlayGame() {
   return (
     <div>
       <h2>Question {(session.currentQuestionIndex || 0) + 1}</h2>
-      <p>Time left: {timeLeft}s</p>
+      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center' }}>
+        {timeLeft}s
+      </div>
       <p>{currentQuestion.text}</p>
+      {currentQuestion.imageUrl && (
+        <img src={currentQuestion.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: '200px' }} />
+      )}
 
       {currentQuestion.type !== 'short' ? (
         <div>
@@ -128,10 +138,15 @@ export default function PlayGame() {
               onClick={() => !submitted && setSelectedAnswer(opt)}
               style={{
                 display: 'block',
+                width: '100%',
                 margin: '0.5rem 0',
-                padding: '0.5rem 1rem',
+                padding: '1rem',
+                fontSize: '1.1rem',
                 backgroundColor: selectedAnswer === opt ? '#4CAF50' : '#eee',
                 color: selectedAnswer === opt ? 'white' : 'black',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: submitted ? 'default' : 'pointer',
               }}
               disabled={submitted}
             >
@@ -146,11 +161,16 @@ export default function PlayGame() {
           onChange={(e) => setSelectedAnswer(e.target.value)}
           placeholder="Your answer"
           disabled={submitted}
+          style={{ width: '100%', padding: '0.75rem', fontSize: '1.1rem' }}
         />
       )}
 
       {!submitted && (
-        <button onClick={submitAnswer} disabled={!selectedAnswer}>
+        <button
+          onClick={submitAnswer}
+          disabled={!selectedAnswer}
+          style={{ width: '100%', padding: '1rem', marginTop: '1rem', fontSize: '1.1rem' }}
+        >
           Submit
         </button>
       )}
