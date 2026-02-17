@@ -76,6 +76,10 @@ export default function QuizPreview() {
     const timer = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
+          // Time's up — no points, break streak
+          setPointsEarned(0);
+          setStreakBonus(0);
+          setStreak(0);
           setState('revealed');
           return 0;
         }
@@ -172,7 +176,28 @@ export default function QuizPreview() {
         </span>
       </div>
 
-      {/* Timer + Question number */}
+      {/* Score bar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5 text-sm text-white/50">
+            <Trophy className="w-3.5 h-3.5 text-warning" />
+            <span className="font-bold text-white tabular-nums">{totalPoints.toLocaleString()}</span>
+            <span>pts</span>
+          </span>
+          {streak > 0 && (
+            <span className="flex items-center gap-1 text-xs px-2 py-0.5 bg-warning/20 text-warning rounded-full font-medium">
+              <Flame className="w-3 h-3" />
+              {streak} streak
+            </span>
+          )}
+        </div>
+        <span className="flex items-center gap-1 text-xs text-white/30">
+          <Zap className="w-3 h-3" />
+          Max 1000 + streak bonus
+        </span>
+      </div>
+
+      {/* Timer + Question type */}
       <div className="flex items-center justify-between px-4 py-3">
         <span className="text-white/50 text-sm flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5" />
@@ -281,20 +306,63 @@ export default function QuizPreview() {
           </button>
         )}
 
-        {/* Reveal info */}
-        {state === 'revealed' && question.type !== 'short' && (
-          <div className="mt-4 text-center animate-fade-in">
-            {selectedAnswer && isCorrect(selectedAnswer) ? (
-              <p className="text-success font-bold text-lg">Correct!</p>
-            ) : selectedAnswer ? (
-              <p className="text-danger font-bold text-lg">
-                Wrong — correct: {question.correctAnswers.join(', ')}
-              </p>
-            ) : (
-              <p className="text-white/50 font-medium">
-                Time's up! Correct: {question.correctAnswers.join(', ')}
-              </p>
-            )}
+        {/* Reveal info with scoring */}
+        {state === 'revealed' && (
+          <div className="mt-4 animate-fade-in">
+            {/* Result text */}
+            <div className="text-center mb-3">
+              {selectedAnswer && isCorrect(selectedAnswer) ? (
+                <p className="text-success font-bold text-lg">Correct!</p>
+              ) : selectedAnswer ? (
+                <p className="text-danger font-bold text-lg">
+                  Wrong — correct: {question.correctAnswers.join(', ')}
+                </p>
+              ) : (
+                <p className="text-white/50 font-medium">
+                  Time's up! Correct: {question.correctAnswers.join(', ')}
+                </p>
+              )}
+            </div>
+
+            {/* Points breakdown */}
+            <div className="bg-white/5 backdrop-blur rounded-xl p-4 max-w-sm mx-auto">
+              <div className="text-center mb-3">
+                <span className="text-3xl font-black text-white animate-bounce-in inline-block">
+                  +{pointsEarned}
+                </span>
+                <span className="text-white/40 text-sm ml-1">pts</span>
+              </div>
+              {pointsEarned > 0 && (
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between text-white/50">
+                    <span className="flex items-center gap-1.5">
+                      <Zap className="w-3 h-3 text-brand-light" />
+                      Base (speed)
+                    </span>
+                    <span className="text-white font-medium tabular-nums">{pointsEarned - streakBonus}</span>
+                  </div>
+                  {streakBonus > 0 && (
+                    <div className="flex justify-between text-white/50">
+                      <span className="flex items-center gap-1.5">
+                        <Flame className="w-3 h-3 text-warning" />
+                        Streak x{streak}
+                      </span>
+                      <span className="text-warning font-medium tabular-nums">+{streakBonus}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-white/10 pt-1.5 flex justify-between text-white/70 font-medium">
+                    <span>Time remaining</span>
+                    <span className="tabular-nums">{timeLeft}s / {question.timeLimitSec}s</span>
+                  </div>
+                </div>
+              )}
+              {pointsEarned === 0 && selectedAnswer && (
+                <p className="text-center text-white/30 text-xs">Wrong answer = 0 points, streak reset</p>
+              )}
+              {pointsEarned === 0 && !selectedAnswer && (
+                <p className="text-center text-white/30 text-xs">No answer = 0 points, streak reset</p>
+              )}
+            </div>
           </div>
         )}
 
