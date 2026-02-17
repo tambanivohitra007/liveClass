@@ -144,6 +144,18 @@
   backface-visibility: hidden;
 }
 
+/* Scrolling marquee */
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: 200%;
+  animation: marquee-scroll 25s linear infinite;
+}
+
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -1,124 +1,151 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
 import {
   Zap, BarChart3, WifiOff, Users, BookOpen, Shield,
-  Play, ClipboardList, Trophy, ArrowRight, Sparkles,
-  GraduationCap, Globe
+  Play, ArrowRight, Sparkles, GraduationCap, Globe,
+  ClipboardList, Trophy, Share2
 } from 'lucide-react';
-
-function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          let current = 0;
-          const step = Math.ceil(target / 40);
-          const timer = setInterval(() => {
-            current += step;
-            if (current >= target) {
-              setCount(target);
-              clearInterval(timer);
-            } else {
-              setCount(current);
-            }
-          }, 30);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [target]);
-
-  return (
-    <div ref={ref} className="animate-count-up">
-      <span className="text-3xl md:text-4xl font-black text-white">
-        {count.toLocaleString()}{suffix}
-      </span>
-    </div>
-  );
-}
 
 export default function Home() {
   const navigate = useNavigate();
+  const [pin, setPin] = useState('');
+
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin.length >= 4) {
+      navigate(`/join?pin=${pin}`);
+    }
+  };
 
   const features = [
     {
       icon: <Zap className="w-6 h-6" />,
       title: 'Real-Time Play',
-      desc: 'Students answer live with instant feedback, speed bonuses, and streak rewards that keep everyone engaged.',
+      desc: 'Students answer live with instant feedback, speed bonuses, and streak rewards.',
       color: 'bg-answer-red/10 text-answer-red',
     },
     {
       icon: <BarChart3 className="w-6 h-6" />,
       title: 'Rich Analytics',
-      desc: 'Per-question accuracy, average response time, and exportable CSV reports for data-driven teaching.',
+      desc: 'Per-question accuracy, response time stats, and exportable CSV reports.',
       color: 'bg-answer-blue/10 text-answer-blue',
     },
     {
       icon: <WifiOff className="w-6 h-6" />,
       title: 'Works Offline',
-      desc: 'Assignment mode with offline caching. Answers sync automatically when students reconnect.',
+      desc: 'Assignment mode with offline caching. Answers sync when students reconnect.',
       color: 'bg-answer-green/10 text-answer-green',
     },
     {
       icon: <Shield className="w-6 h-6" />,
       title: 'Anti-Cheat Built In',
-      desc: 'Session tokens, server-authoritative scoring, and duplicate detection keep games fair.',
+      desc: 'Session tokens, server-authoritative scoring, and tab-switch detection.',
       color: 'bg-brand/10 text-brand',
     },
     {
       icon: <Users className="w-6 h-6" />,
-      title: 'Scales to 1000s',
-      desc: 'Sharded leaderboards and optimized Cloud Functions handle large classrooms with ease.',
+      title: 'Team Mode',
+      desc: 'Split players into color-coded teams with automatic assignment and group scoring.',
       color: 'bg-answer-yellow/10 text-answer-yellow',
     },
     {
       icon: <BookOpen className="w-6 h-6" />,
-      title: 'Multiple Question Types',
-      desc: 'MCQ, True/False, Short Answer with image support. Build varied assessments in minutes.',
+      title: '8 Question Types',
+      desc: 'MCQ, True/False, Short Answer, Matching, Ordering, Fill Blank, Polls, and Slides.',
       color: 'bg-accent/10 text-accent-dark',
     },
   ];
 
   const steps = [
-    { icon: <ClipboardList className="w-7 h-7" />, title: 'Create a Quiz', desc: 'Add questions with images, set time limits, and choose question types.' },
-    { icon: <Play className="w-7 h-7" />, title: 'Host Live', desc: 'Share the 6-digit PIN. Students join from any device — no account needed.' },
-    { icon: <Trophy className="w-7 h-7" />, title: 'See Results', desc: 'View the leaderboard, per-question analytics, and export data.' },
+    { icon: <ClipboardList className="w-7 h-7" />, title: 'Pick a Quiz', desc: 'Browse our library of public quizzes or create your own custom challenge from scratch.' },
+    { icon: <Share2 className="w-7 h-7" />, title: 'Share the PIN', desc: 'Launch your session and invite students with a unique 6-digit PIN — no accounts needed.' },
+    { icon: <Trophy className="w-7 h-7" />, title: 'Compete & Learn', desc: 'Answer quickly, climb the real-time leaderboard, and review results with rich analytics.' },
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark text-white">
-        <div className="absolute inset-0 opacity-15">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-brand rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-brand-light rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/30 rounded-full blur-3xl" />
-        </div>
+    <div>
+      {/* Hero Section */}
+      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark">
+        {/* Floating Geometric Shapes */}
+        <div className="absolute top-20 left-10 w-32 h-32 border-4 border-white/10 rounded-2xl rotate-12 pointer-events-none" />
+        <div className="absolute bottom-40 right-20 w-48 h-48 bg-brand/15 rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/4 w-16 h-16 border-2 border-brand/20 rotate-45 pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 w-24 h-24 border-b-8 border-l-8 border-white/5 rounded-full pointer-events-none" />
+        <div className="absolute bottom-1/3 left-[15%] w-20 h-20 border-2 border-white/10 rounded-full pointer-events-none animate-float" />
+        <div className="absolute top-[15%] right-[10%] w-12 h-12 bg-accent/10 rounded-xl rotate-[30deg] pointer-events-none" />
 
-        <div className="relative max-w-6xl mx-auto px-4 py-24 md:py-36">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium mb-8 animate-fade-in">
-              <Sparkles className="w-4 h-4 text-warning" />
-              Free for teachers — no credit card required
+        <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left - Join Game Card (Glass) */}
+          <div className="bg-white/10 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/20 shadow-2xl animate-fade-in">
+            <div className="mb-8">
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-2">Join a Game</h2>
+              <p className="text-white/60">Enter the Game PIN provided by your host to start competing!</p>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 animate-fade-in leading-[1.1]">
+            <form onSubmit={handlePinSubmit} className="space-y-6">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000 000"
+                maxLength={6}
+                className="w-full bg-white/5 border-2 border-white/20 rounded-2xl py-5 px-6 text-3xl font-bold tracking-[0.5em] text-center text-white placeholder:text-white/20 focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/20 transition-all"
+              />
+              <button
+                type="submit"
+                disabled={pin.length < 4}
+                className="w-full bg-brand hover:bg-brand-dark text-white py-5 rounded-2xl text-xl font-bold transition-all active:scale-[0.98] shadow-xl shadow-brand/30 flex items-center justify-center gap-3 disabled:opacity-40"
+              >
+                Enter Game
+                <Play className="w-6 h-6" fill="currentColor" />
+              </button>
+
+              <div className="flex items-center gap-4 py-2">
+                <hr className="flex-grow border-white/10" />
+                <span className="text-white/40 text-xs font-bold uppercase tracking-widest whitespace-nowrap">Or access more</span>
+                <hr className="flex-grow border-white/10" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="bg-white/5 hover:bg-white/10 text-white/80 py-3 rounded-xl text-sm font-semibold border border-white/10 transition-colors"
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/discover')}
+                  className="bg-white/5 hover:bg-white/10 text-white/80 py-3 rounded-xl text-sm font-semibold border border-white/10 transition-colors"
+                >
+                  Browse Quizzes
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Right - Hero Text */}
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 animate-slide-up">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium text-white">
+              <Sparkles className="w-4 h-4 text-warning" />
+              Free for educators — no credit card required
+            </div>
+
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
               Make Learning
-              <span className="block bg-gradient-to-r from-accent via-success to-accent bg-clip-text text-transparent">Unforgettable</span>
+              <span className="block bg-gradient-to-r from-accent via-success to-accent bg-clip-text text-transparent">
+                Unforgettable
+              </span>
             </h1>
-            <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-10 animate-fade-in leading-relaxed">
+
+            <p className="text-lg text-white/60 max-w-md leading-relaxed">
               Host live quizzes that spark engagement. Track understanding in real-time.
               Works on any device, even offline.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up">
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button
                 onClick={() => navigate('/signup')}
                 className="group px-8 py-4 bg-white text-brand font-bold rounded-xl text-lg hover:bg-gray-50 transition-all hover:scale-[1.02] shadow-lg shadow-black/20 flex items-center justify-center gap-2"
@@ -126,73 +153,66 @@ export default function Home() {
                 Get Started Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
               </button>
-              <button
-                onClick={() => navigate('/join')}
-                className="px-8 py-4 bg-white/10 backdrop-blur text-white font-bold rounded-xl text-lg border border-white/20 hover:bg-white/20 transition-all hover:scale-[1.02]"
-              >
-                Join a Game
-              </button>
+            </div>
+
+            {/* Inline Stats */}
+            <div className="grid grid-cols-3 gap-8 pt-6 w-full max-w-sm">
+              {[
+                { value: '50K+', label: 'Quizzes' },
+                { value: '200K+', label: 'Students' },
+                { value: '99%', label: 'Uptime' },
+              ].map((s) => (
+                <div key={s.label} className="text-center lg:text-left">
+                  <p className="text-2xl font-bold text-white">{s.value}</p>
+                  <p className="text-white/40 text-xs mt-0.5">{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 80" fill="none" className="w-full" preserveAspectRatio="none">
-            <path d="M0 80L60 73.3C120 66.7 240 53.3 360 48C480 42.7 600 45.3 720 50.7C840 56 960 64 1080 64C1200 64 1320 56 1380 52L1440 48V80H0Z" fill="#F9FAFB"/>
+          <svg viewBox="0 0 1200 120" fill="none" className="w-full h-12" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.83C0,95.83,56.44,116.68,103.5,120c47.06,3.32,217.89,0,217.89,0Z" fill="#F9FAFB" />
           </svg>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="relative -mt-8 z-10">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-gradient-to-r from-surface-dark to-brand-dark rounded-2xl shadow-xl p-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              {[
-                { value: 50000, suffix: '+', label: 'Quizzes Created' },
-                { value: 200, suffix: 'K+', label: 'Students Engaged' },
-                { value: 150, suffix: '+', label: 'Countries' },
-                { value: 99, suffix: '%', label: 'Uptime' },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <AnimatedCounter target={stat.value} suffix={stat.suffix} />
-                  <p className="text-white/60 text-sm mt-1">{stat.label}</p>
+      {/* How it Works */}
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-20">
+            <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4">How it Works</h2>
+            <div className="h-1.5 w-24 bg-brand mx-auto rounded-full" />
+            <p className="mt-6 text-gray-500 max-w-xl mx-auto font-medium">
+              Get your game live in under 60 seconds. Simple, fast, and incredibly fun.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            {steps.map((step, i) => (
+              <div
+                key={step.title}
+                className="relative group p-8 bg-white rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
+              >
+                <div className="absolute -top-6 left-8 bg-brand text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl shadow-lg shadow-brand/30">
+                  {i + 1}
                 </div>
-              ))}
-            </div>
+                <div className="mb-6 mt-2 text-brand">
+                  <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                    {step.icon}
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-500 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="max-w-6xl mx-auto px-4 py-20 md:py-28">
-        <div className="text-center mb-16">
-          <span className="text-sm font-semibold text-brand uppercase tracking-wider">How it Works</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-3">
-            Three steps to an engaging classroom
-          </h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-8 stagger-children">
-          {steps.map((step, i) => (
-            <div key={step.title} className="text-center animate-fade-in">
-              <div className="relative inline-flex mb-6">
-                <div className="w-16 h-16 bg-brand/10 rounded-2xl flex items-center justify-center text-brand">
-                  {step.icon}
-                </div>
-                <span className="absolute -top-2 -right-2 w-7 h-7 bg-brand text-white text-sm font-bold rounded-full flex items-center justify-center shadow-md">
-                  {i + 1}
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
-              <p className="text-gray-500 leading-relaxed max-w-xs mx-auto">{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Features Grid */}
-      <section className="bg-white py-20 md:py-28">
+      <section className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16">
             <span className="text-sm font-semibold text-brand uppercase tracking-wider">Features</span>
@@ -203,11 +223,11 @@ export default function Home() {
               Built for real classrooms with real constraints. Fast, reliable, and works everywhere.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f) => (
               <div
                 key={f.title}
-                className="group bg-surface rounded-2xl p-7 border border-gray-100 hover:border-brand/20 hover:shadow-lg transition-all duration-300 animate-fade-in"
+                className="group bg-surface rounded-2xl p-7 border border-gray-100 hover:border-brand/20 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               >
                 <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                   {f.icon}
@@ -221,7 +241,7 @@ export default function Home() {
       </section>
 
       {/* Trust / Social Proof */}
-      <section className="py-20 md:py-28">
+      <section className="py-20">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16">
             <span className="text-sm font-semibold text-brand uppercase tracking-wider">Trusted Platform</span>
@@ -250,7 +270,7 @@ export default function Home() {
                 icon: <Sparkles className="w-5 h-5" />,
               },
             ].map((t) => (
-              <div key={t.name} className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm">
+              <div key={t.name} className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-2 text-brand mb-4">
                   {[...Array(5)].map((_, i) => (
                     <svg key={i} className="w-4 h-4 fill-warning" viewBox="0 0 20 20">
@@ -276,10 +296,12 @@ export default function Home() {
 
       {/* CTA Footer */}
       <section className="relative overflow-hidden bg-gradient-to-br from-surface-dark via-brand-dark to-surface-dark text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-15">
-          <div className="absolute top-10 right-20 w-64 h-64 bg-brand-light rounded-full blur-3xl" />
-          <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent rounded-full blur-3xl" />
-        </div>
+        {/* Floating shapes */}
+        <div className="absolute top-10 right-20 w-64 h-64 bg-brand-light/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-[10%] w-16 h-16 border-2 border-white/10 rounded-xl rotate-12 pointer-events-none" />
+        <div className="absolute bottom-1/4 right-[15%] w-20 h-20 border-2 border-white/10 rounded-full pointer-events-none" />
+
         <div className="relative max-w-3xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-extrabold mb-6">
             Ready to transform your classroom?
@@ -304,7 +326,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }
