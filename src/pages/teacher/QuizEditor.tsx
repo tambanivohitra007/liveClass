@@ -191,7 +191,8 @@ export default function QuizEditor() {
       for (const question of questions) {
         const questionData: Record<string, unknown> = {
           quizId: savedQuizId, type: question.type, text: question.text,
-          imageUrl: question.imageUrl || null, options: question.options,
+          imageUrl: question.imageUrl || null, videoUrl: question.videoUrl || null,
+          options: question.options,
           correctAnswers: question.correctAnswers, timeLimitSec: question.timeLimitSec,
         };
         if (question.type === 'matching') {
@@ -348,6 +349,17 @@ export default function QuizEditor() {
                 onUpload={(url) => updateQuestion(i, { imageUrl: url })}
                 path={`questions/${quizId || 'new'}`}
               />
+
+              {/* Video URL */}
+              <div>
+                <label className="text-sm font-medium text-gray-600 mb-1.5 block">Video URL (YouTube)</label>
+                <input
+                  value={q.videoUrl || ''}
+                  onChange={(e) => updateQuestion(i, { videoUrl: e.target.value || undefined })}
+                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 text-sm"
+                />
+              </div>
 
               {/* Time Limit */}
               <div className="flex items-center gap-3">

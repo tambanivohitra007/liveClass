@@ -47,6 +47,7 @@ export interface Question {
   type: QuestionType;
   text: string;
   imageUrl?: string;
+  videoUrl?: string;
   options: string[];
   matchOptions?: string[];
   correctAnswers: string[];

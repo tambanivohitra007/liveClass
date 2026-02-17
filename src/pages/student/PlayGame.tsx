@@ -20,6 +20,11 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([^?&/]+)/);
+  return match?.[1] || null;
+}
+
 const answerColors = [
   'bg-answer-red hover:brightness-110',
   'bg-answer-blue hover:brightness-110',
@@ -317,6 +322,16 @@ export default function PlayGame() {
           <h2 className="text-xl md:text-2xl font-bold text-white">{currentQuestion.text}</h2>
           {currentQuestion.imageUrl && (
             <img src={currentQuestion.imageUrl} alt="" className="max-h-40 mx-auto mt-4 rounded-xl" />
+          )}
+          {currentQuestion.videoUrl && getYouTubeId(currentQuestion.videoUrl) && (
+            <div className="mt-4 mx-auto max-w-md aspect-video rounded-xl overflow-hidden">
+              <iframe
+                src={`https://www.youtube.com/embed/${getYouTubeId(currentQuestion.videoUrl)}?autoplay=0&rel=0`}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           )}
         </div>
 
