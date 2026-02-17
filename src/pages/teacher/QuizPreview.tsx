@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import {
-  ArrowLeft, Eye, ChevronLeft, ChevronRight, Clock,
-  Triangle, Diamond, Circle, Square, Check, X as XIcon
+  ArrowLeft, Eye, ChevronLeft, ChevronRight, Clock, Flame, Trophy,
+  Triangle, Diamond, Circle, Square, Check, X as XIcon, Zap
 } from 'lucide-react';
 import type { Quiz, Question } from '../../types/models';
 
@@ -36,6 +36,12 @@ export default function QuizPreview() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Scoring
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [streakBonus, setStreakBonus] = useState(0);
+
   useEffect(() => {
     if (!quizId) return;
     const load = async () => {
@@ -59,6 +65,8 @@ export default function QuizPreview() {
       setTimeLeft(q.timeLimitSec);
       setSelectedAnswer('');
       setState('answering');
+      setPointsEarned(0);
+      setStreakBonus(0);
     }
   }, [currentIndex, questions]);
 
@@ -82,7 +90,27 @@ export default function QuizPreview() {
     setSelectedAnswer(opt);
   };
 
+  const calculatePoints = (answer: string, timeRemaining: number) => {
+    const correct = question.correctAnswers.includes(answer);
+    if (!correct) {
+      setPointsEarned(0);
+      setStreakBonus(0);
+      setStreak(0);
+      return;
+    }
+    const timeFactor = Math.max(0, timeRemaining / question.timeLimitSec);
+    const basePoints = Math.round(1000 * timeFactor);
+    const newStreak = streak + 1;
+    const bonus = newStreak * 50;
+    const total = basePoints + bonus;
+    setPointsEarned(total);
+    setStreakBonus(bonus);
+    setStreak(newStreak);
+    setTotalPoints((prev) => prev + total);
+  };
+
   const handleSubmit = () => {
+    calculatePoints(selectedAnswer, timeLeft);
     setState('revealed');
   };
 
