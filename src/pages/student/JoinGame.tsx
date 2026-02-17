@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
-import { Shuffle } from 'lucide-react';
+import { Shuffle, Triangle, Diamond, Circle, Square } from 'lucide-react';
 
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
@@ -24,14 +24,68 @@ function randomNickname(): string {
   return `${adj}${noun}`;
 }
 
+const SHAPES = ['triangle', 'diamond', 'circle', 'square'] as const;
+const SHAPE_COLORS = ['#EF4444', '#3B82F6', '#EAB308', '#22C55E'];
+const ShapeIcon = ({ shape, color, size = 'w-8 h-8' }: { shape: string; color: string; size?: string }) => {
+  const cls = `${size}`;
+  switch (shape) {
+    case 'triangle': return <Triangle className={cls} style={{ color }} fill={color} />;
+    case 'diamond': return <Diamond className={cls} style={{ color }} fill={color} />;
+    case 'circle': return <Circle className={cls} style={{ color }} fill={color} />;
+    case 'square': return <Square className={cls} style={{ color }} fill={color} />;
+    default: return null;
+  }
+};
+
+function generatePattern() {
+  // Create a 3-item pattern as the target
+  const target = Array.from({ length: 3 }, () => ({
+    shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+    color: SHAPE_COLORS[Math.floor(Math.random() * SHAPE_COLORS.length)],
+  }));
+
+  // Create 4 choices: 1 correct + 3 wrong
+  const choices = [target];
+  while (choices.length < 4) {
+    const alt = Array.from({ length: 3 }, () => ({
+      shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+      color: SHAPE_COLORS[Math.floor(Math.random() * SHAPE_COLORS.length)],
+    }));
+    // Make sure it's different from target
+    const key = (p: typeof target) => p.map((s) => `${s.shape}-${s.color}`).join(',');
+    if (key(alt) !== key(target) && !choices.some((c) => key(c) === key(alt))) {
+      choices.push(alt);
+    }
+  }
+
+  // Shuffle choices
+  for (let i = choices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [choices[i], choices[j]] = [choices[j], choices[i]];
+  }
+
+  return { target, choices };
+}
+
 export default function JoinGame() {
   const [pin, setPin] = useState('');
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
-  const [step, setStep] = useState<'pin' | 'nickname'>('pin');
+  const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
   const navigate = useNavigate();
+  const pattern = useMemo(() => generatePattern(), [step === 'verify' ? sessionId : null]); // eslint-disable-line
+
+  const handleVerify = (choiceIdx: number) => {
+    const key = (p: typeof pattern.target) => p.map((s) => `${s.shape}-${s.color}`).join(',');
+    if (key(pattern.choices[choiceIdx]) === key(pattern.target)) {
+      setStep('nickname');
+      setError('');
+    } else {
+      setError('Wrong pattern! Try again.');
+    }
+  };
 
   const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +107,7 @@ export default function JoinGame() {
     }
 
     setSessionId(sessionDoc.id);
-    setStep('nickname');
+    setStep('verify');
   };
 
   const handleJoin = async (e: React.FormEvent) => {
@@ -90,7 +144,36 @@ export default function JoinGame() {
             </div>
           )}
 
-          {step === 'pin' ? (
+          {step === 'verify' ? (
+            <div>
+              <label className="block text-center text-sm font-medium text-gray-500 mb-4">Pick the matching pattern</label>
+              <div className="flex justify-center gap-2 mb-6 p-4 bg-gray-50 rounded-xl">
+                {pattern.target.map((s, i) => (
+                  <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-10 h-10" />
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {pattern.choices.map((choice, ci) => (
+                  <button
+                    key={ci}
+                    onClick={() => handleVerify(ci)}
+                    className="flex justify-center gap-1.5 p-4 rounded-xl border-2 border-gray-200 hover:border-brand hover:bg-brand/5 transition-all"
+                  >
+                    {choice.map((s, i) => (
+                      <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-6 h-6" />
+                    ))}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setStep('pin'); setError(''); }}
+                className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-gray-600"
+              >
+                &larr; Change PIN
+              </button>
+            </div>
+          ) : step === 'pin' ? (
             <form onSubmit={handlePinSubmit}>
               <label className="block text-center text-sm font-medium text-gray-500 mb-3">Enter Game PIN</label>
               <input
