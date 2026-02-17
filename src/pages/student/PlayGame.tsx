@@ -6,11 +6,12 @@ import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
-import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Volume2, VolumeX } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
+import { playCorrect, playWrong, playTick, playUrgentTick, playSubmit, playPodium, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
 import type { Session, Question } from '../../types/models';
 
 const answerColors = [
@@ -39,7 +40,8 @@ export default function PlayGame() {
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
-
+  const [muted, setMutedState] = useState(isMuted());
+  const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
   const { showWarning, dismissWarning } = useAntiCheat({
     sessionId,
     playerId,
@@ -108,6 +110,23 @@ export default function PlayGame() {
     return () => window.removeEventListener('keydown', handler);
   });
 
+  // Sound effects
+  useEffect(() => {
+    if (timeLeft <= 0 || timeLeft > 5 || submitted) return;
+    if (timeLeft <= 3) playUrgentTick();
+    else playTick();
+  }, [timeLeft, submitted]);
+
+  useEffect(() => {
+    if (!feedback) return;
+    if (feedback.correct) playCorrect();
+    else playWrong();
+  }, [feedback]);
+
+  useEffect(() => {
+    if (session?.status === 'ended') playPodium();
+  }, [session?.status]);
+
   const getSelection = (): string => {
     if (!currentQuestion) return selectedAnswer;
     if (currentQuestion.type === 'matching') return JSON.stringify(matchingPairs);
@@ -129,6 +148,7 @@ export default function PlayGame() {
   const submitAnswer = async () => {
     if (!sessionId || !playerId || !currentQuestion || submitted) return;
     setSubmitted(true);
+    playSubmit();
     const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
     const selection = getSelection();
     try {
@@ -233,7 +253,9 @@ export default function PlayGame() {
       <div className="flex items-center justify-between px-4 py-3">
         <span className="text-white/50 text-sm font-medium">Q{(session.currentQuestionIndex || 0) + 1}</span>
         <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
-        <div className="w-20" />
+        <button onClick={toggleMute} className="w-20 flex justify-end">
+          {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
+        </button>
       </div>
 
       {/* Question */}

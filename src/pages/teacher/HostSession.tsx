@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
@@ -6,7 +6,8 @@ import { db, functions } from '../../lib/firebase';
 import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Volume2, VolumeX } from 'lucide-react';
+import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 
 export default function HostSession() {
@@ -16,6 +17,8 @@ export default function HostSession() {
   const [currentQuestionText, setCurrentQuestionText] = useState('');
   const [error, setError] = useState('');
   const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
+  const [muted, setMutedState] = useState(isMuted());
+  const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -110,6 +113,25 @@ export default function HostSession() {
     return () => window.removeEventListener('keydown', handler);
   });
 
+  // Lobby music
+  useEffect(() => {
+    if (session?.status === 'lobby' && !muted) startLobbyMusic();
+    else stopLobbyMusic();
+    return () => stopLobbyMusic();
+  }, [session?.status, muted]);
+
+  // Join chime
+  useEffect(() => {
+    if (players.length > prevPlayerCountRef.current && prevPlayerCountRef.current > 0) playJoin();
+    prevPlayerCountRef.current = players.length;
+  }, [players.length]);
+
+  const toggleMute = () => {
+    const next = !muted;
+    setSoundMuted(next);
+    setMutedState(next);
+  };
+
   if (!session) return (
     <div className="min-h-screen bg-surface-dark flex items-center justify-center">
       <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
@@ -124,6 +146,9 @@ export default function HostSession() {
         <div className="flex items-center gap-3 text-sm text-white/60">
           <span>{players.length} player{players.length !== 1 && 's'}</span>
           <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs capitalize">{session.questionState}</span>
+          <button onClick={toggleMute} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+            {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
