@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand — from logo crimson */
-  --color-brand: #E63B55;
-  --color-brand-dark: #CF2E47;
-  --color-brand-light: #F7A8B5;
+  /* Brand — muted rose-crimson from logo */
+  --color-brand: #D4566B;
+  --color-brand-dark: #B94458;
+  --color-brand-light: #F0C4CE;
 
-  /* Accent — teal, complementary to crimson */
-  --color-accent: #14B8A6;
-  --color-accent-dark: #0D9488;
+  /* Accent — soft teal, complementary to rose */
+  --color-accent: #2BB5A6;
+  --color-accent-dark: #1F9A8D;
 
   /* Functional */
   --color-success: #10B981;
-  --color-danger: #F97066;
-  --color-warning: #F59E0B;
-  --color-info: #3B82F6;
+  --color-danger: #E8636B;
+  --color-warning: #E8A308;
+  --color-info: #5B8FD4;
 
   /* Kahoot-style answer colors */
   --color-answer-red: #E21B3C;
@@ -23,7 +23,7 @@
   --color-answer-green: #26890C;
 
   /* Surfaces — navy from logo outline */
-  --color-surface: #FAFAFA;
+  --color-surface: #F9FAFB;
   --color-surface-dark: #1C2B4A;
   --color-surface-card: #FFFFFF;
 }

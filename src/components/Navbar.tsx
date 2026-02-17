@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings, History } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 export default function Navbar() {
@@ -66,6 +66,16 @@ export default function Navbar() {
               >
                 Dashboard
               </Link>
+              {user?.role === 'teacher' && (
+                <Link
+                  to="/history"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                    isActive('/history') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
+                  }`}
+                >
+                  History
+                </Link>
+              )}
               <Link
                 to="/join"
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
@@ -173,6 +183,12 @@ export default function Navbar() {
                   <LayoutDashboard className="w-4 h-4 text-gray-400" />
                   Dashboard
                 </Link>
+                {user?.role === 'teacher' && (
+                  <Link to="/history" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
+                    <History className="w-4 h-4 text-gray-400" />
+                    Session History
+                  </Link>
+                )}
                 <Link to="/join" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
                   <User className="w-4 h-4 text-gray-400" />
                   Join Game

@@ -96,11 +96,11 @@ export default function Home() {
   return (
     <div className="min-h-[calc(100vh-4rem)]">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand via-brand-dark to-surface-dark text-white">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-accent rounded-full blur-3xl animate-float" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark text-white">
+        <div className="absolute inset-0 opacity-15">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-brand rounded-full blur-3xl animate-float" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-brand-light rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-warning/30 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/30 rounded-full blur-3xl" />
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 py-24 md:py-36">
@@ -140,7 +140,7 @@ export default function Home() {
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 80" fill="none" className="w-full" preserveAspectRatio="none">
-            <path d="M0 80L60 73.3C120 66.7 240 53.3 360 48C480 42.7 600 45.3 720 50.7C840 56 960 64 1080 64C1200 64 1320 56 1380 52L1440 48V80H0Z" fill="#F8F9FA"/>
+            <path d="M0 80L60 73.3C120 66.7 240 53.3 360 48C480 42.7 600 45.3 720 50.7C840 56 960 64 1080 64C1200 64 1320 56 1380 52L1440 48V80H0Z" fill="#F9FAFB"/>
           </svg>
         </div>
       </section>
@@ -148,7 +148,7 @@ export default function Home() {
       {/* Stats Bar */}
       <section className="relative -mt-8 z-10">
         <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-gradient-to-r from-brand-dark to-brand rounded-2xl shadow-xl p-8">
+          <div className="bg-gradient-to-r from-surface-dark to-brand-dark rounded-2xl shadow-xl p-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
                 { value: 50000, suffix: '+', label: 'Quizzes Created' },
@@ -276,10 +276,10 @@ export default function Home() {
       </section>
 
       {/* CTA Footer */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand to-brand-dark text-white py-20 md:py-28">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 right-20 w-64 h-64 bg-accent rounded-full blur-3xl" />
-          <div className="absolute bottom-10 left-20 w-80 h-80 bg-warning rounded-full blur-3xl" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-surface-dark via-brand-dark to-surface-dark text-white py-20 md:py-28">
+        <div className="absolute inset-0 opacity-15">
+          <div className="absolute top-10 right-20 w-64 h-64 bg-brand-light rounded-full blur-3xl" />
+          <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-3xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-extrabold mb-6">
@@ -307,7 +307,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white/50 py-8">
+      <footer className="bg-surface-dark text-white/50 py-8">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="flex items-center gap-2">
             <img src={logo} alt="LiveClass" className="w-6 h-6 rounded" />
