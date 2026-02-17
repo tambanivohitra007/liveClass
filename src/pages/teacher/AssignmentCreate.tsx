@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
+import { ArrowLeft } from 'lucide-react';
 import type { Quiz } from '../../types/models';
 
 export default function AssignmentCreate() {
@@ -44,7 +45,7 @@ export default function AssignmentCreate() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-4 block">&larr; Back</button>
+      <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-4 flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> Back</button>
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Assignment</h1>
 
       <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">

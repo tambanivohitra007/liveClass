@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { Trophy, Medal, Flame } from 'lucide-react';
 
 interface LeaderboardPlayer {
   playerId: string;
@@ -16,7 +17,7 @@ interface LeaderboardProps {
   compact?: boolean;
 }
 
-const medals = ['', '🥇', '🥈', '🥉'];
+const medalColors = ['', 'text-yellow-500', 'text-gray-400', 'text-amber-600'];
 
 export default function Leaderboard({ sessionId, top10Snapshot, compact }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardPlayer[]>([]);
@@ -73,15 +74,18 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
             }`}
             style={{ animationDelay: `${i * 50}ms` }}
           >
-            <span className="w-8 text-center font-bold text-lg">
-              {entry.rank <= 3 ? medals[entry.rank] : <span className="text-gray-400">{entry.rank}</span>}
+            <span className="w-8 flex items-center justify-center font-bold text-lg">
+              {entry.rank === 1 ? <Trophy className={`w-5 h-5 ${medalColors[1]}`} /> :
+               entry.rank <= 3 ? <Medal className={`w-5 h-5 ${medalColors[entry.rank]}`} /> :
+               <span className="text-gray-400">{entry.rank}</span>}
             </span>
             <span className="flex-1 font-medium text-gray-800 truncate">
               {entry.nickname || entry.playerId.slice(0, 8)}
             </span>
             {entry.streak && entry.streak > 1 ? (
-              <span className="text-xs px-2 py-0.5 bg-warning/20 text-warning rounded-full font-medium">
-                {entry.streak} streak
+              <span className="text-xs px-2 py-0.5 bg-warning/20 text-warning rounded-full font-medium flex items-center gap-1">
+                <Flame className="w-3 h-3" />
+                {entry.streak}
               </span>
             ) : null}
             <span className="font-bold text-brand tabular-nums">

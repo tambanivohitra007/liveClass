@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Zap, BarChart3, WifiOff } from 'lucide-react';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -47,19 +48,19 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-8">
           {[
             {
-              icon: '&#9889;',
+              icon: <Zap className="w-6 h-6" />,
               title: 'Real-Time Play',
               desc: 'Students answer live with instant feedback, speed bonuses, and streak rewards.',
               color: 'bg-answer-red/10 text-answer-red',
             },
             {
-              icon: '&#128202;',
+              icon: <BarChart3 className="w-6 h-6" />,
               title: 'Analytics & Export',
               desc: 'See per-question stats, correctness rates, and export results as CSV.',
               color: 'bg-answer-blue/10 text-answer-blue',
             },
             {
-              icon: '&#128247;',
+              icon: <WifiOff className="w-6 h-6" />,
               title: 'Works Offline',
               desc: 'Assignment mode with offline caching — answers sync automatically on reconnect.',
               color: 'bg-answer-green/10 text-answer-green',
@@ -69,10 +70,9 @@ export default function Home() {
               key={f.title}
               className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
             >
-              <div
-                className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center text-2xl mb-4`}
-                dangerouslySetInnerHTML={{ __html: f.icon }}
-              />
+              <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-4`}>
+                {f.icon}
+              </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{f.title}</h3>
               <p className="text-gray-500 leading-relaxed">{f.desc}</p>
             </div>

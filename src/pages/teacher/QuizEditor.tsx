@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where,
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import ImageUpload from '../../components/ImageUpload';
+import { ChevronUp, ChevronDown, Copy, Trash2, Check } from 'lucide-react';
 import type { Quiz, Question, QuestionType } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
@@ -171,10 +172,10 @@ export default function QuizEditor() {
             <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-100">
               <span className="font-semibold text-sm text-gray-600">Question {i + 1}</span>
               <div className="flex items-center gap-1">
-                <button onClick={() => moveQuestion(i, -1)} disabled={i === 0} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500 text-sm">&#9650;</button>
-                <button onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500 text-sm">&#9660;</button>
-                <button onClick={() => duplicateQuestion(i)} className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors text-gray-500 text-xs">Copy</button>
-                <button onClick={() => removeQuestion(i)} className="p-1.5 rounded-lg hover:bg-danger/10 transition-colors text-danger text-xs">Delete</button>
+                <button onClick={() => moveQuestion(i, -1)} disabled={i === 0} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500"><ChevronUp className="w-4 h-4" /></button>
+                <button onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500"><ChevronDown className="w-4 h-4" /></button>
+                <button onClick={() => duplicateQuestion(i)} className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors text-gray-500"><Copy className="w-4 h-4" /></button>
+                <button onClick={() => removeQuestion(i)} className="p-1.5 rounded-lg hover:bg-danger/10 transition-colors text-danger"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
 
@@ -242,7 +243,7 @@ export default function QuizEditor() {
                             isCorrect ? 'border-success bg-success text-white' : 'border-gray-300 hover:border-gray-400'
                           }`}
                         >
-                          {isCorrect && <span className="text-sm">&#10003;</span>}
+                          {isCorrect && <Check className="w-4 h-4" />}
                         </button>
                         <input
                           value={opt}

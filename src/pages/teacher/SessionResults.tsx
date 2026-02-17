@@ -4,6 +4,7 @@ import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import Leaderboard from '../../components/Leaderboard';
+import { Download, ArrowLeft } from 'lucide-react';
 
 interface QuestionAnalytics {
   questionIndex: number;
@@ -63,7 +64,7 @@ export default function SessionResults() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-2 block">&larr; Back to Dashboard</button>
+          <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-2 flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> Back to Dashboard</button>
           <h1 className="text-2xl font-bold text-gray-900">Session Results</h1>
           {sessionPin && <p className="text-gray-500 mt-1">PIN: {sessionPin}</p>}
         </div>
@@ -72,7 +73,7 @@ export default function SessionResults() {
           disabled={exporting}
           className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 flex items-center gap-2"
         >
-          <span>&#8615;</span>
+          <Download className="w-4 h-4" />
           {exporting ? 'Exporting...' : 'Export CSV'}
         </button>
       </div>

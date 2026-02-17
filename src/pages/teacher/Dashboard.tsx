@@ -3,6 +3,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useNavigate } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 import type { Quiz } from '../../types/models';
 
 export default function Dashboard() {
@@ -57,7 +58,7 @@ export default function Dashboard() {
       {quizzes.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-20 h-20 bg-brand/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">&#128218;</span>
+            <BookOpen className="w-10 h-10 text-brand" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No quizzes yet</h3>
           <p className="text-gray-500 mb-6">Create your first quiz to get started</p>

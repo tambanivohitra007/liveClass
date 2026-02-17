@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import { queueAnswer, syncPendingAnswers } from '../../lib/offlineQueue';
+import { Clock, Ban, CircleCheckBig } from 'lucide-react';
 import type { Assignment, Question } from '../../types/models';
 
 const answerColors = [
@@ -91,7 +92,7 @@ export default function PlayAssignment() {
     return (
       <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
         <div>
-          <span className="text-5xl mb-4 block">&#9200;</span>
+          <Clock className="w-14 h-14 mx-auto mb-4 text-white/60" />
           <h1 className="text-2xl font-bold mb-2">Not yet available</h1>
           <p className="text-white/50">This assignment hasn't started yet.</p>
         </div>
@@ -102,7 +103,7 @@ export default function PlayAssignment() {
     return (
       <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
         <div>
-          <span className="text-5xl mb-4 block">&#128683;</span>
+          <Ban className="w-14 h-14 mx-auto mb-4 text-danger" />
           <h1 className="text-2xl font-bold mb-2">Assignment Closed</h1>
           <p className="text-white/50">This assignment has ended.</p>
         </div>
@@ -114,7 +115,7 @@ export default function PlayAssignment() {
     return (
       <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
         <div className="animate-bounce-in">
-          <span className="text-6xl mb-4 block">&#10004;&#65039;</span>
+          <CircleCheckBig className="w-16 h-16 mx-auto mb-4 text-success" />
           <h1 className="text-3xl font-black mb-2">All Done!</h1>
           <p className="text-white/50">
             {isOnline ? 'Your answers have been submitted.' : 'Answers saved offline — they\'ll sync when you reconnect.'}

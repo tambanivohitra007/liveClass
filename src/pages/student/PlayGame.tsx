@@ -5,6 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
+import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square } from 'lucide-react';
 import type { Session, Question } from '../../types/models';
 
 const answerColors = [
@@ -14,7 +15,12 @@ const answerColors = [
   'bg-answer-green hover:brightness-110',
 ];
 
-const answerShapes = ['&#9650;', '&#9670;', '&#9679;', '&#9632;'];
+const answerIcons = [
+  <Triangle key="t" className="w-5 h-5 shrink-0" />,
+  <Diamond key="d" className="w-5 h-5 shrink-0" />,
+  <Circle key="c" className="w-5 h-5 shrink-0" />,
+  <Square key="s" className="w-5 h-5 shrink-0" />,
+];
 
 export default function PlayGame() {
   const { sessionId, playerId } = useParams<{ sessionId: string; playerId: string }>();
@@ -102,7 +108,7 @@ export default function PlayGame() {
     return (
       <div className="min-h-screen bg-surface-dark text-white p-6">
         <div className="max-w-md mx-auto text-center py-12 animate-bounce-in">
-          <span className="text-6xl mb-4 block">&#127942;</span>
+          <Trophy className="w-16 h-16 mx-auto mb-4 text-warning" />
           <h1 className="text-3xl font-black mb-2">Game Over!</h1>
           <p className="text-white/50 mb-8">Thanks for playing!</p>
           {sessionId && (
@@ -122,9 +128,11 @@ export default function PlayGame() {
         <div className="max-w-md mx-auto text-center py-12">
           {feedback && (
             <div className="animate-bounce-in">
-              <span className="text-7xl block mb-4">
-                {feedback.correct ? '&#127881;' : '&#128557;'}
-              </span>
+              <div className="flex justify-center mb-4">
+                {feedback.correct
+                  ? <PartyPopper className="w-16 h-16 text-success" />
+                  : <Frown className="w-16 h-16 text-danger" />}
+              </div>
               <h2 className={`text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
                 {feedback.correct ? 'Correct!' : 'Wrong!'}
               </h2>
@@ -193,7 +201,7 @@ export default function PlayGame() {
                   submitted ? 'opacity-60' : 'active:scale-95'
                 }`}
               >
-                <span dangerouslySetInnerHTML={{ __html: answerShapes[i % 4] }} />
+                {answerIcons[i % 4]}
                 <span className="truncate px-2">{opt}</span>
               </button>
             ))}
