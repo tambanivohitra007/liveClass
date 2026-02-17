@@ -6,7 +6,7 @@ import { db, functions } from '../../lib/firebase';
 import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Users, Volume2, VolumeX } from 'lucide-react';
+import { ShieldAlert, Users, Shuffle, Volume2, VolumeX } from 'lucide-react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
@@ -62,7 +62,10 @@ export default function HostSession() {
       const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
       const snapshot = await getDocs(q);
       const questions = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
-      setCurrentQuestionText(questions[session.currentQuestionIndex]?.text || '');
+      const qIdx = session.questionOrder
+        ? session.questionOrder[session.currentQuestionIndex]
+        : session.currentQuestionIndex;
+      setCurrentQuestionText(questions[qIdx]?.text || '');
     };
     loadCurrentQuestion();
   }, [session?.currentQuestionIndex, session?.questionState]);
@@ -226,6 +229,20 @@ export default function HostSession() {
                   ))}
                 </select>
               )}
+            </div>
+
+            {/* Shuffle Toggle */}
+            <div className="flex items-center gap-2">
+              <Shuffle className={`w-4 h-4 ${session.shuffleQuestions ? 'text-warning' : 'text-white/30'}`} />
+              <span className="text-sm text-white/60">Shuffle</span>
+              <button
+                onClick={async () => {
+                  await updateDoc(doc(db, 'sessions', session.id), { shuffleQuestions: !session.shuffleQuestions });
+                }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleQuestions ? 'bg-warning' : 'bg-white/20'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleQuestions ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
             </div>
           </div>
         )}

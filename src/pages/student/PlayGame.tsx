@@ -95,7 +95,10 @@ export default function PlayGame() {
       const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
       const snapshot = await getDocs(q);
       const questions = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
-      const current = questions[session.currentQuestionIndex];
+      const qIdx = session.questionOrder
+        ? session.questionOrder[session.currentQuestionIndex]
+        : session.currentQuestionIndex;
+      const current = questions[qIdx];
       if (current) {
         setCurrentQuestion(current);
         setTimeLeft(current.timeLimitSec);

@@ -88,6 +88,8 @@ export interface Session {
   teamMode?: boolean;
   teamCount?: number;
   teams?: TeamConfig[];
+  shuffleQuestions?: boolean;
+  questionOrder?: number[];
 }
 
 export interface SessionPlayer {

@@ -182,12 +182,29 @@ export const startQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     throw new HttpsError("permission-denied", "Not the host");
   }
 
-  await sessionDoc.ref.update({
+  // Generate question order on first question if shuffle is enabled
+  const updateData: Record<string, unknown> = {
     status: "live",
     currentQuestionIndex: qIndex,
     questionState: "live",
     questionStartedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  };
+
+  if (qIndex === 0 && session.shuffleQuestions) {
+    const questionsSnap = await db
+      .collection("questions")
+      .where("quizId", "==", session.quizId)
+      .get();
+    const indices = Array.from({ length: questionsSnap.size }, (_, i) => i);
+    // Fisher-Yates shuffle
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    updateData.questionOrder = indices;
+  }
+
+  await sessionDoc.ref.update(updateData);
 
   return { success: true };
 });
@@ -416,7 +433,10 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     .where("quizId", "==", session.quizId)
     .get();
   const questionsArr = questionsSnap.docs.map((d) => d.id);
-  const currentQuestionId = questionsArr[session.currentQuestionIndex];
+  const qIdx = session.questionOrder
+    ? session.questionOrder[session.currentQuestionIndex]
+    : session.currentQuestionIndex;
+  const currentQuestionId = questionsArr[qIdx];
 
   let totalCorrect = 0;
   let totalTime = 0;
