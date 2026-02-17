@@ -88,6 +88,26 @@ export default function PlayGame() {
     return () => clearInterval(timer);
   }, [timeLeft, submitted]);
 
+  // Keyboard shortcuts: 1-4 for MCQ, Enter to submit
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!currentQuestion || submitted) return;
+      if (e.key === 'Enter' && canSubmit()) {
+        e.preventDefault();
+        submitAnswer();
+        return;
+      }
+      if ((currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && /^[1-4]$/.test(e.key)) {
+        const idx = parseInt(e.key) - 1;
+        if (idx < currentQuestion.options.length) {
+          setSelectedAnswer(currentQuestion.options[idx]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
+
   const getSelection = (): string => {
     if (!currentQuestion) return selectedAnswer;
     if (currentQuestion.type === 'matching') return JSON.stringify(matchingPairs);

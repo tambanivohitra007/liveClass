@@ -95,13 +95,26 @@ export default function HostSession() {
     </div>
   );
 
+  const isLastQuestion = session ? session.currentQuestionIndex >= totalQuestions - 1 : false;
+
+  // Keyboard shortcuts: Space to advance
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || !session) return;
+      e.preventDefault();
+      if (session.status === 'lobby' && players.length > 0) startQuestion();
+      else if (session.questionState === 'live') endQuestion();
+      else if (session.questionState === 'reveal' && session.currentQuestionIndex < totalQuestions - 1) nextQuestion();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
+
   if (!session) return (
     <div className="min-h-screen bg-surface-dark flex items-center justify-center">
       <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
     </div>
   );
-
-  const isLastQuestion = session.currentQuestionIndex >= totalQuestions - 1;
 
   return (
     <div className="min-h-screen bg-surface-dark text-white">
@@ -235,6 +248,7 @@ export default function HostSession() {
             </button>
           )}
         </div>
+        <p className="text-center text-white/20 text-xs mt-4">Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-white/40">Space</kbd> to advance</p>
       </div>
     </div>
   );
