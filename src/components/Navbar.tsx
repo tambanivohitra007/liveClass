@@ -79,6 +79,14 @@ export default function Navbar() {
                 </Link>
               )}
               <Link
+                to="/discover"
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                  isActive('/discover') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
+                }`}
+              >
+                Discover
+              </Link>
+              <Link
                 to="/join"
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
                   isActive('/join') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
@@ -148,6 +156,14 @@ export default function Navbar() {
             </>
           ) : (
             <>
+              <Link
+                to="/discover"
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                  isActive('/discover') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
+                }`}
+              >
+                Discover
+              </Link>
               <Link
                 to="/join"
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${

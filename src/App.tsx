@@ -22,6 +22,7 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import Profile from './pages/Profile';
 import QuizPreview from './pages/teacher/QuizPreview';
 import CollectionView from './pages/teacher/CollectionView';
+import Discover from './pages/Discover';
 import './App.css';
 
 function AppContent() {
@@ -41,6 +42,7 @@ function AppContent() {
         <Route path="/join" element={<JoinGame />} />
         <Route path="/play/:sessionId/:playerId" element={<PlayGame />} />
         <Route path="/assignment/:assignmentId" element={<PlayAssignment />} />
+        <Route path="/discover" element={<Discover />} />
 
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />

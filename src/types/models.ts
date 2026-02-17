@@ -33,7 +33,7 @@ export interface Quiz {
   ownerId: string;
   title: string;
   description: string;
-  visibility: 'private' | 'org';
+  visibility: 'private' | 'org' | 'public';
   collectionId?: string | null;
   createdAt: number;
   updatedAt: number;

@@ -43,6 +43,7 @@ export default function QuizEditor() {
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [visibility, setVisibility] = useState<'private' | 'org' | 'public'>('private');
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -56,6 +57,7 @@ export default function QuizEditor() {
         const data = quizDoc.data() as Quiz;
         setTitle(data.title);
         setDescription(data.description);
+        setVisibility(data.visibility || 'private');
         setSelectedCollectionId(data.collectionId || '');
       }
       const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
@@ -176,14 +178,14 @@ export default function QuizEditor() {
       let savedQuizId = quizId;
       if (isNew) {
         const quizRef = await addDoc(collection(db, 'quizzes'), {
-          ownerId: user.id, title, description, visibility: 'private',
+          ownerId: user.id, title, description, visibility,
           collectionId: selectedCollectionId || null,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
         });
         savedQuizId = quizRef.id;
       } else if (savedQuizId) {
         await setDoc(doc(db, 'quizzes', savedQuizId), {
-          ownerId: user.id, title, description, visibility: 'private',
+          ownerId: user.id, title, description, visibility,
           collectionId: selectedCollectionId || null,
           updatedAt: serverTimestamp(),
         }, { merge: true });
@@ -261,6 +263,17 @@ export default function QuizEditor() {
             rows={2}
             className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 resize-none"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Visibility</label>
+          <select
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as 'private' | 'org' | 'public')}
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+          >
+            <option value="private">Private — Only you</option>
+            <option value="public">Public — Anyone can discover & clone</option>
+          </select>
         </div>
         {collections.length > 0 && (
           <div>
