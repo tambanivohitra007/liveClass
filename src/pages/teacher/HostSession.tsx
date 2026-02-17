@@ -6,8 +6,8 @@ import { db, functions } from '../../lib/firebase';
 import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Users, Shuffle, Volume2, VolumeX } from 'lucide-react';
-import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
+import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX } from 'lucide-react';
+import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
 
@@ -19,6 +19,7 @@ export default function HostSession() {
   const [error, setError] = useState('');
   const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
   const [muted, setMutedState] = useState(isMuted());
+  const [lobbyTrack, setLobbyTrackState] = useState(getLobbyTrack());
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
 
@@ -243,6 +244,23 @@ export default function HostSession() {
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleQuestions ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
+            </div>
+
+            {/* Music Track Selector */}
+            <div className="flex items-center gap-2">
+              <Music className="w-4 h-4 text-white/30" />
+              <select
+                value={lobbyTrack}
+                onChange={(e) => {
+                  setLobbyTrackState(e.target.value);
+                  setLobbyTrack(e.target.value);
+                }}
+                className="px-2 py-1 bg-white/10 text-white text-sm rounded-lg border border-white/20 outline-none"
+              >
+                {Object.entries(MUSIC_TRACKS).map(([key, track]) => (
+                  <option key={key} value={key} className="bg-gray-800">{track.label}</option>
+                ))}
+              </select>
             </div>
           </div>
         )}
