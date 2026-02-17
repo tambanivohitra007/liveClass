@@ -6,7 +6,7 @@ import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete } from '../../lib/swal';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
-import { Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye, FolderOpen, X as XIcon } from 'lucide-react';
+import { Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye, Copy, FolderOpen, X as XIcon } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
 import type { Quiz, Collection, CollectionColor } from '../../types/models';
@@ -47,6 +47,29 @@ export default function Dashboard() {
       addToast('error', 'Failed to delete quiz. Please try again.');
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleDuplicate = async (quiz: QuizWithMeta) => {
+    if (!user) return;
+    try {
+      const newQuizRef = await addDoc(collection(db, 'quizzes'), {
+        ownerId: user.id,
+        title: `${quiz.title} (Copy)`,
+        description: quiz.description,
+        visibility: 'private',
+        collectionId: quiz.collectionId || null,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      const questionsSnap = await getDocs(query(collection(db, 'questions'), where('quizId', '==', quiz.id)));
+      await Promise.all(questionsSnap.docs.map((d) => {
+        const qData = d.data();
+        return addDoc(collection(db, 'questions'), { ...qData, quizId: newQuizRef.id });
+      }));
+      addToast('success', `"${quiz.title}" duplicated`);
+    } catch {
+      addToast('error', 'Failed to duplicate quiz');
     }
   };
 
@@ -430,6 +453,13 @@ export default function Dashboard() {
                   title="Preview"
                 >
                   <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDuplicate(quiz)}
+                  className="px-3 py-2 text-sm text-gray-400 hover:text-info hover:bg-info/5 rounded-lg transition-colors"
+                  title="Duplicate"
+                >
+                  <Copy className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => navigate(`/quiz/${quiz.id}/host`)}
