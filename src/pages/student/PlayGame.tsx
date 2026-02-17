@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
@@ -46,6 +46,7 @@ export default function PlayGame() {
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [myTeam, setMyTeam] = useState<{ name: string; color: string } | null>(null);
   const [muted, setMutedState] = useState(isMuted());
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
   const { showWarning, dismissWarning } = useAntiCheat({
@@ -61,6 +62,19 @@ export default function PlayGame() {
     });
     return unsubscribe;
   }, [sessionId, setSession]);
+
+  // Load player's team info
+  useEffect(() => {
+    if (!sessionId || !playerId || !session?.teamMode || !session.teams) return;
+    getDoc(doc(db, `sessions/${sessionId}/players`, playerId)).then((snap) => {
+      if (snap.exists()) {
+        const ti = snap.data().teamIndex;
+        if (ti !== undefined && session.teams?.[ti]) {
+          setMyTeam(session.teams[ti]);
+        }
+      }
+    });
+  }, [sessionId, playerId, session?.teamMode]);
 
   useEffect(() => {
     if (!session || session.questionState !== 'live') return;
@@ -188,6 +202,11 @@ export default function PlayGame() {
         <div className="text-center animate-fade-in">
           <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
           <h1 className="text-2xl font-bold mb-2">You're in!</h1>
+          {myTeam && (
+            <span className="inline-block px-4 py-1.5 rounded-full text-sm font-bold text-white mb-3" style={{ backgroundColor: myTeam.color }}>
+              {myTeam.name}
+            </span>
+          )}
           <p className="text-white/50">Waiting for the host to start...</p>
         </div>
       </div>
@@ -265,7 +284,14 @@ export default function PlayGame() {
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-white/50 text-sm font-medium">Q{(session.currentQuestionIndex || 0) + 1}</span>
+        <div className="flex items-center gap-2 w-20">
+          <span className="text-white/50 text-sm font-medium">Q{(session.currentQuestionIndex || 0) + 1}</span>
+          {myTeam && (
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: myTeam.color }}>
+              {myTeam.name.split(' ')[0]}
+            </span>
+          )}
+        </div>
         <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
         <button onClick={toggleMute} className="w-20 flex justify-end">
           {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}

@@ -139,12 +139,22 @@ export const joinSession = onCall(FUNCTION_CONFIG, async (request) => {
   // Generate session token for anti-cheat
   const activeToken = generateToken();
 
+  // Auto-assign team if team mode is enabled (round-robin)
+  let teamIndex: number | null = null;
+  if (session.teamMode && session.teamCount) {
+    const playersSnap = await db
+      .collection(`sessions/${sessionId}/players`)
+      .get();
+    teamIndex = playersSnap.size % session.teamCount;
+  }
+
   const playerRef = db.collection(`sessions/${sessionId}/players`).doc();
   await playerRef.set({
     sessionId,
     userId: request.auth?.uid || null,
     nickname,
     activeToken,
+    ...(teamIndex !== null ? { teamIndex } : {}),
     joinedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -419,9 +429,46 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
       avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
     });
 
+  // Compute team scores if team mode is enabled
+  let teamScoreSnapshot: { teamIndex: number; name: string; color: string; avgPoints: number }[] = [];
+  if (session.teamMode && session.teams) {
+    const playersSnap = await db
+      .collection(`sessions/${sessionId}/players`)
+      .get();
+    const playerTeams = new Map<string, number>();
+    playersSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (data.teamIndex !== undefined) {
+        playerTeams.set(d.id, data.teamIndex);
+      }
+    });
+
+    const teamTotals: { total: number; count: number }[] =
+      (session.teams as { name: string; color: string }[]).map(() => ({ total: 0, count: 0 }));
+
+    allPlayers.forEach((p) => {
+      const ti = playerTeams.get(p.playerId);
+      if (ti !== undefined && teamTotals[ti]) {
+        teamTotals[ti].total += p.totalPoints;
+        teamTotals[ti].count++;
+      }
+    });
+
+    teamScoreSnapshot = (session.teams as { name: string; color: string }[]).map((t, i) => ({
+      teamIndex: i,
+      name: t.name,
+      color: t.color,
+      avgPoints: teamTotals[i].count > 0
+        ? Math.round(teamTotals[i].total / teamTotals[i].count)
+        : 0,
+    }));
+    teamScoreSnapshot.sort((a, b) => b.avgPoints - a.avgPoints);
+  }
+
   await sessionDoc.ref.update({
     questionState: "reveal",
     top10Snapshot: top10,
+    ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
   });
 
   return { success: true, top10 };

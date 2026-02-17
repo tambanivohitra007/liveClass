@@ -6,9 +6,10 @@ import { db, functions } from '../../lib/firebase';
 import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Volume2, VolumeX } from 'lucide-react';
+import { ShieldAlert, Users, Volume2, VolumeX } from 'lucide-react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
+import { TEAM_PRESETS } from '../../types/models';
 
 export default function HostSession() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -172,20 +173,60 @@ export default function HostSession() {
           </div>
         )}
 
-        {/* Anti-Cheat Toggle */}
+        {/* Lobby Settings */}
         {session.status === 'lobby' && (
-          <div className="flex items-center justify-center gap-3 mb-8 animate-fade-in">
-            <ShieldAlert className={`w-4 h-4 ${session.antiCheatEnabled !== false ? 'text-success' : 'text-white/30'}`} />
-            <span className="text-sm text-white/60">Anti-Cheat</span>
-            <button
-              onClick={async () => {
-                const newVal = session.antiCheatEnabled === false;
-                await updateDoc(doc(db, 'sessions', session.id), { antiCheatEnabled: newVal });
-              }}
-              className={`relative w-11 h-6 rounded-full transition-colors ${session.antiCheatEnabled !== false ? 'bg-success' : 'bg-white/20'}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.antiCheatEnabled !== false ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-8 animate-fade-in">
+            {/* Anti-Cheat Toggle */}
+            <div className="flex items-center gap-2">
+              <ShieldAlert className={`w-4 h-4 ${session.antiCheatEnabled !== false ? 'text-success' : 'text-white/30'}`} />
+              <span className="text-sm text-white/60">Anti-Cheat</span>
+              <button
+                onClick={async () => {
+                  const newVal = session.antiCheatEnabled === false;
+                  await updateDoc(doc(db, 'sessions', session.id), { antiCheatEnabled: newVal });
+                }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${session.antiCheatEnabled !== false ? 'bg-success' : 'bg-white/20'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.antiCheatEnabled !== false ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </div>
+
+            {/* Team Mode Toggle */}
+            <div className="flex items-center gap-2">
+              <Users className={`w-4 h-4 ${session.teamMode ? 'text-info' : 'text-white/30'}`} />
+              <span className="text-sm text-white/60">Teams</span>
+              <button
+                onClick={async () => {
+                  const newVal = !session.teamMode;
+                  const teamCount = session.teamCount || 2;
+                  await updateDoc(doc(db, 'sessions', session.id), {
+                    teamMode: newVal,
+                    teamCount,
+                    teams: TEAM_PRESETS.slice(0, teamCount),
+                  });
+                }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${session.teamMode ? 'bg-info' : 'bg-white/20'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.teamMode ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+              {session.teamMode && (
+                <select
+                  value={session.teamCount || 2}
+                  onChange={async (e) => {
+                    const count = parseInt(e.target.value);
+                    await updateDoc(doc(db, 'sessions', session.id), {
+                      teamCount: count,
+                      teams: TEAM_PRESETS.slice(0, count),
+                    });
+                  }}
+                  className="ml-1 px-2 py-1 bg-white/10 text-white text-sm rounded-lg border border-white/20 outline-none"
+                >
+                  {[2, 3, 4, 5, 6].map((n) => (
+                    <option key={n} value={n} className="bg-gray-800">{n} teams</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         )}
 
@@ -193,29 +234,79 @@ export default function HostSession() {
         {session.status === 'lobby' && (
           <div className="mb-8">
             <h3 className="text-sm text-white/40 uppercase tracking-wider mb-4">Players Joined</h3>
-            <div className="flex flex-wrap gap-2">
-              {players.map((p) => {
-                const v = violations.get(p.id);
-                return (
-                  <span key={p.id} className="px-4 py-2 bg-white/10 backdrop-blur rounded-xl text-sm font-medium animate-fade-in inline-flex items-center gap-1.5">
-                    {p.nickname}
-                    {v && v.totalViolations > 0 && (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-danger/20 text-danger rounded-full text-xs font-bold" title={`${v.totalViolations} violation(s)`}>
-                        <ShieldAlert className="w-3 h-3" />
-                        {v.totalViolations}
-                      </span>
-                    )}
-                  </span>
-                );
-              })}
-              {players.length === 0 && <p className="text-white/30">Waiting for players to join...</p>}
-            </div>
+            {session.teamMode && session.teams ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {session.teams.map((team, ti) => {
+                  const teamPlayers = players.filter((p) => p.teamIndex === ti);
+                  return (
+                    <div key={ti} className="bg-white/5 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: team.color }} />
+                        <span className="text-sm font-bold">{team.name}</span>
+                        <span className="text-xs text-white/40">({teamPlayers.length})</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {teamPlayers.map((p) => {
+                          const v = violations.get(p.id);
+                          return (
+                            <span key={p.id} className="px-3 py-1.5 rounded-lg text-sm font-medium animate-fade-in inline-flex items-center gap-1.5" style={{ backgroundColor: team.color + '20' }}>
+                              {p.nickname}
+                              {v && v.totalViolations > 0 && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-danger/20 text-danger rounded-full text-xs font-bold">
+                                  <ShieldAlert className="w-3 h-3" />
+                                  {v.totalViolations}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {players.map((p) => {
+                  const v = violations.get(p.id);
+                  return (
+                    <span key={p.id} className="px-4 py-2 bg-white/10 backdrop-blur rounded-xl text-sm font-medium animate-fade-in inline-flex items-center gap-1.5">
+                      {p.nickname}
+                      {v && v.totalViolations > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-danger/20 text-danger rounded-full text-xs font-bold" title={`${v.totalViolations} violation(s)`}>
+                          <ShieldAlert className="w-3 h-3" />
+                          {v.totalViolations}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            {players.length === 0 && <p className="text-white/30">Waiting for players to join...</p>}
           </div>
         )}
 
         {/* Leaderboard (on reveal) */}
         {session.questionState === 'reveal' && (
           <>
+            {/* Team Scores */}
+            {session.teamMode && session.teamScoreSnapshot && (
+              <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-4 animate-bounce-in">
+                <h3 className="text-lg font-bold mb-4">Team Standings</h3>
+                <div className="space-y-3">
+                  {session.teamScoreSnapshot.map((team, i) => (
+                    <div key={team.teamIndex} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
+                      <span className="text-2xl font-black text-white/40 w-8">{i + 1}</span>
+                      <span className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
+                      <span className="flex-1 font-bold">{team.name}</span>
+                      <span className="font-black text-lg tabular-nums">{team.avgPoints.toLocaleString()}</span>
+                      <span className="text-xs text-white/40">avg pts</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-4 animate-slide-up">
               <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} />
             </div>

@@ -55,6 +55,20 @@ export interface Question {
 
 export type SessionStatus = 'lobby' | 'live' | 'ended';
 
+export interface TeamConfig {
+  name: string;
+  color: string;
+}
+
+export const TEAM_PRESETS: TeamConfig[] = [
+  { name: 'Red Team', color: '#EF4444' },
+  { name: 'Blue Team', color: '#3B82F6' },
+  { name: 'Green Team', color: '#22C55E' },
+  { name: 'Yellow Team', color: '#EAB308' },
+  { name: 'Purple Team', color: '#8B5CF6' },
+  { name: 'Orange Team', color: '#F97316' },
+];
+
 export interface Session {
   id: string;
   quizId: string;
@@ -67,8 +81,12 @@ export interface Session {
   startedAt: number | null;
   endedAt: number | null;
   top10Snapshot?: { playerId: string; totalPoints: number; rank: number }[];
+  teamScoreSnapshot?: { teamIndex: number; name: string; color: string; avgPoints: number }[];
   questionStartedAt?: number | null;
   antiCheatEnabled?: boolean;
+  teamMode?: boolean;
+  teamCount?: number;
+  teams?: TeamConfig[];
 }
 
 export interface SessionPlayer {
@@ -77,6 +95,7 @@ export interface SessionPlayer {
   userId?: string;
   nickname: string;
   avatar?: string;
+  teamIndex?: number;
   joinedAt: number;
 }
 
