@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
 import { confirmAction } from '../../lib/swal';
 import { ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus } from 'lucide-react';
-import type { Quiz, Question, QuestionType } from '../../types/models';
+import type { Quiz, Question, QuestionType, Collection } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
   quizId,
@@ -39,6 +39,8 @@ export default function QuizEditor() {
   const [saving, setSaving] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
 
   useEffect(() => {
     if (isNew || !quizId) return;
@@ -49,6 +51,7 @@ export default function QuizEditor() {
         const data = quizDoc.data() as Quiz;
         setTitle(data.title);
         setDescription(data.description);
+        setSelectedCollectionId(data.collectionId || '');
       }
       const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
       const snapshot = await getDocs(q);
@@ -57,6 +60,16 @@ export default function QuizEditor() {
     };
     loadQuizAndQuestions();
   }, [quizId, isNew]);
+
+  // Fetch user's collections
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'collections'), where('ownerId', '==', user.id));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setCollections(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Collection[]);
+    });
+    return unsub;
+  }, [user]);
 
   const addQuestion = () => setQuestions([...questions, emptyQuestion(quizId || '')]);
 
@@ -137,12 +150,15 @@ export default function QuizEditor() {
       if (isNew) {
         const quizRef = await addDoc(collection(db, 'quizzes'), {
           ownerId: user.id, title, description, visibility: 'private',
+          collectionId: selectedCollectionId || null,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
         });
         savedQuizId = quizRef.id;
       } else if (savedQuizId) {
         await setDoc(doc(db, 'quizzes', savedQuizId), {
-          ownerId: user.id, title, description, visibility: 'private', updatedAt: serverTimestamp(),
+          ownerId: user.id, title, description, visibility: 'private',
+          collectionId: selectedCollectionId || null,
+          updatedAt: serverTimestamp(),
         }, { merge: true });
       }
       for (const question of questions) {
@@ -218,6 +234,21 @@ export default function QuizEditor() {
             className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 resize-none"
           />
         </div>
+        {collections.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Collection</label>
+            <select
+              value={selectedCollectionId}
+              onChange={(e) => setSelectedCollectionId(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+            >
+              <option value="">None (Uncategorized)</option>
+              {collections.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Validation Errors */}

@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.exportCsv = exports.endQuestion = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const https_1 = require("firebase-functions/v2/https");
@@ -102,6 +102,7 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
         currentQuestionIndex: 0,
         questionState: "lobby",
         joinLocked: false,
+        antiCheatEnabled: true,
         startedAt: null,
         endedAt: null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -379,6 +380,43 @@ exports.exportCsv = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         return `${sessionId},"${nickname}",${a.playerId},${a.questionId},"${a.selection}",${a.correct},${a.timeMs},${a.pointsAwarded}`;
     });
     return { csv: [header, ...rows].join("\n") };
+});
+// --- Report Violation (Anti-Cheat) ---
+exports.reportViolation = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    const { sessionId, playerId, type } = request.data;
+    if (!sessionId || !playerId || !type) {
+        throw new https_1.HttpsError("invalid-argument", "sessionId, playerId, and type are required");
+    }
+    const validTypes = ["tab_hidden", "window_blur", "paste_attempt"];
+    if (!validTypes.includes(type)) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid violation type");
+    }
+    const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Session not found");
+    }
+    if (sessionDoc.data()?.status === "ended") {
+        throw new https_1.HttpsError("failed-precondition", "Session has ended");
+    }
+    if (sessionDoc.data()?.antiCheatEnabled === false) {
+        return { success: false, reason: "Anti-cheat is disabled" };
+    }
+    const playerDoc = await db.doc(`sessions/${sessionId}/players/${playerId}`).get();
+    if (!playerDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Player not found in session");
+    }
+    const nickname = playerDoc.data()?.nickname || "Unknown";
+    const violationRef = db.doc(`sessions/${sessionId}/violations/${playerId}`);
+    await violationRef.set({
+        playerId,
+        nickname,
+        totalViolations: admin.firestore.FieldValue.increment(1),
+        events: admin.firestore.FieldValue.arrayUnion({
+            type,
+            timestamp: Date.now(),
+        }),
+    }, { merge: true });
+    return { success: true };
 });
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({

@@ -19,6 +19,7 @@ import PlayAssignment from './pages/student/PlayAssignment';
 import StudentDashboard from './pages/student/StudentDashboard';
 import Profile from './pages/Profile';
 import QuizPreview from './pages/teacher/QuizPreview';
+import CollectionView from './pages/teacher/CollectionView';
 import './App.css';
 
 function AppContent() {
@@ -47,6 +48,7 @@ function AppContent() {
         <Route path="/session/:sessionId/results" element={<ProtectedRoute><SessionResults /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><SessionHistory /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/collection/:collectionId" element={<ProtectedRoute><CollectionView /></ProtectedRoute>} />
         <Route path="/assignment/new" element={<ProtectedRoute><AssignmentCreate /></ProtectedRoute>} />
       </Routes>
       </main>

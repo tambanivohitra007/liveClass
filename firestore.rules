@@ -9,6 +9,14 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Collections: any authed user can read, owner can CRUD
+    match /collections/{collectionId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.ownerId == request.auth.uid;
+    }
+
     // Quizzes: owner can CRUD, students can read public quizzes
     match /quizzes/{quizId} {
       allow read: if request.auth != null;
