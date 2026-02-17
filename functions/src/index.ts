@@ -603,6 +603,92 @@ export const reportViolation = onCall(FUNCTION_CONFIG, async (request) => {
   return { success: true };
 });
 
+// --- AI Question Generator ---
+export const generateQuestions = onCall(
+  { ...FUNCTION_CONFIG, memory: "512MiB" as const },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Must be logged in");
+    }
+
+    const { topic, count = 5, questionType = "mcq" } = request.data as {
+      topic: string;
+      count?: number;
+      questionType?: string;
+    };
+
+    if (!topic || topic.trim().length < 3) {
+      throw new HttpsError("invalid-argument", "Topic must be at least 3 characters");
+    }
+
+    const clampedCount = Math.min(Math.max(count, 1), 10);
+
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      // Fallback: generate template questions without AI
+      const questions = [];
+      for (let i = 0; i < clampedCount; i++) {
+        questions.push({
+          type: questionType,
+          text: `Question ${i + 1} about ${topic}`,
+          options: questionType === "tf" ? ["True", "False"]
+            : questionType === "short" ? []
+            : ["Option A", "Option B", "Option C", "Option D"],
+          correctAnswers: questionType === "tf" ? ["True"]
+            : questionType === "short" ? [topic]
+            : ["Option A"],
+          timeLimitSec: 20,
+        });
+      }
+      return { questions, note: "AI API key not configured. Template questions generated — edit them manually." };
+    }
+
+    const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
+    const prompt = `Generate ${clampedCount} quiz questions about "${topic}".
+Each question should be type "${questionType}".
+Return ONLY a valid JSON array. Each element:
+${questionType === "mcq" ? '{"text":"...","options":["A","B","C","D"],"correctAnswers":["A"],"timeLimitSec":20}' : ""}
+${questionType === "tf" ? '{"text":"...","options":["True","False"],"correctAnswers":["True"],"timeLimitSec":15}' : ""}
+${questionType === "short" ? '{"text":"...","options":[],"correctAnswers":["answer"],"timeLimitSec":30}' : ""}
+Make questions educational, varied in difficulty, and factually accurate.`;
+
+    try {
+      let responseText = "";
+      if (isAnthropic) {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+          body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 2048, messages: [{ role: "user", content: prompt }] }),
+        });
+        const data = await res.json();
+        responseText = data.content?.[0]?.text || "[]";
+      } else {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 2048 }),
+        });
+        const data = await res.json();
+        responseText = data.choices?.[0]?.message?.content || "[]";
+      }
+
+      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new HttpsError("internal", "Failed to parse AI response");
+
+      const questions = JSON.parse(jsonMatch[0]).map(
+        (q: { text: string; options: string[]; correctAnswers: string[]; timeLimitSec: number }) => ({
+          type: questionType, text: q.text, options: q.options || [],
+          correctAnswers: q.correctAnswers || [], timeLimitSec: q.timeLimitSec || 20,
+        })
+      );
+      return { questions };
+    } catch (err) {
+      if (err instanceof HttpsError) throw err;
+      throw new HttpsError("internal", "AI generation failed");
+    }
+  }
+);
+
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 export const cleanupExpiredSessions = onSchedule(
   {

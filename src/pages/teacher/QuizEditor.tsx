@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
 import { confirmAction } from '../../lib/swal';
-import { GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus, Sparkles, X as XIcon } from 'lucide-react';
 import type { Quiz, Question, QuestionType, Collection } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
@@ -47,6 +48,11 @@ export default function QuizEditor() {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiCount, setAiCount] = useState(5);
+  const [aiType, setAiType] = useState<QuestionType>('mcq');
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   useEffect(() => {
     if (isNew || !quizId) return;
@@ -79,6 +85,31 @@ export default function QuizEditor() {
   }, [user]);
 
   const addQuestion = () => setQuestions([...questions, emptyQuestion(quizId || '')]);
+
+  const handleAiGenerate = async () => {
+    if (!aiTopic.trim()) return;
+    setAiGenerating(true);
+    try {
+      const fn = httpsCallable<
+        { topic: string; count: number; questionType: string },
+        { questions: Omit<Question, 'id' | 'quizId'>[]; note?: string }
+      >(functions, 'generateQuestions');
+      const result = await fn({ topic: aiTopic, count: aiCount, questionType: aiType });
+      const generated = result.data.questions.map((q) => ({
+        ...q,
+        quizId: quizId || '',
+      }));
+      setQuestions([...questions, ...generated]);
+      if (result.data.note) addToast('info', result.data.note);
+      else addToast('success', `${generated.length} questions generated`);
+      setShowAiModal(false);
+      setAiTopic('');
+    } catch {
+      addToast('error', 'Failed to generate questions');
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   const updateQuestion = (index: number, updates: Partial<Question>) => {
     setQuestions(questions.map((q, i) => (i === index ? { ...q, ...updates } : q)));
@@ -619,13 +650,95 @@ export default function QuizEditor() {
         ))}
       </div>
 
-      {/* Add Question Button */}
-      <button
-        onClick={addQuestion}
-        className="w-full mt-4 py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors"
-      >
-        + Add Question
-      </button>
+      {/* Add Question Buttons */}
+      <div className="flex gap-3 mt-4">
+        <button
+          onClick={addQuestion}
+          className="flex-1 py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors"
+        >
+          + Add Question
+        </button>
+        <button
+          onClick={() => setShowAiModal(true)}
+          className="px-6 py-4 bg-gradient-to-r from-brand to-accent text-white font-medium rounded-2xl hover:brightness-110 transition-all shadow-sm flex items-center gap-2"
+        >
+          <Sparkles className="w-4 h-4" />
+          AI Generate
+        </button>
+      </div>
+
+      {/* AI Generate Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAiModal(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 pb-0">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-brand" />
+                AI Question Generator
+              </h3>
+              <button onClick={() => setShowAiModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Topic</label>
+                <input
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  placeholder="e.g. Photosynthesis, World War II, Python basics"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Count</label>
+                  <select
+                    value={aiCount}
+                    onChange={(e) => setAiCount(parseInt(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  >
+                    {[3, 5, 7, 10].map((n) => (
+                      <option key={n} value={n}>{n} questions</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
+                  <select
+                    value={aiType}
+                    onChange={(e) => setAiType(e.target.value as QuestionType)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  >
+                    <option value="mcq">Multiple Choice</option>
+                    <option value="tf">True / False</option>
+                    <option value="short">Short Answer</option>
+                  </select>
+                </div>
+              </div>
+              <button
+                onClick={handleAiGenerate}
+                disabled={aiGenerating || !aiTopic.trim()}
+                className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {aiGenerating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate Questions
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-gray-400 text-center">Questions will be added to your quiz. Review and edit them before saving.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
