@@ -3,11 +3,13 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings, History } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings, History, Sun, Moon } from 'lucide-react';
+import { useThemeStore } from '../stores/themeStore';
 import logo from '../assets/logo.png';
 
 export default function Navbar() {
   const { firebaseUser, user } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -85,6 +87,15 @@ export default function Navbar() {
                 Join Game
               </Link>
 
+              {/* Dark mode toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-gray-500 hover:text-brand hover:bg-gray-50 transition-colors"
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+
               {/* Profile Dropdown */}
               <div ref={profileRef} className="relative ml-2">
                 <button
@@ -145,6 +156,13 @@ export default function Navbar() {
               >
                 Join Game
               </Link>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-gray-500 hover:text-brand hover:bg-gray-50 transition-colors"
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
               <Link
                 to="/login"
                 className="ml-1 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors no-underline"
@@ -197,6 +215,13 @@ export default function Navbar() {
                   <Settings className="w-4 h-4 text-gray-400" />
                   Profile Settings
                 </Link>
+                <button
+                  onClick={toggleTheme}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                >
+                  {theme === 'dark' ? <Sun className="w-4 h-4 text-gray-400" /> : <Moon className="w-4 h-4 text-gray-400" />}
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </button>
                 <hr className="my-2 border-gray-100" />
                 <button
                   onClick={handleLogout}

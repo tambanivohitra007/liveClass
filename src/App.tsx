@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
+import { useThemeStore } from './stores/themeStore';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -59,6 +61,11 @@ function AppContent() {
 
 function App() {
   useAuthListener();
+  const { theme } = useThemeStore();
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   return (
     <BrowserRouter>
