@@ -6,6 +6,7 @@ import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
 import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
@@ -234,7 +235,14 @@ export default function HostSession() {
             <div className="inline-block bg-white text-surface-dark rounded-2xl px-12 py-6 shadow-2xl animate-pulse-glow">
               <span className="text-5xl md:text-7xl font-black tracking-[0.3em]">{session.pinCode}</span>
             </div>
-            <p className="text-white/40 mt-4 text-sm">Share this PIN with your students</p>
+            <div className="mt-6 inline-block bg-white rounded-2xl p-4">
+              <QRCodeSVG
+                value={`${window.location.origin}/join?pin=${session.pinCode}`}
+                size={160}
+                level="M"
+              />
+            </div>
+            <p className="text-white/40 mt-3 text-sm">or scan to join</p>
           </div>
         )}
 

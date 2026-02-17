@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
@@ -75,7 +75,33 @@ export default function JoinGame() {
   const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const pattern = useMemo(() => generatePattern(), [step === 'verify' ? sessionId : null]); // eslint-disable-line
+
+  // Auto-fill and auto-submit PIN from URL query param (e.g. /join?pin=123456)
+  useEffect(() => {
+    const pinParam = searchParams.get('pin');
+    if (pinParam && /^\d{4,6}$/.test(pinParam) && step === 'pin') {
+      setPin(pinParam);
+      // Auto-submit: look up the session
+      (async () => {
+        const sessionsRef = collection(db, 'sessions');
+        const q = query(sessionsRef, where('pinCode', '==', pinParam), where('status', '!=', 'ended'));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+          setError('No active game found with that PIN.');
+          return;
+        }
+        const sessionDoc = snapshot.docs[0];
+        if (sessionDoc.data().joinLocked) {
+          setError('This game is locked. No more players can join.');
+          return;
+        }
+        setSessionId(sessionDoc.id);
+        setStep('verify');
+      })();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleVerify = (choiceIdx: number) => {
     const key = (p: typeof pattern.target) => p.map((s) => `${s.shape}-${s.color}`).join(',');
