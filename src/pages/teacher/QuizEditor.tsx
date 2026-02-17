@@ -6,7 +6,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
 import { confirmAction } from '../../lib/swal';
-import { ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus } from 'lucide-react';
 import type { Quiz, Question, QuestionType, Collection } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
@@ -41,6 +41,8 @@ export default function QuizEditor() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (isNew || !quizId) return;
@@ -110,6 +112,17 @@ export default function QuizEditor() {
     const updated = [...questions];
     updated.splice(index + 1, 0, copy);
     setQuestions(updated);
+  };
+
+  const handleDragEnd = () => {
+    if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+      const reordered = [...questions];
+      const [moved] = reordered.splice(dragIndex, 1);
+      reordered.splice(dragOverIndex, 0, moved);
+      setQuestions(reordered);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   const validate = (): string[] => {
@@ -268,10 +281,22 @@ export default function QuizEditor() {
 
       <div className="space-y-4">
         {questions.map((q, i) => (
-          <div key={q.id || i} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in">
+          <div
+            key={q.id || i}
+            draggable
+            onDragStart={() => setDragIndex(i)}
+            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(i); }}
+            onDragEnd={handleDragEnd}
+            className={`bg-white rounded-2xl border shadow-sm overflow-hidden animate-fade-in transition-all ${
+              dragOverIndex === i && dragIndex !== i ? 'border-brand border-2' : 'border-gray-100'
+            } ${dragIndex === i ? 'opacity-50' : ''}`}
+          >
             {/* Question Header */}
             <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-100">
-              <span className="font-semibold text-sm text-gray-600">Question {i + 1}</span>
+              <div className="flex items-center gap-2">
+                <GripVertical className="w-4 h-4 text-gray-300 cursor-grab active:cursor-grabbing" />
+                <span className="font-semibold text-sm text-gray-600">Question {i + 1}</span>
+              </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => moveQuestion(i, -1)} disabled={i === 0} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500"><ChevronUp className="w-4 h-4" /></button>
                 <button onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500"><ChevronDown className="w-4 h-4" /></button>
