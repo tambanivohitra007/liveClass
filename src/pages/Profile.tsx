@@ -1,0 +1,327 @@
+import { useState } from 'react';
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../lib/firebase';
+import { useAuthStore } from '../stores/authStore';
+import { useToastStore } from '../stores/toastStore';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Camera, Save, KeyRound, Mail, Shield } from 'lucide-react';
+
+export default function Profile() {
+  const { firebaseUser, user, setUser } = useAuthStore();
+  const { addToast } = useToastStore();
+  const navigate = useNavigate();
+
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [role, setRole] = useState<'teacher' | 'student'>(user?.role || 'student');
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Password change
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const isEmailUser = firebaseUser?.providerData[0]?.providerId === 'password';
+
+  const handleSaveProfile = async () => {
+    if (!firebaseUser || !user) return;
+    if (!displayName.trim()) {
+      addToast('warning', 'Display name cannot be empty.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Update Firebase Auth profile
+      await updateProfile(firebaseUser, { displayName: displayName.trim() });
+
+      // Update Firestore user doc
+      await updateDoc(doc(db, 'users', firebaseUser.uid), {
+        displayName: displayName.trim(),
+        role,
+      });
+
+      // Update local state
+      setUser({ ...user, displayName: displayName.trim(), role });
+      addToast('success', 'Profile updated successfully.');
+    } catch {
+      addToast('error', 'Failed to update profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!firebaseUser || !user) return;
+    if (!file.type.startsWith('image/')) {
+      addToast('warning', 'Please select an image file.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      addToast('warning', 'Image must be under 2MB.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const storageRef = ref(storage, `avatars/${firebaseUser.uid}`);
+      await uploadBytes(storageRef, file);
+      const photoUrl = await getDownloadURL(storageRef);
+
+      await updateProfile(firebaseUser, { photoURL: photoUrl });
+      await updateDoc(doc(db, 'users', firebaseUser.uid), { photoUrl });
+
+      setUser({ ...user, photoUrl });
+      addToast('success', 'Profile photo updated.');
+    } catch {
+      addToast('error', 'Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firebaseUser || !firebaseUser.email) return;
+
+    if (newPassword.length < 6) {
+      addToast('warning', 'New password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      addToast('warning', 'Passwords do not match.');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      // Re-authenticate first
+      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+
+      // Update password
+      await updatePassword(firebaseUser, newPassword);
+
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordForm(false);
+      addToast('success', 'Password changed successfully.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to change password.';
+      if (message.includes('wrong-password') || message.includes('invalid-credential')) {
+        addToast('error', 'Current password is incorrect.');
+      } else {
+        addToast('error', message);
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  if (!firebaseUser || !user) return null;
+
+  const initials = user.displayName
+    ? user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+
+  const photoUrl = user.photoUrl || firebaseUser.photoURL;
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <button
+        onClick={() => navigate(-1)}
+        className="text-sm text-gray-400 hover:text-brand mb-6 flex items-center gap-1"
+      >
+        <ArrowLeft className="w-3 h-3" /> Back
+      </button>
+
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">Profile Settings</h1>
+
+      {/* Avatar Section */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 animate-fade-in">
+        <div className="flex items-center gap-6">
+          <div className="relative group">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={user.displayName}
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-100"
+              />
+            ) : (
+              <div className="w-20 h-20 bg-gradient-to-br from-brand to-accent rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+                {initials}
+              </div>
+            )}
+            <label className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+              {uploadingPhoto ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Camera className="w-5 h-5 text-white" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => e.target.files?.[0] && handlePhotoUpload(e.target.files[0])}
+                className="hidden"
+                disabled={uploadingPhoto}
+              />
+            </label>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">{user.displayName}</h2>
+            <p className="text-sm text-gray-400">{user.email}</p>
+            <span className="inline-block mt-1.5 text-xs px-2 py-0.5 bg-brand/10 text-brand rounded-full font-medium capitalize">
+              {user.role}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Info Form */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 animate-fade-in">
+        <h3 className="font-semibold text-gray-900 mb-4">Personal Information</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Display Name</label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500">
+              <Mail className="w-4 h-4 text-gray-400" />
+              {user.email}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <div className="grid grid-cols-2 gap-3">
+              {(['teacher', 'student'] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRole(r)}
+                  className={`py-3 rounded-xl border-2 font-medium capitalize transition-all ${
+                    role === r
+                      ? 'border-brand bg-brand/5 text-brand'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={handleSaveProfile}
+            disabled={saving}
+            className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+
+      {/* Security Section */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-fade-in">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Shield className="w-4 h-4 text-gray-400" />
+          Security
+        </h3>
+
+        {isEmailUser ? (
+          <>
+            {!showPasswordForm ? (
+              <button
+                onClick={() => setShowPasswordForm(true)}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors w-full"
+              >
+                <KeyRound className="w-4 h-4 text-gray-400" />
+                Change Password
+              </button>
+            ) : (
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+                    placeholder="Min 6 characters"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setShowPasswordForm(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); }}
+                    className="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    className="flex-1 py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
+                  >
+                    {changingPassword ? 'Changing...' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
+        ) : (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 text-gray-500 text-sm">
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Signed in with Google. Password is managed by your Google account.
+          </div>
+        )}
+
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <p className="text-xs text-gray-400">
+            Account created {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'recently'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings } from 'lucide-react';
 
 export default function Navbar() {
   const { firebaseUser, user } = useAuthStore();
@@ -108,6 +108,13 @@ export default function Navbar() {
                         Dashboard
                       </button>
                       <button
+                        onClick={() => { setProfileOpen(false); navigate('/profile'); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <Settings className="w-4 h-4 text-gray-400" />
+                        Profile Settings
+                      </button>
+                      <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-danger hover:bg-danger/5 transition-colors text-left"
                       >
@@ -170,6 +177,10 @@ export default function Navbar() {
                 <Link to="/join" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
                   <User className="w-4 h-4 text-gray-400" />
                   Join Game
+                </Link>
+                <Link to="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
+                  <Settings className="w-4 h-4 text-gray-400" />
+                  Profile Settings
                 </Link>
                 <hr className="my-2 border-gray-100" />
                 <button

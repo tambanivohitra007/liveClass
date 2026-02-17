@@ -15,6 +15,7 @@ import JoinGame from './pages/student/JoinGame';
 import PlayGame from './pages/student/PlayGame';
 import PlayAssignment from './pages/student/PlayAssignment';
 import StudentDashboard from './pages/student/StudentDashboard';
+import Profile from './pages/Profile';
 import './App.css';
 
 function AppContent() {
@@ -39,6 +40,7 @@ function AppContent() {
         <Route path="/quiz/:quizId" element={<ProtectedRoute><QuizEditor /></ProtectedRoute>} />
         <Route path="/quiz/:quizId/host" element={<ProtectedRoute><HostSession /></ProtectedRoute>} />
         <Route path="/session/:sessionId/results" element={<ProtectedRoute><SessionResults /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/assignment/new" element={<ProtectedRoute><AssignmentCreate /></ProtectedRoute>} />
       </Routes>
     </>
