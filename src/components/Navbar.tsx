@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
 import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 export default function Navbar() {
   const { firebaseUser, user } = useAuthStore();
@@ -49,9 +50,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 no-underline">
-          <div className="w-8 h-8 bg-gradient-to-br from-brand to-brand-dark rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-white font-bold text-sm">LC</span>
-          </div>
+          <img src={logo} alt="LiveClass" className="w-8 h-8 rounded-lg shadow-sm" />
           <span className="font-bold text-xl text-gray-900">LiveClass</span>
         </Link>
 

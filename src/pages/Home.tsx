@@ -5,6 +5,7 @@ import {
   Play, ClipboardList, Trophy, ArrowRight, Sparkles,
   GraduationCap, Globe
 } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0);
@@ -309,9 +310,7 @@ export default function Home() {
       <footer className="bg-gray-900 text-white/50 py-8">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-white/10 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-bold">LC</span>
-            </div>
+            <img src={logo} alt="LiveClass" className="w-6 h-6 rounded" />
             <span>LiveClass</span>
           </div>
           <p>Built with care for educators everywhere.</p>
