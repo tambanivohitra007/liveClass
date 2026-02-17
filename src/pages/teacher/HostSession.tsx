@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
-import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
 import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX } from 'lucide-react';
@@ -16,6 +15,8 @@ export default function HostSession() {
   const { session, setSession, players, setPlayers } = useSessionStore();
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
+  const [currentTimeLimitSec, setCurrentTimeLimitSec] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [error, setError] = useState('');
   const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
   const [muted, setMutedState] = useState(isMuted());
@@ -66,10 +67,43 @@ export default function HostSession() {
       const qIdx = session.questionOrder
         ? session.questionOrder[session.currentQuestionIndex]
         : session.currentQuestionIndex;
-      setCurrentQuestionText(questions[qIdx]?.text || '');
+      const current = questions[qIdx];
+      setCurrentQuestionText(current?.text || '');
+      if (current?.timeLimitSec) {
+        setCurrentTimeLimitSec(current.timeLimitSec);
+        // Calculate remaining time from server timestamp to survive refreshes
+        const startedAt = session.questionStartedAt as any;
+        const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+        if (startMs > 0) {
+          const elapsed = Math.floor((Date.now() - startMs) / 1000);
+          setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
+        } else {
+          setTimeLeft(current.timeLimitSec);
+        }
+      }
     };
     loadCurrentQuestion();
   }, [session?.currentQuestionIndex, session?.questionState]);
+
+  // Countdown timer — auto-ends question when time runs out
+  const autoEndCalledRef = useRef(false);
+  useEffect(() => {
+    if (!session || session.questionState !== 'live') {
+      autoEndCalledRef.current = false;
+      return;
+    }
+    if (timeLeft <= 0) return;
+    const timer = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [session?.questionState, timeLeft]);
+
+  useEffect(() => {
+    if (!session || session.questionState !== 'live') return;
+    if (timeLeft <= 0 && currentTimeLimitSec > 0 && !autoEndCalledRef.current) {
+      autoEndCalledRef.current = true;
+      httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+    }
+  }, [timeLeft, session?.questionState, currentTimeLimitSec]);
 
   const startQuestion = async () => {
     if (!session) return;
@@ -83,12 +117,6 @@ export default function HostSession() {
 
   const endQuestion = async () => {
     if (!session) return;
-    const { isConfirmed } = await confirmAction(
-      'End this question?',
-      'Students will no longer be able to submit answers.',
-      'Yes, end it'
-    );
-    if (!isConfirmed) return;
     await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
   };
 
@@ -174,6 +202,12 @@ export default function HostSession() {
           <div className="text-center mb-8 animate-fade-in">
             <span className="text-sm text-white/40 uppercase tracking-wider">Question {session.currentQuestionIndex + 1} of {totalQuestions}</span>
             <h2 className="text-2xl md:text-3xl font-bold mt-2">{currentQuestionText}</h2>
+            {currentTimeLimitSec > 0 && (
+              <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full ${timeLeft <= 5 ? 'bg-danger/20 text-danger' : 'bg-white/10 text-white/70'}`}>
+                <span className={`text-2xl font-black tabular-nums ${timeLeft <= 5 ? 'animate-timer-pulse' : ''}`}>{timeLeft}</span>
+                <span className="text-sm">sec</span>
+              </div>
+            )}
           </div>
         )}
 

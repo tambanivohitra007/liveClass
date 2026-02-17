@@ -101,7 +101,15 @@ export default function PlayGame() {
       const current = questions[qIdx];
       if (current) {
         setCurrentQuestion(current);
-        setTimeLeft(current.timeLimitSec);
+        // Calculate remaining time from server timestamp to survive refreshes
+        const startedAt = session.questionStartedAt as any;
+        const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+        if (startMs > 0) {
+          const elapsed = Math.floor((Date.now() - startMs) / 1000);
+          setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
+        } else {
+          setTimeLeft(current.timeLimitSec);
+        }
         if (current.type === 'ordering') {
           setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
         }
