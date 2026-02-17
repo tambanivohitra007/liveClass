@@ -5,7 +5,7 @@ import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
-import { ChevronUp, ChevronDown, Copy, Trash2, Check } from 'lucide-react';
+import { ChevronUp, ChevronDown, Copy, Trash2, Check, Eye } from 'lucide-react';
 import type { Quiz, Question, QuestionType } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
@@ -149,13 +149,24 @@ export default function QuizEditor() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">{isNew ? 'Create Quiz' : 'Edit Quiz'}</h1>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-6 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
-        >
-          {saving ? 'Saving...' : 'Save Quiz'}
-        </button>
+        <div className="flex items-center gap-3">
+          {!isNew && (
+            <button
+              onClick={() => navigate(`/quiz/${quizId}/preview`)}
+              className="px-4 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4" />
+              Preview
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-6 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save Quiz'}
+          </button>
+        </div>
       </div>
 
       {/* Quiz Meta */}

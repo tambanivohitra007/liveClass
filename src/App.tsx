@@ -16,12 +16,13 @@ import PlayGame from './pages/student/PlayGame';
 import PlayAssignment from './pages/student/PlayAssignment';
 import StudentDashboard from './pages/student/StudentDashboard';
 import Profile from './pages/Profile';
+import QuizPreview from './pages/teacher/QuizPreview';
 import './App.css';
 
 function AppContent() {
   const location = useLocation();
   // Hide navbar on full-screen game pages
-  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && location.pathname.endsWith('/host'));
+  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview')));
 
   return (
     <>
@@ -39,6 +40,7 @@ function AppContent() {
         <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
         <Route path="/quiz/:quizId" element={<ProtectedRoute><QuizEditor /></ProtectedRoute>} />
         <Route path="/quiz/:quizId/host" element={<ProtectedRoute><HostSession /></ProtectedRoute>} />
+        <Route path="/quiz/:quizId/preview" element={<ProtectedRoute><QuizPreview /></ProtectedRoute>} />
         <Route path="/session/:sessionId/results" element={<ProtectedRoute><SessionResults /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/assignment/new" element={<ProtectedRoute><AssignmentCreate /></ProtectedRoute>} />

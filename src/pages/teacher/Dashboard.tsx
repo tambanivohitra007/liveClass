@@ -5,7 +5,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
-import { BookOpen, Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList } from 'lucide-react';
+import { BookOpen, Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye } from 'lucide-react';
 import type { Quiz } from '../../types/models';
 
 interface QuizWithMeta extends Quiz {
@@ -198,6 +198,13 @@ export default function Dashboard() {
                   className="flex-1 py-2 text-sm font-medium text-gray-600 hover:text-brand hover:bg-brand/5 rounded-lg transition-colors"
                 >
                   Edit
+                </button>
+                <button
+                  onClick={() => navigate(`/quiz/${quiz.id}/preview`)}
+                  className="px-3 py-2 text-sm text-gray-400 hover:text-accent-dark hover:bg-accent/5 rounded-lg transition-colors"
+                  title="Preview"
+                >
+                  <Eye className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => navigate(`/quiz/${quiz.id}/host`)}
