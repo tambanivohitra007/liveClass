@@ -218,7 +218,7 @@ export default function HostSession() {
             <button
               onClick={startQuestion}
               disabled={players.length === 0}
-              className="px-8 py-4 bg-success text-white font-bold text-lg rounded-xl hover:brightness-110 transition-all disabled:opacity-40 shadow-lg"
+              className="px-8 py-3.5 bg-success text-white font-bold text-lg rounded-2xl hover:brightness-110 transition-all disabled:opacity-40 shadow-lg"
             >
               Start Game
             </button>
@@ -226,7 +226,7 @@ export default function HostSession() {
           {session.questionState === 'live' && (
             <button
               onClick={endQuestion}
-              className="px-8 py-4 bg-danger text-white font-bold text-lg rounded-xl hover:brightness-110 transition-all shadow-lg"
+              className="px-8 py-3.5 bg-danger text-white font-bold text-lg rounded-2xl hover:brightness-110 transition-all shadow-lg"
             >
               End Question
             </button>
@@ -234,7 +234,7 @@ export default function HostSession() {
           {session.questionState === 'reveal' && !isLastQuestion && (
             <button
               onClick={nextQuestion}
-              className="px-8 py-4 bg-brand text-white font-bold text-lg rounded-xl hover:bg-brand-dark transition-all shadow-lg"
+              className="px-8 py-3.5 bg-brand text-white font-bold text-lg rounded-2xl hover:bg-brand-dark transition-all shadow-lg"
             >
               Next Question
             </button>
@@ -242,7 +242,7 @@ export default function HostSession() {
           {session.questionState === 'reveal' && isLastQuestion && (
             <button
               onClick={() => navigate(`/session/${session.id}/results`)}
-              className="px-8 py-4 bg-brand text-white font-bold text-lg rounded-xl hover:bg-brand-dark transition-all shadow-lg"
+              className="px-8 py-3.5 bg-brand text-white font-bold text-lg rounded-2xl hover:bg-brand-dark transition-all shadow-lg"
             >
               View Results
             </button>

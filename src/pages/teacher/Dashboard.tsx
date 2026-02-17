@@ -280,7 +280,7 @@ export default function Dashboard() {
 
       {/* Collection Modal */}
       {showCollModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShowCollModal(false)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCollModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-0">
               <h3 className="text-lg font-bold text-gray-900">{editingColl ? 'Edit Collection' : 'New Collection'}</h3>
