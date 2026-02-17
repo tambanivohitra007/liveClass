@@ -107,6 +107,25 @@
 .stagger-children > *:nth-child(5) { animation-delay: 400ms; }
 .stagger-children > *:nth-child(6) { animation-delay: 500ms; }
 
+/* Toast enter/exit */
+@keyframes toast-enter {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-exit {
+  from { transform: translateX(0); opacity: 1; max-height: 100px; }
+  to { transform: translateX(100%); opacity: 0; max-height: 0; }
+}
+
+.animate-toast-enter {
+  animation: toast-enter 0.3s ease-out;
+}
+
+.animate-toast-exit {
+  animation: toast-exit 0.3s ease-in forwards;
+}
+
 /* Shimmer skeleton */
 .animate-shimmer {
   background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);

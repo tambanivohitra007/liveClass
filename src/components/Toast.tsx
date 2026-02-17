@@ -26,6 +26,7 @@ const barMap = {
 function ToastItem({ toast }: { toast: ToastData }) {
   const { removeToast } = useToastStore();
   const [progress, setProgress] = useState(100);
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     if (!toast.duration || toast.duration <= 0) return;
@@ -39,12 +40,17 @@ function ToastItem({ toast }: { toast: ToastData }) {
     return () => clearInterval(interval);
   }, [toast.duration]);
 
+  const handleDismiss = () => {
+    setExiting(true);
+    setTimeout(() => removeToast(toast.id), 300);
+  };
+
   return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-sm animate-slide-up ${bgMap[toast.type]}`}>
+    <div className={`relative overflow-hidden rounded-xl border shadow-lg backdrop-blur-sm ${bgMap[toast.type]} ${exiting ? 'animate-toast-exit' : 'animate-toast-enter'}`}>
       <div className="flex items-start gap-3 px-4 py-3">
         {iconMap[toast.type]}
         <p className="text-sm font-medium text-gray-800 flex-1 pt-0.5">{toast.message}</p>
-        <button onClick={() => removeToast(toast.id)} className="p-0.5 hover:bg-black/5 rounded-lg transition-colors shrink-0">
+        <button onClick={handleDismiss} className="p-0.5 hover:bg-black/5 rounded-lg transition-colors shrink-0">
           <X className="w-4 h-4 text-gray-400" />
         </button>
       </div>
