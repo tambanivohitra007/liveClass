@@ -84,3 +84,17 @@ export interface Assignment {
   endAt: number;
   attemptsAllowed: number;
 }
+
+export type ViolationType = 'tab_hidden' | 'window_blur' | 'paste_attempt';
+
+export interface ViolationEvent {
+  type: ViolationType;
+  timestamp: number;
+}
+
+export interface ViolationDoc {
+  playerId: string;
+  nickname: string;
+  totalViolations: number;
+  events: ViolationEvent[];
+}

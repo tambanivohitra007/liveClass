@@ -7,6 +7,8 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
 import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square } from 'lucide-react';
+import { useAntiCheat } from '../../hooks/useAntiCheat';
+import ViolationWarning from '../../components/ViolationWarning';
 import type { Session, Question } from '../../types/models';
 
 const answerColors = [
@@ -35,6 +37,12 @@ export default function PlayGame() {
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
+
+  const { showWarning, dismissWarning } = useAntiCheat({
+    sessionId,
+    playerId,
+    enabled: session?.questionState === 'live',
+  });
 
   useEffect(() => {
     if (!sessionId) return;
@@ -159,6 +167,7 @@ export default function PlayGame() {
   if (session.questionState === 'reveal') {
     return (
       <div className="min-h-screen bg-surface-dark text-white p-6">
+        <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-12">
           {feedback && (
             <div className="animate-bounce-in">
@@ -196,6 +205,7 @@ export default function PlayGame() {
   // Live question
   return (
     <div className="min-h-screen bg-surface-dark flex flex-col">
+      <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
         <span className="text-white/50 text-sm">Q{(session.currentQuestionIndex || 0) + 1}</span>

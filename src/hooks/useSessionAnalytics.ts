@@ -20,6 +20,12 @@ interface AnswerDistribution {
   total: number;
 }
 
+interface ViolationSummary {
+  playerId: string;
+  nickname: string;
+  totalViolations: number;
+}
+
 interface SessionAnalyticsData {
   loading: boolean;
   sessionPin: string;
@@ -31,6 +37,7 @@ interface SessionAnalyticsData {
   sessionDuration: number | null; // in seconds
   answerDistributions: AnswerDistribution[];
   responseTimeTrend: { label: string; value: number }[];
+  violations: ViolationSummary[];
 }
 
 export function useSessionAnalytics(sessionId: string | undefined): SessionAnalyticsData {
@@ -45,6 +52,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
     sessionDuration: null,
     answerDistributions: [],
     responseTimeTrend: [],
+    violations: [],
   });
 
   useEffect(() => {
@@ -53,11 +61,12 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
     const load = async () => {
       // Fetch session doc, analytics, players, and answers in parallel
       const sessionRef = doc(db, 'sessions', sessionId);
-      const [sessionSnap, analyticsSnap, playersSnap, answersSnap] = await Promise.all([
+      const [sessionSnap, analyticsSnap, playersSnap, answersSnap, violationsSnap] = await Promise.all([
         getDoc(sessionRef),
         getDocs(collection(db, `sessions/${sessionId}/analytics`)),
         getDocs(collection(db, `sessions/${sessionId}/players`)),
         getDocs(collection(db, `sessions/${sessionId}/answers`)),
+        getDocs(collection(db, `sessions/${sessionId}/violations`)),
       ]);
 
       const sessionData = sessionSnap.data();
@@ -175,6 +184,15 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
       const sessionDuration =
         startedAt && endedAt ? Math.round((endedAt - startedAt) / 1000) : null;
 
+      const violations: ViolationSummary[] = violationsSnap.docs
+        .map((d) => ({
+          playerId: d.id,
+          nickname: (d.data().nickname as string) || 'Unknown',
+          totalViolations: (d.data().totalViolations as number) || 0,
+        }))
+        .filter((v) => v.totalViolations > 0)
+        .sort((a, b) => b.totalViolations - a.totalViolations);
+
       setData({
         loading: false,
         sessionPin: pinCode,
@@ -186,6 +204,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
         sessionDuration,
         answerDistributions,
         responseTimeTrend,
+        violations,
       });
     };
 

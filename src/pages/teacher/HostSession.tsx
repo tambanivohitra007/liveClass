@@ -6,7 +6,8 @@ import { db, functions } from '../../lib/firebase';
 import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import type { Session, SessionPlayer, Question } from '../../types/models';
+import { ShieldAlert } from 'lucide-react';
+import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 
 export default function HostSession() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -14,6 +15,7 @@ export default function HostSession() {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
   const [error, setError] = useState('');
+  const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,6 +44,11 @@ export default function HostSession() {
     });
     onSnapshot(collection(db, `sessions/${sessionId}/players`), (snap) => {
       setPlayers(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as SessionPlayer[]);
+    });
+    onSnapshot(collection(db, `sessions/${sessionId}/violations`), (snap) => {
+      const map = new Map<string, ViolationDoc>();
+      snap.docs.forEach((d) => map.set(d.id, d.data() as ViolationDoc));
+      setViolations(map);
     });
   };
 
@@ -132,11 +139,20 @@ export default function HostSession() {
           <div className="mb-8">
             <h3 className="text-sm text-white/40 uppercase tracking-wider mb-4">Players Joined</h3>
             <div className="flex flex-wrap gap-2">
-              {players.map((p) => (
-                <span key={p.id} className="px-4 py-2 bg-white/10 backdrop-blur rounded-xl text-sm font-medium animate-fade-in">
-                  {p.nickname}
-                </span>
-              ))}
+              {players.map((p) => {
+                const v = violations.get(p.id);
+                return (
+                  <span key={p.id} className="px-4 py-2 bg-white/10 backdrop-blur rounded-xl text-sm font-medium animate-fade-in inline-flex items-center gap-1.5">
+                    {p.nickname}
+                    {v && v.totalViolations > 0 && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-danger/20 text-danger rounded-full text-xs font-bold" title={`${v.totalViolations} violation(s)`}>
+                        <ShieldAlert className="w-3 h-3" />
+                        {v.totalViolations}
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
               {players.length === 0 && <p className="text-white/30">Waiting for players to join...</p>}
             </div>
           </div>
@@ -144,9 +160,26 @@ export default function HostSession() {
 
         {/* Leaderboard (on reveal) */}
         {session.questionState === 'reveal' && (
-          <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-8 animate-slide-up">
-            <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} />
-          </div>
+          <>
+            <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-4 animate-slide-up">
+              <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} />
+            </div>
+            {violations.size > 0 && (
+              <div className="bg-danger/10 backdrop-blur rounded-2xl p-4 mb-8 animate-fade-in">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldAlert className="w-4 h-4 text-danger" />
+                  <h3 className="text-sm font-bold text-danger">Flagged Activity</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(violations.entries()).map(([pid, v]) => (
+                    <span key={pid} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white/80">
+                      {v.nickname}: {v.totalViolations} violation{v.totalViolations !== 1 ? 's' : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Controls */}

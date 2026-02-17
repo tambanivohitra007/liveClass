@@ -52,6 +52,12 @@ service cloud.firestore {
         allow read: if true;
         allow write: if false; // Only via Cloud Functions
       }
+
+      // Violations: read-only for clients, write via Cloud Functions only
+      match /violations/{playerId} {
+        allow read: if true;
+        allow write: if false; // Only via Cloud Functions
+      }
     }
 
     // Assignments

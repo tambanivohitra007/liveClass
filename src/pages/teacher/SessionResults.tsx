@@ -8,7 +8,7 @@ import Leaderboard from '../../components/Leaderboard';
 import BarChart from '../../components/charts/BarChart';
 import LineChart from '../../components/charts/LineChart';
 import HorizontalBarChart from '../../components/charts/HorizontalBarChart';
-import { Download, ArrowLeft, Users, Target, Trophy, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, ArrowLeft, Users, Target, Trophy, Clock, ChevronDown, ChevronUp, ShieldAlert } from 'lucide-react';
 
 export default function SessionResults() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -28,6 +28,7 @@ export default function SessionResults() {
     sessionDuration,
     answerDistributions,
     responseTimeTrend,
+    violations,
   } = useSessionAnalytics(sessionId);
 
   const handleExportCsv = async () => {
@@ -120,6 +121,39 @@ export default function SessionResults() {
           </div>
         ))}
       </div>
+
+      {/* Integrity Alerts */}
+      {violations.length > 0 && (
+        <div className="bg-white rounded-2xl border border-danger/20 shadow-sm overflow-hidden mb-8 animate-fade-in">
+          <div className="px-6 py-4 border-b border-danger/10 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-danger" />
+            <h2 className="font-bold text-gray-900">Integrity Alerts</h2>
+            <span className="ml-auto text-xs text-gray-400">{violations.length} player{violations.length !== 1 ? 's' : ''} flagged</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-sm text-gray-500 border-b border-gray-100">
+                  <th className="text-left px-6 py-3 font-medium">Player</th>
+                  <th className="text-right px-6 py-3 font-medium">Violations</th>
+                </tr>
+              </thead>
+              <tbody>
+                {violations.map((v) => (
+                  <tr key={v.playerId} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-3 font-medium text-gray-800">{v.nickname}</td>
+                    <td className="px-6 py-3 text-right">
+                      <span className="inline-block px-2 py-0.5 rounded-full text-sm font-medium bg-danger/10 text-danger">
+                        {v.totalViolations}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Question Performance Bar Chart */}
       {analytics.length > 0 && (

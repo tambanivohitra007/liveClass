@@ -448,6 +448,55 @@ export const exportCsv = onCall(FUNCTION_CONFIG, async (request) => {
   return { csv: [header, ...rows].join("\n") };
 });
 
+// --- Report Violation (Anti-Cheat) ---
+export const reportViolation = onCall(FUNCTION_CONFIG, async (request) => {
+  const { sessionId, playerId, type } = request.data as {
+    sessionId: string;
+    playerId: string;
+    type: string;
+  };
+
+  if (!sessionId || !playerId || !type) {
+    throw new HttpsError("invalid-argument", "sessionId, playerId, and type are required");
+  }
+
+  const validTypes = ["tab_hidden", "window_blur", "paste_attempt"];
+  if (!validTypes.includes(type)) {
+    throw new HttpsError("invalid-argument", "Invalid violation type");
+  }
+
+  const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+  if (!sessionDoc.exists) {
+    throw new HttpsError("not-found", "Session not found");
+  }
+  if (sessionDoc.data()?.status === "ended") {
+    throw new HttpsError("failed-precondition", "Session has ended");
+  }
+
+  const playerDoc = await db.doc(`sessions/${sessionId}/players/${playerId}`).get();
+  if (!playerDoc.exists) {
+    throw new HttpsError("not-found", "Player not found in session");
+  }
+
+  const nickname = playerDoc.data()?.nickname || "Unknown";
+  const violationRef = db.doc(`sessions/${sessionId}/violations/${playerId}`);
+
+  await violationRef.set(
+    {
+      playerId,
+      nickname,
+      totalViolations: admin.firestore.FieldValue.increment(1),
+      events: admin.firestore.FieldValue.arrayUnion({
+        type,
+        timestamp: Date.now(),
+      }),
+    },
+    { merge: true }
+  );
+
+  return { success: true };
+});
+
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 export const cleanupExpiredSessions = onSchedule(
   {
