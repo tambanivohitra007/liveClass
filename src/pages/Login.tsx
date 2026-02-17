@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useNavigate, Link } from 'react-router-dom';
+import ValidatedInput from '../components/ValidatedInput';
 import logo from '../assets/logo.png';
 
 export default function Login() {
@@ -78,28 +79,23 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleEmailLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-                placeholder="Enter password"
-              />
-            </div>
+            <ValidatedInput
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="you@example.com"
+              required
+            />
+            <ValidatedInput
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              placeholder="Enter password"
+              required
+              minLength={6}
+            />
             <button
               type="submit"
               disabled={loading}

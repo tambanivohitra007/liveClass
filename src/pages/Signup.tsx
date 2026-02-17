@@ -3,6 +3,7 @@ import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } f
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useNavigate, Link } from 'react-router-dom';
+import ValidatedInput from '../components/ValidatedInput';
 import logo from '../assets/logo.png';
 
 export default function Signup() {
@@ -96,40 +97,30 @@ export default function Signup() {
           </div>
 
           <form onSubmit={handleEmailSignup} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Display Name</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-                placeholder="Min 6 characters"
-              />
-            </div>
+            <ValidatedInput
+              label="Display Name"
+              value={displayName}
+              onChange={setDisplayName}
+              placeholder="Your name"
+              required
+            />
+            <ValidatedInput
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="you@example.com"
+              required
+            />
+            <ValidatedInput
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              placeholder="Min 6 characters"
+              required
+              minLength={6}
+            />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">I am a</label>
               <div className="grid grid-cols-2 gap-3">
