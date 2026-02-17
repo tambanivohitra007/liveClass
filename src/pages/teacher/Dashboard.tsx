@@ -154,6 +154,14 @@ export default function Dashboard() {
   const getQuizCountForCollection = (collId: string) =>
     quizzes.filter((q) => q.collectionId === collId).length;
 
+  const getQuizColorStrip = (quiz: QuizWithMeta) => {
+    if (!quiz.collectionId) return 'bg-gray-200';
+    const coll = collections.find((c) => c.id === quiz.collectionId);
+    if (!coll) return 'bg-gray-200';
+    const colorMeta = COLLECTION_COLORS.find((c) => c.key === coll.color);
+    return colorMeta?.bg || 'bg-gray-200';
+  };
+
   const filtered = quizzes.filter((q) =>
     q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     q.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -371,8 +379,9 @@ export default function Dashboard() {
           {filtered.map((quiz) => (
             <div
               key={quiz.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/10 transition-all group animate-fade-in"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/10 transition-all group animate-fade-in overflow-hidden"
             >
+              <div className={`h-1.5 ${getQuizColorStrip(quiz)}`} />
               <div className="p-6">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-gray-900 group-hover:text-brand transition-colors line-clamp-1">
