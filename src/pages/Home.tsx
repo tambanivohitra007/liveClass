@@ -96,7 +96,7 @@ export default function Home() {
   return (
     <div className="min-h-[calc(100vh-4rem)]">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand via-brand-dark to-purple-900 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand via-brand-dark to-surface-dark text-white">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-accent rounded-full blur-3xl animate-float" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-brand-light rounded-full blur-3xl" />

@@ -57,7 +57,7 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand via-brand-dark to-purple-900">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand via-brand-dark to-surface-dark">
       <div className="w-full max-w-sm animate-bounce-in">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-white">LiveClass</h1>
