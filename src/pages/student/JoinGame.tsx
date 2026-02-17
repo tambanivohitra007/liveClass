@@ -44,9 +44,10 @@ export default function JoinGame() {
     try {
       const joinFn = httpsCallable<
         { sessionId: string; nickname: string },
-        { playerId: string }
+        { playerId: string; activeToken: string }
       >(functions, 'joinSession');
       const result = await joinFn({ sessionId, nickname });
+      sessionStorage.setItem(`activeToken_${sessionId}`, result.data.activeToken);
       navigate(`/play/${sessionId}/${result.data.playerId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join');

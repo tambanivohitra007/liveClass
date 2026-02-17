@@ -33,6 +33,7 @@ export default function QuizEditor() {
   const [questions, setQuestions] = useState<(Omit<Question, 'id'> & { id?: string })[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (isNew || !quizId) return;
@@ -83,8 +84,26 @@ export default function QuizEditor() {
     setQuestions(updated);
   };
 
+  const validate = (): string[] => {
+    const errors: string[] = [];
+    if (!title.trim()) errors.push('Quiz title is required.');
+    if (questions.length === 0) errors.push('Add at least one question.');
+    questions.forEach((q, i) => {
+      const num = i + 1;
+      if (!q.text.trim()) errors.push(`Q${num}: Question text is required.`);
+      if (q.correctAnswers.length === 0) errors.push(`Q${num}: Mark at least one correct answer.`);
+      if (q.type !== 'short' && q.options.some((o) => !o.trim())) {
+        errors.push(`Q${num}: All options must be filled in.`);
+      }
+    });
+    return errors;
+  };
+
   const handleSave = async () => {
     if (!user) return;
+    const errors = validate();
+    setValidationErrors(errors);
+    if (errors.length > 0) return;
     setSaving(true);
     try {
       let savedQuizId = quizId;
@@ -159,6 +178,16 @@ export default function QuizEditor() {
           />
         </div>
       </div>
+
+      {/* Validation Errors */}
+      {validationErrors.length > 0 && (
+        <div className="mb-6 p-4 bg-danger/10 border border-danger/20 rounded-xl">
+          <p className="font-medium text-danger text-sm mb-2">Please fix the following:</p>
+          <ul className="list-disc list-inside text-sm text-danger/80 space-y-1">
+            {validationErrors.map((err, i) => <li key={i}>{err}</li>)}
+          </ul>
+        </div>
+      )}
 
       {/* Questions */}
       <div className="flex items-center justify-between mb-4">

@@ -8,7 +8,10 @@
       "Bash(xcopy /E /Y \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\temp-scaffold\\\\*\" \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\"\" 2>&1 && rmdir /S /Q \"C:UsersrindraProjectskahoottemp-scaffold \")",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(firebase:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npm run test:rules:*)"
     ]
   }
 }

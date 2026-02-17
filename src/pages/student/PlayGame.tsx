@@ -69,12 +69,13 @@ export default function PlayGame() {
     setSubmitted(true);
     const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
     try {
+      const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || undefined;
       const fn = httpsCallable<
-        { sessionId: string; questionId: string; playerId: string; selection: string; timeMs: number },
+        { sessionId: string; questionId: string; playerId: string; selection: string; timeMs: number; activeToken?: string },
         { correct: boolean; pointsAwarded: number }
       >(functions, 'scoreAnswer');
       const result = await fn({
-        sessionId, questionId: currentQuestion.id, playerId, selection: selectedAnswer, timeMs: elapsedMs,
+        sessionId, questionId: currentQuestion.id, playerId, selection: selectedAnswer, timeMs: elapsedMs, activeToken,
       });
       setFeedback({ correct: result.data.correct, points: result.data.pointsAwarded });
     } catch (err) {

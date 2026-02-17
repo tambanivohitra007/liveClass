@@ -1,17 +1,39 @@
 import * as admin from "firebase-admin";
+import * as crypto from "crypto";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 admin.initializeApp();
 const db = admin.firestore();
 
 const REGION = "asia-southeast1";
+const NUM_SHARDS = 10;
+
+const FUNCTION_CONFIG = {
+  region: REGION,
+  memory: "512MiB" as const,
+  minInstances: 1,
+  maxInstances: 20,
+};
 
 function generatePin(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+function generateToken(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function getShardId(playerId: string): number {
+  let hash = 0;
+  for (let i = 0; i < playerId.length; i++) {
+    hash = (hash * 31 + playerId.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % NUM_SHARDS;
+}
+
 // --- Create Session ---
-export const createSession = onCall({ region: REGION }, async (request) => {
+export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
   }
@@ -30,7 +52,6 @@ export const createSession = onCall({ region: REGION }, async (request) => {
   }
 
   let pinCode = generatePin();
-  // Ensure PIN is unique among active sessions
   let existing = await db
     .collection("sessions")
     .where("pinCode", "==", pinCode)
@@ -46,7 +67,10 @@ export const createSession = onCall({ region: REGION }, async (request) => {
   }
 
   const sessionRef = db.collection("sessions").doc();
-  await sessionRef.set({
+
+  // Initialize 10 leaderboard shards
+  const batch = db.batch();
+  batch.set(sessionRef, {
     quizId,
     hostId: request.auth.uid,
     pinCode,
@@ -59,11 +83,20 @@ export const createSession = onCall({ region: REGION }, async (request) => {
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
+  for (let i = 0; i < NUM_SHARDS; i++) {
+    const shardRef = db.doc(
+      `sessions/${sessionRef.id}/leaderboard_shards/${i}`
+    );
+    batch.set(shardRef, { players: {} });
+  }
+
+  await batch.commit();
+
   return { sessionId: sessionRef.id };
 });
 
 // --- Join Session ---
-export const joinSession = onCall({ region: REGION }, async (request) => {
+export const joinSession = onCall(FUNCTION_CONFIG, async (request) => {
   const { sessionId, nickname } = request.data as {
     sessionId: string;
     nickname: string;
@@ -102,19 +135,23 @@ export const joinSession = onCall({ region: REGION }, async (request) => {
     throw new HttpsError("already-exists", "Nickname already taken");
   }
 
+  // Generate session token for anti-cheat
+  const activeToken = generateToken();
+
   const playerRef = db.collection(`sessions/${sessionId}/players`).doc();
   await playerRef.set({
     sessionId,
     userId: request.auth?.uid || null,
     nickname,
+    activeToken,
     joinedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  return { playerId: playerRef.id };
+  return { playerId: playerRef.id, activeToken };
 });
 
 // --- Start Question ---
-export const startQuestion = onCall({ region: REGION }, async (request) => {
+export const startQuestion = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
   }
@@ -145,14 +182,15 @@ export const startQuestion = onCall({ region: REGION }, async (request) => {
 });
 
 // --- Score Answer ---
-export const scoreAnswer = onCall({ region: REGION }, async (request) => {
-  const { sessionId, questionId, playerId, selection, timeMs } =
+export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
+  const { sessionId, questionId, playerId, selection, timeMs, activeToken } =
     request.data as {
       sessionId: string;
       questionId: string;
       playerId: string;
       selection: string;
       timeMs: number;
+      activeToken?: string;
     };
 
   // Validate session is live
@@ -162,6 +200,16 @@ export const scoreAnswer = onCall({ region: REGION }, async (request) => {
       "failed-precondition",
       "Question is not currently live"
     );
+  }
+
+  // Validate session token (anti-cheat)
+  if (activeToken) {
+    const playerDoc = await db
+      .doc(`sessions/${sessionId}/players/${playerId}`)
+      .get();
+    if (!playerDoc.exists || playerDoc.data()?.activeToken !== activeToken) {
+      throw new HttpsError("permission-denied", "Invalid session token");
+    }
   }
 
   // Prevent duplicate answers
@@ -182,6 +230,18 @@ export const scoreAnswer = onCall({ region: REGION }, async (request) => {
   const question = questionDoc.data()!;
   const correct = question.correctAnswers.includes(selection);
 
+  // Read current player state from shard to compute streak
+  const shardId = getShardId(playerId);
+  const shardRef = db.doc(
+    `sessions/${sessionId}/leaderboard_shards/${shardId}`
+  );
+  const shardSnap = await shardRef.get();
+  const shardData = shardSnap.data() || { players: {} };
+  const playerData = shardData.players[playerId] || {
+    totalPoints: 0,
+    streak: 0,
+  };
+
   // Calculate points: base(1000) * timeRemaining% * correctness
   let pointsAwarded = 0;
   if (correct) {
@@ -191,20 +251,15 @@ export const scoreAnswer = onCall({ region: REGION }, async (request) => {
     );
     pointsAwarded = Math.round(1000 * timeFactor);
 
-    // Check streak for bonus
-    const leaderboardDoc = await db
-      .doc(`sessions/${sessionId}/leaderboard_shards/${playerId}`)
-      .get();
-    if (leaderboardDoc.exists) {
-      const streak = (leaderboardDoc.data()?.streak || 0) + 1;
-      pointsAwarded += streak * 50;
-    } else {
-      pointsAwarded += 50; // First correct = streak of 1
-    }
+    // Streak bonus: +50 per consecutive correct
+    const newStreak = playerData.streak + 1;
+    pointsAwarded += newStreak * 50;
   }
 
-  // Write answer
-  await db.doc(`sessions/${sessionId}/answers/${answerId}`).set({
+  // Write answer + update shard atomically
+  const batch = db.batch();
+
+  batch.set(db.doc(`sessions/${sessionId}/answers/${answerId}`), {
     sessionId,
     playerId,
     questionId,
@@ -215,29 +270,27 @@ export const scoreAnswer = onCall({ region: REGION }, async (request) => {
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  // Update leaderboard shard
-  const shardRef = db.doc(
-    `sessions/${sessionId}/leaderboard_shards/${playerId}`
+  // Update leaderboard shard using dot notation for the specific player
+  batch.set(
+    shardRef,
+    {
+      players: {
+        [playerId]: {
+          totalPoints: playerData.totalPoints + pointsAwarded,
+          streak: correct ? playerData.streak + 1 : 0,
+        },
+      },
+    },
+    { merge: true }
   );
-  const shard = await shardRef.get();
-  if (shard.exists) {
-    await shardRef.update({
-      totalPoints: admin.firestore.FieldValue.increment(pointsAwarded),
-      streak: correct ? admin.firestore.FieldValue.increment(1) : 0,
-    });
-  } else {
-    await shardRef.set({
-      playerId,
-      totalPoints: pointsAwarded,
-      streak: correct ? 1 : 0,
-    });
-  }
+
+  await batch.commit();
 
   return { correct, pointsAwarded };
 });
 
 // --- End Question ---
-export const endQuestion = onCall({ region: REGION }, async (request) => {
+export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
   }
@@ -254,45 +307,73 @@ export const endQuestion = onCall({ region: REGION }, async (request) => {
     throw new HttpsError("permission-denied", "Not the host");
   }
 
-  // Aggregate leaderboard: get all shards, compute top 10
+  // Aggregate leaderboard across all 10 shards
   const shardsSnap = await db
     .collection(`sessions/${sessionId}/leaderboard_shards`)
-    .orderBy("totalPoints", "desc")
-    .limit(10)
     .get();
 
-  const top10 = shardsSnap.docs.map((d, i) => ({
-    playerId: d.id,
-    totalPoints: d.data().totalPoints,
+  const allPlayers: {
+    playerId: string;
+    totalPoints: number;
+    streak: number;
+  }[] = [];
+
+  shardsSnap.docs.forEach((shardDoc) => {
+    const players = shardDoc.data().players || {};
+    for (const [pid, data] of Object.entries(players)) {
+      const pdata = data as { totalPoints: number; streak: number };
+      allPlayers.push({
+        playerId: pid,
+        totalPoints: pdata.totalPoints,
+        streak: pdata.streak,
+      });
+    }
+  });
+
+  // Sort by totalPoints descending, take top 10
+  allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
+  const top10 = allPlayers.slice(0, 10).map((p, i) => ({
+    playerId: p.playerId,
+    totalPoints: p.totalPoints,
     rank: i + 1,
   }));
 
-  // Compute per-question analytics
-  const answersSnap = await db
-    .collection(`sessions/${sessionId}/answers`)
-    .where("questionId", "==", session.quizId) // will be filtered by current question
+  // Get all answers for the CURRENT question (fix: filter by actual questionId)
+  const questionsSnap = await db
+    .collection("questions")
+    .where("quizId", "==", session.quizId)
     .get();
-
-  const questionId =
-    `q${session.currentQuestionIndex}` || session.currentQuestionIndex;
+  const questionsArr = questionsSnap.docs.map((d) => d.id);
+  const currentQuestionId = questionsArr[session.currentQuestionIndex];
 
   let totalCorrect = 0;
   let totalTime = 0;
   let totalAnswers = 0;
-  answersSnap.docs.forEach((d) => {
-    const data = d.data();
-    totalAnswers++;
-    if (data.correct) totalCorrect++;
-    totalTime += data.timeMs || 0;
-  });
 
-  await db.doc(`sessions/${sessionId}/analytics/${questionId}`).set({
-    questionIndex: session.currentQuestionIndex,
-    totalAnswers,
-    correctCount: totalCorrect,
-    correctPercent: totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
-    avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
-  });
+  if (currentQuestionId) {
+    const answersSnap = await db
+      .collection(`sessions/${sessionId}/answers`)
+      .where("questionId", "==", currentQuestionId)
+      .get();
+
+    answersSnap.docs.forEach((d) => {
+      const data = d.data();
+      totalAnswers++;
+      if (data.correct) totalCorrect++;
+      totalTime += data.timeMs || 0;
+    });
+  }
+
+  await db
+    .doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
+    .set({
+      questionIndex: session.currentQuestionIndex,
+      totalAnswers,
+      correctCount: totalCorrect,
+      correctPercent:
+        totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
+      avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
+    });
 
   await sessionDoc.ref.update({
     questionState: "reveal",
@@ -303,7 +384,7 @@ export const endQuestion = onCall({ region: REGION }, async (request) => {
 });
 
 // --- Export CSV ---
-export const exportCsv = onCall({ region: REGION }, async (request) => {
+export const exportCsv = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
   }
@@ -318,12 +399,10 @@ export const exportCsv = onCall({ region: REGION }, async (request) => {
     throw new HttpsError("permission-denied", "Not the host");
   }
 
-  // Get all answers
   const answersSnap = await db
     .collection(`sessions/${sessionId}/answers`)
     .get();
 
-  // Get all players for nickname lookup
   const playersSnap = await db
     .collection(`sessions/${sessionId}/players`)
     .get();
@@ -342,3 +421,35 @@ export const exportCsv = onCall({ region: REGION }, async (request) => {
 
   return { csv: [header, ...rows].join("\n") };
 });
+
+// --- TTL Cleanup: delete sessions older than 24 hours ---
+export const cleanupExpiredSessions = onSchedule(
+  {
+    schedule: "every 6 hours",
+    region: REGION,
+    memory: "512MiB",
+  },
+  async () => {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const expiredSessions = await db
+      .collection("sessions")
+      .where("createdAt", "<", cutoff)
+      .where("status", "!=", "ended")
+      .limit(100)
+      .get();
+
+    const batch = db.batch();
+    expiredSessions.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        status: "ended",
+        endedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    if (!expiredSessions.empty) {
+      await batch.commit();
+      console.log(`Cleaned up ${expiredSessions.size} expired sessions`);
+    }
+  }
+);

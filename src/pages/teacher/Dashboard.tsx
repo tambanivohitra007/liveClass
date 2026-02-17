@@ -1,15 +1,32 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Trash2 } from 'lucide-react';
 import type { Quiz } from '../../types/models';
 
 export default function Dashboard() {
   const { user } = useAuthStore();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const handleDelete = async (quizId: string, quizTitle: string) => {
+    if (!confirm(`Delete "${quizTitle || 'Untitled Quiz'}"? This will also delete all its questions.`)) return;
+    setDeleting(quizId);
+    try {
+      // Delete associated questions
+      const questionsSnap = await getDocs(query(collection(db, 'questions'), where('quizId', '==', quizId)));
+      await Promise.all(questionsSnap.docs.map((d) => deleteDoc(d.ref)));
+      // Delete the quiz
+      await deleteDoc(doc(db, 'quizzes', quizId));
+    } catch (err) {
+      console.error('Failed to delete quiz:', err);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -101,6 +118,13 @@ export default function Dashboard() {
                   className="flex-1 py-2 text-sm font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors"
                 >
                   Host Live
+                </button>
+                <button
+                  onClick={() => handleDelete(quiz.id, quiz.title)}
+                  disabled={deleting === quiz.id}
+                  className="px-3 py-2 text-sm text-gray-400 hover:text-danger hover:bg-danger/5 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>

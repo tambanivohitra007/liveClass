@@ -33,17 +33,36 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exportCsv = exports.endQuestion = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.exportCsv = exports.endQuestion = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
+const crypto = __importStar(require("crypto"));
 const https_1 = require("firebase-functions/v2/https");
+const scheduler_1 = require("firebase-functions/v2/scheduler");
 admin.initializeApp();
 const db = admin.firestore();
 const REGION = "asia-southeast1";
+const NUM_SHARDS = 10;
+const FUNCTION_CONFIG = {
+    region: REGION,
+    memory: "512MiB",
+    minInstances: 1,
+    maxInstances: 20,
+};
 function generatePin() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
+function generateToken() {
+    return crypto.randomBytes(32).toString("hex");
+}
+function getShardId(playerId) {
+    let hash = 0;
+    for (let i = 0; i < playerId.length; i++) {
+        hash = (hash * 31 + playerId.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash) % NUM_SHARDS;
+}
 // --- Create Session ---
-exports.createSession = (0, https_1.onCall)({ region: REGION }, async (request) => {
+exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
@@ -59,7 +78,6 @@ exports.createSession = (0, https_1.onCall)({ region: REGION }, async (request) 
         throw new https_1.HttpsError("permission-denied", "Not your quiz");
     }
     let pinCode = generatePin();
-    // Ensure PIN is unique among active sessions
     let existing = await db
         .collection("sessions")
         .where("pinCode", "==", pinCode)
@@ -74,7 +92,9 @@ exports.createSession = (0, https_1.onCall)({ region: REGION }, async (request) 
             .get();
     }
     const sessionRef = db.collection("sessions").doc();
-    await sessionRef.set({
+    // Initialize 10 leaderboard shards
+    const batch = db.batch();
+    batch.set(sessionRef, {
         quizId,
         hostId: request.auth.uid,
         pinCode,
@@ -86,10 +106,15 @@ exports.createSession = (0, https_1.onCall)({ region: REGION }, async (request) 
         endedAt: null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    for (let i = 0; i < NUM_SHARDS; i++) {
+        const shardRef = db.doc(`sessions/${sessionRef.id}/leaderboard_shards/${i}`);
+        batch.set(shardRef, { players: {} });
+    }
+    await batch.commit();
     return { sessionId: sessionRef.id };
 });
 // --- Join Session ---
-exports.joinSession = (0, https_1.onCall)({ region: REGION }, async (request) => {
+exports.joinSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     const { sessionId, nickname } = request.data;
     if (!sessionId || !nickname) {
         throw new https_1.HttpsError("invalid-argument", "sessionId and nickname are required");
@@ -116,17 +141,20 @@ exports.joinSession = (0, https_1.onCall)({ region: REGION }, async (request) =>
     if (!existing.empty) {
         throw new https_1.HttpsError("already-exists", "Nickname already taken");
     }
+    // Generate session token for anti-cheat
+    const activeToken = generateToken();
     const playerRef = db.collection(`sessions/${sessionId}/players`).doc();
     await playerRef.set({
         sessionId,
         userId: request.auth?.uid || null,
         nickname,
+        activeToken,
         joinedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    return { playerId: playerRef.id };
+    return { playerId: playerRef.id, activeToken };
 });
 // --- Start Question ---
-exports.startQuestion = (0, https_1.onCall)({ region: REGION }, async (request) => {
+exports.startQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
@@ -148,12 +176,21 @@ exports.startQuestion = (0, https_1.onCall)({ region: REGION }, async (request) 
     return { success: true };
 });
 // --- Score Answer ---
-exports.scoreAnswer = (0, https_1.onCall)({ region: REGION }, async (request) => {
-    const { sessionId, questionId, playerId, selection, timeMs } = request.data;
+exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    const { sessionId, questionId, playerId, selection, timeMs, activeToken } = request.data;
     // Validate session is live
     const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
     if (!sessionDoc.exists || sessionDoc.data()?.questionState !== "live") {
         throw new https_1.HttpsError("failed-precondition", "Question is not currently live");
+    }
+    // Validate session token (anti-cheat)
+    if (activeToken) {
+        const playerDoc = await db
+            .doc(`sessions/${sessionId}/players/${playerId}`)
+            .get();
+        if (!playerDoc.exists || playerDoc.data()?.activeToken !== activeToken) {
+            throw new https_1.HttpsError("permission-denied", "Invalid session token");
+        }
     }
     // Prevent duplicate answers
     const answerId = `${questionId}_${playerId}`;
@@ -170,25 +207,27 @@ exports.scoreAnswer = (0, https_1.onCall)({ region: REGION }, async (request) =>
     }
     const question = questionDoc.data();
     const correct = question.correctAnswers.includes(selection);
+    // Read current player state from shard to compute streak
+    const shardId = getShardId(playerId);
+    const shardRef = db.doc(`sessions/${sessionId}/leaderboard_shards/${shardId}`);
+    const shardSnap = await shardRef.get();
+    const shardData = shardSnap.data() || { players: {} };
+    const playerData = shardData.players[playerId] || {
+        totalPoints: 0,
+        streak: 0,
+    };
     // Calculate points: base(1000) * timeRemaining% * correctness
     let pointsAwarded = 0;
     if (correct) {
         const timeFactor = Math.max(0, (question.timeLimitSec * 1000 - timeMs) / (question.timeLimitSec * 1000));
         pointsAwarded = Math.round(1000 * timeFactor);
-        // Check streak for bonus
-        const leaderboardDoc = await db
-            .doc(`sessions/${sessionId}/leaderboard_shards/${playerId}`)
-            .get();
-        if (leaderboardDoc.exists) {
-            const streak = (leaderboardDoc.data()?.streak || 0) + 1;
-            pointsAwarded += streak * 50;
-        }
-        else {
-            pointsAwarded += 50; // First correct = streak of 1
-        }
+        // Streak bonus: +50 per consecutive correct
+        const newStreak = playerData.streak + 1;
+        pointsAwarded += newStreak * 50;
     }
-    // Write answer
-    await db.doc(`sessions/${sessionId}/answers/${answerId}`).set({
+    // Write answer + update shard atomically
+    const batch = db.batch();
+    batch.set(db.doc(`sessions/${sessionId}/answers/${answerId}`), {
         sessionId,
         playerId,
         questionId,
@@ -198,26 +237,20 @@ exports.scoreAnswer = (0, https_1.onCall)({ region: REGION }, async (request) =>
         pointsAwarded,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    // Update leaderboard shard
-    const shardRef = db.doc(`sessions/${sessionId}/leaderboard_shards/${playerId}`);
-    const shard = await shardRef.get();
-    if (shard.exists) {
-        await shardRef.update({
-            totalPoints: admin.firestore.FieldValue.increment(pointsAwarded),
-            streak: correct ? admin.firestore.FieldValue.increment(1) : 0,
-        });
-    }
-    else {
-        await shardRef.set({
-            playerId,
-            totalPoints: pointsAwarded,
-            streak: correct ? 1 : 0,
-        });
-    }
+    // Update leaderboard shard using dot notation for the specific player
+    batch.set(shardRef, {
+        players: {
+            [playerId]: {
+                totalPoints: playerData.totalPoints + pointsAwarded,
+                streak: correct ? playerData.streak + 1 : 0,
+            },
+        },
+    }, { merge: true });
+    await batch.commit();
     return { correct, pointsAwarded };
 });
 // --- End Question ---
-exports.endQuestion = (0, https_1.onCall)({ region: REGION }, async (request) => {
+exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
@@ -230,34 +263,55 @@ exports.endQuestion = (0, https_1.onCall)({ region: REGION }, async (request) =>
     if (session.hostId !== request.auth.uid) {
         throw new https_1.HttpsError("permission-denied", "Not the host");
     }
-    // Aggregate leaderboard: get all shards, compute top 10
+    // Aggregate leaderboard across all 10 shards
     const shardsSnap = await db
         .collection(`sessions/${sessionId}/leaderboard_shards`)
-        .orderBy("totalPoints", "desc")
-        .limit(10)
         .get();
-    const top10 = shardsSnap.docs.map((d, i) => ({
-        playerId: d.id,
-        totalPoints: d.data().totalPoints,
+    const allPlayers = [];
+    shardsSnap.docs.forEach((shardDoc) => {
+        const players = shardDoc.data().players || {};
+        for (const [pid, data] of Object.entries(players)) {
+            const pdata = data;
+            allPlayers.push({
+                playerId: pid,
+                totalPoints: pdata.totalPoints,
+                streak: pdata.streak,
+            });
+        }
+    });
+    // Sort by totalPoints descending, take top 10
+    allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
+    const top10 = allPlayers.slice(0, 10).map((p, i) => ({
+        playerId: p.playerId,
+        totalPoints: p.totalPoints,
         rank: i + 1,
     }));
-    // Compute per-question analytics
-    const answersSnap = await db
-        .collection(`sessions/${sessionId}/answers`)
-        .where("questionId", "==", session.quizId) // will be filtered by current question
+    // Get all answers for the CURRENT question (fix: filter by actual questionId)
+    const questionsSnap = await db
+        .collection("questions")
+        .where("quizId", "==", session.quizId)
         .get();
-    const questionId = `q${session.currentQuestionIndex}` || session.currentQuestionIndex;
+    const questionsArr = questionsSnap.docs.map((d) => d.id);
+    const currentQuestionId = questionsArr[session.currentQuestionIndex];
     let totalCorrect = 0;
     let totalTime = 0;
     let totalAnswers = 0;
-    answersSnap.docs.forEach((d) => {
-        const data = d.data();
-        totalAnswers++;
-        if (data.correct)
-            totalCorrect++;
-        totalTime += data.timeMs || 0;
-    });
-    await db.doc(`sessions/${sessionId}/analytics/${questionId}`).set({
+    if (currentQuestionId) {
+        const answersSnap = await db
+            .collection(`sessions/${sessionId}/answers`)
+            .where("questionId", "==", currentQuestionId)
+            .get();
+        answersSnap.docs.forEach((d) => {
+            const data = d.data();
+            totalAnswers++;
+            if (data.correct)
+                totalCorrect++;
+            totalTime += data.timeMs || 0;
+        });
+    }
+    await db
+        .doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
+        .set({
         questionIndex: session.currentQuestionIndex,
         totalAnswers,
         correctCount: totalCorrect,
@@ -271,7 +325,7 @@ exports.endQuestion = (0, https_1.onCall)({ region: REGION }, async (request) =>
     return { success: true, top10 };
 });
 // --- Export CSV ---
-exports.exportCsv = (0, https_1.onCall)({ region: REGION }, async (request) => {
+exports.exportCsv = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
@@ -283,11 +337,9 @@ exports.exportCsv = (0, https_1.onCall)({ region: REGION }, async (request) => {
     if (sessionDoc.data()?.hostId !== request.auth.uid) {
         throw new https_1.HttpsError("permission-denied", "Not the host");
     }
-    // Get all answers
     const answersSnap = await db
         .collection(`sessions/${sessionId}/answers`)
         .get();
-    // Get all players for nickname lookup
     const playersSnap = await db
         .collection(`sessions/${sessionId}/players`)
         .get();
@@ -302,5 +354,30 @@ exports.exportCsv = (0, https_1.onCall)({ region: REGION }, async (request) => {
         return `${sessionId},"${nickname}",${a.playerId},${a.questionId},"${a.selection}",${a.correct},${a.timeMs},${a.pointsAwarded}`;
     });
     return { csv: [header, ...rows].join("\n") };
+});
+// --- TTL Cleanup: delete sessions older than 24 hours ---
+exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({
+    schedule: "every 6 hours",
+    region: REGION,
+    memory: "512MiB",
+}, async () => {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const expiredSessions = await db
+        .collection("sessions")
+        .where("createdAt", "<", cutoff)
+        .where("status", "!=", "ended")
+        .limit(100)
+        .get();
+    const batch = db.batch();
+    expiredSessions.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+            status: "ended",
+            endedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    });
+    if (!expiredSessions.empty) {
+        await batch.commit();
+        console.log(`Cleaned up ${expiredSessions.size} expired sessions`);
+    }
 });
 //# sourceMappingURL=index.js.map

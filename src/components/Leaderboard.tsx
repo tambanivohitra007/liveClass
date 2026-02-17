@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Trophy, Medal, Flame } from 'lucide-react';
 
@@ -28,21 +28,33 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
       return;
     }
 
-    const q = query(
+    // Listen to all 10 shards and aggregate player scores
+    const unsubscribe = onSnapshot(
       collection(db, `sessions/${sessionId}/leaderboard_shards`),
-      orderBy('totalPoints', 'desc'),
-      limit(10)
-    );
+      (snapshot) => {
+        const allPlayers: Record<string, { totalPoints: number; streak: number }> = {};
+        snapshot.docs.forEach((shardDoc) => {
+          const players = shardDoc.data().players || {};
+          for (const [pid, data] of Object.entries(players)) {
+            const pdata = data as { totalPoints: number; streak: number };
+            allPlayers[pid] = pdata;
+          }
+        });
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc, i) => ({
-        playerId: doc.id,
-        totalPoints: doc.data().totalPoints,
-        streak: doc.data().streak,
-        rank: i + 1,
-      }));
-      setEntries(data);
-    });
+        const sorted = Object.entries(allPlayers)
+          .map(([playerId, data]) => ({
+            playerId,
+            totalPoints: data.totalPoints,
+            streak: data.streak,
+            rank: 0,
+          }))
+          .sort((a, b) => b.totalPoints - a.totalPoints)
+          .slice(0, 10)
+          .map((p, i) => ({ ...p, rank: i + 1 }));
+
+        setEntries(sorted);
+      }
+    );
 
     return unsubscribe;
   }, [sessionId, top10Snapshot]);
