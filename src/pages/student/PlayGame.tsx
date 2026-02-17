@@ -4,6 +4,7 @@ import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/fir
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
+import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
 import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square } from 'lucide-react';
 import type { Session, Question } from '../../types/models';
@@ -25,6 +26,7 @@ const answerIcons = [
 export default function PlayGame() {
   const { sessionId, playerId } = useParams<{ sessionId: string; playerId: string }>();
   const { session, setSession } = useSessionStore();
+  const { addToast } = useToastStore();
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [submitted, setSubmitted] = useState(false);
@@ -78,8 +80,8 @@ export default function PlayGame() {
         sessionId, questionId: currentQuestion.id, playerId, selection: selectedAnswer, timeMs: elapsedMs, activeToken,
       });
       setFeedback({ correct: result.data.correct, points: result.data.pointsAwarded });
-    } catch (err) {
-      console.error('Failed to submit answer:', err);
+    } catch {
+      addToast('error', 'Failed to submit answer. Please try again.');
     }
   };
 

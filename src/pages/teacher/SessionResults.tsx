@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
+import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
 import { Download, ArrowLeft } from 'lucide-react';
 
@@ -20,6 +21,7 @@ export default function SessionResults() {
   const [analytics, setAnalytics] = useState<QuestionAnalytics[]>([]);
   const [sessionPin, setSessionPin] = useState('');
   const [exporting, setExporting] = useState(false);
+  const { addToast } = useToastStore();
 
   useEffect(() => {
     if (!sessionId) return;
@@ -50,8 +52,8 @@ export default function SessionResults() {
       a.download = `session_${sessionId}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Export failed:', err);
+    } catch {
+      addToast('error', 'CSV export failed. Please try again.');
     } finally {
       setExporting(false);
     }

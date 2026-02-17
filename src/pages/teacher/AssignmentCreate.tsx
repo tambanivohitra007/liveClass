@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
+import { useToastStore } from '../../stores/toastStore';
 import { ArrowLeft } from 'lucide-react';
 import type { Quiz } from '../../types/models';
 
 export default function AssignmentCreate() {
   const { user } = useAuthStore();
+  const { addToast } = useToastStore();
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuizId, setSelectedQuizId] = useState('');
@@ -36,8 +38,8 @@ export default function AssignmentCreate() {
         attemptsAllowed, createdAt: serverTimestamp(),
       });
       navigate('/dashboard');
-    } catch (err) {
-      console.error('Failed to create assignment:', err);
+    } catch {
+      addToast('error', 'Failed to create assignment. Please try again.');
     } finally {
       setSaving(false);
     }

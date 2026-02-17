@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
+import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
 import { ChevronUp, ChevronDown, Copy, Trash2, Check } from 'lucide-react';
 import type { Quiz, Question, QuestionType } from '../../types/models';
@@ -25,6 +26,7 @@ const typeLabels: Record<QuestionType, string> = {
 export default function QuizEditor() {
   const { quizId } = useParams<{ quizId: string }>();
   const { user } = useAuthStore();
+  const { addToast } = useToastStore();
   const navigate = useNavigate();
   const isNew = quizId === 'new';
 
@@ -128,8 +130,8 @@ export default function QuizEditor() {
         else await addDoc(collection(db, 'questions'), questionData);
       }
       navigate('/dashboard');
-    } catch (err) {
-      console.error('Failed to save quiz:', err);
+    } catch {
+      addToast('error', 'Failed to save quiz. Please try again.');
     } finally {
       setSaving(false);
     }

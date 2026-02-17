@@ -11,7 +11,8 @@
       "Bash(npm run build:*)",
       "Bash(firebase:*)",
       "Bash(npx vitest:*)",
-      "Bash(npm run test:rules:*)"
+      "Bash(npm run test:rules:*)",
+      "WebFetch(domain:wayground.com)"
     ]
   }
 }

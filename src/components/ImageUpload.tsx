@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
+import { useToastStore } from '../stores/toastStore';
 
 interface ImageUploadProps {
   currentUrl?: string;
@@ -12,6 +13,7 @@ export default function ImageUpload({ currentUrl, onUpload, path }: ImageUploadP
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { addToast } = useToastStore();
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -23,8 +25,8 @@ export default function ImageUpload({ currentUrl, onUpload, path }: ImageUploadP
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       onUpload(url);
-    } catch (err) {
-      console.error('Upload failed:', err);
+    } catch {
+      addToast('error', 'Image upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
