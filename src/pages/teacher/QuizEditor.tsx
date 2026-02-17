@@ -24,6 +24,9 @@ const typeLabels: Record<QuestionType, string> = {
   short: 'Short Answer',
   matching: 'Matching',
   fill_blank: 'Fill Blank',
+  ordering: 'Ordering',
+  poll: 'Poll',
+  slide: 'Slide',
 };
 
 export default function QuizEditor() {
@@ -85,6 +88,9 @@ export default function QuizEditor() {
     else if (type === 'mcq') { updates.options = ['', '', '', '']; updates.correctAnswers = []; updates.matchOptions = undefined; }
     else if (type === 'matching') { updates.options = ['', '']; updates.matchOptions = ['', '']; updates.correctAnswers = []; }
     else if (type === 'fill_blank') { updates.options = []; updates.matchOptions = undefined; updates.correctAnswers = ['']; }
+    else if (type === 'ordering') { updates.options = ['', '', '', '']; updates.correctAnswers = []; updates.matchOptions = undefined; }
+    else if (type === 'poll') { updates.options = ['', '', '', '']; updates.correctAnswers = []; updates.matchOptions = undefined; }
+    else if (type === 'slide') { updates.options = []; updates.correctAnswers = []; updates.matchOptions = undefined; }
     else { updates.options = []; updates.correctAnswers = []; updates.matchOptions = undefined; }
     updateQuestion(index, updates);
   };
@@ -132,7 +138,15 @@ export default function QuizEditor() {
     questions.forEach((q, i) => {
       const num = i + 1;
       if (!q.text.trim()) errors.push(`Q${num}: Question text is required.`);
-      if (q.type === 'matching') {
+      if (q.type === 'slide') {
+        // Slides just need text, no answers
+      } else if (q.type === 'poll') {
+        if (q.options.length < 2) errors.push(`Q${num}: Poll needs at least 2 options.`);
+        if (q.options.some((o) => !o.trim())) errors.push(`Q${num}: All poll options must be filled in.`);
+      } else if (q.type === 'ordering') {
+        if (q.options.length < 2) errors.push(`Q${num}: Ordering needs at least 2 items.`);
+        if (q.options.some((o) => !o.trim())) errors.push(`Q${num}: All ordering items must be filled in.`);
+      } else if (q.type === 'matching') {
         if (q.options.length < 2) errors.push(`Q${num}: Matching needs at least 2 pairs.`);
         if (q.options.some((o) => !o.trim())) errors.push(`Q${num}: All left-side items must be filled in.`);
         if (q.matchOptions?.some((o) => !o.trim())) errors.push(`Q${num}: All right-side items must be filled in.`);
@@ -307,8 +321,8 @@ export default function QuizEditor() {
 
             <div className="p-6 space-y-4">
               {/* Type Selector */}
-              <div className="flex gap-2">
-                {(['mcq', 'tf', 'short', 'matching', 'fill_blank'] as QuestionType[]).map((t) => (
+              <div className="flex flex-wrap gap-2">
+                {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide'] as QuestionType[]).map((t) => (
                   <button
                     key={t}
                     onClick={() => updateQuestionType(i, t)}
@@ -456,6 +470,88 @@ export default function QuizEditor() {
                   >
                     <Plus className="w-4 h-4" /> Add Pair
                   </button>
+                </div>
+              )}
+
+              {/* Ordering Editor */}
+              {q.type === 'ordering' && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-600">Items in correct order (top = first)</label>
+                  {q.options.map((item, oi) => (
+                    <div key={oi} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 w-5 text-center shrink-0">{oi + 1}</span>
+                      <input
+                        value={item}
+                        onChange={(e) => {
+                          const newOpts = [...q.options];
+                          newOpts[oi] = e.target.value;
+                          updateQuestion(i, { options: newOpts });
+                        }}
+                        placeholder={`Item ${oi + 1}`}
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                      />
+                      <button onClick={() => moveQuestion(i, -1)} disabled={oi === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                      <button onClick={() => moveQuestion(i, 1)} disabled={oi === q.options.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                      {q.options.length > 2 && (
+                        <button
+                          onClick={() => updateQuestion(i, { options: q.options.filter((_, idx) => idx !== oi) })}
+                          className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-colors"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => updateQuestion(i, { options: [...q.options, ''] })}
+                    className="flex items-center gap-1.5 text-sm text-brand font-medium hover:text-brand-dark transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add Item
+                  </button>
+                  <p className="text-xs text-gray-400">Players will see these items shuffled and must drag them into the correct order.</p>
+                </div>
+              )}
+
+              {/* Poll Editor (options, no correct answer) */}
+              {q.type === 'poll' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-600">Poll Options (no correct answer)</label>
+                  {q.options.map((opt, oi) => (
+                    <div key={oi} className="flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-400 shrink-0">{oi + 1}</span>
+                      <input
+                        value={opt}
+                        onChange={(e) => {
+                          const newOpts = [...q.options];
+                          newOpts[oi] = e.target.value;
+                          updateQuestion(i, { options: newOpts });
+                        }}
+                        placeholder={`Option ${oi + 1}`}
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                      />
+                      {q.options.length > 2 && (
+                        <button onClick={() => updateQuestion(i, { options: q.options.filter((_, idx) => idx !== oi) })} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-colors">
+                          <Minus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {q.options.length < 6 && (
+                    <button
+                      onClick={() => updateQuestion(i, { options: [...q.options, ''] })}
+                      className="flex items-center gap-1.5 text-sm text-brand font-medium hover:text-brand-dark transition-colors"
+                    >
+                      <Plus className="w-4 h-4" /> Add Option
+                    </button>
+                  )}
+                  <p className="text-xs text-gray-400">Polls gather opinions — all answers are accepted, no scoring.</p>
+                </div>
+              )}
+
+              {/* Slide (informational, no answer needed) */}
+              {q.type === 'slide' && (
+                <div className="p-4 bg-info/5 border border-info/20 rounded-xl">
+                  <p className="text-sm text-info">This is a content slide — no question or answer. Use the text and image fields above to present information between questions.</p>
                 </div>
               )}
 

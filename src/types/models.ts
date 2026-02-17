@@ -39,7 +39,7 @@ export interface Quiz {
   updatedAt: number;
 }
 
-export type QuestionType = 'mcq' | 'tf' | 'short' | 'matching' | 'fill_blank';
+export type QuestionType = 'mcq' | 'tf' | 'short' | 'matching' | 'fill_blank' | 'ordering' | 'poll' | 'slide';
 
 export interface Question {
   id: string;

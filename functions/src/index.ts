@@ -242,7 +242,25 @@ export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
 
   // Type-aware correctness check
   let correct = false;
-  if (question.type === 'matching') {
+  const isPoll = question.type === 'poll';
+  const isSlide = question.type === 'slide';
+
+  if (isSlide) {
+    // Slides don't have answers
+    return { correct: false, pointsAwarded: 0, rank: 0, totalPoints: 0, behindBy: 0 };
+  } else if (isPoll) {
+    // Polls accept any answer, no scoring
+    correct = true;
+  } else if (question.type === 'ordering') {
+    try {
+      const submitted = JSON.parse(selection) as string[];
+      const expected: string[] = question.options || [];
+      correct = submitted.length === expected.length &&
+        submitted.every((item: string, idx: number) => item === expected[idx]);
+    } catch {
+      correct = false;
+    }
+  } else if (question.type === 'matching') {
     try {
       const pairs = JSON.parse(selection) as Record<string, string>;
       const options: string[] = question.options || [];
@@ -281,7 +299,7 @@ export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
 
   // Calculate points: base(1000) * timeRemaining% * correctness
   let pointsAwarded = 0;
-  if (correct) {
+  if (correct && !isPoll) {
     const timeFactor = Math.max(
       0,
       (question.timeLimitSec * 1000 - timeMs) / (question.timeLimitSec * 1000)

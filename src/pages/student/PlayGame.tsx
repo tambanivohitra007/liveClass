@@ -6,7 +6,7 @@ import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
-import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Volume2, VolumeX } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
@@ -42,6 +42,7 @@ export default function PlayGame() {
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [matchingPairs, setMatchingPairs] = useState<Record<string, string>>({});
   const [fillAnswers, setFillAnswers] = useState<string[]>([]);
+  const [orderingItems, setOrderingItems] = useState<string[]>([]);
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
@@ -82,6 +83,7 @@ export default function PlayGame() {
     setSelectedAnswer('');
     setMatchingPairs({});
     setFillAnswers([]);
+    setOrderingItems([]);
     setFeedback(null);
 
     const loadQuestion = async () => {
@@ -92,6 +94,9 @@ export default function PlayGame() {
       if (current) {
         setCurrentQuestion(current);
         setTimeLeft(current.timeLimitSec);
+        if (current.type === 'ordering') {
+          setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
+        }
         if (current.type === 'matching' && current.matchOptions) {
           setShuffledMatchOptions([...current.matchOptions].sort(() => Math.random() - 0.5));
         }
@@ -151,16 +156,24 @@ export default function PlayGame() {
     if (!currentQuestion) return selectedAnswer;
     if (currentQuestion.type === 'matching') return JSON.stringify(matchingPairs);
     if (currentQuestion.type === 'fill_blank') return JSON.stringify(fillAnswers);
+    if (currentQuestion.type === 'ordering') return JSON.stringify(orderingItems);
     return selectedAnswer;
   };
 
   const canSubmit = (): boolean => {
     if (!currentQuestion) return false;
+    if (currentQuestion.type === 'slide') return false;
     if (currentQuestion.type === 'matching') {
       return currentQuestion.options.every((opt) => matchingPairs[opt]?.trim());
     }
     if (currentQuestion.type === 'fill_blank') {
       return fillAnswers.every((a) => a.trim());
+    }
+    if (currentQuestion.type === 'ordering') {
+      return orderingItems.length > 0;
+    }
+    if (currentQuestion.type === 'poll') {
+      return selectedAnswer !== '';
     }
     return selectedAnswer !== '';
   };
@@ -402,6 +415,80 @@ export default function PlayGame() {
                   </span>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Ordering UI */}
+        {currentQuestion.type === 'ordering' && (
+          <div className="flex-1 space-y-2 max-w-md mx-auto w-full">
+            <p className="text-center text-white/40 text-sm mb-3">Drag or use arrows to reorder</p>
+            {orderingItems.map((item, i) => (
+              <div key={item} className={`flex items-center gap-2 p-3 rounded-xl border-2 border-white/10 bg-white/5 ${submitted ? 'opacity-60' : ''}`}>
+                <span className="text-white/30 text-sm font-bold w-6 text-center">{i + 1}</span>
+                <span className="flex-1 font-medium text-white">{item}</span>
+                {!submitted && (
+                  <div className="flex flex-col">
+                    <button
+                      onClick={() => {
+                        if (i === 0) return;
+                        const newItems = [...orderingItems];
+                        [newItems[i - 1], newItems[i]] = [newItems[i], newItems[i - 1]];
+                        setOrderingItems(newItems);
+                      }}
+                      disabled={i === 0}
+                      className="p-0.5 text-white/40 hover:text-white disabled:opacity-20"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (i === orderingItems.length - 1) return;
+                        const newItems = [...orderingItems];
+                        [newItems[i], newItems[i + 1]] = [newItems[i + 1], newItems[i]];
+                        setOrderingItems(newItems);
+                      }}
+                      disabled={i === orderingItems.length - 1}
+                      className="p-0.5 text-white/40 hover:text-white disabled:opacity-20"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Poll UI */}
+        {currentQuestion.type === 'poll' && (
+          <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
+            {currentQuestion.options.map((opt, i) => (
+              <button
+                key={i}
+                onClick={() => { if (!submitted) setSelectedAnswer(opt); }}
+                disabled={submitted}
+                className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+                  answerColors[i % 4]
+                } ${
+                  selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
+                } ${
+                  submitted ? 'opacity-60' : 'active:scale-95'
+                }`}
+              >
+                {answerIcons[i % 4]}
+                <span className="truncate px-2">{opt}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Slide UI */}
+        {currentQuestion.type === 'slide' && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <BookOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
+              <p className="text-white/40 text-sm">This is an informational slide — no answer needed.</p>
             </div>
           </div>
         )}
