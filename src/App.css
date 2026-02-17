@@ -107,6 +107,13 @@
 .stagger-children > *:nth-child(5) { animation-delay: 400ms; }
 .stagger-children > *:nth-child(6) { animation-delay: 500ms; }
 
+/* Shimmer skeleton */
+.animate-shimmer {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
