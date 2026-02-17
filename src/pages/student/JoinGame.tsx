@@ -3,6 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
+import { Shuffle } from 'lucide-react';
+
+const ADJECTIVES = [
+  'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
+  'Sneaky', 'Funky', 'Turbo', 'Mega', 'Super', 'Hyper', 'Ultra', 'Blazing',
+  'Chill', 'Witty', 'Daring', 'Fierce', 'Gentle', 'Happy', 'Icy', 'Keen',
+  'Noble', 'Quick', 'Rapid', 'Silent', 'Tiny', 'Vivid', 'Wild', 'Zen',
+];
+const NOUNS = [
+  'Panda', 'Fox', 'Eagle', 'Tiger', 'Dolphin', 'Phoenix', 'Dragon', 'Wolf',
+  'Falcon', 'Ninja', 'Pirate', 'Wizard', 'Knight', 'Robot', 'Rocket', 'Star',
+  'Comet', 'Lion', 'Owl', 'Shark', 'Koala', 'Penguin', 'Otter', 'Raven',
+  'Hawk', 'Bear', 'Lynx', 'Moose', 'Cobra', 'Viper', 'Crab', 'Yeti',
+];
+
+function randomNickname(): string {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  return `${adj}${noun}`;
+}
 
 export default function JoinGame() {
   const [pin, setPin] = useState('');
@@ -95,16 +115,26 @@ export default function JoinGame() {
           ) : (
             <form onSubmit={handleJoin}>
               <label className="block text-center text-sm font-medium text-gray-500 mb-3">Choose a Nickname</label>
-              <input
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="Your nickname"
-                required
-                maxLength={20}
-                className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border-2 border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300"
-                autoFocus
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="Your nickname"
+                  required
+                  maxLength={20}
+                  className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border-2 border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setNickname(randomNickname())}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-brand/10 hover:bg-brand/20 text-brand transition-colors"
+                  title="Random nickname"
+                >
+                  <Shuffle className="w-5 h-5" />
+                </button>
+              </div>
               <button
                 type="submit"
                 disabled={joining || !nickname.trim()}
