@@ -267,7 +267,7 @@ export default function SessionResults() {
       </div>
 
       {/* Leaderboard */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="bg-surface-dark rounded-2xl shadow-sm p-6">
         <Leaderboard sessionId={sessionId} />
       </div>
     </div>
