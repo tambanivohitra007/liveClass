@@ -90,6 +90,8 @@ export interface Session {
   teams?: TeamConfig[];
   shuffleQuestions?: boolean;
   questionOrder?: number[];
+  timerPaused?: boolean;
+  timerPausedAt?: number | null;
 }
 
 export interface SessionPlayer {

@@ -105,7 +105,10 @@ export default function PlayGame() {
         const startedAt = session.questionStartedAt as any;
         const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
         if (startMs > 0) {
-          const elapsed = Math.floor((Date.now() - startMs) / 1000);
+          const now = session.timerPaused && session.timerPausedAt
+            ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
+            : Date.now();
+          const elapsed = Math.floor((now - startMs) / 1000);
           setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
         } else {
           setTimeLeft(current.timeLimitSec);
@@ -126,10 +129,10 @@ export default function PlayGame() {
   }, [session?.currentQuestionIndex, session?.questionState]);
 
   useEffect(() => {
-    if (timeLeft <= 0 || submitted) return;
+    if (timeLeft <= 0 || submitted || session?.timerPaused) return;
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, submitted]);
+  }, [timeLeft, submitted, session?.timerPaused]);
 
   // Keyboard shortcuts: 1-4 for MCQ, Enter to submit
   useEffect(() => {
@@ -321,7 +324,10 @@ export default function PlayGame() {
             </span>
           )}
         </div>
-        <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
+        <div className="flex flex-col items-center">
+          <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
+          {session?.timerPaused && <span className="text-warning font-bold text-[10px] uppercase tracking-wider animate-pulse">Paused</span>}
+        </div>
         <button onClick={toggleMute} className="w-20 flex justify-end">
           {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
         </button>

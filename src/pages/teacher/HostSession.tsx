@@ -5,7 +5,7 @@ import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'f
 import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX } from 'lucide-react';
+import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
@@ -76,7 +76,10 @@ export default function HostSession() {
         const startedAt = session.questionStartedAt as any;
         const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
         if (startMs > 0) {
-          const elapsed = Math.floor((Date.now() - startMs) / 1000);
+          const now = session.timerPaused && session.timerPausedAt
+            ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
+            : Date.now();
+          const elapsed = Math.floor((now - startMs) / 1000);
           setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
         } else {
           setTimeLeft(current.timeLimitSec);
@@ -93,18 +96,18 @@ export default function HostSession() {
       autoEndCalledRef.current = false;
       return;
     }
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0 || session.timerPaused) return;
     const timer = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
     return () => clearInterval(timer);
-  }, [session?.questionState, timeLeft]);
+  }, [session?.questionState, timeLeft, session?.timerPaused]);
 
   useEffect(() => {
-    if (!session || session.questionState !== 'live') return;
+    if (!session || session.questionState !== 'live' || session.timerPaused) return;
     if (timeLeft <= 0 && currentTimeLimitSec > 0 && !autoEndCalledRef.current) {
       autoEndCalledRef.current = true;
       httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
     }
-  }, [timeLeft, session?.questionState, currentTimeLimitSec]);
+  }, [timeLeft, session?.questionState, currentTimeLimitSec, session?.timerPaused]);
 
   const startQuestion = async () => {
     if (!session) return;
@@ -119,6 +122,41 @@ export default function HostSession() {
   const endQuestion = async () => {
     if (!session) return;
     await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+  };
+
+  const togglePause = async () => {
+    if (!session) return;
+    if (session.timerPaused) {
+      const newStartedAt = Date.now() - (currentTimeLimitSec - timeLeft) * 1000;
+      await updateDoc(doc(db, 'sessions', session.id), {
+        timerPaused: false,
+        timerPausedAt: null,
+        questionStartedAt: newStartedAt,
+      });
+    } else {
+      await updateDoc(doc(db, 'sessions', session.id), {
+        timerPaused: true,
+        timerPausedAt: Date.now(),
+      });
+    }
+  };
+
+  const extendTimer = async () => {
+    if (!session) return;
+    const startedAt = session.questionStartedAt as any;
+    const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+    if (startMs > 0) {
+      await updateDoc(doc(db, 'sessions', session.id), { questionStartedAt: startMs + 30000 });
+      setTimeLeft((t) => t + 30);
+    }
+  };
+
+  const skipQuestion = async () => {
+    if (!session) return;
+    await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+    if (session.currentQuestionIndex < totalQuestions - 1) {
+      await httpsCallable(functions, 'startQuestion')({ sessionId: session.id, qIndex: session.currentQuestionIndex + 1 });
+    }
   };
 
   useEffect(() => { createSession(); }, [quizId]);
@@ -252,9 +290,12 @@ export default function HostSession() {
             <span className="text-sm text-white/40 uppercase tracking-wider">Question {session.currentQuestionIndex + 1} of {totalQuestions}</span>
             <h2 className="text-2xl md:text-3xl font-bold mt-2">{currentQuestionText}</h2>
             {currentTimeLimitSec > 0 && (
-              <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full ${timeLeft <= 5 ? 'bg-danger/20 text-danger' : 'bg-white/10 text-white/70'}`}>
-                <span className={`text-2xl font-black tabular-nums ${timeLeft <= 5 ? 'animate-timer-pulse' : ''}`}>{timeLeft}</span>
-                <span className="text-sm">sec</span>
+              <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+                session.timerPaused ? 'bg-warning/20 text-warning' :
+                timeLeft <= 5 ? 'bg-danger/20 text-danger' : 'bg-white/10 text-white/70'
+              }`}>
+                <span className={`text-2xl font-black tabular-nums ${timeLeft <= 5 && !session.timerPaused ? 'animate-timer-pulse' : ''}`}>{timeLeft}</span>
+                <span className="text-sm">{session.timerPaused ? 'PAUSED' : 'sec'}</span>
               </div>
             )}
           </div>
@@ -458,12 +499,37 @@ export default function HostSession() {
             </button>
           )}
           {session.questionState === 'live' && (
-            <button
-              onClick={endQuestion}
-              className="px-8 py-3.5 bg-danger text-white font-bold text-lg rounded-2xl hover:brightness-110 transition-all shadow-lg"
-            >
-              End Question
-            </button>
+            <>
+              <button
+                onClick={togglePause}
+                className="p-3.5 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all"
+                title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
+              >
+                {session.timerPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={extendTimer}
+                className="px-5 py-3.5 bg-white/10 text-white font-bold rounded-2xl hover:bg-white/20 transition-all"
+                title="Add 30 seconds"
+              >
+                +30s
+              </button>
+              <button
+                onClick={endQuestion}
+                className="px-8 py-3.5 bg-danger text-white font-bold text-lg rounded-2xl hover:brightness-110 transition-all shadow-lg"
+              >
+                End Question
+              </button>
+              {!isLastQuestion && (
+                <button
+                  onClick={skipQuestion}
+                  className="p-3.5 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all"
+                  title="Skip to next question"
+                >
+                  <SkipForward className="w-5 h-5" />
+                </button>
+              )}
+            </>
           )}
           {session.questionState === 'reveal' && !isLastQuestion && (
             <button
