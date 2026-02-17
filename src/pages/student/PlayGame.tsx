@@ -41,7 +41,7 @@ export default function PlayGame() {
   const { showWarning, dismissWarning } = useAntiCheat({
     sessionId,
     playerId,
-    enabled: session?.questionState === 'live',
+    enabled: session?.questionState === 'live' && session?.antiCheatEnabled !== false,
   });
 
   useEffect(() => {

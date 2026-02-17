@@ -78,6 +78,7 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
     currentQuestionIndex: 0,
     questionState: "lobby",
     joinLocked: false,
+    antiCheatEnabled: true,
     startedAt: null,
     endedAt: null,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -471,6 +472,9 @@ export const reportViolation = onCall(FUNCTION_CONFIG, async (request) => {
   }
   if (sessionDoc.data()?.status === "ended") {
     throw new HttpsError("failed-precondition", "Session has ended");
+  }
+  if (sessionDoc.data()?.antiCheatEnabled === false) {
+    return { success: false, reason: "Anti-cheat is disabled" };
   }
 
   const playerDoc = await db.doc(`sessions/${sessionId}/players/${playerId}`).get();

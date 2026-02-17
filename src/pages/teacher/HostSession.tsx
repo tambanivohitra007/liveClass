@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
-import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
 import { confirmAction } from '../../lib/swal';
 import { useSessionStore } from '../../stores/sessionStore';
@@ -131,6 +131,23 @@ export default function HostSession() {
           <div className="text-center mb-8 animate-fade-in">
             <span className="text-sm text-white/40 uppercase tracking-wider">Question {session.currentQuestionIndex + 1} of {totalQuestions}</span>
             <h2 className="text-2xl md:text-3xl font-bold mt-2">{currentQuestionText}</h2>
+          </div>
+        )}
+
+        {/* Anti-Cheat Toggle */}
+        {session.status === 'lobby' && (
+          <div className="flex items-center justify-center gap-3 mb-8 animate-fade-in">
+            <ShieldAlert className={`w-4 h-4 ${session.antiCheatEnabled !== false ? 'text-success' : 'text-white/30'}`} />
+            <span className="text-sm text-white/60">Anti-Cheat</span>
+            <button
+              onClick={async () => {
+                const newVal = session.antiCheatEnabled === false;
+                await updateDoc(doc(db, 'sessions', session.id), { antiCheatEnabled: newVal });
+              }}
+              className={`relative w-11 h-6 rounded-full transition-colors ${session.antiCheatEnabled !== false ? 'bg-success' : 'bg-white/20'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.antiCheatEnabled !== false ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
           </div>
         )}
 

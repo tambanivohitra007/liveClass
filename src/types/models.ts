@@ -46,6 +46,7 @@ export interface Session {
   endedAt: number | null;
   top10Snapshot?: { playerId: string; totalPoints: number; rank: number }[];
   questionStartedAt?: number | null;
+  antiCheatEnabled?: boolean;
 }
 
 export interface SessionPlayer {
