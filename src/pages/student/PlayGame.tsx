@@ -8,6 +8,7 @@ import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
 import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square } from 'lucide-react';
 import Confetti from '../../components/Confetti';
+import CircularTimer from '../../components/CircularTimer';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
 import type { Session, Question } from '../../types/models';
@@ -210,11 +211,9 @@ export default function PlayGame() {
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-white/50 text-sm">Q{(session.currentQuestionIndex || 0) + 1}</span>
-        <div className={`text-3xl font-black ${timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'}`}>
-          {timeLeft}
-        </div>
-        <div className="w-12" />
+        <span className="text-white/50 text-sm font-medium">Q{(session.currentQuestionIndex || 0) + 1}</span>
+        <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
+        <div className="w-20" />
       </div>
 
       {/* Question */}
