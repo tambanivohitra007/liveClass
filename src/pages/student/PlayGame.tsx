@@ -7,6 +7,7 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
 import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square } from 'lucide-react';
+import Confetti from '../../components/Confetti';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
 import type { Session, Question } from '../../types/models';
@@ -167,6 +168,7 @@ export default function PlayGame() {
   if (session.questionState === 'reveal') {
     return (
       <div className="min-h-screen bg-surface-dark text-white p-6">
+        <Confetti active={feedback?.correct === true} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-12">
           {feedback && (

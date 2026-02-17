@@ -77,6 +77,28 @@
   animation: count-up 0.6s ease-out both;
 }
 
+/* Confetti */
+@keyframes confetti-fall {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) translateX(var(--drift, 0px)) rotate(720deg); opacity: 0; }
+}
+
+.animate-confetti-fall {
+  animation: confetti-fall 2s ease-in forwards;
+}
+
+/* Streak fire flicker */
+@keyframes fire-flicker {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  25% { transform: scale(1.1) rotate(3deg); }
+  50% { transform: scale(0.95) rotate(-2deg); }
+  75% { transform: scale(1.05) rotate(2deg); }
+}
+
+.animate-fire-flicker {
+  animation: fire-flicker 0.4s ease-in-out infinite;
+}
+
 /* Staggered children animation */
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
 .stagger-children > *:nth-child(2) { animation-delay: 100ms; }
