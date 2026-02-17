@@ -313,7 +313,24 @@ export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
 
   await batch.commit();
 
-  return { correct, pointsAwarded };
+  // Compute rank info for personal feedback
+  const newTotalPoints = playerData.totalPoints + pointsAwarded;
+  const allShards = await db
+    .collection(`sessions/${sessionId}/leaderboard_shards`)
+    .get();
+  const ranked: { pid: string; pts: number }[] = [];
+  allShards.docs.forEach((s) => {
+    const pl = s.data().players || {};
+    for (const [pid, d] of Object.entries(pl)) {
+      const pd = d as { totalPoints: number };
+      ranked.push({ pid, pts: pid === playerId ? newTotalPoints : pd.totalPoints });
+    }
+  });
+  ranked.sort((a, b) => b.pts - a.pts);
+  const rank = ranked.findIndex((p) => p.pid === playerId) + 1;
+  const behindBy = rank > 1 ? ranked[rank - 2].pts - newTotalPoints : 0;
+
+  return { correct, pointsAwarded, rank, totalPoints: newTotalPoints, behindBy };
 });
 
 // --- End Question ---

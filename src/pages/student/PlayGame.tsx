@@ -14,6 +14,12 @@ import ViolationWarning from '../../components/ViolationWarning';
 import { playCorrect, playWrong, playTick, playUrgentTick, playSubmit, playPodium, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
 import type { Session, Question } from '../../types/models';
 
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 const answerColors = [
   'bg-answer-red hover:brightness-110',
   'bg-answer-blue hover:brightness-110',
@@ -38,7 +44,7 @@ export default function PlayGame() {
   const [fillAnswers, setFillAnswers] = useState<string[]>([]);
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
-  const [feedback, setFeedback] = useState<{ correct: boolean; points: number } | null>(null);
+  const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [muted, setMutedState] = useState(isMuted());
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
@@ -155,12 +161,13 @@ export default function PlayGame() {
       const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || undefined;
       const fn = httpsCallable<
         { sessionId: string; questionId: string; playerId: string; selection: string; timeMs: number; activeToken?: string },
-        { correct: boolean; pointsAwarded: number }
+        { correct: boolean; pointsAwarded: number; rank: number; behindBy: number }
       >(functions, 'scoreAnswer');
       const result = await fn({
         sessionId, questionId: currentQuestion.id, playerId, selection, timeMs: elapsedMs, activeToken,
       });
-      setFeedback({ correct: result.data.correct, points: result.data.pointsAwarded });
+      const { correct: c, pointsAwarded, rank, behindBy } = result.data;
+      setFeedback({ correct: c, points: pointsAwarded, rank, behindBy });
     } catch {
       addToast('error', 'Failed to submit answer. Please try again.');
     }
@@ -222,7 +229,14 @@ export default function PlayGame() {
               <h2 className={`text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
                 {feedback.correct ? 'Correct!' : 'Wrong!'}
               </h2>
-              <p className="text-4xl font-black text-white mb-8">+{feedback.points}</p>
+              <p className="text-4xl font-black text-white mb-2">+{feedback.points}</p>
+              {feedback.rank > 0 && (
+                <p className="text-white/50 text-sm mb-6">
+                  You're in <span className="text-white font-bold">{ordinal(feedback.rank)} place</span>
+                  {feedback.behindBy > 0 && <> — <span className="text-warning font-bold">{feedback.behindBy} pts</span> behind</>}
+                  {feedback.rank === 1 && <span className="text-warning font-bold"> — You're leading!</span>}
+                </p>
+              )}
             </div>
           )}
           {sessionId && (
