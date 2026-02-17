@@ -6,7 +6,7 @@ import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete } from '../../lib/swal';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
-import { Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye, Copy, FolderOpen, X as XIcon } from 'lucide-react';
+import { Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, Eye, Copy, FolderOpen, X as XIcon, BookOpen } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
 import type { Quiz, Collection, CollectionColor } from '../../types/models';
@@ -460,6 +460,13 @@ export default function Dashboard() {
                   title="Duplicate"
                 >
                   <Copy className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => navigate(`/quiz/${quiz.id}/flashcards`)}
+                  className="px-3 py-2 text-sm text-gray-400 hover:text-accent-dark hover:bg-accent/5 rounded-lg transition-colors"
+                  title="Study Flashcards"
+                >
+                  <BookOpen className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => navigate(`/quiz/${quiz.id}/host`)}

@@ -25,9 +25,9 @@ service cloud.firestore {
         && resource.data.ownerId == request.auth.uid;
     }
 
-    // Questions: readable if authed, writable by quiz owner
+    // Questions: readable by anyone (students play without auth), writable by authed users
     match /questions/{questionId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if request.auth != null;
     }
 

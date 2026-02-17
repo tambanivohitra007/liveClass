@@ -23,6 +23,7 @@ import Profile from './pages/Profile';
 import QuizPreview from './pages/teacher/QuizPreview';
 import CollectionView from './pages/teacher/CollectionView';
 import Discover from './pages/Discover';
+import Flashcards from './pages/Flashcards';
 import './App.css';
 
 function AppContent() {
@@ -49,6 +50,7 @@ function AppContent() {
         <Route path="/quiz/:quizId" element={<ProtectedRoute><QuizEditor /></ProtectedRoute>} />
         <Route path="/quiz/:quizId/host" element={<ProtectedRoute><HostSession /></ProtectedRoute>} />
         <Route path="/quiz/:quizId/preview" element={<ProtectedRoute><QuizPreview /></ProtectedRoute>} />
+        <Route path="/quiz/:quizId/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
         <Route path="/session/:sessionId/results" element={<ProtectedRoute><SessionResults /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><SessionHistory /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
