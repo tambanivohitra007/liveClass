@@ -6,7 +6,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
 import { confirmAction } from '../../lib/swal';
-import { ChevronUp, ChevronDown, Copy, Trash2, Check, Eye } from 'lucide-react';
+import { ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus } from 'lucide-react';
 import type { Quiz, Question, QuestionType } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
@@ -22,6 +22,8 @@ const typeLabels: Record<QuestionType, string> = {
   mcq: 'Multiple Choice',
   tf: 'True / False',
   short: 'Short Answer',
+  matching: 'Matching',
+  fill_blank: 'Fill Blank',
 };
 
 export default function QuizEditor() {
@@ -64,9 +66,11 @@ export default function QuizEditor() {
 
   const updateQuestionType = (index: number, type: QuestionType) => {
     const updates: Partial<Question> = { type };
-    if (type === 'tf') { updates.options = ['True', 'False']; updates.correctAnswers = []; }
-    else if (type === 'mcq') { updates.options = ['', '', '', '']; updates.correctAnswers = []; }
-    else { updates.options = []; updates.correctAnswers = []; }
+    if (type === 'tf') { updates.options = ['True', 'False']; updates.correctAnswers = []; updates.matchOptions = undefined; }
+    else if (type === 'mcq') { updates.options = ['', '', '', '']; updates.correctAnswers = []; updates.matchOptions = undefined; }
+    else if (type === 'matching') { updates.options = ['', '']; updates.matchOptions = ['', '']; updates.correctAnswers = []; }
+    else if (type === 'fill_blank') { updates.options = []; updates.matchOptions = undefined; updates.correctAnswers = ['']; }
+    else { updates.options = []; updates.correctAnswers = []; updates.matchOptions = undefined; }
     updateQuestion(index, updates);
   };
 
@@ -102,9 +106,21 @@ export default function QuizEditor() {
     questions.forEach((q, i) => {
       const num = i + 1;
       if (!q.text.trim()) errors.push(`Q${num}: Question text is required.`);
-      if (q.correctAnswers.length === 0) errors.push(`Q${num}: Mark at least one correct answer.`);
-      if (q.type !== 'short' && q.options.some((o) => !o.trim())) {
-        errors.push(`Q${num}: All options must be filled in.`);
+      if (q.type === 'matching') {
+        if (q.options.length < 2) errors.push(`Q${num}: Matching needs at least 2 pairs.`);
+        if (q.options.some((o) => !o.trim())) errors.push(`Q${num}: All left-side items must be filled in.`);
+        if (q.matchOptions?.some((o) => !o.trim())) errors.push(`Q${num}: All right-side items must be filled in.`);
+        if (q.options.length !== (q.matchOptions?.length || 0)) errors.push(`Q${num}: Left and right sides must have equal items.`);
+      } else if (q.type === 'fill_blank') {
+        const blankCount = (q.text.match(/___/g) || []).length;
+        if (blankCount === 0) errors.push(`Q${num}: Use ___ to mark blanks in the question text.`);
+        if (q.correctAnswers.length !== blankCount) errors.push(`Q${num}: Provide exactly ${blankCount} answer(s) for ${blankCount} blank(s).`);
+        if (q.correctAnswers.some((a) => !a.trim())) errors.push(`Q${num}: All blank answers must be filled in.`);
+      } else {
+        if (q.correctAnswers.length === 0) errors.push(`Q${num}: Mark at least one correct answer.`);
+        if (q.type !== 'short' && q.options.some((o) => !o.trim())) {
+          errors.push(`Q${num}: All options must be filled in.`);
+        }
       }
     });
     return errors;
@@ -130,11 +146,14 @@ export default function QuizEditor() {
         }, { merge: true });
       }
       for (const question of questions) {
-        const questionData = {
+        const questionData: Record<string, unknown> = {
           quizId: savedQuizId, type: question.type, text: question.text,
           imageUrl: question.imageUrl || null, options: question.options,
           correctAnswers: question.correctAnswers, timeLimitSec: question.timeLimitSec,
         };
+        if (question.type === 'matching') {
+          questionData.matchOptions = question.matchOptions || [];
+        }
         if (question.id) await setDoc(doc(db, 'questions', question.id), questionData, { merge: true });
         else await addDoc(collection(db, 'questions'), questionData);
       }
@@ -233,7 +252,7 @@ export default function QuizEditor() {
             <div className="p-6 space-y-4">
               {/* Type Selector */}
               <div className="flex gap-2">
-                {(['mcq', 'tf', 'short'] as QuestionType[]).map((t) => (
+                {(['mcq', 'tf', 'short', 'matching', 'fill_blank'] as QuestionType[]).map((t) => (
                   <button
                     key={t}
                     onClick={() => updateQuestionType(i, t)}
@@ -275,7 +294,7 @@ export default function QuizEditor() {
               </div>
 
               {/* Options (MCQ / TF) */}
-              {q.type !== 'short' && (
+              {(q.type === 'mcq' || q.type === 'tf') && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-600">Answer Options</label>
                   {q.options.map((opt, oi) => {
@@ -325,6 +344,97 @@ export default function QuizEditor() {
                     placeholder="answer1, answer2"
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                   />
+                </div>
+              )}
+
+              {/* Matching Editor */}
+              {q.type === 'matching' && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-600">Match Pairs (left item pairs with right item)</label>
+                  {q.options.map((leftItem, pi) => (
+                    <div key={pi} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 w-5 text-center shrink-0">{pi + 1}</span>
+                      <input
+                        value={leftItem}
+                        onChange={(e) => {
+                          const newOpts = [...q.options];
+                          newOpts[pi] = e.target.value;
+                          updateQuestion(i, { options: newOpts });
+                        }}
+                        placeholder={`Left item ${pi + 1}`}
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                      />
+                      <span className="text-gray-400 text-sm">&rarr;</span>
+                      <input
+                        value={q.matchOptions?.[pi] || ''}
+                        onChange={(e) => {
+                          const newMatch = [...(q.matchOptions || [])];
+                          newMatch[pi] = e.target.value;
+                          updateQuestion(i, { matchOptions: newMatch });
+                        }}
+                        placeholder={`Right item ${pi + 1}`}
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                      />
+                      {q.options.length > 2 && (
+                        <button
+                          onClick={() => {
+                            const newOpts = q.options.filter((_, idx) => idx !== pi);
+                            const newMatch = (q.matchOptions || []).filter((_, idx) => idx !== pi);
+                            updateQuestion(i, { options: newOpts, matchOptions: newMatch });
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-colors"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      updateQuestion(i, {
+                        options: [...q.options, ''],
+                        matchOptions: [...(q.matchOptions || []), ''],
+                      });
+                    }}
+                    className="flex items-center gap-1.5 text-sm text-brand font-medium hover:text-brand-dark transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add Pair
+                  </button>
+                </div>
+              )}
+
+              {/* Fill in the Blank Editor */}
+              {q.type === 'fill_blank' && (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-500">Use <code className="bg-gray-100 px-1.5 py-0.5 rounded text-brand font-mono">___</code> (three underscores) in the question text to mark each blank.</p>
+                  {(() => {
+                    const blankCount = (q.text.match(/___/g) || []).length;
+                    const answers = q.correctAnswers.length >= blankCount
+                      ? q.correctAnswers.slice(0, blankCount)
+                      : [...q.correctAnswers, ...Array(blankCount - q.correctAnswers.length).fill('')];
+                    if (blankCount === 0) return <p className="text-sm text-gray-400">No blanks detected — add ___ to your question text above.</p>;
+                    return (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-600">Answers for each blank</label>
+                        {answers.map((ans: string, ai: number) => (
+                          <div key={ai} className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400 shrink-0 w-16">Blank {ai + 1}</span>
+                            <input
+                              value={ans}
+                              onChange={(e) => {
+                                const newAnswers = [...answers];
+                                newAnswers[ai] = e.target.value;
+                                updateQuestion(i, { correctAnswers: newAnswers });
+                              }}
+                              placeholder={`Answer for blank ${ai + 1}`}
+                              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                            />
+                          </div>
+                        ))}
+                        <p className="text-xs text-gray-400">Matching is case-insensitive.</p>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

@@ -119,6 +119,25 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
         questionsByIndex[idx] = q;
 
         const qAnswers = answersByQuestion.get(qId) || [];
+
+        // For matching/fill_blank, show correct vs incorrect counts instead of per-option distribution
+        if (q.type === 'matching' || q.type === 'fill_blank') {
+          const correctCount = qAnswers.filter((a) => a.correct).length;
+          const incorrectCount = qAnswers.length - correctCount;
+          answerDistributions.push({
+            questionIndex: idx,
+            questionText: q.text,
+            options: q.options,
+            correctAnswers: q.correctAnswers,
+            distribution: [
+              { label: 'Correct', count: correctCount, isCorrect: true },
+              { label: 'Incorrect', count: incorrectCount, isCorrect: false },
+            ],
+            total: qAnswers.length,
+          });
+          return;
+        }
+
         const dist = q.options.map((opt) => ({
           label: opt.length > 20 ? opt.slice(0, 18) + '..' : opt,
           count: qAnswers.filter((a) => {

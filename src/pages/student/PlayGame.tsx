@@ -29,6 +29,9 @@ export default function PlayGame() {
   const { addToast } = useToastStore();
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+  const [matchingPairs, setMatchingPairs] = useState<Record<string, string>>({});
+  const [fillAnswers, setFillAnswers] = useState<string[]>([]);
+  const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -45,6 +48,8 @@ export default function PlayGame() {
     if (!session || session.questionState !== 'live') return;
     setSubmitted(false);
     setSelectedAnswer('');
+    setMatchingPairs({});
+    setFillAnswers([]);
     setFeedback(null);
 
     const loadQuestion = async () => {
@@ -55,6 +60,13 @@ export default function PlayGame() {
       if (current) {
         setCurrentQuestion(current);
         setTimeLeft(current.timeLimitSec);
+        if (current.type === 'matching' && current.matchOptions) {
+          setShuffledMatchOptions([...current.matchOptions].sort(() => Math.random() - 0.5));
+        }
+        if (current.type === 'fill_blank') {
+          const blankCount = (current.text.match(/___/g) || []).length;
+          setFillAnswers(Array(blankCount).fill(''));
+        }
       }
     };
     loadQuestion();
@@ -66,10 +78,29 @@ export default function PlayGame() {
     return () => clearInterval(timer);
   }, [timeLeft, submitted]);
 
+  const getSelection = (): string => {
+    if (!currentQuestion) return selectedAnswer;
+    if (currentQuestion.type === 'matching') return JSON.stringify(matchingPairs);
+    if (currentQuestion.type === 'fill_blank') return JSON.stringify(fillAnswers);
+    return selectedAnswer;
+  };
+
+  const canSubmit = (): boolean => {
+    if (!currentQuestion) return false;
+    if (currentQuestion.type === 'matching') {
+      return currentQuestion.options.every((opt) => matchingPairs[opt]?.trim());
+    }
+    if (currentQuestion.type === 'fill_blank') {
+      return fillAnswers.every((a) => a.trim());
+    }
+    return selectedAnswer !== '';
+  };
+
   const submitAnswer = async () => {
     if (!sessionId || !playerId || !currentQuestion || submitted) return;
     setSubmitted(true);
     const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
+    const selection = getSelection();
     try {
       const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || undefined;
       const fn = httpsCallable<
@@ -77,7 +108,7 @@ export default function PlayGame() {
         { correct: boolean; pointsAwarded: number }
       >(functions, 'scoreAnswer');
       const result = await fn({
-        sessionId, questionId: currentQuestion.id, playerId, selection: selectedAnswer, timeMs: elapsedMs, activeToken,
+        sessionId, questionId: currentQuestion.id, playerId, selection, timeMs: elapsedMs, activeToken,
       });
       setFeedback({ correct: result.data.correct, points: result.data.pointsAwarded });
     } catch {
@@ -184,7 +215,7 @@ export default function PlayGame() {
         </div>
 
         {/* Answer buttons */}
-        {currentQuestion.type !== 'short' ? (
+        {(currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && (
           <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
             {currentQuestion.options.map((opt, i) => (
               <button
@@ -192,7 +223,6 @@ export default function PlayGame() {
                 onClick={() => {
                   if (!submitted) {
                     setSelectedAnswer(opt);
-                    // Auto-submit on tap for mobile-friendly experience
                   }
                 }}
                 disabled={submitted}
@@ -209,7 +239,9 @@ export default function PlayGame() {
               </button>
             ))}
           </div>
-        ) : (
+        )}
+
+        {currentQuestion.type === 'short' && (
           <div className="flex-1 flex items-center">
             <div className="w-full max-w-md mx-auto">
               <input
@@ -225,8 +257,64 @@ export default function PlayGame() {
           </div>
         )}
 
+        {/* Matching UI */}
+        {currentQuestion.type === 'matching' && (
+          <div className="flex-1 space-y-3 max-w-md mx-auto w-full">
+            {currentQuestion.options.map((left, i) => (
+              <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
+                matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
+              }`}>
+                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % 4].split(' ')[0]}`}>
+                  {left}
+                </span>
+                <span className="text-white/30">&rarr;</span>
+                <select
+                  value={matchingPairs[left] || ''}
+                  onChange={(e) => setMatchingPairs({ ...matchingPairs, [left]: e.target.value })}
+                  disabled={submitted}
+                  className="flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 outline-none focus:border-brand"
+                >
+                  <option value="" className="bg-gray-800">Select...</option>
+                  {shuffledMatchOptions.map((right) => (
+                    <option key={right} value={right} className="bg-gray-800">{right}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Fill in the Blank UI */}
+        {currentQuestion.type === 'fill_blank' && (
+          <div className="flex-1 flex items-center">
+            <div className="w-full max-w-lg mx-auto space-y-4">
+              <div className="text-lg text-white leading-relaxed text-center">
+                {currentQuestion.text.split('___').map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && (
+                      <input
+                        type="text"
+                        value={fillAnswers[i] || ''}
+                        onChange={(e) => {
+                          const newAnswers = [...fillAnswers];
+                          newAnswers[i] = e.target.value;
+                          setFillAnswers(newAnswers);
+                        }}
+                        disabled={submitted}
+                        placeholder={`Blank ${i + 1}`}
+                        className="inline-block w-32 mx-1 px-2 py-1 text-center font-bold rounded-lg border-2 border-brand/50 bg-white/10 text-white placeholder:text-white/30 outline-none focus:border-brand"
+                      />
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Submit button */}
-        {!submitted && selectedAnswer && (
+        {!submitted && canSubmit() && (
           <button
             onClick={submitAnswer}
             className="mt-4 py-4 bg-white text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all shadow-lg animate-slide-up"

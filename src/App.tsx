@@ -27,9 +27,10 @@ function AppContent() {
   const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview')));
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       {!hideNavbar && <Navbar />}
       <ToastContainer />
+      <main className="flex-1">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -48,7 +49,9 @@ function AppContent() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/assignment/new" element={<ProtectedRoute><AssignmentCreate /></ProtectedRoute>} />
       </Routes>
-    </>
+      </main>
+      {!hideNavbar && <Footer />}
+    </div>
   );
 }
 

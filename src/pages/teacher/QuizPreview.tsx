@@ -32,6 +32,9 @@ export default function QuizPreview() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [matchingPairs, setMatchingPairs] = useState<Record<string, string>>({});
+  const [fillAnswers, setFillAnswers] = useState<string[]>([]);
+  const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
   const [state, setState] = useState<PreviewState>('answering');
   const [timeLeft, setTimeLeft] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,9 +67,18 @@ export default function QuizPreview() {
     if (q) {
       setTimeLeft(q.timeLimitSec);
       setSelectedAnswer('');
+      setMatchingPairs({});
+      setFillAnswers([]);
       setState('answering');
       setPointsEarned(0);
       setStreakBonus(0);
+      if (q.type === 'matching' && q.matchOptions) {
+        setShuffledMatchOptions([...q.matchOptions].sort(() => Math.random() - 0.5));
+      }
+      if (q.type === 'fill_blank') {
+        const blankCount = (q.text.match(/___/g) || []).length;
+        setFillAnswers(Array(blankCount).fill(''));
+      }
     }
   }, [currentIndex, questions]);
 
@@ -94,15 +106,24 @@ export default function QuizPreview() {
     setSelectedAnswer(opt);
   };
 
-  const calculatePoints = (answer: string, timeRemaining: number) => {
-    const correct = question.correctAnswers.includes(answer);
+  const calculatePoints = (timeRemaining: number) => {
+    const q = questions[currentIndex];
+    let correct = false;
+    if (q.type === 'matching') {
+      correct = q.options.every((left, idx) => matchingPairs[left] === q.matchOptions?.[idx]);
+    } else if (q.type === 'fill_blank') {
+      correct = fillAnswers.length === q.correctAnswers.length &&
+        fillAnswers.every((a, idx) => a.trim().toLowerCase() === q.correctAnswers[idx].trim().toLowerCase());
+    } else {
+      correct = q.correctAnswers.includes(selectedAnswer);
+    }
     if (!correct) {
       setPointsEarned(0);
       setStreakBonus(0);
       setStreak(0);
       return;
     }
-    const timeFactor = Math.max(0, timeRemaining / question.timeLimitSec);
+    const timeFactor = Math.max(0, timeRemaining / q.timeLimitSec);
     const basePoints = Math.round(1000 * timeFactor);
     const newStreak = streak + 1;
     const bonus = newStreak * 50;
@@ -113,8 +134,16 @@ export default function QuizPreview() {
     setTotalPoints((prev) => prev + total);
   };
 
+  const canSubmitPreview = (): boolean => {
+    const q = questions[currentIndex];
+    if (!q) return false;
+    if (q.type === 'matching') return q.options.every((opt) => matchingPairs[opt]?.trim());
+    if (q.type === 'fill_blank') return fillAnswers.every((a) => a.trim());
+    return selectedAnswer !== '';
+  };
+
   const handleSubmit = () => {
-    calculatePoints(selectedAnswer, timeLeft);
+    calculatePoints(timeLeft);
     setState('revealed');
   };
 
@@ -155,6 +184,21 @@ export default function QuizPreview() {
 
   const question = questions[currentIndex];
   const isCorrect = (opt: string) => question.correctAnswers.includes(opt);
+  const isAnswerCorrect = (): boolean => {
+    if (question.type === 'matching') {
+      return question.options.every((left, idx) => matchingPairs[left] === question.matchOptions?.[idx]);
+    }
+    if (question.type === 'fill_blank') {
+      return fillAnswers.length === question.correctAnswers.length &&
+        fillAnswers.every((a, idx) => a.trim().toLowerCase() === question.correctAnswers[idx].trim().toLowerCase());
+    }
+    return question.correctAnswers.includes(selectedAnswer);
+  };
+  const hasAnswer = (): boolean => {
+    if (question.type === 'matching') return question.options.some((opt) => matchingPairs[opt]);
+    if (question.type === 'fill_blank') return fillAnswers.some((a) => a.trim());
+    return selectedAnswer !== '';
+  };
 
   return (
     <div className="min-h-screen bg-surface-dark flex flex-col">
@@ -210,7 +254,7 @@ export default function QuizPreview() {
           {timeLeft}
         </div>
         <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50 capitalize">
-          {question.type === 'mcq' ? 'Multiple Choice' : question.type === 'tf' ? 'True / False' : 'Short Answer'}
+          {question.type === 'mcq' ? 'Multiple Choice' : question.type === 'tf' ? 'True / False' : question.type === 'matching' ? 'Matching' : question.type === 'fill_blank' ? 'Fill Blank' : 'Short Answer'}
         </span>
       </div>
 
@@ -234,7 +278,7 @@ export default function QuizPreview() {
         </div>
 
         {/* Answer options */}
-        {question.type !== 'short' ? (
+        {(question.type === 'mcq' || question.type === 'tf') && (
           <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
             {question.options.map((opt, i) => {
               const correct = isCorrect(opt);
@@ -276,7 +320,9 @@ export default function QuizPreview() {
               );
             })}
           </div>
-        ) : (
+        )}
+
+        {question.type === 'short' && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <input
               type="text"
@@ -296,8 +342,94 @@ export default function QuizPreview() {
           </div>
         )}
 
+        {/* Matching Preview */}
+        {question.type === 'matching' && (
+          <div className="flex-1 space-y-3 max-w-md mx-auto w-full">
+            {question.options.map((left, i) => {
+              const revealed = state === 'revealed';
+              const pairCorrect = revealed && matchingPairs[left] === question.matchOptions?.[i];
+              const pairWrong = revealed && matchingPairs[left] && matchingPairs[left] !== question.matchOptions?.[i];
+              return (
+                <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                  pairCorrect ? 'border-success bg-success/10' :
+                  pairWrong ? 'border-danger bg-danger/10' :
+                  matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
+                }`}>
+                  <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % 4]}`}>
+                    {left}
+                  </span>
+                  <span className="text-white/30">&rarr;</span>
+                  <select
+                    value={matchingPairs[left] || ''}
+                    onChange={(e) => state === 'answering' && setMatchingPairs({ ...matchingPairs, [left]: e.target.value })}
+                    disabled={revealed}
+                    className="flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 outline-none focus:border-brand"
+                  >
+                    <option value="" className="bg-gray-800">Select...</option>
+                    {shuffledMatchOptions.map((right) => (
+                      <option key={right} value={right} className="bg-gray-800">{right}</option>
+                    ))}
+                  </select>
+                  {pairCorrect && <Check className="w-5 h-5 text-success shrink-0" />}
+                  {pairWrong && <XIcon className="w-5 h-5 text-danger shrink-0" />}
+                </div>
+              );
+            })}
+            {state === 'revealed' && (
+              <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in mt-4">
+                <p className="text-white/50 text-sm mb-2">Correct pairs:</p>
+                {question.options.map((left, i) => (
+                  <p key={i} className="text-success font-medium text-sm">{left} &rarr; {question.matchOptions?.[i]}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Fill in the Blank Preview */}
+        {question.type === 'fill_blank' && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div className="text-lg text-white leading-relaxed text-center max-w-lg">
+              {question.text.split('___').map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && (
+                    <span className="inline-block mx-1">
+                      <input
+                        type="text"
+                        value={fillAnswers[i] || ''}
+                        onChange={(e) => {
+                          if (state !== 'answering') return;
+                          const newAnswers = [...fillAnswers];
+                          newAnswers[i] = e.target.value;
+                          setFillAnswers(newAnswers);
+                        }}
+                        disabled={state === 'revealed'}
+                        placeholder={`Blank ${i + 1}`}
+                        className={`inline-block w-32 px-2 py-1 text-center font-bold rounded-lg border-2 bg-white/10 text-white placeholder:text-white/30 outline-none ${
+                          state === 'revealed'
+                            ? fillAnswers[i]?.trim().toLowerCase() === question.correctAnswers[i]?.trim().toLowerCase()
+                              ? 'border-success'
+                              : 'border-danger'
+                            : 'border-brand/50 focus:border-brand'
+                        }`}
+                      />
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
+            {state === 'revealed' && (
+              <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
+                <p className="text-white/50 text-sm mb-1">Correct answers:</p>
+                <p className="text-success font-bold">{question.correctAnswers.join(', ')}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Submit / Reveal button */}
-        {state === 'answering' && selectedAnswer && (
+        {state === 'answering' && canSubmitPreview() && (
           <button
             onClick={handleSubmit}
             className="mt-4 py-4 bg-white text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
@@ -311,15 +443,15 @@ export default function QuizPreview() {
           <div className="mt-4 animate-fade-in">
             {/* Result text */}
             <div className="text-center mb-3">
-              {selectedAnswer && isCorrect(selectedAnswer) ? (
+              {hasAnswer() && isAnswerCorrect() ? (
                 <p className="text-success font-bold text-lg">Correct!</p>
-              ) : selectedAnswer ? (
+              ) : hasAnswer() ? (
                 <p className="text-danger font-bold text-lg">
-                  Wrong — correct: {question.correctAnswers.join(', ')}
+                  Wrong{question.type !== 'matching' ? ` — correct: ${question.correctAnswers.join(', ')}` : ''}
                 </p>
               ) : (
                 <p className="text-white/50 font-medium">
-                  Time's up! Correct: {question.correctAnswers.join(', ')}
+                  Time's up!{question.type !== 'matching' ? ` Correct: ${question.correctAnswers.join(', ')}` : ''}
                 </p>
               )}
             </div>
@@ -356,10 +488,10 @@ export default function QuizPreview() {
                   </div>
                 </div>
               )}
-              {pointsEarned === 0 && selectedAnswer && (
+              {pointsEarned === 0 && hasAnswer() && (
                 <p className="text-center text-white/30 text-xs">Wrong answer = 0 points, streak reset</p>
               )}
-              {pointsEarned === 0 && !selectedAnswer && (
+              {pointsEarned === 0 && !hasAnswer() && (
                 <p className="text-center text-white/30 text-xs">No answer = 0 points, streak reset</p>
               )}
             </div>

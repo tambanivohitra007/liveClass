@@ -17,7 +17,7 @@ export interface Quiz {
   updatedAt: number;
 }
 
-export type QuestionType = 'mcq' | 'tf' | 'short';
+export type QuestionType = 'mcq' | 'tf' | 'short' | 'matching' | 'fill_blank';
 
 export interface Question {
   id: string;
@@ -26,6 +26,7 @@ export interface Question {
   text: string;
   imageUrl?: string;
   options: string[];
+  matchOptions?: string[];
   correctAnswers: string[];
   timeLimitSec: number;
 }

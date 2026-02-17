@@ -206,7 +206,32 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         throw new https_1.HttpsError("not-found", "Question not found");
     }
     const question = questionDoc.data();
-    const correct = question.correctAnswers.includes(selection);
+    // Type-aware correctness check
+    let correct = false;
+    if (question.type === 'matching') {
+        try {
+            const pairs = JSON.parse(selection);
+            const options = question.options || [];
+            const matchOpts = question.matchOptions || [];
+            correct = options.length > 0 && options.every((left, idx) => pairs[left] === matchOpts[idx]);
+        }
+        catch {
+            correct = false;
+        }
+    }
+    else if (question.type === 'fill_blank') {
+        try {
+            const answers = JSON.parse(selection);
+            const expected = question.correctAnswers || [];
+            correct = answers.length === expected.length && answers.every((a, idx) => a.trim().toLowerCase() === expected[idx].trim().toLowerCase());
+        }
+        catch {
+            correct = false;
+        }
+    }
+    else {
+        correct = question.correctAnswers.includes(selection);
+    }
     // Read current player state from shard to compute streak
     const shardId = getShardId(playerId);
     const shardRef = db.doc(`sessions/${sessionId}/leaderboard_shards/${shardId}`);

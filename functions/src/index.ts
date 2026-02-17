@@ -228,7 +228,33 @@ export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
   }
 
   const question = questionDoc.data()!;
-  const correct = question.correctAnswers.includes(selection);
+
+  // Type-aware correctness check
+  let correct = false;
+  if (question.type === 'matching') {
+    try {
+      const pairs = JSON.parse(selection) as Record<string, string>;
+      const options: string[] = question.options || [];
+      const matchOpts: string[] = question.matchOptions || [];
+      correct = options.length > 0 && options.every((left: string, idx: number) =>
+        pairs[left] === matchOpts[idx]
+      );
+    } catch {
+      correct = false;
+    }
+  } else if (question.type === 'fill_blank') {
+    try {
+      const answers = JSON.parse(selection) as string[];
+      const expected: string[] = question.correctAnswers || [];
+      correct = answers.length === expected.length && answers.every(
+        (a: string, idx: number) => a.trim().toLowerCase() === expected[idx].trim().toLowerCase()
+      );
+    } catch {
+      correct = false;
+    }
+  } else {
+    correct = question.correctAnswers.includes(selection);
+  }
 
   // Read current player state from shard to compute streak
   const shardId = getShardId(playerId);
