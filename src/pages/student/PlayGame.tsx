@@ -7,6 +7,15 @@ import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
 import type { Session, Question } from '../../types/models';
 
+const answerColors = [
+  'bg-answer-red hover:brightness-110',
+  'bg-answer-blue hover:brightness-110',
+  'bg-answer-yellow hover:brightness-110',
+  'bg-answer-green hover:brightness-110',
+];
+
+const answerShapes = ['&#9650;', '&#9670;', '&#9679;', '&#9632;'];
+
 export default function PlayGame() {
   const { sessionId, playerId } = useParams<{ sessionId: string; playerId: string }>();
   const { session, setSession } = useSessionStore();
@@ -19,9 +28,7 @@ export default function PlayGame() {
   useEffect(() => {
     if (!sessionId) return;
     const unsubscribe = onSnapshot(doc(db, 'sessions', sessionId), (snap) => {
-      if (snap.exists()) {
-        setSession({ id: snap.id, ...snap.data() } as Session);
-      }
+      if (snap.exists()) setSession({ id: snap.id, ...snap.data() } as Session);
     });
     return unsubscribe;
   }, [sessionId, setSession]);
@@ -33,10 +40,7 @@ export default function PlayGame() {
     setFeedback(null);
 
     const loadQuestion = async () => {
-      const q = query(
-        collection(db, 'questions'),
-        where('quizId', '==', session.quizId)
-      );
+      const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
       const snapshot = await getDocs(q);
       const questions = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
       const current = questions[session.currentQuestionIndex];
@@ -57,20 +61,14 @@ export default function PlayGame() {
   const submitAnswer = async () => {
     if (!sessionId || !playerId || !currentQuestion || submitted) return;
     setSubmitted(true);
-
     const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
-    const fn = httpsCallable<
-      { sessionId: string; questionId: string; playerId: string; selection: string; timeMs: number },
-      { correct: boolean; pointsAwarded: number }
-    >(functions, 'scoreAnswer');
-
     try {
+      const fn = httpsCallable<
+        { sessionId: string; questionId: string; playerId: string; selection: string; timeMs: number },
+        { correct: boolean; pointsAwarded: number }
+      >(functions, 'scoreAnswer');
       const result = await fn({
-        sessionId,
-        questionId: currentQuestion.id,
-        playerId,
-        selection: selectedAnswer,
-        timeMs: elapsedMs,
+        sessionId, questionId: currentQuestion.id, playerId, selection: selectedAnswer, timeMs: elapsedMs,
       });
       setFeedback({ correct: result.data.correct, points: result.data.pointsAwarded });
     } catch (err) {
@@ -78,104 +76,161 @@ export default function PlayGame() {
     }
   };
 
-  if (!session) return <p>Connecting to session...</p>;
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+      </div>
+    );
+  }
 
+  // Lobby
   if (session.status === 'lobby') {
     return (
-      <div>
-        <h1>Waiting for host to start...</h1>
-        <p>You're in! Hang tight.</p>
+      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white">
+        <div className="text-center animate-fade-in">
+          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
+          <h1 className="text-2xl font-bold mb-2">You're in!</h1>
+          <p className="text-white/50">Waiting for the host to start...</p>
+        </div>
       </div>
     );
   }
 
+  // Ended
   if (session.status === 'ended') {
     return (
-      <div>
-        <h1>Game Over!</h1>
-        <p>Thanks for playing!</p>
-        {sessionId && <Leaderboard sessionId={sessionId} />}
+      <div className="min-h-screen bg-surface-dark text-white p-6">
+        <div className="max-w-md mx-auto text-center py-12 animate-bounce-in">
+          <span className="text-6xl mb-4 block">&#127942;</span>
+          <h1 className="text-3xl font-black mb-2">Game Over!</h1>
+          <p className="text-white/50 mb-8">Thanks for playing!</p>
+          {sessionId && (
+            <div className="bg-white/5 backdrop-blur rounded-2xl p-6">
+              <Leaderboard sessionId={sessionId} />
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
+  // Reveal
   if (session.questionState === 'reveal') {
     return (
-      <div>
-        <h2>Results</h2>
-        {feedback && (
-          <div>
-            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-              {feedback.correct ? 'Correct!' : 'Wrong!'}
-            </p>
-            <p>+{feedback.points} points</p>
-          </div>
-        )}
-        {sessionId && <Leaderboard sessionId={sessionId} compact />}
-        <p>Waiting for next question...</p>
+      <div className="min-h-screen bg-surface-dark text-white p-6">
+        <div className="max-w-md mx-auto text-center py-12">
+          {feedback && (
+            <div className="animate-bounce-in">
+              <span className="text-7xl block mb-4">
+                {feedback.correct ? '&#127881;' : '&#128557;'}
+              </span>
+              <h2 className={`text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+                {feedback.correct ? 'Correct!' : 'Wrong!'}
+              </h2>
+              <p className="text-4xl font-black text-white mb-8">+{feedback.points}</p>
+            </div>
+          )}
+          {sessionId && (
+            <div className="bg-white/5 backdrop-blur rounded-2xl p-6 animate-slide-up">
+              <Leaderboard sessionId={sessionId} compact />
+            </div>
+          )}
+          <p className="text-white/30 mt-6 text-sm">Next question coming up...</p>
+        </div>
       </div>
     );
   }
 
-  if (!currentQuestion) return <p>Loading question...</p>;
-
-  return (
-    <div>
-      <h2>Question {(session.currentQuestionIndex || 0) + 1}</h2>
-      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center' }}>
-        {timeLeft}s
+  // Loading question
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
-      <p>{currentQuestion.text}</p>
-      {currentQuestion.imageUrl && (
-        <img src={currentQuestion.imageUrl} alt="" style={{ maxWidth: '100%', maxHeight: '200px' }} />
-      )}
+    );
+  }
 
-      {currentQuestion.type !== 'short' ? (
-        <div>
-          {currentQuestion.options.map((opt, i) => (
-            <button
-              key={i}
-              onClick={() => !submitted && setSelectedAnswer(opt)}
-              style={{
-                display: 'block',
-                width: '100%',
-                margin: '0.5rem 0',
-                padding: '1rem',
-                fontSize: '1.1rem',
-                backgroundColor: selectedAnswer === opt ? '#4CAF50' : '#eee',
-                color: selectedAnswer === opt ? 'white' : 'black',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: submitted ? 'default' : 'pointer',
-              }}
-              disabled={submitted}
-            >
-              {opt}
-            </button>
-          ))}
+  // Live question
+  return (
+    <div className="min-h-screen bg-surface-dark flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="text-white/50 text-sm">Q{(session.currentQuestionIndex || 0) + 1}</span>
+        <div className={`text-3xl font-black ${timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'}`}>
+          {timeLeft}
         </div>
-      ) : (
-        <input
-          type="text"
-          value={selectedAnswer}
-          onChange={(e) => setSelectedAnswer(e.target.value)}
-          placeholder="Your answer"
-          disabled={submitted}
-          style={{ width: '100%', padding: '0.75rem', fontSize: '1.1rem' }}
-        />
-      )}
+        <div className="w-12" />
+      </div>
 
-      {!submitted && (
-        <button
-          onClick={submitAnswer}
-          disabled={!selectedAnswer}
-          style={{ width: '100%', padding: '1rem', marginTop: '1rem', fontSize: '1.1rem' }}
-        >
-          Submit
-        </button>
-      )}
+      {/* Question */}
+      <div className="flex-1 flex flex-col px-4 pb-4">
+        <div className="text-center py-6 animate-fade-in">
+          <h2 className="text-xl md:text-2xl font-bold text-white">{currentQuestion.text}</h2>
+          {currentQuestion.imageUrl && (
+            <img src={currentQuestion.imageUrl} alt="" className="max-h-40 mx-auto mt-4 rounded-xl" />
+          )}
+        </div>
 
-      {submitted && !feedback && <p>Submitting...</p>}
+        {/* Answer buttons */}
+        {currentQuestion.type !== 'short' ? (
+          <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
+            {currentQuestion.options.map((opt, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (!submitted) {
+                    setSelectedAnswer(opt);
+                    // Auto-submit on tap for mobile-friendly experience
+                  }
+                }}
+                disabled={submitted}
+                className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+                  answerColors[i % 4]
+                } ${
+                  selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
+                } ${
+                  submitted ? 'opacity-60' : 'active:scale-95'
+                }`}
+              >
+                <span dangerouslySetInnerHTML={{ __html: answerShapes[i % 4] }} />
+                <span className="truncate px-2">{opt}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center">
+            <div className="w-full max-w-md mx-auto">
+              <input
+                type="text"
+                value={selectedAnswer}
+                onChange={(e) => setSelectedAnswer(e.target.value)}
+                placeholder="Type your answer..."
+                disabled={submitted}
+                className="w-full text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none backdrop-blur"
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Submit button */}
+        {!submitted && selectedAnswer && (
+          <button
+            onClick={submitAnswer}
+            className="mt-4 py-4 bg-white text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
+          >
+            Submit Answer
+          </button>
+        )}
+
+        {submitted && !feedback && (
+          <div className="mt-4 py-4 text-center text-white/50 animate-fade-in">
+            <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-2" />
+            Waiting for results...
+          </div>
+        )}
+      </div>
     </div>
   );
 }

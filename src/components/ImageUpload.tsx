@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
 
@@ -10,13 +10,12 @@ interface ImageUploadProps {
 
 export default function ImageUpload({ currentUrl, onUpload, path }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
-    if (file.size > 5 * 1024 * 1024) return; // 5MB max
+    if (file.size > 5 * 1024 * 1024) return;
 
     setUploading(true);
     try {
@@ -31,14 +30,56 @@ export default function ImageUpload({ currentUrl, onUpload, path }: ImageUploadP
     }
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  };
+
   return (
-    <div>
-      <label>Question Image</label>
-      <input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
-      {uploading && <p>Uploading...</p>}
-      {currentUrl && (
-        <img src={currentUrl} alt="Question" style={{ maxWidth: '200px', maxHeight: '150px', marginTop: '0.5rem' }} />
+    <div className="mt-2">
+      {currentUrl ? (
+        <div className="relative inline-block group">
+          <img
+            src={currentUrl}
+            alt="Question"
+            className="max-w-[200px] max-h-[120px] rounded-xl object-cover border border-gray-200"
+          />
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="absolute inset-0 bg-black/40 text-white text-xs font-medium rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+          >
+            Replace
+          </button>
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
+            dragActive ? 'border-brand bg-brand/5' : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          {uploading ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+              <div className="w-4 h-4 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
+              Uploading...
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">Click or drag image here (max 5MB)</p>
+          )}
+        </div>
       )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+        className="hidden"
+      />
     </div>
   );
 }

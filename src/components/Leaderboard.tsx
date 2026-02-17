@@ -16,6 +16,8 @@ interface LeaderboardProps {
   compact?: boolean;
 }
 
+const medals = ['', '🥇', '🥈', '🥉'];
+
 export default function Leaderboard({ sessionId, top10Snapshot, compact }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardPlayer[]>([]);
 
@@ -44,33 +46,50 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
     return unsubscribe;
   }, [sessionId, top10Snapshot]);
 
-  if (entries.length === 0) return <p>No scores yet</p>;
+  if (entries.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-400">
+        <p>No scores yet</p>
+      </div>
+    );
+  }
 
   const displayEntries = compact ? entries.slice(0, 5) : entries;
 
   return (
-    <div>
-      <h3>Leaderboard {compact ? '(Top 5)' : '(Top 10)'}</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th style={{ textAlign: 'left', padding: '0.5rem' }}>Rank</th>
-            <th style={{ textAlign: 'left', padding: '0.5rem' }}>Player</th>
-            <th style={{ textAlign: 'right', padding: '0.5rem' }}>Points</th>
-            <th style={{ textAlign: 'right', padding: '0.5rem' }}>Streak</th>
-          </tr>
-        </thead>
-        <tbody>
-          {displayEntries.map((entry) => (
-            <tr key={entry.playerId} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '0.5rem' }}>{entry.rank}</td>
-              <td style={{ padding: '0.5rem' }}>{entry.nickname || entry.playerId}</td>
-              <td style={{ textAlign: 'right', padding: '0.5rem' }}>{entry.totalPoints}</td>
-              <td style={{ textAlign: 'right', padding: '0.5rem' }}>{entry.streak}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="animate-fade-in">
+      <h3 className="text-lg font-bold text-gray-900 mb-4">
+        Leaderboard {compact && <span className="text-gray-400 font-normal text-sm">Top 5</span>}
+      </h3>
+
+      <div className="space-y-2">
+        {displayEntries.map((entry, i) => (
+          <div
+            key={entry.playerId}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all animate-slide-up ${
+              entry.rank <= 3
+                ? 'bg-gradient-to-r from-brand/5 to-transparent border border-brand/10'
+                : 'bg-white border border-gray-100'
+            }`}
+            style={{ animationDelay: `${i * 50}ms` }}
+          >
+            <span className="w-8 text-center font-bold text-lg">
+              {entry.rank <= 3 ? medals[entry.rank] : <span className="text-gray-400">{entry.rank}</span>}
+            </span>
+            <span className="flex-1 font-medium text-gray-800 truncate">
+              {entry.nickname || entry.playerId.slice(0, 8)}
+            </span>
+            {entry.streak && entry.streak > 1 ? (
+              <span className="text-xs px-2 py-0.5 bg-warning/20 text-warning rounded-full font-medium">
+                {entry.streak} streak
+              </span>
+            ) : null}
+            <span className="font-bold text-brand tabular-nums">
+              {entry.totalPoints.toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

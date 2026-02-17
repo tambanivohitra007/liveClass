@@ -17,11 +17,9 @@ export default function HostSession() {
 
   useEffect(() => {
     if (!quizId) return;
-
     const loadQuestionCount = async () => {
       const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
-      const snapshot = await getDocs(q);
-      setTotalQuestions(snapshot.size);
+      setTotalQuestions((await getDocs(q)).size);
     };
     loadQuestionCount();
   }, [quizId]);
@@ -39,110 +37,148 @@ export default function HostSession() {
 
   const subscribeToSession = (sessionId: string) => {
     onSnapshot(doc(db, 'sessions', sessionId), (snap) => {
-      if (snap.exists()) {
-        setSession({ id: snap.id, ...snap.data() } as Session);
-      }
+      if (snap.exists()) setSession({ id: snap.id, ...snap.data() } as Session);
     });
-
     onSnapshot(collection(db, `sessions/${sessionId}/players`), (snap) => {
-      const playerList = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as SessionPlayer[];
-      setPlayers(playerList);
+      setPlayers(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as SessionPlayer[]);
     });
   };
 
   useEffect(() => {
-    if (!session || !session.quizId) return;
-    if (session.questionState !== 'live') return;
-
+    if (!session || session.questionState !== 'live') return;
     const loadCurrentQuestion = async () => {
       const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
       const snapshot = await getDocs(q);
       const questions = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
-      const current = questions[session.currentQuestionIndex];
-      setCurrentQuestionText(current?.text || '');
+      setCurrentQuestionText(questions[session.currentQuestionIndex]?.text || '');
     };
     loadCurrentQuestion();
   }, [session?.currentQuestionIndex, session?.questionState]);
 
   const startQuestion = async () => {
     if (!session) return;
-    const fn = httpsCallable(functions, 'startQuestion');
-    await fn({ sessionId: session.id, qIndex: session.currentQuestionIndex });
+    await httpsCallable(functions, 'startQuestion')({ sessionId: session.id, qIndex: session.currentQuestionIndex });
   };
 
   const nextQuestion = async () => {
     if (!session) return;
-    const nextIdx = session.currentQuestionIndex + 1;
-    if (nextIdx >= totalQuestions) return;
-    const fn = httpsCallable(functions, 'startQuestion');
-    await fn({ sessionId: session.id, qIndex: nextIdx });
+    await httpsCallable(functions, 'startQuestion')({ sessionId: session.id, qIndex: session.currentQuestionIndex + 1 });
   };
 
   const endQuestion = async () => {
     if (!session) return;
-    const fn = httpsCallable(functions, 'endQuestion');
-    await fn({ sessionId: session.id });
+    await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
   };
 
-  const endSession = async () => {
-    if (!session) return;
-    navigate(`/session/${session.id}/results`);
-  };
+  useEffect(() => { createSession(); }, [quizId]);
 
-  useEffect(() => {
-    createSession();
-  }, [quizId]);
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-danger mb-4">{error}</p>
+        <button onClick={() => navigate('/dashboard')} className="text-brand underline">Back to Dashboard</button>
+      </div>
+    </div>
+  );
 
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
-  if (!session) return <p>Creating session...</p>;
+  if (!session) return (
+    <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+      <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+    </div>
+  );
 
   const isLastQuestion = session.currentQuestionIndex >= totalQuestions - 1;
 
   return (
-    <div>
-      <h1>Live Session</h1>
-      <div style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'center', padding: '1rem', background: '#f5f5f5', borderRadius: '8px' }}>
-        PIN: {session.pinCode}
-      </div>
-      <p>Status: {session.status} | Question State: {session.questionState}</p>
-
-      {session.questionState === 'live' && (
-        <p>Question {session.currentQuestionIndex + 1} of {totalQuestions}: {currentQuestionText}</p>
-      )}
-
-      <h3>Players ({players.length})</h3>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-        {players.map((p) => (
-          <span key={p.id} style={{ padding: '0.25rem 0.75rem', background: '#e3f2fd', borderRadius: '16px' }}>
-            {p.nickname}
-          </span>
-        ))}
+    <div className="min-h-screen bg-surface-dark text-white">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <span className="font-bold text-lg">LiveClass</span>
+        <div className="flex items-center gap-3 text-sm text-white/60">
+          <span>{players.length} player{players.length !== 1 && 's'}</span>
+          <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs capitalize">{session.questionState}</span>
+        </div>
       </div>
 
-      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* PIN Display */}
         {session.status === 'lobby' && (
-          <button onClick={startQuestion}>Start First Question</button>
+          <div className="text-center mb-12 animate-bounce-in">
+            <p className="text-white/50 text-sm uppercase tracking-widest mb-3">Game PIN</p>
+            <div className="inline-block bg-white text-surface-dark rounded-2xl px-12 py-6 shadow-2xl animate-pulse-glow">
+              <span className="text-5xl md:text-7xl font-black tracking-[0.3em]">{session.pinCode}</span>
+            </div>
+            <p className="text-white/40 mt-4 text-sm">Share this PIN with your students</p>
+          </div>
         )}
 
+        {/* Current Question (when live) */}
         {session.questionState === 'live' && (
-          <button onClick={endQuestion}>End Question</button>
+          <div className="text-center mb-8 animate-fade-in">
+            <span className="text-sm text-white/40 uppercase tracking-wider">Question {session.currentQuestionIndex + 1} of {totalQuestions}</span>
+            <h2 className="text-2xl md:text-3xl font-bold mt-2">{currentQuestionText}</h2>
+          </div>
         )}
 
-        {session.questionState === 'reveal' && !isLastQuestion && (
-          <button onClick={nextQuestion}>Next Question</button>
+        {/* Players Grid */}
+        {session.status === 'lobby' && (
+          <div className="mb-8">
+            <h3 className="text-sm text-white/40 uppercase tracking-wider mb-4">Players Joined</h3>
+            <div className="flex flex-wrap gap-2">
+              {players.map((p) => (
+                <span key={p.id} className="px-4 py-2 bg-white/10 backdrop-blur rounded-xl text-sm font-medium animate-fade-in">
+                  {p.nickname}
+                </span>
+              ))}
+              {players.length === 0 && <p className="text-white/30">Waiting for players to join...</p>}
+            </div>
+          </div>
         )}
 
-        {session.questionState === 'reveal' && isLastQuestion && (
-          <button onClick={endSession}>View Results</button>
+        {/* Leaderboard (on reveal) */}
+        {session.questionState === 'reveal' && (
+          <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-8 animate-slide-up">
+            <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} />
+          </div>
         )}
+
+        {/* Controls */}
+        <div className="flex justify-center gap-4 mt-8">
+          {session.status === 'lobby' && (
+            <button
+              onClick={startQuestion}
+              disabled={players.length === 0}
+              className="px-8 py-4 bg-success text-white font-bold text-lg rounded-xl hover:brightness-110 transition-all disabled:opacity-40 shadow-lg"
+            >
+              Start Game
+            </button>
+          )}
+          {session.questionState === 'live' && (
+            <button
+              onClick={endQuestion}
+              className="px-8 py-4 bg-danger text-white font-bold text-lg rounded-xl hover:brightness-110 transition-all shadow-lg"
+            >
+              End Question
+            </button>
+          )}
+          {session.questionState === 'reveal' && !isLastQuestion && (
+            <button
+              onClick={nextQuestion}
+              className="px-8 py-4 bg-brand text-white font-bold text-lg rounded-xl hover:bg-brand-dark transition-all shadow-lg"
+            >
+              Next Question
+            </button>
+          )}
+          {session.questionState === 'reveal' && isLastQuestion && (
+            <button
+              onClick={() => navigate(`/session/${session.id}/results`)}
+              className="px-8 py-4 bg-brand text-white font-bold text-lg rounded-xl hover:bg-brand-dark transition-all shadow-lg"
+            >
+              View Results
+            </button>
+          )}
+        </div>
       </div>
-
-      {session.questionState === 'reveal' && (
-        <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} />
-      )}
     </div>
   );
 }

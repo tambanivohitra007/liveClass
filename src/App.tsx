@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
+import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -12,12 +13,16 @@ import AssignmentCreate from './pages/teacher/AssignmentCreate';
 import JoinGame from './pages/student/JoinGame';
 import PlayGame from './pages/student/PlayGame';
 import PlayAssignment from './pages/student/PlayAssignment';
+import './App.css';
 
-function App() {
-  useAuthListener();
+function AppContent() {
+  const location = useLocation();
+  // Hide navbar on full-screen game pages
+  const hideNavbar = location.pathname.startsWith('/play/') || location.pathname.startsWith('/quiz/') && location.pathname.endsWith('/host');
 
   return (
-    <BrowserRouter>
+    <>
+      {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -26,13 +31,22 @@ function App() {
         <Route path="/play/:sessionId/:playerId" element={<PlayGame />} />
         <Route path="/assignment/:assignmentId" element={<PlayAssignment />} />
 
-        {/* Protected teacher routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/quiz/:quizId" element={<ProtectedRoute><QuizEditor /></ProtectedRoute>} />
         <Route path="/quiz/:quizId/host" element={<ProtectedRoute><HostSession /></ProtectedRoute>} />
         <Route path="/session/:sessionId/results" element={<ProtectedRoute><SessionResults /></ProtectedRoute>} />
         <Route path="/assignment/new" element={<ProtectedRoute><AssignmentCreate /></ProtectedRoute>} />
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  useAuthListener();
+
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
