@@ -68,6 +68,7 @@ export default function QuizEditor() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiDifficulty, setAiDifficulty] = useState('mixed');
   const [aiDescription, setAiDescription] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function QuizEditor() {
         setDescription(data.description);
         setVisibility(data.visibility || 'private');
         setSelectedCollectionId(data.collectionId || '');
+        setCoverImageUrl(data.coverImageUrl || '');
       }
       const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
       const snapshot = await getDocs(q);
@@ -271,6 +273,7 @@ export default function QuizEditor() {
         const quizRef = await addDoc(collection(db, 'quizzes'), {
           ownerId: user.id, title, description, visibility,
           collectionId: selectedCollectionId || null,
+          coverImageUrl: coverImageUrl || null,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
         });
         savedQuizId = quizRef.id;
@@ -278,6 +281,7 @@ export default function QuizEditor() {
         await setDoc(doc(db, 'quizzes', savedQuizId), {
           ownerId: user.id, title, description, visibility,
           collectionId: selectedCollectionId || null,
+          coverImageUrl: coverImageUrl || null,
           updatedAt: serverTimestamp(),
         }, { merge: true });
       }
@@ -789,6 +793,14 @@ export default function QuizEditor() {
                   Quiz settings
                 </label>
                 <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Cover Image</label>
+                    <ImageUpload
+                      currentUrl={coverImageUrl}
+                      onUpload={(url) => setCoverImageUrl(url)}
+                      path={`quizzes/${quizId || 'new'}`}
+                    />
+                  </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Description</label>
                     <textarea

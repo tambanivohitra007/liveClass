@@ -35,6 +35,7 @@ export interface Quiz {
   description: string;
   visibility: 'private' | 'org' | 'public';
   collectionId?: string | null;
+  coverImageUrl?: string;
   createdAt: number;
   updatedAt: number;
 }

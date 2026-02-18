@@ -460,12 +460,18 @@ export default function Dashboard() {
                 key={quiz.id}
                 className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col animate-fade-in"
               >
-                {/* Gradient Banner */}
-                <div className={`h-32 ${getCardGradient(quiz)} relative overflow-hidden rounded-t-2xl`}>
-                  {/* Decorative shapes */}
-                  <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
-                  <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
-                  <div className="absolute left-1/2 -top-8 w-32 h-32 rounded-full bg-white/5" />
+                {/* Banner */}
+                <div className={`h-32 ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} relative overflow-hidden rounded-t-2xl`}>
+                  {quiz.coverImageUrl ? (
+                    <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      {/* Decorative shapes */}
+                      <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
+                      <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
+                      <div className="absolute left-1/2 -top-8 w-32 h-32 rounded-full bg-white/5" />
+                    </>
+                  )}
 
                   {/* Collection badge */}
                   {collName && (
