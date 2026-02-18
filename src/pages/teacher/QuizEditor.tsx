@@ -488,11 +488,16 @@ export default function QuizEditor() {
                             const newOpts = [...activeQ.options];
                             newOpts[oi] = e.target.value;
                             updateQuestion(activeIndex, { options: newOpts });
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                          }}
+                          ref={(el) => {
+                            if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
                           }}
                           placeholder={card.placeholder}
                           disabled={activeQ.type === 'tf'}
-                          rows={2}
-                          className="flex-1 bg-transparent border-none outline-none text-white font-medium placeholder:text-white/40 text-base resize-none wrap-break-word"
+                          rows={1}
+                          className="flex-1 bg-transparent border-none outline-none text-white font-medium placeholder:text-white/40 text-base resize-none"
                         />
                         {activeQ.type !== 'poll' && (
                           <button
