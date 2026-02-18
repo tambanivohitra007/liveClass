@@ -796,6 +796,7 @@ Question type: ${questionType}.
 
 ${metaInstruction}
 ${typeTemplates[questionType] || typeTemplates.mcq}
+IMPORTANT: "correctAnswers" must contain values that EXACTLY match entries in the "options" array (same text, same casing).
 Make questions educational, varied in difficulty, and factually accurate.`;
 
     try {

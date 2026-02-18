@@ -139,11 +139,25 @@ export default function QuizEditor() {
         description: aiDescription,
         difficulty: aiDifficulty,
       });
-      const generated = result.data.questions.map((q) => ({
-        ...q,
-        quizId: quizId || '',
-        matchOptions: q.matchOptions || undefined,
-      }));
+      const generated = result.data.questions.map((q) => {
+        // Normalize correctAnswers to match exact option text (AI may return slight mismatches)
+        let correctAnswers = q.correctAnswers || [];
+        if (q.options && q.options.length > 0 && correctAnswers.length > 0) {
+          correctAnswers = correctAnswers.map((ca) => {
+            const exact = q.options.find((o) => o === ca);
+            if (exact) return exact;
+            // Fallback: case-insensitive match
+            const fuzzy = q.options.find((o) => o.trim().toLowerCase() === ca.trim().toLowerCase());
+            return fuzzy || ca;
+          });
+        }
+        return {
+          ...q,
+          correctAnswers,
+          quizId: quizId || '',
+          matchOptions: q.matchOptions || undefined,
+        };
+      });
       setQuestions([...questions, ...generated]);
       if (result.data.note) addToast('info', result.data.note);
       else addToast('success', `${generated.length} questions generated`);
