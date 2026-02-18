@@ -335,6 +335,13 @@ export default function QuizEditor() {
           />
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={openAiModal}
+            className="px-4 py-2 bg-gradient-to-r from-brand to-accent text-white font-medium rounded-xl hover:brightness-110 transition-all flex items-center gap-2 text-sm"
+          >
+            <Sparkles className="w-4 h-4" />
+            AI Generate
+          </button>
           {!isNew && (
             <button
               onClick={() => navigate(`/quiz/${quizId}/preview`)}
@@ -409,21 +416,14 @@ export default function QuizEditor() {
             ))}
           </div>
 
-          {/* Add Question Buttons */}
-          <div className="p-3 border-t border-gray-100 space-y-2">
+          {/* Add Question Button */}
+          <div className="p-3 border-t border-gray-100">
             <button
               onClick={addQuestion}
               className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
               Add Question
-            </button>
-            <button
-              onClick={openAiModal}
-              className="w-full py-2.5 bg-gradient-to-r from-brand to-accent text-white text-sm font-medium rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              AI Generate
             </button>
           </div>
         </aside>
@@ -439,7 +439,7 @@ export default function QuizEditor() {
                   onChange={(e) => updateQuestion(activeIndex, { text: e.target.value })}
                   placeholder={activeQ.type === 'fill_blank' ? 'Enter question with ___ for blanks' : 'Click to start typing your question'}
                   rows={3}
-                  className="w-full px-6 py-5 text-xl font-medium text-center text-gray-900 placeholder:text-gray-300 border-none outline-none resize-none bg-transparent"
+                  className="w-full px-6 py-5 text-xl font-medium text-center text-gray-900 placeholder:text-gray-300 border-none outline-none resize-none bg-transparent wrap-break-word"
                 />
               </div>
 
@@ -477,12 +477,12 @@ export default function QuizEditor() {
                     return (
                       <div
                         key={oi}
-                        className={`relative ${card.bg} rounded-2xl p-4 min-h-[80px] flex items-center gap-3 shadow-sm transition-all ${
+                        className={`relative ${card.bg} rounded-2xl p-4 min-h-[80px] flex items-start gap-3 shadow-sm transition-all ${
                           isCorrect ? 'ring-3 ring-white/60' : ''
                         }`}
                       >
-                        <CardIcon className="w-6 h-6 text-white/60 shrink-0" fill="rgba(255,255,255,0.2)" />
-                        <input
+                        <CardIcon className="w-6 h-6 text-white/60 shrink-0 mt-1" fill="rgba(255,255,255,0.2)" />
+                        <textarea
                           value={opt}
                           onChange={(e) => {
                             const newOpts = [...activeQ.options];
@@ -491,7 +491,8 @@ export default function QuizEditor() {
                           }}
                           placeholder={card.placeholder}
                           disabled={activeQ.type === 'tf'}
-                          className="flex-1 bg-transparent border-none outline-none text-white font-medium placeholder:text-white/40 text-base"
+                          rows={2}
+                          className="flex-1 bg-transparent border-none outline-none text-white font-medium placeholder:text-white/40 text-base resize-none wrap-break-word"
                         />
                         {activeQ.type !== 'poll' && (
                           <button
@@ -502,7 +503,7 @@ export default function QuizEditor() {
                                 : [...activeQ.correctAnswers, opt];
                               updateQuestion(activeIndex, { correctAnswers: correct });
                             }}
-                            className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                            className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
                               isCorrect
                                 ? 'border-white bg-white text-green-600'
                                 : 'border-white/40 hover:border-white/70'
