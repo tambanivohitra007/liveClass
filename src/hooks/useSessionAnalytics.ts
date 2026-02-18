@@ -14,6 +14,7 @@ interface QuestionAnalytics {
 interface AnswerDistribution {
   questionIndex: number;
   questionText: string;
+  questionType: string;
   options: string[];
   correctAnswers: string[];
   distribution: { label: string; count: number; isCorrect: boolean }[];
@@ -147,6 +148,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
           answerDistributions.push({
             questionIndex: idx,
             questionText: q.text,
+            questionType: q.type,
             options: q.options,
             correctAnswers: q.correctAnswers,
             distribution: [
@@ -170,6 +172,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
         answerDistributions.push({
           questionIndex: idx,
           questionText: q.text,
+          questionType: q.type,
           options: q.options,
           correctAnswers: q.correctAnswers,
           distribution: dist,

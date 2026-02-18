@@ -18,30 +18,42 @@ export default function Discover() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [cloning, setCloning] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const loadPublicQuizzes = async () => {
-      const q = query(
-        collection(db, 'quizzes'),
-        where('visibility', '==', 'public'),
-        orderBy('updatedAt', 'desc'),
-        fbLimit(50)
-      );
-      const snapshot = await getDocs(q);
-      const quizzesData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as PublicQuiz[];
+      try {
+        const q = query(
+          collection(db, 'quizzes'),
+          where('visibility', '==', 'public'),
+          orderBy('updatedAt', 'desc'),
+          fbLimit(50)
+        );
+        const snapshot = await getDocs(q);
+        const quizzesData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as PublicQuiz[];
 
-      const enriched = await Promise.all(
-        quizzesData.map(async (quiz) => {
-          const qSnap = await getDocs(query(collection(db, 'questions'), where('quizId', '==', quiz.id)));
-          return { ...quiz, questionCount: qSnap.size };
-        })
-      );
+        const enriched = await Promise.all(
+          quizzesData.map(async (quiz) => {
+            try {
+              const qSnap = await getDocs(query(collection(db, 'questions'), where('quizId', '==', quiz.id)));
+              return { ...quiz, questionCount: qSnap.size };
+            } catch {
+              return { ...quiz, questionCount: 0 };
+            }
+          })
+        );
 
-      setQuizzes(enriched);
-      setLoading(false);
+        setQuizzes(enriched);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to load quizzes';
+        setError(msg);
+        addToast('error', 'Failed to load public quizzes');
+      } finally {
+        setLoading(false);
+      }
     };
     loadPublicQuizzes();
-  }, []);
+  }, [addToast]);
 
   const handleClone = async (quiz: PublicQuiz) => {
     if (!user) {
@@ -99,7 +111,18 @@ export default function Discover() {
         />
       </div>
 
-      {loading ? (
+      {error ? (
+        <div className="text-center py-16">
+          <Globe className="w-12 h-12 text-danger/40 mx-auto mb-4" />
+          <p className="text-gray-500 mb-2">Something went wrong loading quizzes.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-sm text-brand font-medium hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      ) : loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
