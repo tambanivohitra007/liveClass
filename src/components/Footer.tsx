@@ -18,6 +18,8 @@ export default function Footer() {
             <Link to="/join" className="hover:text-white transition-colors no-underline">Join Game</Link>
             <Link to="/dashboard" className="hover:text-white transition-colors no-underline">Dashboard</Link>
             <Link to="/history" className="hover:text-white transition-colors no-underline">History</Link>
+            <Link to="/privacy" className="hover:text-white transition-colors no-underline">Privacy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors no-underline">Terms</Link>
           </div>
 
           {/* Social */}

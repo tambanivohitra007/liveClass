@@ -24,6 +24,8 @@ import QuizPreview from './pages/teacher/QuizPreview';
 import CollectionView from './pages/teacher/CollectionView';
 import Discover from './pages/Discover';
 import Flashcards from './pages/Flashcards';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
 import './App.css';
 
 function AppContent() {
@@ -44,6 +46,8 @@ function AppContent() {
         <Route path="/play/:sessionId/:playerId" element={<PlayGame />} />
         <Route path="/assignment/:assignmentId" element={<PlayAssignment />} />
         <Route path="/discover" element={<Discover />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
 
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />

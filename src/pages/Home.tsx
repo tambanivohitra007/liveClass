@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Zap, BarChart3, WifiOff, Users, BookOpen, Shield,
-  Play, ArrowRight, Sparkles, GraduationCap, Globe,
+  Play, ArrowRight, Sparkles,
   ClipboardList, Trophy, Share2
 } from 'lucide-react';
 
@@ -16,45 +15,6 @@ export default function Home() {
       navigate(`/join?pin=${pin}`);
     }
   };
-
-  const features = [
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: 'Real-Time Play',
-      desc: 'Students answer live with instant feedback, speed bonuses, and streak rewards.',
-      color: 'bg-answer-red/10 text-answer-red',
-    },
-    {
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: 'Rich Analytics',
-      desc: 'Per-question accuracy, response time stats, and exportable CSV reports.',
-      color: 'bg-answer-blue/10 text-answer-blue',
-    },
-    {
-      icon: <WifiOff className="w-6 h-6" />,
-      title: 'Works Offline',
-      desc: 'Assignment mode with offline caching. Answers sync when students reconnect.',
-      color: 'bg-answer-green/10 text-answer-green',
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: 'Anti-Cheat Built In',
-      desc: 'Session tokens, server-authoritative scoring, and tab-switch detection.',
-      color: 'bg-brand/10 text-brand',
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: 'Team Mode',
-      desc: 'Split players into color-coded teams with automatic assignment and group scoring.',
-      color: 'bg-answer-yellow/10 text-answer-yellow',
-    },
-    {
-      icon: <BookOpen className="w-6 h-6" />,
-      title: '8 Question Types',
-      desc: 'MCQ, True/False, Short Answer, Matching, Ordering, Fill Blank, Polls, and Slides.',
-      color: 'bg-accent/10 text-accent-dark',
-    },
-  ];
 
   const steps = [
     { icon: <ClipboardList className="w-7 h-7" />, title: 'Pick a Quiz', desc: 'Browse our library of public quizzes or create your own custom challenge from scratch.' },
