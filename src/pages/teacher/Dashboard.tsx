@@ -136,15 +136,28 @@ export default function Dashboard() {
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const quizzesData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as QuizWithMeta[];
+      const quizIds = quizzesData.map((qz) => qz.id);
 
+      // Batch: fetch ALL questions for all quizzes in one query instead of N+1
       let totalQ = 0;
-      const enriched = await Promise.all(
-        quizzesData.map(async (quiz) => {
-          const qSnap = await getDocs(query(collection(db, 'questions'), where('quizId', '==', quiz.id)));
-          totalQ += qSnap.size;
-          return { ...quiz, questionCount: qSnap.size };
-        })
-      );
+      const questionCountMap = new Map<string, number>();
+      if (quizIds.length > 0) {
+        // Firestore 'in' supports up to 30 values; chunk if needed
+        for (let i = 0; i < quizIds.length; i += 30) {
+          const chunk = quizIds.slice(i, i + 30);
+          const qSnap = await getDocs(query(collection(db, 'questions'), where('quizId', 'in', chunk)));
+          qSnap.docs.forEach((d) => {
+            const qid = d.data().quizId as string;
+            questionCountMap.set(qid, (questionCountMap.get(qid) || 0) + 1);
+            totalQ++;
+          });
+        }
+      }
+
+      const enriched = quizzesData.map((quiz) => ({
+        ...quiz,
+        questionCount: questionCountMap.get(quiz.id) || 0,
+      }));
 
       const sessionsSnap = await getDocs(query(collection(db, 'sessions'), where('hostId', '==', user.id)));
 
