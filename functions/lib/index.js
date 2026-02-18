@@ -38,10 +38,12 @@ const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
+const params_1 = require("firebase-functions/params");
 admin.initializeApp();
 const db = admin.firestore();
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
+const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 const FUNCTION_CONFIG = {
     region: REGION,
     memory: "256MiB",
@@ -515,7 +517,7 @@ exports.reportViolation = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) =
     return { success: true };
 });
 // --- AI Question Generator ---
-exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "512MiB" }, async (request) => {
+exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "512MiB", secrets: [geminiApiKey] }, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
@@ -524,7 +526,7 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "5
         throw new https_1.HttpsError("invalid-argument", "Topic must be at least 3 characters");
     }
     const clampedCount = Math.min(Math.max(count, 1), 10);
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = geminiApiKey.value();
     if (!apiKey) {
         // Fallback: generate template questions without AI
         const fallbackQuestion = (i) => {

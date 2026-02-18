@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { db } from '../../lib/firebase';
 import {
   ArrowLeft, Eye, ChevronLeft, ChevronRight, Clock, Flame, Trophy,
-  Triangle, Diamond, Circle, Square, Check, X as XIcon, Zap
+  Triangle, Diamond, Circle, Square, Hexagon, Star, Check, X as XIcon, Zap
 } from 'lucide-react';
 import type { Quiz, Question } from '../../types/models';
 
@@ -13,6 +13,8 @@ const answerColors = [
   'bg-answer-blue',
   'bg-answer-yellow',
   'bg-answer-green',
+  'bg-answer-purple',
+  'bg-answer-orange',
 ];
 
 const answerIcons = [
@@ -20,6 +22,8 @@ const answerIcons = [
   <Diamond key="d" className="w-5 h-5 shrink-0" />,
   <Circle key="c" className="w-5 h-5 shrink-0" />,
   <Square key="s" className="w-5 h-5 shrink-0" />,
+  <Hexagon key="h" className="w-5 h-5 shrink-0" />,
+  <Star key="st" className="w-5 h-5 shrink-0" />,
 ];
 
 type PreviewState = 'answering' | 'revealed';
@@ -291,7 +295,7 @@ export default function QuizPreview() {
                   onClick={() => handleSelect(opt)}
                   disabled={revealed}
                   className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all relative ${
-                    answerColors[i % 4]
+                    answerColors[i % answerColors.length]
                   } ${
                     selected && !revealed ? 'ring-4 ring-white scale-95' : ''
                   } ${
@@ -304,7 +308,7 @@ export default function QuizPreview() {
                     !revealed ? 'active:scale-95' : ''
                   }`}
                 >
-                  {answerIcons[i % 4]}
+                  {answerIcons[i % answerIcons.length]}
                   <span className="truncate px-2">{opt}</span>
                   {revealed && correct && (
                     <div className="absolute top-2 right-2 w-6 h-6 bg-success rounded-full flex items-center justify-center">
@@ -355,7 +359,7 @@ export default function QuizPreview() {
                   pairWrong ? 'border-danger bg-danger/10' :
                   matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
                 }`}>
-                  <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % 4]}`}>
+                  <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % answerColors.length]}`}>
                     {left}
                   </span>
                   <span className="text-white/30">&rarr;</span>

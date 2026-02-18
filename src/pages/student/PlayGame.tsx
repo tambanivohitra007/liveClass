@@ -6,7 +6,7 @@ import { db, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
-import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Hexagon, Star, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
@@ -30,6 +30,8 @@ const answerColors = [
   'bg-answer-blue hover:brightness-110',
   'bg-answer-yellow hover:brightness-110',
   'bg-answer-green hover:brightness-110',
+  'bg-answer-purple hover:brightness-110',
+  'bg-answer-orange hover:brightness-110',
 ];
 
 const answerIcons = [
@@ -37,6 +39,8 @@ const answerIcons = [
   <Diamond key="d" className="w-5 h-5 shrink-0" />,
   <Circle key="c" className="w-5 h-5 shrink-0" />,
   <Square key="s" className="w-5 h-5 shrink-0" />,
+  <Hexagon key="h" className="w-5 h-5 shrink-0" />,
+  <Star key="st" className="w-5 h-5 shrink-0" />,
 ];
 
 export default function PlayGame() {
@@ -365,14 +369,14 @@ export default function PlayGame() {
                 }}
                 disabled={submitted}
                 className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-                  answerColors[i % 4]
+                  answerColors[i % answerColors.length]
                 } ${
                   selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
                 } ${
                   submitted ? 'opacity-60' : 'active:scale-95'
                 }`}
               >
-                {answerIcons[i % 4]}
+                {answerIcons[i % answerIcons.length]}
                 <span className="truncate px-2">{opt}</span>
               </button>
             ))}
@@ -402,7 +406,7 @@ export default function PlayGame() {
               <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
                 matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
               }`}>
-                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % 4].split(' ')[0]}`}>
+                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % answerColors.length].split(' ')[0]}`}>
                   {left}
                 </span>
                 <span className="text-white/30">&rarr;</span>
@@ -501,14 +505,14 @@ export default function PlayGame() {
                 onClick={() => { if (!submitted) setSelectedAnswer(opt); }}
                 disabled={submitted}
                 className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all ${
-                  answerColors[i % 4]
+                  answerColors[i % answerColors.length]
                 } ${
                   selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
                 } ${
                   submitted ? 'opacity-60' : 'active:scale-95'
                 }`}
               >
-                {answerIcons[i % 4]}
+                {answerIcons[i % answerIcons.length]}
                 <span className="truncate px-2">{opt}</span>
               </button>
             ))}

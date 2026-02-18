@@ -9,7 +9,7 @@ import ImageUpload from '../../components/ImageUpload';
 import { confirmAction } from '../../lib/swal';
 import {
   GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
-  Sparkles, X as XIcon, Triangle, Diamond, Circle, Square, ArrowLeft,
+  Sparkles, X as XIcon, Triangle, Diamond, Circle, Square, Hexagon, Star, ArrowLeft,
   Clock, Image as ImageIcon, Type, FileText,
 } from 'lucide-react';
 import type { Quiz, Question, QuestionType, Collection } from '../../types/models';
@@ -39,6 +39,8 @@ const ANSWER_CARDS = [
   { bg: 'bg-answer-blue', border: 'border-answer-blue', icon: Diamond, placeholder: 'Add answer' },
   { bg: 'bg-answer-yellow', border: 'border-answer-yellow', icon: Circle, placeholder: 'Add answer' },
   { bg: 'bg-answer-green', border: 'border-answer-green', icon: Square, placeholder: 'Add answer' },
+  { bg: 'bg-answer-purple', border: 'border-answer-purple', icon: Hexagon, placeholder: 'Add answer' },
+  { bg: 'bg-answer-orange', border: 'border-answer-orange', icon: Star, placeholder: 'Add answer' },
 ];
 
 export default function QuizEditor() {

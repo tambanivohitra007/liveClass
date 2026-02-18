@@ -5,6 +5,8 @@ const KAHOOT_COLORS = [
   'bg-answer-blue',
   'bg-answer-yellow',
   'bg-answer-green',
+  'bg-answer-purple',
+  'bg-answer-orange',
 ];
 
 interface DistributionData {

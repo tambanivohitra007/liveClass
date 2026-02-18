@@ -2,12 +2,14 @@ import * as admin from "firebase-admin";
 import * as crypto from "crypto";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { defineSecret } from "firebase-functions/params";
 
 admin.initializeApp();
 const db = admin.firestore();
 
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 const FUNCTION_CONFIG = {
   region: REGION,
@@ -605,7 +607,7 @@ export const reportViolation = onCall(FUNCTION_CONFIG, async (request) => {
 
 // --- AI Question Generator ---
 export const generateQuestions = onCall(
-  { ...FUNCTION_CONFIG, memory: "512MiB" as const },
+  { ...FUNCTION_CONFIG, memory: "512MiB" as const, secrets: [geminiApiKey] },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Must be logged in");
@@ -633,7 +635,7 @@ export const generateQuestions = onCall(
 
     const clampedCount = Math.min(Math.max(count, 1), 10);
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = geminiApiKey.value();
     if (!apiKey) {
       // Fallback: generate template questions without AI
       const fallbackQuestion = (i: number) => {
