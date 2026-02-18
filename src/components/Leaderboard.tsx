@@ -15,6 +15,8 @@ interface LeaderboardProps {
   sessionId: string;
   top10Snapshot?: LeaderboardPlayer[];
   compact?: boolean;
+  currentQuestion?: number;
+  totalQuestions?: number;
 }
 
 const AVATAR_COLORS = [
@@ -37,7 +39,7 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export default function Leaderboard({ sessionId, top10Snapshot, compact }: LeaderboardProps) {
+export default function Leaderboard({ sessionId, top10Snapshot, compact, currentQuestion, totalQuestions }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardPlayer[]>([]);
   const [nicknameMap, setNicknameMap] = useState<Record<string, string>>({});
 
@@ -114,9 +116,22 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
       {/* Header */}
       <div className="text-center mb-5">
         <h3 className="text-xl font-bold text-white mb-1">Current Standings</h3>
-        <p className="text-brand/70 text-sm font-medium">
-          {compact ? 'Top 5' : `Top ${displayEntries.length}`}
-        </p>
+        <div className="flex items-center justify-center gap-3">
+          <p className="text-brand/70 text-sm font-medium">
+            {compact ? 'Top 5' : `Top ${displayEntries.length}`}
+          </p>
+          {currentQuestion != null && totalQuestions != null && totalQuestions > 0 && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-white/20" />
+              <p className="text-white/40 text-sm font-medium">
+                Q {currentQuestion}/{totalQuestions}
+                {currentQuestion < totalQuestions && (
+                  <span className="text-white/25"> &middot; {totalQuestions - currentQuestion} left</span>
+                )}
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* #1 Hero Card */}

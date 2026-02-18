@@ -697,7 +697,7 @@ export default function HostSession() {
           )}
 
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-4 animate-slide-up">
-            <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} />
+            <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} currentQuestion={session.currentQuestionIndex + 1} totalQuestions={totalQuestions} />
           </div>
 
           {violations.size > 0 && (

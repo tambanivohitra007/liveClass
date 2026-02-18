@@ -268,7 +268,7 @@ export default function SessionResults() {
 
       {/* Leaderboard */}
       <div className="bg-surface-dark rounded-2xl shadow-sm p-6">
-        <Leaderboard sessionId={sessionId} />
+        <Leaderboard sessionId={sessionId} currentQuestion={analytics.length} totalQuestions={analytics.length} />
       </div>
     </div>
   );

@@ -56,6 +56,7 @@ export default function PlayGame() {
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [myTeam, setMyTeam] = useState<{ name: string; color: string } | null>(null);
   const [muted, setMutedState] = useState(isMuted());
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
@@ -99,6 +100,7 @@ export default function PlayGame() {
       const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
       const snapshot = await getDocs(q);
       const questions = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
+      setTotalQuestions(questions.length);
       const qIdx = session.questionOrder
         ? session.questionOrder[session.currentQuestionIndex]
         : session.currentQuestionIndex;
@@ -259,7 +261,7 @@ export default function PlayGame() {
           <p className="text-white/50 mb-8">Thanks for playing!</p>
           {sessionId && (
             <div className="bg-white/5 backdrop-blur rounded-2xl p-6">
-              <Leaderboard sessionId={sessionId} />
+              <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
             </div>
           )}
         </div>
@@ -296,7 +298,7 @@ export default function PlayGame() {
           )}
           {sessionId && (
             <div className="bg-white/5 backdrop-blur rounded-2xl p-6 animate-slide-up">
-              <Leaderboard sessionId={sessionId} compact />
+              <Leaderboard sessionId={sessionId} compact currentQuestion={(session.currentQuestionIndex || 0) + 1} totalQuestions={totalQuestions} />
             </div>
           )}
           <p className="text-white/30 mt-6 text-sm">Next question coming up...</p>
