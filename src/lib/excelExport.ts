@@ -446,6 +446,20 @@ export async function exportSessionExcel(params: ExportParams): Promise<void> {
   ws4.getColumn(3).width = 14;
   ws4.getColumn(4).width = 14;
 
+  // ════════════════════════════════════════════════════════════
+  // Sheet 5: Moodle (Simple LMS import format)
+  // ════════════════════════════════════════════════════════════
+  const wsMoodle = wb.addWorksheet('Moodle');
+  wsMoodle.columns = [
+    { header: 'Player Name', key: 'name', width: 25 },
+    { header: 'Percentage', key: 'pct', width: 14 },
+  ];
+  wsMoodle.getRow(1).font = { bold: true };
+
+  sortedPlayers.forEach((p) => {
+    wsMoodle.addRow({ name: p.nickname, pct: p.accuracyPercent });
+  });
+
   // ── Download ──
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], {

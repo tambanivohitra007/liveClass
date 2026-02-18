@@ -6,7 +6,7 @@ import { db, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
-import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Hexagon, Star, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Hexagon, Star, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
@@ -65,6 +65,11 @@ export default function PlayGame() {
   const [redirectCountdown, setRedirectCountdown] = useState(15);
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
   const resultUnsubRef = useRef<(() => void) | null>(null);
+
+  // Student-paced mode state
+  const [localQIndex, setLocalQIndex] = useState(0);
+  const [spFinished, setSpFinished] = useState(false);
+  const isStudentPaced = session?.paceMode === 'student' && session?.questionState === 'student_paced';
   const { showWarning, dismissWarning } = useAntiCheat({
     sessionId,
     playerId,
@@ -112,9 +117,10 @@ export default function PlayGame() {
     return () => { cancelled = true; };
   }, [session?.quizId]);
 
-  // Pick current question from cache when question state changes
+  // Pick current question from cache when question state changes (teacher-led only)
   useEffect(() => {
     if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
+    if (session.paceMode === 'student') return;
     // Clean up previous result listener
     if (resultUnsubRef.current) {
       resultUnsubRef.current();
@@ -159,6 +165,41 @@ export default function PlayGame() {
     }
   }, [session?.currentQuestionIndex, session?.questionState, allQuestions]);
 
+  // Student-paced: pick question from local index
+  useEffect(() => {
+    if (!isStudentPaced || allQuestions.length === 0 || spFinished) return;
+    if (resultUnsubRef.current) {
+      resultUnsubRef.current();
+      resultUnsubRef.current = null;
+    }
+    setSubmitted(false);
+    setSubmitFailed(false);
+    setSelectedAnswer('');
+    setMatchingPairs({});
+    setFillAnswers([]);
+    setOrderingItems([]);
+    setFeedback(null);
+
+    const qIdx = session?.questionOrder
+      ? session.questionOrder[localQIndex]
+      : localQIndex;
+    const current = allQuestions[qIdx];
+    if (current) {
+      setCurrentQuestion(current);
+      setTimeLeft(current.timeLimitSec);
+      if (current.type === 'ordering') {
+        setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
+      }
+      if (current.type === 'matching' && current.matchOptions) {
+        setShuffledMatchOptions([...current.matchOptions].sort(() => Math.random() - 0.5));
+      }
+      if (current.type === 'fill_blank') {
+        const blankCount = (current.text.match(/___/g) || []).length;
+        setFillAnswers(Array(blankCount).fill(''));
+      }
+    }
+  }, [localQIndex, isStudentPaced, allQuestions, spFinished]);
+
   // Cleanup result listener on unmount
   useEffect(() => {
     return () => {
@@ -170,10 +211,23 @@ export default function PlayGame() {
   }, []);
 
   useEffect(() => {
-    if (timeLeft <= 0 || submitted || session?.timerPaused) return;
+    if (timeLeft <= 0 || submitted) return;
+    if (!isStudentPaced && session?.timerPaused) return;
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, submitted, session?.timerPaused]);
+  }, [timeLeft, submitted, session?.timerPaused, isStudentPaced]);
+
+  // Student-paced: auto-submit when timer expires
+  const spAutoSubmitRef = useRef(false);
+  useEffect(() => {
+    if (!isStudentPaced || !currentQuestion || submitted || timeLeft > 0) {
+      if (timeLeft > 0) spAutoSubmitRef.current = false;
+      return;
+    }
+    if (spAutoSubmitRef.current) return;
+    spAutoSubmitRef.current = true;
+    submitAnswer();
+  }, [timeLeft, isStudentPaced, submitted, currentQuestion]);
 
   // Keyboard shortcuts: 1-4 for MCQ, Enter to submit
   useEffect(() => {
@@ -294,6 +348,10 @@ export default function PlayGame() {
             rank: val.rank,
             behindBy: val.behindBy,
           });
+          // Student-paced: write progress after each answer
+          if (isStudentPaced) {
+            writeProgress(localQIndex + 1, localQIndex + 1 >= totalQuestions);
+          }
         }
       };
 
@@ -322,6 +380,24 @@ export default function PlayGame() {
     }
   };
 
+  // Student-paced: write progress to RTDB after answer + advance to next question
+  const writeProgress = async (answered: number, finished: boolean) => {
+    if (!sessionId || !playerId) return;
+    const progressRef = ref(rtdb, `studentProgress/${sessionId}/${playerId}`);
+    await set(progressRef, { answered, finished });
+  };
+
+  const spNextQuestion = async () => {
+    const nextIdx = localQIndex + 1;
+    await writeProgress(nextIdx, nextIdx >= totalQuestions);
+    if (nextIdx >= totalQuestions) {
+      setSpFinished(true);
+    } else {
+      spAutoSubmitRef.current = false;
+      setLocalQIndex(nextIdx);
+    }
+  };
+
   if (!session) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex items-center justify-center">
@@ -343,6 +419,65 @@ export default function PlayGame() {
             </span>
           )}
           <p className="text-white/50">Waiting for the host to start...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Student-paced: All done screen
+  if (isStudentPaced && spFinished) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
+        <div className="max-w-md mx-auto text-center py-12 animate-bounce-in">
+          <PartyPopper className="w-16 h-16 mx-auto mb-4 text-success" />
+          <h1 className="text-3xl font-black mb-2">All Done!</h1>
+          <p className="text-white/50 mb-8">You've completed all {totalQuestions} questions. Wait for the host to end the session.</p>
+          {sessionId && (
+            <div className="bg-white/5 backdrop-blur rounded-2xl p-6">
+              <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Student-paced: Feedback + Next question
+  if (isStudentPaced && feedback && submitted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
+        <Confetti active={feedback.correct} />
+        <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
+        <div className="max-w-md mx-auto text-center py-12">
+          <div className="animate-bounce-in">
+            <div className="flex justify-center mb-4">
+              {feedback.correct
+                ? <PartyPopper className="w-16 h-16 text-success" />
+                : <Frown className="w-16 h-16 text-danger" />}
+            </div>
+            <h2 className={`text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+              {feedback.correct ? 'Correct!' : 'Wrong!'}
+            </h2>
+            <p className="text-4xl font-black text-white mb-2">+{feedback.points}</p>
+            {feedback.rank > 0 && (
+              <p className="text-white/50 text-sm mb-6">
+                You're in <span className="text-white font-bold">{ordinal(feedback.rank)} place</span>
+                {feedback.behindBy > 0 && <> — <span className="text-warning font-bold">{feedback.behindBy} pts</span> behind</>}
+                {feedback.rank === 1 && <span className="text-warning font-bold"> — You're leading!</span>}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={spNextQuestion}
+            className="mt-6 px-10 py-4 bg-brand hover:bg-brand-dark text-white font-bold text-lg rounded-full transition-all flex items-center justify-center gap-2 mx-auto"
+            style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
+          >
+            {localQIndex + 1 >= totalQuestions ? 'See Results' : 'Next Question'}
+            <Play className="w-5 h-5" />
+          </button>
+          <p className="text-white/30 text-sm mt-4">
+            Question {localQIndex + 1} of {totalQuestions}
+          </p>
         </div>
       </div>
     );
@@ -429,7 +564,7 @@ export default function PlayGame() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2 w-20">
-          <span className="text-white/50 text-sm font-medium">Q{(session.currentQuestionIndex || 0) + 1}</span>
+          <span className="text-white/50 text-sm font-medium">Q{isStudentPaced ? localQIndex + 1 : (session.currentQuestionIndex || 0) + 1}</span>
           {myTeam && (
             <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: myTeam.color }}>
               {myTeam.name.split(' ')[0]}

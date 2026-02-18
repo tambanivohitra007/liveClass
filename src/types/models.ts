@@ -82,7 +82,8 @@ export interface Session {
   pinCode: string;
   status: SessionStatus;
   currentQuestionIndex: number;
-  questionState: 'lobby' | 'live' | 'reveal';
+  questionState: 'lobby' | 'live' | 'reveal' | 'student_paced';
+  paceMode?: 'teacher' | 'student';
   joinLocked: boolean;
   startedAt: number | null;
   endedAt: number | null;

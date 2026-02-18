@@ -216,7 +216,7 @@ export default function PrivacyPolicy() {
             please contact us at:
           </p>
           <p className="mt-2 font-medium text-gray-800">
-            Email: privacy@liveclass.app
+            Email: rindra.it@gmail.com
           </p>
         </section>
       </div>

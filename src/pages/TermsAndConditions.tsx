@@ -299,7 +299,7 @@ export default function TermsAndConditions() {
             If you have any questions or concerns about these Terms, please contact us at:
           </p>
           <p className="mt-2 font-medium text-gray-800">
-            Email: legal@liveclass.app
+            Email: rindra.it@gmail.com
           </p>
         </section>
       </div>

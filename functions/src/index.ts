@@ -1477,6 +1477,129 @@ export const regenerateJoinCode = onCall(FUNCTION_CONFIG, async (request) => {
   return { joinCode, expiresAt: Date.now() + FOURTEEN_DAYS_MS };
 });
 
+// --- End Student-Paced Session ---
+export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in");
+  }
+
+  const { sessionId } = request.data as { sessionId: string };
+
+  const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+  if (!sessionDoc.exists) {
+    throw new HttpsError("not-found", "Session not found");
+  }
+
+  const session = sessionDoc.data()!;
+  if (session.hostId !== request.auth.uid) {
+    throw new HttpsError("permission-denied", "Not the host");
+  }
+
+  // Aggregate leaderboard across all shards
+  const shardsSnap = await db
+    .collection(`sessions/${sessionId}/leaderboard_shards`)
+    .get();
+
+  const allPlayers: {
+    playerId: string;
+    nickname: string;
+    totalPoints: number;
+    streak: number;
+  }[] = [];
+
+  shardsSnap.docs.forEach((shardDoc) => {
+    const players = shardDoc.data().players || {};
+    for (const [pid, data] of Object.entries(players)) {
+      const pdata = data as { totalPoints: number; streak: number; nickname?: string };
+      allPlayers.push({
+        playerId: pid,
+        nickname: pdata.nickname || "",
+        totalPoints: pdata.totalPoints,
+        streak: pdata.streak,
+      });
+    }
+  });
+
+  // Backfill nicknames
+  const missingNicknames = allPlayers.filter((p) => !p.nickname);
+  if (missingNicknames.length > 0) {
+    const playersSnap = await db
+      .collection(`sessions/${sessionId}/players`)
+      .get();
+    const nicknameMap = new Map<string, string>();
+    playersSnap.docs.forEach((d) => {
+      nicknameMap.set(d.id, d.data().nickname || "");
+    });
+    missingNicknames.forEach((p) => {
+      p.nickname = nicknameMap.get(p.playerId) || "";
+    });
+  }
+
+  allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
+  const top10 = allPlayers.slice(0, 10).map((p, i) => ({
+    playerId: p.playerId,
+    nickname: p.nickname,
+    totalPoints: p.totalPoints,
+    rank: i + 1,
+  }));
+
+  // Compute per-question analytics
+  const questionsSnap = await db
+    .collection("questions")
+    .where("quizId", "==", session.quizId)
+    .get();
+
+  const batch = db.batch();
+  for (const qDoc of questionsSnap.docs) {
+    const qId = qDoc.id;
+    const answersSnap = await db
+      .collection(`sessions/${sessionId}/answers`)
+      .where("questionId", "==", qId)
+      .get();
+
+    let totalAnswers = 0;
+    let correctCount = 0;
+    let totalTime = 0;
+
+    answersSnap.docs.forEach((d) => {
+      const data = d.data();
+      totalAnswers++;
+      if (data.correct) correctCount++;
+      totalTime += data.timeMs || 0;
+    });
+
+    batch.set(
+      db.doc(`sessions/${sessionId}/analytics/${qId}`),
+      {
+        totalAnswers,
+        correctCount,
+        correctPercent: totalAnswers > 0 ? (correctCount / totalAnswers) * 100 : 0,
+        avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
+      }
+    );
+  }
+
+  await batch.commit();
+
+  // Update session doc
+  await sessionDoc.ref.update({
+    status: "ended",
+    endedAt: Date.now(),
+    questionState: "ended",
+    top10Snapshot: top10,
+  });
+
+  // Clean up RTDB
+  await Promise.all([
+    rtdb.ref(`liveAnswers/${sessionId}`).remove(),
+    rtdb.ref(`results/${sessionId}`).remove(),
+    rtdb.ref(`answerCounts/${sessionId}`).remove(),
+    rtdb.ref(`studentProgress/${sessionId}`).remove(),
+  ]);
+
+  return { success: true, top10 };
+});
+
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 export const cleanupExpiredSessions = onSchedule(
   {

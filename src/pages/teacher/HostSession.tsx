@@ -6,7 +6,7 @@ import { ref, onValue, off } from 'firebase/database';
 import { db, functions, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles } from 'lucide-react';
+import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
@@ -54,6 +54,8 @@ export default function HostSession() {
   const [lobbyTrack, setLobbyTrackState] = useState(getLobbyTrack());
 
   const [answeredCount, setAnsweredCount] = useState(0);
+  const [studentProgress, setStudentProgress] = useState<Record<string, { answered: number; finished: boolean }>>({});
+  const [endingSession, setEndingSession] = useState(false);
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
 
@@ -181,6 +183,30 @@ export default function HostSession() {
     return () => off(countRef, 'value', handler);
   }, [session?.id, session?.questionState, session?.currentQuestionIndex, session?.questionOrder, allQuestions, players.length]);
 
+  // Subscribe to student progress for student-paced mode
+  useEffect(() => {
+    if (!session || session.questionState !== 'student_paced') {
+      setStudentProgress({});
+      return;
+    }
+    const progressRef = ref(rtdb, `studentProgress/${session.id}`);
+    const handler = (snap: import('firebase/database').DataSnapshot) => {
+      setStudentProgress(snap.val() || {});
+    };
+    onValue(progressRef, handler);
+    return () => off(progressRef, 'value', handler);
+  }, [session?.id, session?.questionState]);
+
+  const endStudentPacedSessionFn = async () => {
+    if (!session || endingSession) return;
+    setEndingSession(true);
+    try {
+      await httpsCallable(functions, 'endStudentPacedSession')({ sessionId: session.id });
+    } catch {
+      setEndingSession(false);
+    }
+  };
+
   const startQuestionDirect = async (qIndex: number) => {
     if (!session) return;
     const updateData: Record<string, unknown> = {
@@ -201,7 +227,28 @@ export default function HostSession() {
     await updateDoc(doc(db, 'sessions', session.id), updateData);
   };
 
-  const startQuestion = () => startQuestionDirect(session?.currentQuestionIndex ?? 0);
+  const startQuestion = async () => {
+    if (session?.paceMode === 'student') {
+      // Student-paced: set session live with student_paced questionState
+      const updateData: Record<string, unknown> = {
+        status: 'live',
+        questionState: 'student_paced',
+        questionStartedAt: Date.now(),
+      };
+      // Generate shuffle order if enabled
+      if (session.shuffleQuestions && allQuestions.length > 0) {
+        const indices = Array.from({ length: allQuestions.length }, (_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        updateData.questionOrder = indices;
+      }
+      await updateDoc(doc(db, 'sessions', session.id), updateData);
+      return;
+    }
+    startQuestionDirect(session?.currentQuestionIndex ?? 0);
+  };
   const nextQuestion = () => startQuestionDirect((session?.currentQuestionIndex ?? 0) + 1);
 
   const endQuestion = async () => {
@@ -247,6 +294,13 @@ export default function HostSession() {
 
   useEffect(() => { createSession(); }, [quizId]);
 
+  // Navigate to results when student-paced session ends
+  useEffect(() => {
+    if (session?.status === 'ended' && session?.paceMode === 'student') {
+      navigate(`/session/${session.id}/results`);
+    }
+  }, [session?.status, session?.paceMode]);
+
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-dark">
       <div className="text-center">
@@ -263,6 +317,9 @@ export default function HostSession() {
       if (e.code !== 'Space' || !session) return;
       e.preventDefault();
       if (session.status === 'lobby' && players.length > 0) startQuestion();
+      else if (session.questionState === 'student_paced') {
+        if (confirm('End the session for all students?')) endStudentPacedSessionFn();
+      }
       else if (session.questionState === 'live') endQuestion();
       else if (session.questionState === 'reveal' && session.currentQuestionIndex < totalQuestions - 1) nextQuestion();
     };
@@ -494,6 +551,42 @@ export default function HostSession() {
                     </button>
                   </div>
 
+                  {/* Pace Mode */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <GraduationCap className={`w-5 h-5 ${session.paceMode === 'student' ? 'text-info' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
+                      <span className="text-sm font-medium">Pace</span>
+                    </div>
+                    <div className="flex items-center bg-white/10 rounded-full p-0.5 gap-0.5">
+                      <button
+                        onClick={async () => {
+                          await updateDoc(doc(db, 'sessions', session.id), { paceMode: 'teacher' });
+                        }}
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          session.paceMode !== 'student'
+                            ? 'bg-brand text-white shadow'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        <Presentation className="w-3 h-3 inline mr-1" />
+                        Led
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await updateDoc(doc(db, 'sessions', session.id), { paceMode: 'student' });
+                        }}
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          session.paceMode === 'student'
+                            ? 'bg-info text-white shadow'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        <GraduationCap className="w-3 h-3 inline mr-1" />
+                        Self
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Teams */}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
@@ -706,6 +799,95 @@ export default function HostSession() {
           </p>
         </main>
       )}
+
+      {/* ══════════════════ STUDENT-PACED LIVE ══════════════════ */}
+      {session.questionState === 'student_paced' && (() => {
+        const finishedCount = Object.values(studentProgress).filter((p) => p.finished).length;
+        const totalPlayers = players.length;
+        const progressPercent = totalPlayers > 0 ? Math.round((finishedCount / totalPlayers) * 100) : 0;
+        return (
+          <main className="flex-grow flex flex-col lg:flex-row gap-8 px-8 py-8 max-w-7xl mx-auto w-full">
+            {/* Left: Progress */}
+            <div className="flex-grow flex flex-col gap-6">
+              {/* Progress Card */}
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-fade-in">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                    Student Progress
+                  </h3>
+                  <span className="text-2xl font-black tabular-nums">
+                    {finishedCount}<span className="text-white/30">/{totalPlayers}</span>
+                    <span className="text-sm font-medium text-white/40 ml-2">finished</span>
+                  </span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-brand to-success rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <p className="text-white/40 text-sm mt-2">{progressPercent}% complete</p>
+              </div>
+
+              {/* Per-student progress list */}
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-fade-in">
+                <h4 className="text-sm font-bold text-white/60 mb-4 uppercase tracking-wider">Individual Progress</h4>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {players.map((p) => {
+                    const prog = studentProgress[p.id];
+                    const answered = prog?.answered || 0;
+                    const done = prog?.finished || false;
+                    const pct = totalQuestions > 0 ? Math.round((answered / totalQuestions) * 100) : 0;
+                    return (
+                      <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-white/5">
+                        <span className="font-medium text-sm truncate w-28">{p.nickname}</span>
+                        <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-300 ${done ? 'bg-success' : 'bg-brand'}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-white/40 tabular-nums w-16 text-right">
+                          {answered}/{totalQuestions}
+                        </span>
+                        {done && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Leaderboard + End Button */}
+            <div className="w-full lg:w-96 flex flex-col gap-6 shrink-0">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-slide-up">
+                <Leaderboard sessionId={session.id} currentQuestion={undefined} totalQuestions={totalQuestions} />
+              </div>
+
+              <button
+                onClick={endStudentPacedSessionFn}
+                disabled={endingSession}
+                className="w-full py-4 bg-danger text-white font-bold rounded-full hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ boxShadow: '0 4px 20px rgba(232, 99, 107, 0.35)' }}
+              >
+                {endingSession ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Ending...
+                  </>
+                ) : (
+                  'End Session'
+                )}
+              </button>
+
+              <p className="text-white/15 text-xs text-center">
+                Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to end session
+              </p>
+            </div>
+          </main>
+        );
+      })()}
 
       {/* ══════════════════ REVEAL ══════════════════ */}
       {session.questionState === 'reveal' && (
