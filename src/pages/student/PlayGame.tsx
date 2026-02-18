@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, onSnapshot, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../lib/firebase';
+import { ref, set, serverTimestamp, onValue, off } from 'firebase/database';
+import { db, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
@@ -62,6 +62,7 @@ export default function PlayGame() {
   const [myTeam, setMyTeam] = useState<{ name: string; color: string } | null>(null);
   const [muted, setMutedState] = useState(isMuted());
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
+  const resultUnsubRef = useRef<(() => void) | null>(null);
   const { showWarning, dismissWarning } = useAntiCheat({
     sessionId,
     playerId,
@@ -112,6 +113,11 @@ export default function PlayGame() {
   // Pick current question from cache when question state changes
   useEffect(() => {
     if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
+    // Clean up previous result listener
+    if (resultUnsubRef.current) {
+      resultUnsubRef.current();
+      resultUnsubRef.current = null;
+    }
     setSubmitted(false);
     setSubmitFailed(false);
     setSelectedAnswer('');
@@ -150,6 +156,16 @@ export default function PlayGame() {
       }
     }
   }, [session?.currentQuestionIndex, session?.questionState, allQuestions]);
+
+  // Cleanup result listener on unmount
+  useEffect(() => {
+    return () => {
+      if (resultUnsubRef.current) {
+        resultUnsubRef.current();
+        resultUnsubRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0 || submitted || session?.timerPaused) return;
@@ -227,19 +243,63 @@ export default function PlayGame() {
     playSubmit();
     const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
     const selection = getSelection();
+    const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || '';
+
     try {
-      const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || undefined;
-      const fn = httpsCallable<
-        { sessionId: string; questionId: string; playerId: string; selection: string; timeMs: number; activeToken?: string },
-        { correct: boolean; pointsAwarded: number; rank: number; behindBy: number }
-      >(functions, 'scoreAnswer');
-      const result = await fn({
-        sessionId, questionId: currentQuestion.id, playerId, selection, timeMs: elapsedMs, activeToken,
+      // Write answer to RTDB — instant (~50ms)
+      const answerRef = ref(rtdb, `liveAnswers/${sessionId}/${currentQuestion.id}/${playerId}`);
+      await set(answerRef, {
+        selection,
+        timeMs: elapsedMs,
+        activeToken,
+        ts: serverTimestamp(),
       });
-      const { correct: c, pointsAwarded, rank, behindBy } = result.data;
-      setFeedback({ correct: c, points: pointsAwarded, rank, behindBy });
-    } catch {
-      setSubmitFailed(true);
+
+      // Listen for result from the background Cloud Function
+      const resultRef = ref(rtdb, `results/${sessionId}/${currentQuestion.id}/${playerId}`);
+      let feedbackReceived = false;
+
+      const unsub = () => off(resultRef, 'value', handler);
+      const handler = (snap: import('firebase/database').DataSnapshot) => {
+        const val = snap.val();
+        if (!val || feedbackReceived) return;
+        feedbackReceived = true;
+        unsub();
+        resultUnsubRef.current = null;
+        if (val.error) {
+          setSubmitFailed(true);
+        } else {
+          setFeedback({
+            correct: val.correct,
+            points: val.pointsAwarded,
+            rank: val.rank,
+            behindBy: val.behindBy,
+          });
+        }
+      };
+
+      onValue(resultRef, handler);
+      resultUnsubRef.current = unsub;
+
+      // 8-second timeout fallback
+      setTimeout(() => {
+        if (!feedbackReceived) {
+          feedbackReceived = true;
+          unsub();
+          resultUnsubRef.current = null;
+          // Don't show error — answer was submitted, just no feedback yet
+          setFeedback({ correct: false, points: 0, rank: 0, behindBy: 0 });
+        }
+      }, 8000);
+    } catch (err: unknown) {
+      // PERMISSION_DENIED = duplicate answer (RTDB rules reject if data.exists())
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('PERMISSION_DENIED')) {
+        addToast('warning', 'You already answered this question');
+        setSubmitted(true);
+      } else {
+        setSubmitFailed(true);
+      }
     }
   };
 

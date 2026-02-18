@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { db, functions } from '../../lib/firebase';
+import { ref, onValue, off } from 'firebase/database';
+import { db, functions, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
 import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles } from 'lucide-react';
@@ -152,8 +153,7 @@ export default function HostSession() {
     }
   }, [timeLeft, session?.questionState, currentTimeLimitSec, session?.timerPaused]);
 
-  // Subscribe to answer count and auto-end when all players have answered.
-  // Derives question ID directly from session props to avoid stale-state race.
+  // Subscribe to RTDB answer count and auto-end when all players have answered.
   useEffect(() => {
     if (!session || session.questionState !== 'live' || allQuestions.length === 0) {
       setAnsweredCount(0);
@@ -168,20 +168,17 @@ export default function HostSession() {
       return;
     }
     setAnsweredCount(0);
-    const q = query(
-      collection(db, `sessions/${session.id}/answers`),
-      where('questionId', '==', qId)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const count = snap.size;
+    const countRef = ref(rtdb, `answerCounts/${session.id}/${qId}/count`);
+    const handler = (snap: import('firebase/database').DataSnapshot) => {
+      const count: number = snap.val() || 0;
       setAnsweredCount(count);
-      // Auto-end inside the callback — only fires on fresh data for the current question
       if (count > 0 && count >= players.length && !autoEndCalledRef.current) {
         autoEndCalledRef.current = true;
         httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
       }
-    });
-    return unsub;
+    };
+    onValue(countRef, handler);
+    return () => off(countRef, 'value', handler);
   }, [session?.id, session?.questionState, session?.currentQuestionIndex, session?.questionOrder, allQuestions, players.length]);
 
   const startQuestionDirect = async (qIndex: number) => {

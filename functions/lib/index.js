@@ -33,14 +33,16 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
+const database_1 = require("firebase-functions/v2/database");
 const params_1 = require("firebase-functions/params");
 admin.initializeApp();
 const db = admin.firestore();
+const rtdb = admin.database();
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
@@ -202,12 +204,14 @@ exports.startQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
     await sessionDoc.ref.update(updateData);
     return { success: true };
 });
-// --- Score Answer ---
-exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
-    const { sessionId, questionId, playerId, selection, timeMs, activeToken } = request.data;
-    // Validate session is live
+async function computeAndWriteScore(input) {
+    const { sessionId, questionId, playerId, selection, timeMs, activeToken, calledFromTrigger } = input;
+    // Validate session is live (skip questionState check for trigger — answer was written during live phase)
     const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
-    if (!sessionDoc.exists || sessionDoc.data()?.questionState !== "live") {
+    if (!sessionDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Session not found");
+    }
+    if (!calledFromTrigger && sessionDoc.data()?.questionState !== "live") {
         throw new https_1.HttpsError("failed-precondition", "Question is not currently live");
     }
     // Fetch player doc for nickname + token validation
@@ -224,7 +228,7 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
             throw new https_1.HttpsError("permission-denied", "Invalid session token");
         }
     }
-    // Prevent duplicate answers
+    // Prevent duplicate answers (idempotency guard)
     const answerId = `${questionId}_${playerId}`;
     const existingAnswer = await db
         .doc(`sessions/${sessionId}/answers/${answerId}`)
@@ -243,11 +247,9 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     const isPoll = question.type === 'poll';
     const isSlide = question.type === 'slide';
     if (isSlide) {
-        // Slides don't have answers
         return { correct: false, pointsAwarded: 0, rank: 0, totalPoints: 0, behindBy: 0 };
     }
     else if (isPoll) {
-        // Polls accept any answer, no scoring
         correct = true;
     }
     else if (question.type === 'ordering') {
@@ -315,7 +317,6 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         pointsAwarded,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    // Update leaderboard shard using dot notation for the specific player
     batch.set(shardRef, {
         players: {
             [playerId]: {
@@ -343,6 +344,57 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     const rank = ranked.findIndex((p) => p.pid === playerId) + 1;
     const behindBy = rank > 1 ? ranked[rank - 2].pts - newTotalPoints : 0;
     return { correct, pointsAwarded, rank, totalPoints: newTotalPoints, behindBy };
+}
+// --- Score Answer (callable — used by PlayAssignment) ---
+exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    const { sessionId, questionId, playerId, selection, timeMs, activeToken } = request.data;
+    return computeAndWriteScore({ sessionId, questionId, playerId, selection, timeMs, activeToken });
+});
+// --- Process Answer (RTDB trigger — used by PlayGame live mode) ---
+exports.processAnswer = (0, database_1.onValueCreated)({
+    ref: "/liveAnswers/{sessionId}/{questionId}/{playerId}",
+    region: REGION,
+    memory: "256MiB",
+    maxInstances: 20,
+}, async (event) => {
+    const { sessionId, questionId, playerId } = event.params;
+    const data = event.data.val();
+    const resultRef = rtdb.ref(`results/${sessionId}/${questionId}/${playerId}`);
+    const countRef = rtdb.ref(`answerCounts/${sessionId}/${questionId}/count`);
+    // Increment answer count FIRST so host sees it before scoring finishes
+    await countRef.transaction((current) => (current || 0) + 1);
+    try {
+        const result = await computeAndWriteScore({
+            sessionId,
+            questionId,
+            playerId,
+            selection: data.selection,
+            timeMs: data.timeMs,
+            activeToken: data.activeToken,
+            calledFromTrigger: true,
+        });
+        await resultRef.set({
+            correct: result.correct,
+            pointsAwarded: result.pointsAwarded,
+            rank: result.rank,
+            totalPoints: result.totalPoints,
+            behindBy: result.behindBy,
+            processedAt: admin.database.ServerValue.TIMESTAMP,
+        });
+    }
+    catch (err) {
+        // Write error result so player doesn't hang
+        const message = err instanceof https_1.HttpsError ? err.message : "Scoring failed";
+        await resultRef.set({
+            correct: false,
+            pointsAwarded: 0,
+            rank: 0,
+            totalPoints: 0,
+            behindBy: 0,
+            error: message,
+            processedAt: admin.database.ServerValue.TIMESTAMP,
+        });
+    }
 });
 // --- End Question ---
 exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
@@ -472,6 +524,12 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
         ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
     });
+    // Clean up RTDB data for this session
+    await Promise.all([
+        rtdb.ref(`liveAnswers/${sessionId}`).remove(),
+        rtdb.ref(`results/${sessionId}`).remove(),
+        rtdb.ref(`answerCounts/${sessionId}`).remove(),
+    ]);
     return { success: true, top10 };
 });
 // --- Export CSV ---
@@ -689,6 +747,12 @@ exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({
     });
     if (!expiredSessions.empty) {
         await batch.commit();
+        // Clean up RTDB data for expired sessions
+        await Promise.all(expiredSessions.docs.map((d) => Promise.all([
+            rtdb.ref(`liveAnswers/${d.id}`).remove(),
+            rtdb.ref(`results/${d.id}`).remove(),
+            rtdb.ref(`answerCounts/${d.id}`).remove(),
+        ])));
         console.log(`Cleaned up ${expiredSessions.size} expired sessions`);
     }
 });

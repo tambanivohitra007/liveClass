@@ -1,0 +1,29 @@
+{
+  "rules": {
+    "liveAnswers": {
+      "$sessionId": {
+        "$questionId": {
+          "$playerId": {
+            ".read": false,
+            ".write": "!data.exists() && newData.hasChildren(['selection', 'timeMs', 'activeToken', 'ts']) && newData.child('ts').val() === now",
+            ".validate": "newData.child('selection').isString() && newData.child('timeMs').isNumber() && newData.child('activeToken').isString()"
+          }
+        }
+      }
+    },
+    "answerCounts": {
+      ".read": true,
+      ".write": false
+    },
+    "results": {
+      "$sessionId": {
+        "$questionId": {
+          "$playerId": {
+            ".read": true,
+            ".write": false
+          }
+        }
+      }
+    }
+  }
+}
