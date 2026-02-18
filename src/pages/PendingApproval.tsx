@@ -1,11 +1,13 @@
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
+import { useNavigate } from 'react-router-dom';
 import { Clock, XCircle, LogOut } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 export default function PendingApproval() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const isRejected = user?.approvalStatus === 'rejected';
 
   return (
@@ -38,7 +40,7 @@ export default function PendingApproval() {
           )}
 
           <button
-            onClick={() => signOut(auth)}
+            onClick={() => signOut(auth).then(() => navigate('/'))}
             className="w-full py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
           >
             <LogOut className="w-4 h-4" />
