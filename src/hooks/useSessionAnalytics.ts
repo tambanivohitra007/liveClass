@@ -39,6 +39,7 @@ interface PlayerStats {
 interface SessionAnalyticsData {
   loading: boolean;
   sessionPin: string;
+  quizId: string;
   quizTitle: string;
   analytics: QuestionAnalytics[];
   playerCount: number;
@@ -55,6 +56,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
   const [data, setData] = useState<SessionAnalyticsData>({
     loading: true,
     sessionPin: '',
+    quizId: '',
     quizTitle: '',
     analytics: [],
     playerCount: 0,
@@ -236,6 +238,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
       setData({
         loading: false,
         sessionPin: pinCode,
+        quizId,
         quizTitle,
         analytics,
         playerCount,

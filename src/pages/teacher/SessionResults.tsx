@@ -6,9 +6,9 @@ import { useToastStore } from '../../stores/toastStore';
 import { useSessionAnalytics } from '../../hooks/useSessionAnalytics';
 import { exportSessionExcel } from '../../lib/excelExport';
 import {
-  Download, FileSpreadsheet, Users, Target, BarChart3,
-  ChevronDown, ChevronUp, ShieldAlert,
-  HelpCircle, Tag, CheckCircle2, XCircle, ListOrdered, AlignLeft,
+  Download, FileSpreadsheet, Users, Target,
+  ShieldAlert,
+  HelpCircle, CheckCircle2, XCircle, ListOrdered, AlignLeft,
   ArrowLeftRight, PenLine, MessageSquare, Presentation,
   Printer, Mail, Share2, Trash2, MoreVertical, Check, X,
   Zap, ArrowUpDown
@@ -58,9 +58,8 @@ export default function SessionResults() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const [exporting, setExporting] = useState(false);
-  const [exportingExcel, setExportingExcel] = useState(false);
-  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [, setExporting] = useState(false);
+  const [, setExportingExcel] = useState(false);
   const { addToast } = useToastStore();
 
   const {
@@ -71,7 +70,7 @@ export default function SessionResults() {
     playerCount,
     avgScore,
     avgAccuracy,
-    sessionDuration,
+    quizId,
     answerDistributions,
     violations,
     playerStats,
@@ -233,7 +232,7 @@ export default function SessionResults() {
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <button 
-            onClick={() => navigate(`/quiz/${analytics[0]?.quizId || ''}`)}
+            onClick={() => navigate(`/quiz/${quizId || ''}`)}
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors text-sm"
         >
           View quiz
@@ -352,11 +351,11 @@ export default function SessionResults() {
                     </td>
                     <td className="py-3 px-2 text-center border-l border-gray-100">
                       <div>
-                        <span className="font-bold text-gray-900">{player.totalScore.toLocaleString()}</span>
+                        <span className="font-bold text-gray-900">{player.totalPoints.toLocaleString()}</span>
                         <span className="text-gray-500 text-sm ml-1">({player.accuracyPercent}%)</span>
                       </div>
                     </td>
-                    {analytics.map((q, i) => {
+                    {analytics.map((_, i) => {
                        const isCorrect = Math.random() > 0.3; // Placeholder for visual consistency
                        return (
                          <td key={i} className={`p-0 border-l border-white ${isCorrect ? 'bg-success' : 'bg-danger'}`}>
@@ -439,7 +438,7 @@ export default function SessionResults() {
                       <div className="text-xs text-gray-400">Points</div>
                    </div>
                    <div className="w-24 text-right flex-shrink-0">
-                      <div className="font-bold text-gray-900">{player.totalScore}</div>
+                      <div className="font-bold text-gray-900">{player.totalPoints}</div>
                       <div className="text-xs text-gray-400">Score</div>
                    </div>
 
@@ -514,7 +513,7 @@ export default function SessionResults() {
                            
                            return (
                              <div key={optIdx} className="relative">
-                               <div className={`p-3 rounded-lg border ${option.value > 0 ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100 opacity-60'} flex justify-between items-center z-10 relative`}>
+                               <div className={`p-3 rounded-lg border ${option.count > 0 ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100 opacity-60'} flex justify-between items-center z-10 relative`}>
                                  <div className="flex items-center gap-3">
                                    <div className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-sm ${colors[optIdx % 4] || 'bg-gray-100'}`}>
                                      {letters[optIdx] || '?'}
@@ -524,13 +523,13 @@ export default function SessionResults() {
                                  
                                  <div className="flex items-center gap-3">
                                    {isCorrect && <Check className="w-5 h-5 text-success" />}
-                                   <span className="text-sm text-gray-500">{option.value} answered</span>
+                                   <span className="text-sm text-gray-500">{option.count} answered</span>
                                  </div>
                                </div>
                                {/* Progress Bar Background */}
                                <div 
                                  className={`absolute top-0 bottom-0 left-0 rounded-lg opacity-10 z-0 ${isCorrect ? 'bg-success' : 'bg-danger'}`}
-                                 style={{ width: `${(option.value / (q.totalAnswers || 1)) * 100}%` }}
+                                 style={{ width: `${(option.count / (q.totalAnswers || 1)) * 100}%` }}
                                />
                              </div>
                            )
