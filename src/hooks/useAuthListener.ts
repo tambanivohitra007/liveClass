@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
 import type { User } from '../types/models';
@@ -11,7 +11,7 @@ export function useAuthListener() {
   useEffect(() => {
     let unsubUserDoc: (() => void) | null = null;
 
-    const unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setFirebaseUser(firebaseUser);
 
       // Clean up previous user doc listener
@@ -21,20 +21,23 @@ export function useAuthListener() {
       }
 
       if (firebaseUser) {
+        // Initial fetch to unblock loading quickly
+        const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+        if (snap.exists()) {
+          setUser({ id: snap.id, ...snap.data() } as User);
+        }
+        setLoading(false);
+
+        // Then subscribe for real-time updates (e.g. admin approval)
         unsubUserDoc = onSnapshot(
           doc(db, 'users', firebaseUser.uid),
-          (snap) => {
-            if (snap.exists()) {
-              setUser({ id: snap.id, ...snap.data() } as User);
-            } else {
-              setUser(null);
+          (liveSnap) => {
+            if (liveSnap.exists()) {
+              setUser({ id: liveSnap.id, ...liveSnap.data() } as User);
             }
-            setLoading(false);
           },
-          (err) => {
-            console.error('User doc listener error:', err);
-            setUser(null);
-            setLoading(false);
+          () => {
+            // Silently ignore listener errors
           },
         );
       } else {
