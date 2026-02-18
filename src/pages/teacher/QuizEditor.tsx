@@ -433,13 +433,20 @@ export default function QuizEditor() {
           {activeQ ? (
             <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
               {/* Question Text */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
                 <textarea
                   value={activeQ.text}
-                  onChange={(e) => updateQuestion(activeIndex, { text: e.target.value })}
+                  onChange={(e) => {
+                    updateQuestion(activeIndex, { text: e.target.value });
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
+                  ref={(el) => {
+                    if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+                  }}
                   placeholder={activeQ.type === 'fill_blank' ? 'Enter question with ___ for blanks' : 'Click to start typing your question'}
-                  rows={3}
-                  className="w-full px-6 py-5 text-xl font-medium text-center text-gray-900 placeholder:text-gray-300 border-none outline-none resize-none bg-transparent wrap-break-word"
+                  rows={2}
+                  className="w-full px-6 py-5 text-xl font-medium text-center text-gray-900 placeholder:text-gray-300 border-none outline-none resize-none bg-transparent break-words"
                 />
               </div>
 
@@ -497,7 +504,7 @@ export default function QuizEditor() {
                           placeholder={card.placeholder}
                           disabled={activeQ.type === 'tf'}
                           rows={1}
-                          className="flex-1 bg-transparent border-none outline-none text-white font-medium placeholder:text-white/40 text-base resize-none"
+                          className="flex-1 bg-transparent border-none outline-none text-white font-medium placeholder:text-white/40 text-base resize-none break-words"
                         />
                         {activeQ.type !== 'poll' && (
                           <button
