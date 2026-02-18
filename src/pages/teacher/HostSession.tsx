@@ -190,7 +190,8 @@ export default function HostSession() {
   const nextQuestion = () => startQuestionDirect((session?.currentQuestionIndex ?? 0) + 1);
 
   const endQuestion = async () => {
-    if (!session) return;
+    if (!session || autoEndCalledRef.current) return;
+    autoEndCalledRef.current = true;
     await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
   };
 
