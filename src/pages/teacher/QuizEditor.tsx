@@ -203,16 +203,20 @@ export default function QuizEditor() {
         description: aiDescription,
         difficulty: aiDifficulty,
       });
+      const letterToIndex: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4, F: 5 };
       const generated = result.data.questions.map((q) => {
-        // Normalize correctAnswers to match exact option text (AI may return slight mismatches)
+        // Normalize correctAnswers to match exact option text (AI may return slight mismatches or letter labels)
         let correctAnswers = q.correctAnswers || [];
         if (q.options && q.options.length > 0 && correctAnswers.length > 0) {
           correctAnswers = correctAnswers.map((ca) => {
             const exact = q.options.find((o) => o === ca);
             if (exact) return exact;
-            // Fallback: case-insensitive match
             const fuzzy = q.options.find((o) => o.trim().toLowerCase() === ca.trim().toLowerCase());
-            return fuzzy || ca;
+            if (fuzzy) return fuzzy;
+            // Fallback: AI returned a letter label (A, B, C, D) — resolve to actual option text
+            const idx = letterToIndex[ca.trim().toUpperCase()];
+            if (idx !== undefined && idx < q.options.length) return q.options[idx];
+            return ca;
           });
         }
         return {

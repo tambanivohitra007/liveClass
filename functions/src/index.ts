@@ -777,9 +777,9 @@ export const generateQuestions = onCall(
 
     // Build per-type JSON template for the prompt
     const typeTemplates: Record<string, string> = {
-      mcq: '{"text":"...","options":["A","B","C","D"],"correctAnswers":["A"],"timeLimitSec":20}',
-      tf: '{"text":"...","options":["True","False"],"correctAnswers":["True"],"timeLimitSec":15}',
-      short: '{"text":"...","options":[],"correctAnswers":["answer"],"timeLimitSec":30}',
+      mcq: '{"text":"What is the capital of France?","options":["Paris","London","Berlin","Madrid"],"correctAnswers":["Paris"],"timeLimitSec":20}',
+      tf: '{"text":"The Earth is flat.","options":["True","False"],"correctAnswers":["False"],"timeLimitSec":15}',
+      short: '{"text":"What gas do plants absorb?","options":[],"correctAnswers":["carbon dioxide"],"timeLimitSec":30}',
       matching: '{"text":"Match the following","options":["left1","left2","left3"],"matchOptions":["right1","right2","right3"],"correctAnswers":["left1","left2","left3"],"timeLimitSec":30}',
       ordering: '{"text":"Put these in order","options":["first","second","third","fourth"],"correctAnswers":["first","second","third","fourth"],"timeLimitSec":30}',
       fill_blank: '{"text":"The ___ is the powerhouse of the ___","options":[],"correctAnswers":["mitochondria","cell"],"timeLimitSec":25}',
@@ -796,7 +796,7 @@ Question type: ${questionType}.
 
 ${metaInstruction}
 ${typeTemplates[questionType] || typeTemplates.mcq}
-IMPORTANT: "correctAnswers" must contain values that EXACTLY match entries in the "options" array (same text, same casing).
+IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
 Make questions educational, varied in difficulty, and factually accurate.`;
 
     try {
@@ -864,6 +864,9 @@ Make questions educational, varied in difficulty, and factually accurate.`;
         return [String(raw)];
       };
 
+      // Map letter labels (A-F) to option indices
+      const letterToIndex: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4, F: 5 };
+
       const mapped = questions.map(
         (q: Record<string, unknown>) => {
           const options = (q.options as string[]) || [];
@@ -872,7 +875,11 @@ Make questions educational, varied in difficulty, and factually accurate.`;
             const exact = options.find((o) => o === ca);
             if (exact) return exact;
             const fuzzy = options.find((o) => o.trim().toLowerCase() === ca.trim().toLowerCase());
-            return fuzzy || ca;
+            if (fuzzy) return fuzzy;
+            // Fallback: AI returned a letter label (A, B, C, D) — resolve to actual option text
+            const idx = letterToIndex[ca.trim().toUpperCase()];
+            if (idx !== undefined && idx < options.length) return options[idx];
+            return ca;
           });
           return {
             type: questionType,
