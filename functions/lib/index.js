@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const https_1 = require("firebase-functions/v2/https");
@@ -144,12 +144,21 @@ exports.joinSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     }
     // Generate session token for anti-cheat
     const activeToken = generateToken();
+    // Auto-assign team if team mode is enabled (round-robin)
+    let teamIndex = null;
+    if (session.teamMode && session.teamCount) {
+        const playersSnap = await db
+            .collection(`sessions/${sessionId}/players`)
+            .get();
+        teamIndex = playersSnap.size % session.teamCount;
+    }
     const playerRef = db.collection(`sessions/${sessionId}/players`).doc();
     await playerRef.set({
         sessionId,
         userId: request.auth?.uid || null,
         nickname,
         activeToken,
+        ...(teamIndex !== null ? { teamIndex } : {}),
         joinedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     return { playerId: playerRef.id, activeToken };
@@ -168,12 +177,27 @@ exports.startQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
     if (session.hostId !== request.auth.uid) {
         throw new https_1.HttpsError("permission-denied", "Not the host");
     }
-    await sessionDoc.ref.update({
+    // Generate question order on first question if shuffle is enabled
+    const updateData = {
         status: "live",
         currentQuestionIndex: qIndex,
         questionState: "live",
         questionStartedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+    if (qIndex === 0 && session.shuffleQuestions) {
+        const questionsSnap = await db
+            .collection("questions")
+            .where("quizId", "==", session.quizId)
+            .get();
+        const indices = Array.from({ length: questionsSnap.size }, (_, i) => i);
+        // Fisher-Yates shuffle
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        updateData.questionOrder = indices;
+    }
+    await sessionDoc.ref.update(updateData);
     return { success: true };
 });
 // --- Score Answer ---
@@ -209,7 +233,28 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     const question = questionDoc.data();
     // Type-aware correctness check
     let correct = false;
-    if (question.type === 'matching') {
+    const isPoll = question.type === 'poll';
+    const isSlide = question.type === 'slide';
+    if (isSlide) {
+        // Slides don't have answers
+        return { correct: false, pointsAwarded: 0, rank: 0, totalPoints: 0, behindBy: 0 };
+    }
+    else if (isPoll) {
+        // Polls accept any answer, no scoring
+        correct = true;
+    }
+    else if (question.type === 'ordering') {
+        try {
+            const submitted = JSON.parse(selection);
+            const expected = question.options || [];
+            correct = submitted.length === expected.length &&
+                submitted.every((item, idx) => item === expected[idx]);
+        }
+        catch {
+            correct = false;
+        }
+    }
+    else if (question.type === 'matching') {
         try {
             const pairs = JSON.parse(selection);
             const options = question.options || [];
@@ -244,7 +289,7 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     };
     // Calculate points: base(1000) * timeRemaining% * correctness
     let pointsAwarded = 0;
-    if (correct) {
+    if (correct && !isPoll) {
         const timeFactor = Math.max(0, (question.timeLimitSec * 1000 - timeMs) / (question.timeLimitSec * 1000));
         pointsAwarded = Math.round(1000 * timeFactor);
         // Streak bonus: +50 per consecutive correct
@@ -273,7 +318,23 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         },
     }, { merge: true });
     await batch.commit();
-    return { correct, pointsAwarded };
+    // Compute rank info for personal feedback
+    const newTotalPoints = playerData.totalPoints + pointsAwarded;
+    const allShards = await db
+        .collection(`sessions/${sessionId}/leaderboard_shards`)
+        .get();
+    const ranked = [];
+    allShards.docs.forEach((s) => {
+        const pl = s.data().players || {};
+        for (const [pid, d] of Object.entries(pl)) {
+            const pd = d;
+            ranked.push({ pid, pts: pid === playerId ? newTotalPoints : pd.totalPoints });
+        }
+    });
+    ranked.sort((a, b) => b.pts - a.pts);
+    const rank = ranked.findIndex((p) => p.pid === playerId) + 1;
+    const behindBy = rank > 1 ? ranked[rank - 2].pts - newTotalPoints : 0;
+    return { correct, pointsAwarded, rank, totalPoints: newTotalPoints, behindBy };
 });
 // --- End Question ---
 exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
@@ -318,7 +379,10 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         .where("quizId", "==", session.quizId)
         .get();
     const questionsArr = questionsSnap.docs.map((d) => d.id);
-    const currentQuestionId = questionsArr[session.currentQuestionIndex];
+    const qIdx = session.questionOrder
+        ? session.questionOrder[session.currentQuestionIndex]
+        : session.currentQuestionIndex;
+    const currentQuestionId = questionsArr[qIdx];
     let totalCorrect = 0;
     let totalTime = 0;
     let totalAnswers = 0;
@@ -344,9 +408,41 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         correctPercent: totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
         avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
     });
+    // Compute team scores if team mode is enabled
+    let teamScoreSnapshot = [];
+    if (session.teamMode && session.teams) {
+        const playersSnap = await db
+            .collection(`sessions/${sessionId}/players`)
+            .get();
+        const playerTeams = new Map();
+        playersSnap.docs.forEach((d) => {
+            const data = d.data();
+            if (data.teamIndex !== undefined) {
+                playerTeams.set(d.id, data.teamIndex);
+            }
+        });
+        const teamTotals = session.teams.map(() => ({ total: 0, count: 0 }));
+        allPlayers.forEach((p) => {
+            const ti = playerTeams.get(p.playerId);
+            if (ti !== undefined && teamTotals[ti]) {
+                teamTotals[ti].total += p.totalPoints;
+                teamTotals[ti].count++;
+            }
+        });
+        teamScoreSnapshot = session.teams.map((t, i) => ({
+            teamIndex: i,
+            name: t.name,
+            color: t.color,
+            avgPoints: teamTotals[i].count > 0
+                ? Math.round(teamTotals[i].total / teamTotals[i].count)
+                : 0,
+        }));
+        teamScoreSnapshot.sort((a, b) => b.avgPoints - a.avgPoints);
+    }
     await sessionDoc.ref.update({
         questionState: "reveal",
         top10Snapshot: top10,
+        ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
     });
     return { success: true, top10 };
 });
@@ -417,6 +513,122 @@ exports.reportViolation = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) =
         }),
     }, { merge: true });
     return { success: true };
+});
+// --- AI Question Generator ---
+exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "512MiB" }, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { topic, count = 5, questionType = "mcq", description = "", difficulty = "mixed", generateMeta = false, } = request.data;
+    if (!topic || topic.trim().length < 3) {
+        throw new https_1.HttpsError("invalid-argument", "Topic must be at least 3 characters");
+    }
+    const clampedCount = Math.min(Math.max(count, 1), 10);
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+        // Fallback: generate template questions without AI
+        const fallbackQuestion = (i) => {
+            const base = { type: questionType, text: `Question ${i + 1} about ${topic}` };
+            switch (questionType) {
+                case "tf":
+                    return { ...base, options: ["True", "False"], correctAnswers: ["True"], timeLimitSec: 15 };
+                case "short":
+                    return { ...base, options: [], correctAnswers: [topic], timeLimitSec: 30 };
+                case "matching":
+                    return { ...base, text: `Match the following about ${topic}`, options: ["Item A", "Item B", "Item C"], matchOptions: ["Match A", "Match B", "Match C"], correctAnswers: ["Item A", "Item B", "Item C"], timeLimitSec: 30 };
+                case "ordering":
+                    return { ...base, text: `Put these in the correct order (${topic})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
+                case "fill_blank":
+                    return { ...base, text: `The ___ is related to ${topic}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
+                default:
+                    return { ...base, options: ["Option A", "Option B", "Option C", "Option D"], correctAnswers: ["Option A"], timeLimitSec: 20 };
+            }
+        };
+        const questions = Array.from({ length: clampedCount }, (_, i) => fallbackQuestion(i));
+        return {
+            questions,
+            ...(generateMeta ? { title: `Quiz: ${topic}`, description: `A quiz about ${topic}` } : {}),
+            note: "AI API key not configured. Template questions generated — edit them manually.",
+        };
+    }
+    // Build per-type JSON template for the prompt
+    const typeTemplates = {
+        mcq: '{"text":"...","options":["A","B","C","D"],"correctAnswers":["A"],"timeLimitSec":20}',
+        tf: '{"text":"...","options":["True","False"],"correctAnswers":["True"],"timeLimitSec":15}',
+        short: '{"text":"...","options":[],"correctAnswers":["answer"],"timeLimitSec":30}',
+        matching: '{"text":"Match the following","options":["left1","left2","left3"],"matchOptions":["right1","right2","right3"],"correctAnswers":["left1","left2","left3"],"timeLimitSec":30}',
+        ordering: '{"text":"Put these in order","options":["first","second","third","fourth"],"correctAnswers":["first","second","third","fourth"],"timeLimitSec":30}',
+        fill_blank: '{"text":"The ___ is the powerhouse of the ___","options":[],"correctAnswers":["mitochondria","cell"],"timeLimitSec":25}',
+    };
+    const metaInstruction = generateMeta
+        ? 'Return ONLY valid JSON: {"title":"...","description":"...","questions":[...]}'
+        : "Return ONLY a valid JSON array. Each element:";
+    const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
+    const prompt = `Generate ${clampedCount} quiz questions about "${topic}".
+${description ? `Context: ${description}` : ""}
+Difficulty: ${difficulty}.
+Question type: ${questionType}.
+
+${metaInstruction}
+${typeTemplates[questionType] || typeTemplates.mcq}
+Make questions educational, varied in difficulty, and factually accurate.`;
+    try {
+        let responseText = "";
+        if (isAnthropic) {
+            const res = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+                body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 4096, messages: [{ role: "user", content: prompt }] }),
+            });
+            const data = await res.json();
+            responseText = data.content?.[0]?.text || "[]";
+        }
+        else {
+            const res = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 4096 }),
+            });
+            const data = await res.json();
+            responseText = data.choices?.[0]?.message?.content || "[]";
+        }
+        let questions;
+        let title;
+        let desc;
+        if (generateMeta) {
+            // Try to parse as { title, description, questions }
+            const objMatch = responseText.match(/\{[\s\S]*\}/);
+            if (!objMatch)
+                throw new https_1.HttpsError("internal", "Failed to parse AI response");
+            const parsed = JSON.parse(objMatch[0]);
+            title = parsed.title;
+            desc = parsed.description;
+            questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+        }
+        else {
+            const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+            if (!jsonMatch)
+                throw new https_1.HttpsError("internal", "Failed to parse AI response");
+            questions = JSON.parse(jsonMatch[0]);
+        }
+        const mapped = questions.map((q) => ({
+            type: questionType,
+            text: q.text || "",
+            options: q.options || [],
+            ...(q.matchOptions ? { matchOptions: q.matchOptions } : {}),
+            correctAnswers: q.correctAnswers || [],
+            timeLimitSec: q.timeLimitSec || 20,
+        }));
+        return {
+            questions: mapped,
+            ...(generateMeta ? { title, description: desc } : {}),
+        };
+    }
+    catch (err) {
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        throw new https_1.HttpsError("internal", "AI generation failed");
+    }
 });
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({

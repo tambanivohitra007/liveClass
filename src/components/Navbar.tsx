@@ -96,13 +96,13 @@ export default function Navbar() {
               </Link>
 
               {/* Dark mode toggle */}
-              <button
+              {/* <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg text-gray-500 hover:text-brand hover:bg-gray-50 transition-colors"
                 title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
+              </button> */}
 
               {/* Profile Dropdown */}
               <div ref={profileRef} className="relative ml-2">

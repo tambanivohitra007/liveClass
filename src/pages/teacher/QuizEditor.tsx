@@ -64,6 +64,8 @@ export default function QuizEditor() {
   const [aiCount, setAiCount] = useState(5);
   const [aiType, setAiType] = useState<QuestionType>('mcq');
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiDifficulty, setAiDifficulty] = useState('mixed');
+  const [aiDescription, setAiDescription] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -106,19 +108,27 @@ export default function QuizEditor() {
     setAiGenerating(true);
     try {
       const fn = httpsCallable<
-        { topic: string; count: number; questionType: string },
-        { questions: Omit<Question, 'id' | 'quizId'>[]; note?: string }
+        Record<string, unknown>,
+        { questions: (Omit<Question, 'id' | 'quizId'> & { matchOptions?: string[] })[]; note?: string }
       >(functions, 'generateQuestions');
-      const result = await fn({ topic: aiTopic, count: aiCount, questionType: aiType });
+      const result = await fn({
+        topic: aiTopic,
+        count: aiCount,
+        questionType: aiType,
+        description: aiDescription,
+        difficulty: aiDifficulty,
+      });
       const generated = result.data.questions.map((q) => ({
         ...q,
         quizId: quizId || '',
+        matchOptions: q.matchOptions || undefined,
       }));
       setQuestions([...questions, ...generated]);
       if (result.data.note) addToast('info', result.data.note);
       else addToast('success', `${generated.length} questions generated`);
       setShowAiModal(false);
       setAiTopic('');
+      setAiDescription('');
       setActiveIndex(questions.length); // jump to first generated
     } catch {
       addToast('error', 'Failed to generate questions');
@@ -338,7 +348,7 @@ export default function QuizEditor() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* ── Left Sidebar – Question List ── */}
-        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
+        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
             {questions.map((q, i) => (
               <div
@@ -842,6 +852,16 @@ export default function QuizEditor() {
                   autoFocus
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description / Context</label>
+                <textarea
+                  value={aiDescription}
+                  onChange={(e) => setAiDescription(e.target.value)}
+                  placeholder="Optional: grade level, specific focus, learning objectives..."
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                />
+              </div>
               <div className="flex gap-4">
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Count</label>
@@ -865,8 +885,24 @@ export default function QuizEditor() {
                     <option value="mcq">Multiple Choice</option>
                     <option value="tf">True / False</option>
                     <option value="short">Short Answer</option>
+                    <option value="matching">Matching</option>
+                    <option value="ordering">Ordering</option>
+                    <option value="fill_blank">Fill in the Blank</option>
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
+                <select
+                  value={aiDifficulty}
+                  onChange={(e) => setAiDifficulty(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                >
+                  <option value="mixed">Mixed</option>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
               </div>
               <button
                 onClick={handleAiGenerate}

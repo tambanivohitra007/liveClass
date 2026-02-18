@@ -611,10 +611,20 @@ export const generateQuestions = onCall(
       throw new HttpsError("unauthenticated", "Must be logged in");
     }
 
-    const { topic, count = 5, questionType = "mcq" } = request.data as {
+    const {
+      topic,
+      count = 5,
+      questionType = "mcq",
+      description = "",
+      difficulty = "mixed",
+      generateMeta = false,
+    } = request.data as {
       topic: string;
       count?: number;
       questionType?: string;
+      description?: string;
+      difficulty?: string;
+      generateMeta?: boolean;
     };
 
     if (!topic || topic.trim().length < 3) {
@@ -626,30 +636,53 @@ export const generateQuestions = onCall(
     const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY;
     if (!apiKey) {
       // Fallback: generate template questions without AI
-      const questions = [];
-      for (let i = 0; i < clampedCount; i++) {
-        questions.push({
-          type: questionType,
-          text: `Question ${i + 1} about ${topic}`,
-          options: questionType === "tf" ? ["True", "False"]
-            : questionType === "short" ? []
-            : ["Option A", "Option B", "Option C", "Option D"],
-          correctAnswers: questionType === "tf" ? ["True"]
-            : questionType === "short" ? [topic]
-            : ["Option A"],
-          timeLimitSec: 20,
-        });
-      }
-      return { questions, note: "AI API key not configured. Template questions generated — edit them manually." };
+      const fallbackQuestion = (i: number) => {
+        const base = { type: questionType, text: `Question ${i + 1} about ${topic}` };
+        switch (questionType) {
+          case "tf":
+            return { ...base, options: ["True", "False"], correctAnswers: ["True"], timeLimitSec: 15 };
+          case "short":
+            return { ...base, options: [], correctAnswers: [topic], timeLimitSec: 30 };
+          case "matching":
+            return { ...base, text: `Match the following about ${topic}`, options: ["Item A", "Item B", "Item C"], matchOptions: ["Match A", "Match B", "Match C"], correctAnswers: ["Item A", "Item B", "Item C"], timeLimitSec: 30 };
+          case "ordering":
+            return { ...base, text: `Put these in the correct order (${topic})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
+          case "fill_blank":
+            return { ...base, text: `The ___ is related to ${topic}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
+          default:
+            return { ...base, options: ["Option A", "Option B", "Option C", "Option D"], correctAnswers: ["Option A"], timeLimitSec: 20 };
+        }
+      };
+      const questions = Array.from({ length: clampedCount }, (_, i) => fallbackQuestion(i));
+      return {
+        questions,
+        ...(generateMeta ? { title: `Quiz: ${topic}`, description: `A quiz about ${topic}` } : {}),
+        note: "AI API key not configured. Template questions generated — edit them manually.",
+      };
     }
+
+    // Build per-type JSON template for the prompt
+    const typeTemplates: Record<string, string> = {
+      mcq: '{"text":"...","options":["A","B","C","D"],"correctAnswers":["A"],"timeLimitSec":20}',
+      tf: '{"text":"...","options":["True","False"],"correctAnswers":["True"],"timeLimitSec":15}',
+      short: '{"text":"...","options":[],"correctAnswers":["answer"],"timeLimitSec":30}',
+      matching: '{"text":"Match the following","options":["left1","left2","left3"],"matchOptions":["right1","right2","right3"],"correctAnswers":["left1","left2","left3"],"timeLimitSec":30}',
+      ordering: '{"text":"Put these in order","options":["first","second","third","fourth"],"correctAnswers":["first","second","third","fourth"],"timeLimitSec":30}',
+      fill_blank: '{"text":"The ___ is the powerhouse of the ___","options":[],"correctAnswers":["mitochondria","cell"],"timeLimitSec":25}',
+    };
+
+    const metaInstruction = generateMeta
+      ? 'Return ONLY valid JSON: {"title":"...","description":"...","questions":[...]}'
+      : "Return ONLY a valid JSON array. Each element:";
 
     const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
     const prompt = `Generate ${clampedCount} quiz questions about "${topic}".
-Each question should be type "${questionType}".
-Return ONLY a valid JSON array. Each element:
-${questionType === "mcq" ? '{"text":"...","options":["A","B","C","D"],"correctAnswers":["A"],"timeLimitSec":20}' : ""}
-${questionType === "tf" ? '{"text":"...","options":["True","False"],"correctAnswers":["True"],"timeLimitSec":15}' : ""}
-${questionType === "short" ? '{"text":"...","options":[],"correctAnswers":["answer"],"timeLimitSec":30}' : ""}
+${description ? `Context: ${description}` : ""}
+Difficulty: ${difficulty}.
+Question type: ${questionType}.
+
+${metaInstruction}
+${typeTemplates[questionType] || typeTemplates.mcq}
 Make questions educational, varied in difficulty, and factually accurate.`;
 
     try {
@@ -658,7 +691,7 @@ Make questions educational, varied in difficulty, and factually accurate.`;
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-          body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 2048, messages: [{ role: "user", content: prompt }] }),
+          body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 4096, messages: [{ role: "user", content: prompt }] }),
         });
         const data = await res.json();
         responseText = data.content?.[0]?.text || "[]";
@@ -666,22 +699,45 @@ Make questions educational, varied in difficulty, and factually accurate.`;
         const res = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-          body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 2048 }),
+          body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 4096 }),
         });
         const data = await res.json();
         responseText = data.choices?.[0]?.message?.content || "[]";
       }
 
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) throw new HttpsError("internal", "Failed to parse AI response");
+      let questions: Record<string, unknown>[];
+      let title: string | undefined;
+      let desc: string | undefined;
 
-      const questions = JSON.parse(jsonMatch[0]).map(
-        (q: { text: string; options: string[]; correctAnswers: string[]; timeLimitSec: number }) => ({
-          type: questionType, text: q.text, options: q.options || [],
-          correctAnswers: q.correctAnswers || [], timeLimitSec: q.timeLimitSec || 20,
+      if (generateMeta) {
+        // Try to parse as { title, description, questions }
+        const objMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!objMatch) throw new HttpsError("internal", "Failed to parse AI response");
+        const parsed = JSON.parse(objMatch[0]);
+        title = parsed.title;
+        desc = parsed.description;
+        questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+      } else {
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new HttpsError("internal", "Failed to parse AI response");
+        questions = JSON.parse(jsonMatch[0]);
+      }
+
+      const mapped = questions.map(
+        (q: Record<string, unknown>) => ({
+          type: questionType,
+          text: q.text || "",
+          options: (q.options as string[]) || [],
+          ...(q.matchOptions ? { matchOptions: q.matchOptions as string[] } : {}),
+          correctAnswers: (q.correctAnswers as string[]) || [],
+          timeLimitSec: (q.timeLimitSec as number) || 20,
         })
       );
-      return { questions };
+
+      return {
+        questions: mapped,
+        ...(generateMeta ? { title, description: desc } : {}),
+      };
     } catch (err) {
       if (err instanceof HttpsError) throw err;
       throw new HttpsError("internal", "AI generation failed");
