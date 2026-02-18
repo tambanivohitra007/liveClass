@@ -27,7 +27,8 @@
       "Bash(git -C \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\" diff src/pages/student/PlayGame.tsx)",
       "Bash(git -C \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\" add src/index.css)",
       "Bash(git -C \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\" commit -m \"$\\(cat <<''EOF''\nfix: comprehensive dark mode coverage for all components and elements\n\nAdd 200+ CSS overrides in index.css @layer base covering:\n- All bg-gray-* shades, bg-white, bg-surface variants\n- Text colors \\(gray-300 through gray-900\\)\n- Border colors \\(gray-50 through gray-400\\)\n- Hover states for backgrounds, borders, and text\n- Shadow variants \\(sm, md, lg, xl, 2xl\\)\n- Form elements \\(input, textarea, select\\) with focus/placeholder states\n- Gradient backgrounds \\(Login, Signup pages\\)\n- Functional alpha backgrounds \\(brand, accent, success, danger, warning\\)\n- SVG chart fills and strokes for dark readability\n- Shimmer skeleton dark variant\n- Scrollbar styling \\(Webkit\\)\n- Ring colors, backdrop blur, hr/divider elements\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add personal rank feedback after answering\n\nscoreAnswer Cloud Function now computes player rank by aggregating\nleaderboard shards and returns rank + behindBy data. PlayGame reveal\nscreen shows ordinal rank placement and points gap to leader.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add personal rank feedback after answering\n\nscoreAnswer Cloud Function now computes player rank by aggregating\nleaderboard shards and returns rank + behindBy data. PlayGame reveal\nscreen shows ordinal rank placement and points gap to leader.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "WebFetch(domain:trust.kahoot.com)"
     ]
   }
 }
