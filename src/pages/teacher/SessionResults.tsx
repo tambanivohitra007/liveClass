@@ -85,6 +85,9 @@ export default function SessionResults() {
     answerDistributions,
     violations,
     playerStats,
+    allAnswers,
+    sessionDuration,
+    sessionStartedAt,
   } = useSessionAnalytics(sessionId);
 
   const handleEvaluate = useCallback(async (
@@ -207,9 +210,13 @@ export default function SessionResults() {
         sessionPin,
         playerStats,
         analytics,
+        answerDistributions,
+        allAnswers,
         playerCount,
         avgScore,
         avgAccuracy,
+        sessionDuration,
+        sessionStartedAt,
       });
     } catch {
       addToast('error', 'Excel export failed. Please try again.');

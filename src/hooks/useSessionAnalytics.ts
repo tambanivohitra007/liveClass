@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import type { Answer, Question } from '../types/models';
 
 interface QuestionAnalytics {
+  questionId: string;
   questionIndex: number;
   totalAnswers: number;
   correctCount: number;
@@ -46,10 +47,12 @@ interface SessionAnalyticsData {
   avgScore: number;
   avgAccuracy: number;
   sessionDuration: number | null; // in seconds
+  sessionStartedAt: number | null;
   answerDistributions: AnswerDistribution[];
   responseTimeTrend: { label: string; value: number }[];
   violations: ViolationSummary[];
   playerStats: PlayerStats[];
+  allAnswers: Answer[];
 }
 
 export function useSessionAnalytics(sessionId: string | undefined): SessionAnalyticsData {
@@ -63,10 +66,12 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
     avgScore: 0,
     avgAccuracy: 0,
     sessionDuration: null,
+    sessionStartedAt: null,
     answerDistributions: [],
     responseTimeTrend: [],
     violations: [],
     playerStats: [],
+    allAnswers: [],
   });
 
   useEffect(() => {
@@ -113,7 +118,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
 
       // Parse analytics
       const analytics = analyticsSnap.docs
-        .map((d) => d.data() as QuestionAnalytics)
+        .map((d) => ({ ...d.data(), questionId: d.id } as QuestionAnalytics))
         .sort((a, b) => a.questionIndex - b.questionIndex);
 
       // Parse all answers
@@ -245,10 +250,12 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
         avgScore,
         avgAccuracy: parseFloat(avgAccuracy.toFixed(1)),
         sessionDuration,
+        sessionStartedAt: startedAt,
         answerDistributions,
         responseTimeTrend,
         violations,
         playerStats,
+        allAnswers,
       });
     };
 
