@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
 import {
   Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList,
-  Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, BarChart3,
+  Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, BarChart3, Printer,
 } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
@@ -552,6 +552,12 @@ export default function Dashboard() {
                               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                             >
                               <BookOpen className="w-4 h-4 text-gray-400" /> Flashcards
+                            </button>
+                            <button
+                              onClick={() => { navigate(`/quiz/${quiz.id}/worksheet`); setMenuOpenId(null); }}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                              <Printer className="w-4 h-4 text-gray-400" /> Worksheet
                             </button>
                             {collections.length > 0 && (
                               <>

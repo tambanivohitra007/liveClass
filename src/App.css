@@ -257,6 +257,51 @@
 }
 
 /* Accessibility: reduced motion */
+/* ── Print styles for Worksheet ── */
+@media print {
+  .print\:hidden,
+  nav,
+  footer {
+    display: none !important;
+  }
+
+  body,
+  .pattern-dots {
+    background: white !important;
+    background-image: none !important;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+
+  .worksheet-body {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 1.5cm 2cm !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .break-before-page {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  @page {
+    margin: 1cm 1.5cm;
+    size: A4;
+  }
+
+  img {
+    max-width: 100%;
+    break-inside: avoid;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

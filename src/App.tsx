@@ -28,6 +28,7 @@ import QuizPreview from './pages/teacher/QuizPreview';
 import CollectionView from './pages/teacher/CollectionView';
 import Discover from './pages/Discover';
 import Flashcards from './pages/Flashcards';
+import Worksheet from './pages/teacher/Worksheet';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 import './App.css';
@@ -77,7 +78,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const location = useLocation();
   // Hide navbar on full-screen game pages
-  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview')));
+  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -103,6 +104,7 @@ function AppContent() {
         <Route path="/quiz/:quizId/host" element={<TeacherRoute><HostSession /></TeacherRoute>} />
         <Route path="/quiz/:quizId/preview" element={<TeacherRoute><QuizPreview /></TeacherRoute>} />
         <Route path="/quiz/:quizId/flashcards" element={<TeacherRoute><Flashcards /></TeacherRoute>} />
+        <Route path="/quiz/:quizId/worksheet" element={<TeacherRoute><Worksheet /></TeacherRoute>} />
         <Route path="/session/:sessionId/results" element={<TeacherRoute><SessionResults /></TeacherRoute>} />
         <Route path="/history" element={<TeacherRoute><SessionHistory /></TeacherRoute>} />
         <Route path="/collection/:collectionId" element={<TeacherRoute><CollectionView /></TeacherRoute>} />
