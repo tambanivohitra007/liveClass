@@ -197,36 +197,51 @@ export default function Home() {
 
       
      
-      {/* CTA Footer */}
+      {/* CTA Footer — comic style */}
       <section className="relative overflow-hidden bg-gradient-to-br from-surface-dark via-brand-dark to-surface-dark text-white py-20 md:py-28">
         {/* Floating shapes */}
         <div className="absolute inset-0 pattern-grid pointer-events-none" />
         <div className="absolute top-10 right-20 w-64 h-64 bg-brand-light/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/4 left-[10%] w-16 h-16 border-2 border-white/10 rounded-xl rotate-12 pointer-events-none" />
-        <div className="absolute bottom-1/4 right-[15%] w-20 h-20 border-2 border-white/10 rounded-full pointer-events-none" />
+
+        {/* Decorative pencil marks */}
+        <div className="absolute top-12 left-[8%] text-4xl rotate-12 pointer-events-none opacity-[0.06] hidden lg:block select-none" aria-hidden>✎</div>
+        <div className="absolute bottom-12 right-[8%] text-4xl -rotate-12 pointer-events-none opacity-[0.06] hidden lg:block select-none" aria-hidden>✏️</div>
 
         <div className="relative max-w-3xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-6">
-            Ready to transform your classroom?
-          </h2>
-          <p className="text-lg text-white/70 mb-10 max-w-xl mx-auto">
-            Join thousands of educators using LiveClass to make learning interactive, measurable, and fun.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => navigate('/signup')}
-              className="group px-8 py-4 bg-white text-brand font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              Start for Free
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-            <button
-              onClick={() => navigate('/join')}
-              className="px-8 py-4 bg-white/10 backdrop-blur text-white font-bold rounded-2xl text-lg border-2 border-white/20 shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
-            >
-              Join a Game
-            </button>
+          {/* Comic card wrapper for the CTA content */}
+          <div className="relative group inline-block w-full rotate-[-0.5deg]">
+            {/* Background with offset shadow */}
+            <div className="absolute inset-0 bg-white/5 backdrop-blur-sm border-2 border-white/20 rounded-3xl shadow-[6px_6px_0px_0px_#D4566B] transition-all duration-300 group-hover:shadow-[10px_10px_0px_0px_#D4566B] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
+
+            {/* Content */}
+            <div className="relative px-8 py-14 md:px-16 md:py-16">
+              <div className="relative inline-block mb-6">
+                <h2 className="text-3xl md:text-5xl font-extrabold rotate-[-0.5deg]">
+                  Ready to transform your classroom?
+                </h2>
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-56 h-3 bg-brand/30 rotate-[-1deg] rounded-full blur-sm" />
+                <span className="absolute -right-8 -top-4 rotate-12 text-2xl select-none" aria-hidden>✨</span>
+              </div>
+              <p className="text-lg text-white/70 mb-10 max-w-xl mx-auto">
+                Join thousands of educators using LiveClass to make learning interactive, measurable, and fun.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="group/btn px-8 py-4 bg-white text-brand font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  Start for Free
+                  <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-0.5 transition-transform" />
+                </button>
+                <button
+                  onClick={() => navigate('/join')}
+                  className="px-8 py-4 bg-white/10 backdrop-blur text-white font-bold rounded-2xl text-lg border-2 border-white/20 shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
+                >
+                  Join a Game
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
