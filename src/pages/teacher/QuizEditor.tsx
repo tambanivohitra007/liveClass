@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
@@ -124,22 +124,46 @@ export default function QuizEditor() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
-  // In-app navigation blocking
-  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
-    isDirty && !justSavedRef.current && currentLocation.pathname !== nextLocation.pathname
-  );
+  // Browser back/forward navigation blocking
+  const dirtyRef = useRef(isDirty);
+  dirtyRef.current = isDirty;
 
   useEffect(() => {
-    if (blocker.state !== 'blocked') return;
-    confirmAction(
+    const handler = () => {
+      if (!dirtyRef.current || justSavedRef.current) return;
+      // Cancel the navigation by pushing state back
+      window.history.pushState(null, '', window.location.href);
+      confirmAction(
+        'Unsaved changes',
+        'You have unsaved changes. Are you sure you want to leave?',
+        'Leave'
+      ).then(({ isConfirmed }) => {
+        if (isConfirmed) {
+          justSavedRef.current = true; // prevent re-triggering
+          window.history.back();
+        }
+      });
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, []);
+
+  // Guard for in-app navigate calls (back button, preview, etc.)
+  const navigateGuard = useCallback(async (to: string) => {
+    if (!isDirty || justSavedRef.current) {
+      navigate(to);
+      return;
+    }
+    const { isConfirmed } = await confirmAction(
       'Unsaved changes',
       'You have unsaved changes. Are you sure you want to leave?',
       'Leave'
-    ).then(({ isConfirmed }) => {
-      if (isConfirmed) blocker.proceed();
-      else blocker.reset();
-    });
-  }, [blocker.state]); // eslint-disable-line react-hooks/exhaustive-deps
+    );
+    if (isConfirmed) {
+      justSavedRef.current = true;
+      navigate(to);
+    }
+  }, [isDirty, navigate]);
 
   const addQuestion = () => {
     const newQ = emptyQuestion(quizId || '');
@@ -377,7 +401,7 @@ export default function QuizEditor() {
       <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 shrink-0">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigateGuard('/dashboard')}
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -399,7 +423,7 @@ export default function QuizEditor() {
           </button>
           {!isNew && (
             <button
-              onClick={() => navigate(`/quiz/${quizId}/preview`)}
+              onClick={() => navigateGuard(`/quiz/${quizId}/preview`)}
               className="px-4 py-2 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
             >
               <Eye className="w-4 h-4" />
