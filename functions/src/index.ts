@@ -698,26 +698,49 @@ Make questions educational, varied in difficulty, and factually accurate.`;
           }),
         }
       );
+
+      if (!res.ok) {
+        const errBody = await res.text();
+        console.error("Gemini API HTTP error:", res.status, errBody);
+        throw new HttpsError("internal", `Gemini API error: ${res.status}`);
+      }
+
       const data = await res.json();
-      const responseText =
-        data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+
+      // Check for API-level errors (bad key, quota, blocked, etc.)
+      if (data.error) {
+        console.error("Gemini API error:", JSON.stringify(data.error));
+        throw new HttpsError("internal", data.error.message || "Gemini API error");
+      }
+
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) {
+        console.error("Gemini returned no text. Full response:", JSON.stringify(data));
+        throw new HttpsError("internal", "Gemini returned an empty response");
+      }
+
+      // Strip markdown code fences (```json ... ```)
+      const responseText = rawText.replace(/```(?:json)?\s*/gi, "").replace(/```\s*/g, "").trim();
 
       let questions: Record<string, unknown>[];
       let title: string | undefined;
       let desc: string | undefined;
 
       if (generateMeta) {
-        // Try to parse as { title, description, questions }
         const objMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!objMatch) throw new HttpsError("internal", "Failed to parse AI response");
+        if (!objMatch) throw new HttpsError("internal", "Failed to parse AI response as object");
         const parsed = JSON.parse(objMatch[0]);
         title = parsed.title;
         desc = parsed.description;
         questions = Array.isArray(parsed.questions) ? parsed.questions : [];
       } else {
         const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) throw new HttpsError("internal", "Failed to parse AI response");
+        if (!jsonMatch) throw new HttpsError("internal", "Failed to parse AI response as array");
         questions = JSON.parse(jsonMatch[0]);
+      }
+
+      if (questions.length === 0) {
+        throw new HttpsError("internal", "AI returned 0 questions — try again");
       }
 
       const mapped = questions.map(
@@ -737,6 +760,7 @@ Make questions educational, varied in difficulty, and factually accurate.`;
       };
     } catch (err) {
       if (err instanceof HttpsError) throw err;
+      console.error("AI generation failed:", err);
       throw new HttpsError("internal", "AI generation failed");
     }
   }
