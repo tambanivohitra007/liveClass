@@ -55,6 +55,7 @@ export default function PlayGame() {
   const [orderingItems, setOrderingItems] = useState<string[]>([]);
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
@@ -112,6 +113,7 @@ export default function PlayGame() {
   useEffect(() => {
     if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
     setSubmitted(false);
+    setSubmitFailed(false);
     setSelectedAnswer('');
     setMatchingPairs({});
     setFillAnswers([]);
@@ -219,8 +221,9 @@ export default function PlayGame() {
   };
 
   const submitAnswer = async () => {
-    if (!sessionId || !playerId || !currentQuestion || submitted) return;
+    if (!sessionId || !playerId || !currentQuestion) return;
     setSubmitted(true);
+    setSubmitFailed(false);
     playSubmit();
     const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
     const selection = getSelection();
@@ -236,7 +239,7 @@ export default function PlayGame() {
       const { correct: c, pointsAwarded, rank, behindBy } = result.data;
       setFeedback({ correct: c, points: pointsAwarded, rank, behindBy });
     } catch {
-      addToast('error', 'Failed to submit answer. Please try again.');
+      setSubmitFailed(true);
     }
   };
 
@@ -568,10 +571,22 @@ export default function PlayGame() {
           </button>
         )}
 
-        {submitted && !feedback && (
+        {submitted && !feedback && !submitFailed && (
           <div className="mt-4 py-4 text-center text-white/50 animate-fade-in">
             <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-2" />
             Waiting for results...
+          </div>
+        )}
+
+        {submitFailed && (
+          <div className="mt-4 text-center animate-fade-in">
+            <p className="text-danger font-bold mb-2">Failed to submit answer</p>
+            <button
+              onClick={submitAnswer}
+              className="py-3 px-8 bg-white text-surface-dark font-black text-base rounded-2xl hover:bg-gray-100 transition-all shadow-lg"
+            >
+              Retry
+            </button>
           </div>
         )}
       </div>
