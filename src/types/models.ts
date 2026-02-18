@@ -97,6 +97,7 @@ export interface Session {
   questionOrder?: number[];
   timerPaused?: boolean;
   timerPausedAt?: number | null;
+  classroomId?: string | null;
 }
 
 export interface SessionPlayer {
@@ -135,6 +136,35 @@ export interface Assignment {
   startAt: number;
   endAt: number;
   attemptsAllowed: number;
+  classroomId?: string | null;
+}
+
+// --- Classroom Types ---
+export type ClassroomColor = CollectionColor;
+
+export interface Classroom {
+  id: string;
+  name: string;
+  description: string;
+  color: ClassroomColor;
+  ownerId: string;
+  joinCode: string;
+  joinCodeExpiresAt: number;
+  studentCount: number;
+  coTeacherCount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type ClassroomMemberRole = 'student' | 'co-teacher';
+
+export interface ClassroomMember {
+  id: string;
+  userId: string;
+  displayName: string;
+  email: string;
+  role: ClassroomMemberRole;
+  joinedAt: number;
 }
 
 // --- AI Evaluation Types ---

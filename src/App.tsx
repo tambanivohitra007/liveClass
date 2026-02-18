@@ -26,6 +26,9 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import Profile from './pages/Profile';
 import QuizPreview from './pages/teacher/QuizPreview';
 import CollectionView from './pages/teacher/CollectionView';
+import ClassList from './pages/teacher/ClassList';
+import ClassDetail from './pages/teacher/ClassDetail';
+import JoinClass from './pages/student/JoinClass';
 import Discover from './pages/Discover';
 import Flashcards from './pages/Flashcards';
 import Worksheet from './pages/teacher/Worksheet';
@@ -109,7 +112,10 @@ function AppContent() {
         <Route path="/history" element={<TeacherRoute><SessionHistory /></TeacherRoute>} />
         <Route path="/collection/:collectionId" element={<TeacherRoute><CollectionView /></TeacherRoute>} />
         <Route path="/assignment/new" element={<TeacherRoute><AssignmentCreate /></TeacherRoute>} />
+        <Route path="/classes" element={<TeacherRoute><ClassList /></TeacherRoute>} />
+        <Route path="/classroom/:classroomId" element={<TeacherRoute><ClassDetail /></TeacherRoute>} />
 
+        <Route path="/join-class" element={<ProtectedRoute><JoinClass /></ProtectedRoute>} />
         <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>

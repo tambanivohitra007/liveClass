@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings, History, Sun, Moon, Shield } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings, History, Sun, Moon, Shield, Users, UserPlus } from 'lucide-react';
 import { useThemeStore } from '../stores/themeStore';
 import { ADMIN_EMAIL } from '../lib/config';
 import logo from '../assets/logo.png';
@@ -75,6 +75,16 @@ export default function Navbar() {
               )}
               {isApprovedTeacher && (
                 <Link
+                  to="/classes"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                    isActive('/classes') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
+                  }`}
+                >
+                  Classes
+                </Link>
+              )}
+              {isApprovedTeacher && (
+                <Link
                   to="/history"
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
                     isActive('/history') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
@@ -112,6 +122,16 @@ export default function Navbar() {
               >
                 Join Game
               </Link>
+              {user?.role === 'student' && (
+                <Link
+                  to="/join-class"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                    isActive('/join-class') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
+                  }`}
+                >
+                  Join Class
+                </Link>
+              )}
 
               {/* Dark mode toggle */}
               {/* <button
@@ -238,6 +258,12 @@ export default function Navbar() {
                   </Link>
                 )}
                 {isApprovedTeacher && (
+                  <Link to="/classes" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    Classes
+                  </Link>
+                )}
+                {isApprovedTeacher && (
                   <Link to="/history" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
                     <History className="w-4 h-4 text-gray-400" />
                     Session History
@@ -253,6 +279,12 @@ export default function Navbar() {
                   <User className="w-4 h-4 text-gray-400" />
                   Join Game
                 </Link>
+                {user?.role === 'student' && (
+                  <Link to="/join-class" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
+                    <UserPlus className="w-4 h-4 text-gray-400" />
+                    Join Class
+                  </Link>
+                )}
                 <Link to="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
                   <Settings className="w-4 h-4 text-gray-400" />
                   Profile Settings

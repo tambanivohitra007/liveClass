@@ -94,5 +94,22 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
     }
+
+    // Classrooms
+    match /classrooms/{classroomId} {
+      allow read: if request.auth != null;
+      allow create: if false; // Cloud Functions only
+      allow update: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid ||
+        exists(/databases/$(database)/documents/classrooms/$(classroomId)/members/$(request.auth.uid))
+      ) && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['ownerId', 'joinCode', 'joinCodeExpiresAt', 'studentCount', 'coTeacherCount']);
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+
+      match /members/{memberId} {
+        allow read: if request.auth != null;
+        allow write: if false; // Cloud Functions only
+      }
+    }
   }
 }

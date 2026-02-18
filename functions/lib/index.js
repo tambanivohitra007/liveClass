@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const https_1 = require("firebase-functions/v2/https");
@@ -956,6 +956,259 @@ Return ONLY valid JSON with this exact structure:
         console.error("AI evaluation failed:", err);
         throw new https_1.HttpsError("internal", "AI evaluation failed");
     }
+});
+// --- Classroom: Generate Join Code ---
+const JOIN_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I, O, 0, 1
+function generateJoinCode() {
+    let code = "";
+    for (let i = 0; i < 6; i++) {
+        code += JOIN_CODE_CHARS[Math.floor(Math.random() * JOIN_CODE_CHARS.length)];
+    }
+    return code;
+}
+const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+// --- Create Classroom ---
+exports.createClassroom = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { name, description = "", color = "brand" } = request.data;
+    if (!name || name.trim().length === 0) {
+        throw new https_1.HttpsError("invalid-argument", "Name is required");
+    }
+    if (name.trim().length > 100) {
+        throw new https_1.HttpsError("invalid-argument", "Name too long");
+    }
+    // Generate unique join code
+    let joinCode = generateJoinCode();
+    let existing = await db
+        .collection("classrooms")
+        .where("joinCode", "==", joinCode)
+        .get();
+    while (!existing.empty) {
+        joinCode = generateJoinCode();
+        existing = await db
+            .collection("classrooms")
+            .where("joinCode", "==", joinCode)
+            .get();
+    }
+    const now = Date.now();
+    const classroomRef = db.collection("classrooms").doc();
+    await classroomRef.set({
+        name: name.trim(),
+        description: description.trim(),
+        color,
+        ownerId: request.auth.uid,
+        joinCode,
+        joinCodeExpiresAt: now + FOURTEEN_DAYS_MS,
+        studentCount: 0,
+        coTeacherCount: 0,
+        createdAt: now,
+        updatedAt: now,
+    });
+    return { classroomId: classroomRef.id, joinCode };
+});
+// --- Join Classroom ---
+exports.joinClassroom = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { code } = request.data;
+    if (!code || code.trim().length !== 6) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid join code");
+    }
+    const upperCode = code.trim().toUpperCase();
+    // Find classroom by join code
+    const snap = await db
+        .collection("classrooms")
+        .where("joinCode", "==", upperCode)
+        .limit(1)
+        .get();
+    if (snap.empty) {
+        throw new https_1.HttpsError("not-found", "No classroom found with that code");
+    }
+    const classroomDoc = snap.docs[0];
+    const classroom = classroomDoc.data();
+    // Check expiry
+    if (Date.now() > classroom.joinCodeExpiresAt) {
+        throw new https_1.HttpsError("failed-precondition", "This join code has expired");
+    }
+    // Check not already a member
+    const memberDoc = await db
+        .doc(`classrooms/${classroomDoc.id}/members/${request.auth.uid}`)
+        .get();
+    if (memberDoc.exists) {
+        throw new https_1.HttpsError("already-exists", "You are already a member of this class");
+    }
+    // Check not the owner
+    if (classroom.ownerId === request.auth.uid) {
+        throw new https_1.HttpsError("already-exists", "You are the owner of this class");
+    }
+    // Get user info for denormalization
+    const userDoc = await db.doc(`users/${request.auth.uid}`).get();
+    const userData = userDoc.data() || {};
+    const batch = db.batch();
+    batch.set(db.doc(`classrooms/${classroomDoc.id}/members/${request.auth.uid}`), {
+        userId: request.auth.uid,
+        displayName: userData.displayName || "",
+        email: userData.email || request.auth.token.email || "",
+        role: "student",
+        joinedAt: Date.now(),
+    });
+    batch.update(classroomDoc.ref, {
+        studentCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: Date.now(),
+    });
+    await batch.commit();
+    return { classroomId: classroomDoc.id, name: classroom.name };
+});
+// --- Add Co-Teacher ---
+exports.addCoTeacher = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { classroomId, email } = request.data;
+    if (!classroomId || !email) {
+        throw new https_1.HttpsError("invalid-argument", "classroomId and email are required");
+    }
+    // Check caller is owner or co-teacher
+    const classroomDoc = await db.doc(`classrooms/${classroomId}`).get();
+    if (!classroomDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Classroom not found");
+    }
+    const classroom = classroomDoc.data();
+    const isOwner = classroom.ownerId === request.auth.uid;
+    const callerMember = await db
+        .doc(`classrooms/${classroomId}/members/${request.auth.uid}`)
+        .get();
+    const isCoTeacher = callerMember.exists && callerMember.data()?.role === "co-teacher";
+    if (!isOwner && !isCoTeacher) {
+        throw new https_1.HttpsError("permission-denied", "Only the owner or co-teachers can add co-teachers");
+    }
+    // Find user by email
+    const usersSnap = await db
+        .collection("users")
+        .where("email", "==", email.trim().toLowerCase())
+        .limit(1)
+        .get();
+    if (usersSnap.empty) {
+        throw new https_1.HttpsError("not-found", "No user found with that email");
+    }
+    const targetUser = usersSnap.docs[0];
+    const targetUserId = targetUser.id;
+    const targetData = targetUser.data();
+    // Check not already a member
+    const existingMember = await db
+        .doc(`classrooms/${classroomId}/members/${targetUserId}`)
+        .get();
+    if (existingMember.exists) {
+        throw new https_1.HttpsError("already-exists", "This user is already a member");
+    }
+    // Check not the owner
+    if (classroom.ownerId === targetUserId) {
+        throw new https_1.HttpsError("already-exists", "This user is already the owner");
+    }
+    const batch = db.batch();
+    batch.set(db.doc(`classrooms/${classroomId}/members/${targetUserId}`), {
+        userId: targetUserId,
+        displayName: targetData.displayName || "",
+        email: targetData.email || email.trim().toLowerCase(),
+        role: "co-teacher",
+        joinedAt: Date.now(),
+    });
+    batch.update(classroomDoc.ref, {
+        coTeacherCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: Date.now(),
+    });
+    await batch.commit();
+    return { success: true, displayName: targetData.displayName || email };
+});
+// --- Remove Classroom Member ---
+exports.removeClassroomMember = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { classroomId, userId } = request.data;
+    if (!classroomId || !userId) {
+        throw new https_1.HttpsError("invalid-argument", "classroomId and userId are required");
+    }
+    const classroomDoc = await db.doc(`classrooms/${classroomId}`).get();
+    if (!classroomDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Classroom not found");
+    }
+    const classroom = classroomDoc.data();
+    // Can't remove the owner
+    if (classroom.ownerId === userId) {
+        throw new https_1.HttpsError("failed-precondition", "Cannot remove the classroom owner");
+    }
+    // Check caller is owner or co-teacher
+    const isOwner = classroom.ownerId === request.auth.uid;
+    const callerMember = await db
+        .doc(`classrooms/${classroomId}/members/${request.auth.uid}`)
+        .get();
+    const isCoTeacher = callerMember.exists && callerMember.data()?.role === "co-teacher";
+    if (!isOwner && !isCoTeacher) {
+        throw new https_1.HttpsError("permission-denied", "Only the owner or co-teachers can remove members");
+    }
+    const memberDoc = await db
+        .doc(`classrooms/${classroomId}/members/${userId}`)
+        .get();
+    if (!memberDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Member not found");
+    }
+    const memberRole = memberDoc.data()?.role;
+    const countField = memberRole === "co-teacher" ? "coTeacherCount" : "studentCount";
+    const batch = db.batch();
+    batch.delete(memberDoc.ref);
+    batch.update(classroomDoc.ref, {
+        [countField]: admin.firestore.FieldValue.increment(-1),
+        updatedAt: Date.now(),
+    });
+    await batch.commit();
+    return { success: true };
+});
+// --- Regenerate Join Code ---
+exports.regenerateJoinCode = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { classroomId } = request.data;
+    if (!classroomId) {
+        throw new https_1.HttpsError("invalid-argument", "classroomId is required");
+    }
+    const classroomDoc = await db.doc(`classrooms/${classroomId}`).get();
+    if (!classroomDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Classroom not found");
+    }
+    const classroom = classroomDoc.data();
+    // Check caller is owner or co-teacher
+    const isOwner = classroom.ownerId === request.auth.uid;
+    const callerMember = await db
+        .doc(`classrooms/${classroomId}/members/${request.auth.uid}`)
+        .get();
+    const isCoTeacher = callerMember.exists && callerMember.data()?.role === "co-teacher";
+    if (!isOwner && !isCoTeacher) {
+        throw new https_1.HttpsError("permission-denied", "Only the owner or co-teachers can regenerate the join code");
+    }
+    // Generate unique new code
+    let joinCode = generateJoinCode();
+    let existing = await db
+        .collection("classrooms")
+        .where("joinCode", "==", joinCode)
+        .get();
+    while (!existing.empty) {
+        joinCode = generateJoinCode();
+        existing = await db
+            .collection("classrooms")
+            .where("joinCode", "==", joinCode)
+            .get();
+    }
+    await classroomDoc.ref.update({
+        joinCode,
+        joinCodeExpiresAt: Date.now() + FOURTEEN_DAYS_MS,
+        updatedAt: Date.now(),
+    });
+    return { joinCode, expiresAt: Date.now() + FOURTEEN_DAYS_MS };
 });
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({
