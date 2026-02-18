@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const https_1 = require("firebase-functions/v2/https");
@@ -752,6 +752,209 @@ Make questions educational, varied in difficulty, and factually accurate.`;
             throw err;
         console.error("AI generation failed:", err);
         throw new https_1.HttpsError("internal", "AI generation failed");
+    }
+});
+// --- AI Evaluation ---
+exports.evaluateSession = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "512MiB", secrets: [geminiApiKey] }, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { sessionId, mode, playerId, questionIndex } = request.data;
+    if (!sessionId || !mode) {
+        throw new https_1.HttpsError("invalid-argument", "sessionId and mode are required");
+    }
+    // Verify caller is the host
+    const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Session not found");
+    }
+    if (sessionDoc.data()?.hostId !== request.auth.uid) {
+        throw new https_1.HttpsError("permission-denied", "Not the host");
+    }
+    const session = sessionDoc.data();
+    // Cache key
+    const cacheId = mode === "participant"
+        ? `participant_${playerId}`
+        : `question_${questionIndex}`;
+    // Check cache
+    const cacheRef = db.doc(`sessions/${sessionId}/evaluations/${cacheId}`);
+    const cached = await cacheRef.get();
+    if (cached.exists) {
+        return { evaluation: cached.data()?.evaluation, cached: true };
+    }
+    // Gather data based on mode
+    let prompt;
+    if (mode === "participant") {
+        if (!playerId) {
+            throw new https_1.HttpsError("invalid-argument", "playerId is required for participant mode");
+        }
+        // Get player info
+        const playerDoc = await db.doc(`sessions/${sessionId}/players/${playerId}`).get();
+        if (!playerDoc.exists) {
+            throw new https_1.HttpsError("not-found", "Player not found");
+        }
+        const nickname = playerDoc.data()?.nickname || "Unknown";
+        // Get all answers for this player
+        const answersSnap = await db
+            .collection(`sessions/${sessionId}/answers`)
+            .where("playerId", "==", playerId)
+            .get();
+        // Get questions data
+        const questionsSnap = await db
+            .collection("questions")
+            .where("quizId", "==", session.quizId)
+            .get();
+        const questionsMap = new Map();
+        questionsSnap.docs.forEach((d) => {
+            const data = d.data();
+            questionsMap.set(d.id, {
+                text: data.text,
+                type: data.type,
+                correctAnswers: data.correctAnswers || [],
+            });
+        });
+        // Build answer details
+        const answerDetails = answersSnap.docs.map((d) => {
+            const a = d.data();
+            const q = questionsMap.get(a.questionId);
+            return {
+                question: q?.text || "Unknown",
+                type: q?.type || "mcq",
+                selected: a.selection,
+                correct: a.correct,
+                points: a.pointsAwarded,
+                timeMs: a.timeMs,
+            };
+        });
+        const totalQuestions = questionsSnap.size;
+        const correctCount = answerDetails.filter((a) => a.correct).length;
+        const totalPoints = answerDetails.reduce((s, a) => s + a.points, 0);
+        prompt = `You are an educational AI evaluator. Analyze this student's quiz performance and return a JSON evaluation.
+
+Student: ${nickname}
+Quiz: ${totalQuestions} questions
+Score: ${correctCount}/${totalQuestions} correct (${totalPoints} points)
+
+Answer details:
+${answerDetails.map((a, i) => `Q${i + 1} [${a.type}]: "${a.question}" → answered "${a.selected}" → ${a.correct ? "CORRECT" : "INCORRECT"} (${a.points}pts, ${(a.timeMs / 1000).toFixed(1)}s)`).join("\n")}
+
+Return ONLY valid JSON with this exact structure:
+{
+  "summary": "2-3 sentence overall assessment",
+  "strengths": ["strength1", "strength2"],
+  "weaknesses": ["weakness1", "weakness2"],
+  "recommendations": ["recommendation1", "recommendation2"],
+  "overallRating": "excellent|good|average|needs_improvement",
+  "topicMastery": [{"topic": "topic name", "level": "strong|moderate|weak"}]
+}`;
+    }
+    else {
+        if (questionIndex === undefined || questionIndex === null) {
+            throw new https_1.HttpsError("invalid-argument", "questionIndex is required for question mode");
+        }
+        // Get questions
+        const questionsSnap = await db
+            .collection("questions")
+            .where("quizId", "==", session.quizId)
+            .get();
+        const questionsArr = questionsSnap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+        }));
+        const questionOrder = session.questionOrder || questionsArr.map((_, i) => i);
+        const actualIdx = questionOrder[questionIndex] ?? questionIndex;
+        const question = questionsArr[actualIdx];
+        if (!question) {
+            throw new https_1.HttpsError("not-found", "Question not found at given index");
+        }
+        // Get all answers for this question
+        const answersSnap = await db
+            .collection(`sessions/${sessionId}/answers`)
+            .where("questionId", "==", question.id)
+            .get();
+        const answers = answersSnap.docs.map((d) => d.data());
+        const totalAnswers = answers.length;
+        const correctCount = answers.filter((a) => a.correct).length;
+        const avgTimeMs = totalAnswers > 0
+            ? answers.reduce((s, a) => s + (a.timeMs || 0), 0) / totalAnswers
+            : 0;
+        // Count answer selections
+        const selectionCounts = new Map();
+        answers.forEach((a) => {
+            const sel = String(a.selection);
+            selectionCounts.set(sel, (selectionCounts.get(sel) || 0) + 1);
+        });
+        const qData = question;
+        prompt = `You are an educational AI evaluator. Analyze this quiz question's quality and student responses, then return a JSON evaluation.
+
+Question [${qData.type || "mcq"}]: "${qData.text}"
+Options: ${JSON.stringify(qData.options || [])}
+Correct answers: ${JSON.stringify(qData.correctAnswers || [])}
+Time limit: ${qData.timeLimitSec || 20}s
+
+Student responses (${totalAnswers} total):
+- Correct: ${correctCount} (${totalAnswers > 0 ? ((correctCount / totalAnswers) * 100).toFixed(0) : 0}%)
+- Avg response time: ${(avgTimeMs / 1000).toFixed(1)}s
+- Answer distribution: ${JSON.stringify(Object.fromEntries(selectionCounts))}
+
+Return ONLY valid JSON with this exact structure:
+{
+  "summary": "2-3 sentence analysis of question quality and student performance",
+  "difficultyRating": "too_easy|appropriate|too_hard",
+  "qualityScore": 7,
+  "commonMistakes": ["mistake1", "mistake2"],
+  "suggestions": ["suggestion1", "suggestion2"],
+  "discriminationIndex": "good|fair|poor"
+}`;
+    }
+    // Call Gemini API
+    const apiKey = geminiApiKey.value();
+    if (!apiKey) {
+        throw new https_1.HttpsError("failed-precondition", "AI API key not configured");
+    }
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { maxOutputTokens: 2048, temperature: 0.3 },
+            }),
+        });
+        if (!res.ok) {
+            const errBody = await res.text();
+            console.error("Gemini API error:", res.status, errBody);
+            throw new https_1.HttpsError("internal", `Gemini API error: ${res.status}`);
+        }
+        const data = await res.json();
+        if (data.error) {
+            console.error("Gemini API error:", JSON.stringify(data.error));
+            throw new https_1.HttpsError("internal", data.error.message || "Gemini API error");
+        }
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) {
+            throw new https_1.HttpsError("internal", "Gemini returned an empty response");
+        }
+        // Parse JSON from response
+        const cleaned = rawText.replace(/```(?:json)?\s*/gi, "").replace(/```\s*/g, "").trim();
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new https_1.HttpsError("internal", "Failed to parse AI evaluation response");
+        }
+        const evaluation = JSON.parse(jsonMatch[0]);
+        // Cache to Firestore
+        await cacheRef.set({
+            evaluation,
+            mode,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return { evaluation, cached: false };
+    }
+    catch (err) {
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        console.error("AI evaluation failed:", err);
+        throw new https_1.HttpsError("internal", "AI evaluation failed");
     }
 });
 // --- TTL Cleanup: delete sessions older than 24 hours ---

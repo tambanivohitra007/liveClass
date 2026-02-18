@@ -1,17 +1,19 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import { useSessionAnalytics } from '../../hooks/useSessionAnalytics';
 import { exportSessionExcel } from '../../lib/excelExport';
+import SlidePanel from '../../components/SlidePanel';
+import type { ParticipantEvaluation, QuestionEvaluation } from '../../types/models';
 import {
   Download, FileSpreadsheet, Users, Target,
   ShieldAlert,
   HelpCircle, CheckCircle2, XCircle, ListOrdered, AlignLeft,
   ArrowLeftRight, PenLine, MessageSquare, Presentation,
   Printer, Mail, Share2, Trash2, MoreVertical, Check, X,
-  Zap, ArrowUpDown
+  Zap, ArrowUpDown, Sparkles, Star, TrendingUp, AlertTriangle, Loader2
 } from 'lucide-react';
 
 type TabId = 'overview' | 'participants' | 'questions' | 'tags' | 'anti-cheating';
@@ -62,6 +64,15 @@ export default function SessionResults() {
   const [, setExportingExcel] = useState(false);
   const { addToast } = useToastStore();
 
+  // AI Evaluation state
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelMode, setPanelMode] = useState<'participant' | 'question'>('participant');
+  const [panelTitle, setPanelTitle] = useState('');
+  const [panelSubtitle, setPanelSubtitle] = useState('');
+  const [evaluating, setEvaluating] = useState(false);
+  const [participantEval, setParticipantEval] = useState<ParticipantEvaluation | null>(null);
+  const [questionEval, setQuestionEval] = useState<QuestionEvaluation | null>(null);
+
   const {
     loading,
     sessionPin,
@@ -75,6 +86,55 @@ export default function SessionResults() {
     violations,
     playerStats,
   } = useSessionAnalytics(sessionId);
+
+  const handleEvaluate = useCallback(async (
+    mode: 'participant' | 'question',
+    opts: { playerId?: string; nickname?: string; questionIndex?: number }
+  ) => {
+    if (!sessionId) return;
+
+    setPanelMode(mode);
+    setParticipantEval(null);
+    setQuestionEval(null);
+    setPanelOpen(true);
+    setEvaluating(true);
+
+    if (mode === 'participant') {
+      setPanelTitle(opts.nickname || 'Student');
+      setPanelSubtitle('AI Performance Report');
+    } else {
+      setPanelTitle(`Question ${(opts.questionIndex ?? 0) + 1}`);
+      setPanelSubtitle('AI Quality Analysis');
+    }
+
+    try {
+      const fn = httpsCallable<
+        { sessionId: string; mode: string; playerId?: string; questionIndex?: number },
+        { evaluation: ParticipantEvaluation | QuestionEvaluation; cached: boolean }
+      >(functions, 'evaluateSession');
+
+      const result = await fn({
+        sessionId,
+        mode,
+        ...(mode === 'participant' ? { playerId: opts.playerId } : { questionIndex: opts.questionIndex }),
+      });
+
+      if (mode === 'participant') {
+        setParticipantEval(result.data.evaluation as ParticipantEvaluation);
+      } else {
+        setQuestionEval(result.data.evaluation as QuestionEvaluation);
+      }
+
+      if (result.data.cached) {
+        addToast('info', 'Loaded cached evaluation');
+      }
+    } catch {
+      addToast('error', 'AI evaluation failed. Please try again.');
+      setPanelOpen(false);
+    } finally {
+      setEvaluating(false);
+    }
+  }, [sessionId, addToast]);
 
   // Update tabs with violation count
   const tabs = useMemo(() => TABS.map(t => 
@@ -443,8 +503,11 @@ export default function SessionResults() {
                    </div>
 
                    {/* Actions */}
-                   <button className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors">
-                      Evaluate <Zap className="w-3 h-3 fill-current" />
+                   <button
+                      onClick={() => handleEvaluate('participant', { playerId: player.playerId, nickname: player.nickname })}
+                      className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
+                   >
+                      Evaluate <Sparkles className="w-3 h-3" />
                    </button>
                    <button className="p-1 text-gray-400 hover:text-gray-600">
                       <MoreVertical className="w-4 h-4" />
@@ -486,8 +549,11 @@ export default function SessionResults() {
                            <span className="font-bold text-gray-900">{(q.avgTimeMs/1000).toFixed(0)} s</span>
                            <span className="text-sm text-gray-500">Avg. time</span>
                         </div>
-                        <button className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors">
-                           Evaluate <Zap className="w-3 h-3 fill-current" />
+                        <button
+                           onClick={() => handleEvaluate('question', { questionIndex: idx })}
+                           className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
+                        >
+                           Evaluate <Sparkles className="w-3 h-3" />
                         </button>
                       </div>
                    </div>
@@ -591,8 +657,11 @@ export default function SessionResults() {
                         <div className="text-sm text-gray-400">Accuracy</div>
                      </div>
 
-                     <button className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors">
-                        Evaluate <Zap className="w-3 h-3 fill-current" />
+                     <button
+                        onClick={() => handleEvaluate('question', { questionIndex: group.questions[0]?.questionIndex ?? 0 })}
+                        className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
+                     >
+                        Evaluate <Sparkles className="w-3 h-3" />
                      </button>
                   </div>
                 )
@@ -655,6 +724,189 @@ export default function SessionResults() {
         )}
 
       </div>
+
+      {/* AI Evaluation Slide Panel */}
+      <SlidePanel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title={panelTitle}
+        subtitle={panelSubtitle}
+        icon={<Sparkles className="w-5 h-5" />}
+      >
+        {evaluating ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <Loader2 className="w-8 h-8 text-brand animate-spin" />
+            <p className="text-gray-500 font-medium">Analyzing with AI...</p>
+            <p className="text-gray-400 text-sm">This may take a few seconds</p>
+          </div>
+        ) : panelMode === 'participant' && participantEval ? (
+          <div className="space-y-6">
+            {/* Overall Rating Badge */}
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${
+                participantEval.overallRating === 'excellent' ? 'bg-success/10 text-success' :
+                participantEval.overallRating === 'good' ? 'bg-blue-50 text-blue-600' :
+                participantEval.overallRating === 'average' ? 'bg-warning/10 text-warning' :
+                'bg-danger/10 text-danger'
+              }`}>
+                {participantEval.overallRating === 'excellent' ? '★ Excellent' :
+                 participantEval.overallRating === 'good' ? '● Good' :
+                 participantEval.overallRating === 'average' ? '◐ Average' :
+                 '▽ Needs Improvement'}
+              </span>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <p className="text-gray-700 leading-relaxed">{participantEval.summary}</p>
+            </div>
+
+            {/* Strengths */}
+            {participantEval.strengths.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-success" /> Strengths
+                </h3>
+                <ul className="space-y-2">
+                  {participantEval.strengths.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Weaknesses */}
+            {participantEval.weaknesses.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-warning" /> Areas for Improvement
+                </h3>
+                <ul className="space-y-2">
+                  {participantEval.weaknesses.map((w, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700">
+                      <XCircle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                      {w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Recommendations */}
+            {participantEval.recommendations.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-blue-500" /> Recommendations
+                </h3>
+                <ul className="space-y-2">
+                  {participantEval.recommendations.map((r, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700">
+                      <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Topic Mastery */}
+            {participantEval.topicMastery.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 mb-3">Topic Mastery</h3>
+                <div className="space-y-2">
+                  {participantEval.topicMastery.map((t, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="text-gray-700 font-medium">{t.topic}</span>
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                        t.level === 'strong' ? 'bg-success/10 text-success' :
+                        t.level === 'moderate' ? 'bg-warning/10 text-warning' :
+                        'bg-danger/10 text-danger'
+                      }`}>
+                        {t.level}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : panelMode === 'question' && questionEval ? (
+          <div className="space-y-6">
+            {/* Quality Score */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl bg-brand/10 flex items-center justify-center">
+                <span className="text-2xl font-bold text-brand">{questionEval.qualityScore}</span>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Quality Score</div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    questionEval.difficultyRating === 'appropriate' ? 'bg-success/10 text-success' :
+                    questionEval.difficultyRating === 'too_easy' ? 'bg-warning/10 text-warning' :
+                    'bg-danger/10 text-danger'
+                  }`}>
+                    {questionEval.difficultyRating === 'appropriate' ? 'Appropriate Difficulty' :
+                     questionEval.difficultyRating === 'too_easy' ? 'Too Easy' : 'Too Hard'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    questionEval.discriminationIndex === 'good' ? 'bg-success/10 text-success' :
+                    questionEval.discriminationIndex === 'fair' ? 'bg-warning/10 text-warning' :
+                    'bg-danger/10 text-danger'
+                  }`}>
+                    {questionEval.discriminationIndex} discrimination
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <p className="text-gray-700 leading-relaxed">{questionEval.summary}</p>
+            </div>
+
+            {/* Common Mistakes */}
+            {questionEval.commonMistakes.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-danger" /> Common Mistakes
+                </h3>
+                <ul className="space-y-2">
+                  {questionEval.commonMistakes.map((m, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700">
+                      <XCircle className="w-4 h-4 text-danger mt-0.5 flex-shrink-0" />
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Suggestions */}
+            {questionEval.suggestions.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-blue-500" /> Suggestions
+                </h3>
+                <ul className="space-y-2">
+                  {questionEval.suggestions.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700">
+                      <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </SlidePanel>
     </div>
   );
 }

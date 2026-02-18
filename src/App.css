@@ -240,6 +240,22 @@
     radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 }
 
+/* Slide panel */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slide-out-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.animate-slide-out-right {
+  animation: slide-out-right 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

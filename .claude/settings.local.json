@@ -33,7 +33,8 @@
       "Bash(gsutil cors set:*)",
       "Bash(gcloud storage buckets update:*)",
       "Bash(gcloud storage buckets describe:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

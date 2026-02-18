@@ -137,6 +137,25 @@ export interface Assignment {
   attemptsAllowed: number;
 }
 
+// --- AI Evaluation Types ---
+export interface ParticipantEvaluation {
+  summary: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  overallRating: 'excellent' | 'good' | 'average' | 'needs_improvement';
+  topicMastery: { topic: string; level: 'strong' | 'moderate' | 'weak' }[];
+}
+
+export interface QuestionEvaluation {
+  summary: string;
+  difficultyRating: 'too_easy' | 'appropriate' | 'too_hard';
+  qualityScore: number; // 1-10
+  commonMistakes: string[];
+  suggestions: string[];
+  discriminationIndex: 'good' | 'fair' | 'poor';
+}
+
 export type ViolationType = 'tab_hidden' | 'window_blur' | 'paste_attempt';
 
 export interface ViolationEvent {
