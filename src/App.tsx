@@ -47,7 +47,7 @@ function TeacherRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!firebaseUser) return <Navigate to="/login" replace />;
-  if (user?.role === 'teacher' && user.approvalStatus !== 'approved') {
+  if (user?.role === 'teacher' && user.approvalStatus !== 'approved' && user.email !== ADMIN_EMAIL) {
     return <Navigate to="/pending-approval" replace />;
   }
 

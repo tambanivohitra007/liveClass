@@ -43,7 +43,7 @@ export default function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
   const isAdmin = user?.email === ADMIN_EMAIL;
-  const isApprovedTeacher = user?.role === 'teacher' && user.approvalStatus === 'approved';
+  const isApprovedTeacher = user?.role === 'teacher' && (user.approvalStatus === 'approved' || isAdmin);
   const dashboardPath = user?.role === 'student' ? '/student/dashboard' : '/dashboard';
 
   const initials = user?.displayName

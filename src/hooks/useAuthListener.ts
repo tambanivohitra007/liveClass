@@ -21,12 +21,22 @@ export function useAuthListener() {
       }
 
       if (firebaseUser) {
-        unsubUserDoc = onSnapshot(doc(db, 'users', firebaseUser.uid), (snap) => {
-          if (snap.exists()) {
-            setUser({ id: snap.id, ...snap.data() } as User);
-          }
-          setLoading(false);
-        });
+        unsubUserDoc = onSnapshot(
+          doc(db, 'users', firebaseUser.uid),
+          (snap) => {
+            if (snap.exists()) {
+              setUser({ id: snap.id, ...snap.data() } as User);
+            } else {
+              setUser(null);
+            }
+            setLoading(false);
+          },
+          (err) => {
+            console.error('User doc listener error:', err);
+            setUser(null);
+            setLoading(false);
+          },
+        );
       } else {
         setUser(null);
         setLoading(false);
