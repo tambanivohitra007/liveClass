@@ -831,7 +831,7 @@ export default function QuizEditor() {
       {/* ── AI Generate Modal ── */}
       {showAiModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAiModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-0">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-brand" />
@@ -848,7 +848,7 @@ export default function QuizEditor() {
                   value={aiTopic}
                   onChange={(e) => setAiTopic(e.target.value)}
                   placeholder="e.g. Photosynthesis, World War II, Python basics"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                   autoFocus
                 />
               </div>
@@ -859,7 +859,7 @@ export default function QuizEditor() {
                   onChange={(e) => setAiDescription(e.target.value)}
                   placeholder="Optional: grade level, specific focus, learning objectives..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
                 />
               </div>
               <div className="flex gap-4">
@@ -868,7 +868,7 @@ export default function QuizEditor() {
                   <select
                     value={aiCount}
                     onChange={(e) => setAiCount(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                   >
                     {[3, 5, 7, 10].map((n) => (
                       <option key={n} value={n}>{n} questions</option>
@@ -880,7 +880,7 @@ export default function QuizEditor() {
                   <select
                     value={aiType}
                     onChange={(e) => setAiType(e.target.value as QuestionType)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                   >
                     <option value="mcq">Multiple Choice</option>
                     <option value="tf">True / False</option>
@@ -896,7 +896,7 @@ export default function QuizEditor() {
                 <select
                   value={aiDifficulty}
                   onChange={(e) => setAiDifficulty(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                 >
                   <option value="mixed">Mixed</option>
                   <option value="easy">Easy</option>
@@ -907,7 +907,7 @@ export default function QuizEditor() {
               <button
                 onClick={handleAiGenerate}
                 disabled={aiGenerating || !aiTopic.trim()}
-                className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
               >
                 {aiGenerating ? (
                   <>
