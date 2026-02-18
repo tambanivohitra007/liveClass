@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Play, ArrowRight,
   ClipboardList, Trophy, Share2
 } from 'lucide-react';
+
+const ShaderBackground = lazy(() => import('../components/ui/ShaderBackground'));
 
 export default function Home() {
   const navigate = useNavigate();
@@ -25,15 +27,11 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark">
-        {/* Floating Geometric Shapes */}
-        <div className="absolute inset-0 pattern-grid pointer-events-none" />
-        <div className="absolute top-20 left-10 w-32 h-32 border-4 border-white/10 rounded-2xl rotate-12 pointer-events-none" />
-        <div className="absolute bottom-40 right-20 w-48 h-48 bg-brand/15 rounded-full pointer-events-none" />
-        <div className="absolute top-1/2 left-1/4 w-16 h-16 border-2 border-brand/20 rotate-45 pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 w-24 h-24 border-b-8 border-l-8 border-white/5 rounded-full pointer-events-none" />
-        <div className="absolute bottom-1/3 left-[15%] w-20 h-20 border-2 border-white/10 rounded-full pointer-events-none animate-float" />
-        <div className="absolute top-[15%] right-[10%] w-12 h-12 bg-accent/10 rounded-xl rotate-[30deg] pointer-events-none" />
+      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-surface-dark">
+        {/* Neural network CPPN shader background */}
+        <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark" />}>
+          <ShaderBackground />
+        </Suspense>
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left - Join Game Card (Glass) */}
@@ -141,34 +139,59 @@ export default function Home() {
       </section>
 
       {/* How it Works */}
-      <section className="py-24">
+      <section className="py-24 relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4">How it Works</h2>
-            <div className="h-1.5 w-24 bg-brand mx-auto rounded-full" />
+          {/* Section header — playful rotation */}
+          <div className="text-center space-y-4 mb-20">
+            <div className="text-lg text-brand font-bold rotate-[-1deg]">
+              Simple as 1-2-3
+            </div>
+            <div className="relative inline-block">
+              <h2 className="text-3xl md:text-5xl font-black text-gray-900 rotate-[-1deg]">
+                How it Works
+                <span className="absolute -right-10 top-0 rotate-12 text-2xl select-none">✨</span>
+              </h2>
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-44 h-3 bg-brand/20 rotate-[-1deg] rounded-full blur-sm" />
+            </div>
             <p className="mt-6 text-gray-500 max-w-xl mx-auto font-medium">
               Get your game live in under 60 seconds. Simple, fast, and incredibly fun.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+
+          {/* Step cards — comic / creative-pricing style */}
+          <div className="grid md:grid-cols-3 gap-10 lg:gap-14 pt-4">
             {steps.map((step, i) => (
               <div
                 key={step.title}
-                className="relative group p-8 bg-white rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 card-hover"
+                className={`relative group transition-all duration-300 ${
+                  i === 0 ? 'rotate-[-1deg]' : i === 1 ? 'rotate-[1deg] md:-translate-y-4' : 'rotate-[-2deg]'
+                }`}
               >
-                <div className="absolute -top-6 left-8 bg-brand text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl shadow-lg shadow-brand/30">
-                  {i + 1}
-                </div>
-                <div className="mb-6 mt-2 text-brand">
-                  <div className="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                {/* Background card with comic offset shadow */}
+                <div className="absolute inset-0 bg-white border-2 border-gray-800 dark:border-gray-300 rounded-2xl shadow-[4px_4px_0px_0px_#D4566B] transition-all duration-300 group-hover:shadow-[8px_8px_0px_0px_#D4566B] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
+
+                {/* Content */}
+                <div className="relative p-8 pt-10">
+                  {/* Number badge — rotated comic pill */}
+                  <div className="absolute -top-4 -right-3 bg-brand text-white w-11 h-11 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-800 dark:border-gray-300 rotate-12">
+                    {i + 1}
+                  </div>
+
+                  {/* Icon in bordered circle */}
+                  <div className="w-14 h-14 rounded-full border-2 border-gray-800 dark:border-gray-300 flex items-center justify-center text-brand mb-5 bg-brand/5 group-hover:scale-110 transition-transform">
                     {step.icon}
                   </div>
+
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                  <p className="text-gray-500 leading-relaxed">{step.desc}</p>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
+
+          {/* Decorative pencil marks */}
+          <div className="absolute top-40 left-10 text-4xl rotate-12 pointer-events-none opacity-[0.08] hidden lg:block select-none" aria-hidden>✎</div>
+          <div className="absolute bottom-40 right-10 text-4xl -rotate-12 pointer-events-none opacity-[0.08] hidden lg:block select-none" aria-hidden>✏️</div>
         </div>
       </section>
 
