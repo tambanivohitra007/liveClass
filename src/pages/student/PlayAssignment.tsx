@@ -31,12 +31,13 @@ export default function PlayAssignment() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      syncPendingAnswers(async (answer) => {
-        await httpsCallable(functions, 'scoreAnswer')(answer);
-      });
-    };
+    const doSync = () => syncPendingAnswers(async (answer) => {
+      await httpsCallable(functions, 'scoreAnswer')(answer);
+    });
+    // Sync any pending answers from previous sessions on mount
+    if (navigator.onLine) doSync();
+
+    const handleOnline = () => { setIsOnline(true); doSync(); };
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
