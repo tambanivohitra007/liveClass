@@ -39,10 +39,29 @@ function getInitials(name: string): string {
 
 export default function Leaderboard({ sessionId, top10Snapshot, compact }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardPlayer[]>([]);
+  const [nicknameMap, setNicknameMap] = useState<Record<string, string>>({});
+
+  // Always subscribe to players to get nicknames
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(db, `sessions/${sessionId}/players`),
+      (snapshot) => {
+        const map: Record<string, string> = {};
+        snapshot.docs.forEach((d) => {
+          map[d.id] = d.data().nickname || '';
+        });
+        setNicknameMap(map);
+      }
+    );
+    return unsub;
+  }, [sessionId]);
 
   useEffect(() => {
     if (top10Snapshot && top10Snapshot.length > 0) {
-      setEntries(top10Snapshot);
+      setEntries(top10Snapshot.map((p) => ({
+        ...p,
+        nickname: p.nickname || nicknameMap[p.playerId] || undefined,
+      })));
       return;
     }
 
@@ -61,7 +80,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
         const sorted = Object.entries(allPlayers)
           .map(([playerId, data]) => ({
             playerId,
-            nickname: data.nickname,
+            nickname: data.nickname || nicknameMap[playerId],
             totalPoints: data.totalPoints,
             streak: data.streak,
             rank: 0,
@@ -75,7 +94,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
     );
 
     return unsubscribe;
-  }, [sessionId, top10Snapshot]);
+  }, [sessionId, top10Snapshot, nicknameMap]);
 
   if (entries.length === 0) {
     return (
