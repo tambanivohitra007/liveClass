@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, set, serverTimestamp, onValue, off } from 'firebase/database';
 import { db, rtdb } from '../../lib/firebase';
@@ -45,6 +45,7 @@ const answerIcons = [
 
 export default function PlayGame() {
   const { sessionId, playerId } = useParams<{ sessionId: string; playerId: string }>();
+  const navigate = useNavigate();
   const { session, setSession } = useSessionStore();
   const { addToast } = useToastStore();
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
@@ -61,6 +62,7 @@ export default function PlayGame() {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [myTeam, setMyTeam] = useState<{ name: string; color: string } | null>(null);
   const [muted, setMutedState] = useState(isMuted());
+  const [redirectCountdown, setRedirectCountdown] = useState(15);
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
   const resultUnsubRef = useRef<(() => void) | null>(null);
   const { showWarning, dismissWarning } = useAntiCheat({
@@ -210,6 +212,23 @@ export default function PlayGame() {
     if (session?.status === 'ended') playPodium();
   }, [session?.status]);
 
+  // Auto-redirect countdown when game ends
+  useEffect(() => {
+    if (session?.status !== 'ended') return;
+    setRedirectCountdown(15);
+    const timer = setInterval(() => {
+      setRedirectCountdown((t) => {
+        if (t <= 1) {
+          clearInterval(timer);
+          navigate('/');
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [session?.status, navigate]);
+
   const getSelection = (): string => {
     if (!currentQuestion) return selectedAnswer;
     if (currentQuestion.type === 'matching') return JSON.stringify(matchingPairs);
@@ -342,6 +361,15 @@ export default function PlayGame() {
               <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
             </div>
           )}
+          <button
+            onClick={() => navigate('/')}
+            className="mt-6 px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-full transition-all"
+          >
+            Back to Home
+          </button>
+          <p className="text-white/30 text-sm mt-3">
+            Redirecting in {redirectCountdown}s...
+          </p>
         </div>
       </div>
     );
