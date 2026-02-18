@@ -37,7 +37,7 @@ function AppContent() {
     <div className="flex flex-col min-h-screen">
       {!hideNavbar && <Navbar />}
       <ToastContainer />
-      <main className="flex-1">
+      <main className="flex-1 pattern-dots">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

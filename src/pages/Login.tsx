@@ -40,7 +40,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-gray-50 to-gray-100 relative">
+      <div className="absolute inset-0 pattern-dots pointer-events-none" />
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
           <img src={logo} alt="LiveClass" className="w-14 h-14 rounded-2xl mx-auto mb-4" />

@@ -136,7 +136,7 @@
 
   /* --- Border colors --- */
   .dark .border-gray-50 {
-    border-color: #1e293b;
+    border-color: #293548;
   }
 
   .dark .border-gray-100 {
@@ -296,6 +296,87 @@
 
   .dark .backdrop-blur-sm {
     backdrop-filter: blur(4px);
+  }
+
+  /* --- Functional alpha backgrounds (additional) --- */
+  .dark .bg-warning\/10 {
+    background-color: rgba(232, 163, 8, 0.15);
+  }
+
+  .dark .bg-info\/10 {
+    background-color: rgba(91, 143, 212, 0.15);
+  }
+
+  .dark .bg-answer-red\/10 {
+    background-color: rgba(226, 27, 60, 0.15);
+  }
+
+  .dark .bg-success\/20 {
+    background-color: rgba(16, 185, 129, 0.2);
+  }
+
+  .dark .bg-danger\/20 {
+    background-color: rgba(232, 99, 107, 0.2);
+  }
+
+  .dark .bg-brand\/20 {
+    background-color: rgba(212, 86, 107, 0.25);
+  }
+
+  /* --- Functional alpha borders --- */
+  .dark .border-danger\/20 {
+    border-color: rgba(232, 99, 107, 0.3);
+  }
+
+  .dark .border-danger\/10 {
+    border-color: rgba(232, 99, 107, 0.2);
+  }
+
+  .dark .border-success\/20 {
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
+  .dark .border-success\/30 {
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+
+  .dark .border-warning\/20 {
+    border-color: rgba(232, 163, 8, 0.3);
+  }
+
+  .dark .border-info\/20 {
+    border-color: rgba(91, 143, 212, 0.3);
+  }
+
+  .dark .border-brand\/30 {
+    border-color: rgba(212, 86, 107, 0.4);
+  }
+
+  /* --- Additional hover states --- */
+  .dark .hover\:bg-brand\/5:hover {
+    background-color: rgba(212, 86, 107, 0.1);
+  }
+
+  .dark .hover\:bg-brand\/20:hover {
+    background-color: rgba(212, 86, 107, 0.25);
+  }
+
+  .dark .hover\:bg-danger\/5:hover {
+    background-color: rgba(232, 99, 107, 0.1);
+  }
+
+  /* --- Hover shadows --- */
+  .dark .hover\:shadow-md:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  .dark .hover\:shadow-xl:hover {
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
+  }
+
+  /* --- Ring offset (white gap → dark gap) --- */
+  .dark .ring-offset-2 {
+    --tw-ring-offset-color: #1e293b;
   }
 
   /* --- Skeleton shimmer dark variant --- */

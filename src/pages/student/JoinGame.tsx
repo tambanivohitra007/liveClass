@@ -157,13 +157,14 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark relative">
+      <div className="absolute inset-0 pattern-grid pointer-events-none" />
       <div className="w-full max-w-sm animate-bounce-in">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-white">LiveClass</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm text-center">
               {error}

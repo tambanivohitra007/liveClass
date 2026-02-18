@@ -27,6 +27,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark">
         {/* Floating Geometric Shapes */}
+        <div className="absolute inset-0 pattern-grid pointer-events-none" />
         <div className="absolute top-20 left-10 w-32 h-32 border-4 border-white/10 rounded-2xl rotate-12 pointer-events-none" />
         <div className="absolute bottom-40 right-20 w-48 h-48 bg-brand/15 rounded-full pointer-events-none" />
         <div className="absolute top-1/2 left-1/4 w-16 h-16 border-2 border-brand/20 rotate-45 pointer-events-none" />
@@ -176,6 +177,7 @@ export default function Home() {
       {/* CTA Footer */}
       <section className="relative overflow-hidden bg-gradient-to-br from-surface-dark via-brand-dark to-surface-dark text-white py-20 md:py-28">
         {/* Floating shapes */}
+        <div className="absolute inset-0 pattern-grid pointer-events-none" />
         <div className="absolute top-10 right-20 w-64 h-64 bg-brand-light/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/4 left-[10%] w-16 h-16 border-2 border-white/10 rounded-xl rotate-12 pointer-events-none" />
