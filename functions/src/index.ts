@@ -232,12 +232,18 @@ export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
     );
   }
 
+  // Fetch player doc for nickname + token validation
+  const playerDoc = await db
+    .doc(`sessions/${sessionId}/players/${playerId}`)
+    .get();
+  if (!playerDoc.exists) {
+    throw new HttpsError("not-found", "Player not found in session");
+  }
+  const playerNickname: string = playerDoc.data()?.nickname || "";
+
   // Validate session token (anti-cheat)
   if (activeToken) {
-    const playerDoc = await db
-      .doc(`sessions/${sessionId}/players/${playerId}`)
-      .get();
-    if (!playerDoc.exists || playerDoc.data()?.activeToken !== activeToken) {
+    if (playerDoc.data()?.activeToken !== activeToken) {
       throw new HttpsError("permission-denied", "Invalid session token");
     }
   }
@@ -352,6 +358,7 @@ export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
         [playerId]: {
           totalPoints: playerData.totalPoints + pointsAwarded,
           streak: correct ? playerData.streak + 1 : 0,
+          nickname: playerNickname,
         },
       },
     },
@@ -405,6 +412,7 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
 
   const allPlayers: {
     playerId: string;
+    nickname: string;
     totalPoints: number;
     streak: number;
   }[] = [];
@@ -412,19 +420,36 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
   shardsSnap.docs.forEach((shardDoc) => {
     const players = shardDoc.data().players || {};
     for (const [pid, data] of Object.entries(players)) {
-      const pdata = data as { totalPoints: number; streak: number };
+      const pdata = data as { totalPoints: number; streak: number; nickname?: string };
       allPlayers.push({
         playerId: pid,
+        nickname: pdata.nickname || "",
         totalPoints: pdata.totalPoints,
         streak: pdata.streak,
       });
     }
   });
 
+  // Backfill nicknames from player docs if missing in shards
+  const missingNicknames = allPlayers.filter((p) => !p.nickname);
+  if (missingNicknames.length > 0) {
+    const playersSnap2 = await db
+      .collection(`sessions/${sessionId}/players`)
+      .get();
+    const nicknameMap = new Map<string, string>();
+    playersSnap2.docs.forEach((d) => {
+      nicknameMap.set(d.id, d.data().nickname || "");
+    });
+    missingNicknames.forEach((p) => {
+      p.nickname = nicknameMap.get(p.playerId) || "";
+    });
+  }
+
   // Sort by totalPoints descending, take top 10
   allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
   const top10 = allPlayers.slice(0, 10).map((p, i) => ({
     playerId: p.playerId,
+    nickname: p.nickname,
     totalPoints: p.totalPoints,
     rank: i + 1,
   }));

@@ -49,11 +49,11 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
     const unsubscribe = onSnapshot(
       collection(db, `sessions/${sessionId}/leaderboard_shards`),
       (snapshot) => {
-        const allPlayers: Record<string, { totalPoints: number; streak: number }> = {};
+        const allPlayers: Record<string, { totalPoints: number; streak: number; nickname?: string }> = {};
         snapshot.docs.forEach((shardDoc) => {
           const players = shardDoc.data().players || {};
           for (const [pid, data] of Object.entries(players)) {
-            const pdata = data as { totalPoints: number; streak: number };
+            const pdata = data as { totalPoints: number; streak: number; nickname?: string };
             allPlayers[pid] = pdata;
           }
         });
@@ -61,6 +61,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact }: Leade
         const sorted = Object.entries(allPlayers)
           .map(([playerId, data]) => ({
             playerId,
+            nickname: data.nickname,
             totalPoints: data.totalPoints,
             streak: data.streak,
             rank: 0,
