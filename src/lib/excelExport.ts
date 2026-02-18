@@ -1,5 +1,3 @@
-import ExcelJS from 'exceljs';
-
 interface PlayerStats {
   playerId: string;
   nickname: string;
@@ -43,6 +41,7 @@ function accuracyColor(pct: number): string {
 export async function exportSessionExcel(params: ExportParams): Promise<void> {
   const { quizTitle, sessionPin, playerStats, analytics, playerCount, avgScore, avgAccuracy } = params;
 
+  const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
   wb.creator = 'LiveClass';
   wb.created = new Date();
