@@ -26,6 +26,15 @@ interface ViolationSummary {
   totalViolations: number;
 }
 
+interface PlayerStats {
+  playerId: string;
+  nickname: string;
+  totalAnswers: number;
+  correctAnswers: number;
+  accuracyPercent: number;
+  totalPoints: number;
+}
+
 interface SessionAnalyticsData {
   loading: boolean;
   sessionPin: string;
@@ -38,6 +47,7 @@ interface SessionAnalyticsData {
   answerDistributions: AnswerDistribution[];
   responseTimeTrend: { label: string; value: number }[];
   violations: ViolationSummary[];
+  playerStats: PlayerStats[];
 }
 
 export function useSessionAnalytics(sessionId: string | undefined): SessionAnalyticsData {
@@ -53,6 +63,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
     answerDistributions: [],
     responseTimeTrend: [],
     violations: [],
+    playerStats: [],
   });
 
   useEffect(() => {
@@ -193,6 +204,32 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
         .filter((v) => v.totalViolations > 0)
         .sort((a, b) => b.totalViolations - a.totalViolations);
 
+      // Per-player accuracy stats
+      const playerNicknames = new Map<string, string>();
+      playersSnap.docs.forEach((d) => {
+        playerNicknames.set(d.id, d.data().nickname || 'Unknown');
+      });
+
+      const playerAccMap = new Map<string, { total: number; correct: number; points: number }>();
+      for (const a of allAnswers) {
+        const entry = playerAccMap.get(a.playerId) || { total: 0, correct: 0, points: 0 };
+        entry.total++;
+        if (a.correct) entry.correct++;
+        entry.points += a.pointsAwarded;
+        playerAccMap.set(a.playerId, entry);
+      }
+
+      const playerStats: PlayerStats[] = Array.from(playerAccMap.entries())
+        .map(([playerId, stats]) => ({
+          playerId,
+          nickname: playerNicknames.get(playerId) || 'Unknown',
+          totalAnswers: stats.total,
+          correctAnswers: stats.correct,
+          accuracyPercent: stats.total > 0 ? parseFloat(((stats.correct / stats.total) * 100).toFixed(1)) : 0,
+          totalPoints: stats.points,
+        }))
+        .sort((a, b) => b.totalPoints - a.totalPoints);
+
       setData({
         loading: false,
         sessionPin: pinCode,
@@ -205,6 +242,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
         answerDistributions,
         responseTimeTrend,
         violations,
+        playerStats,
       });
     };
 

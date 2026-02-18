@@ -29,6 +29,7 @@ export default function SessionResults() {
     answerDistributions,
     responseTimeTrend,
     violations,
+    playerStats,
   } = useSessionAnalytics(sessionId);
 
   const handleExportCsv = async () => {
@@ -265,6 +266,48 @@ export default function SessionResults() {
           </div>
         )}
       </div>
+
+      {/* Player Accuracy */}
+      {playerStats.length > 0 && (
+        <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden mb-8 animate-fade-in">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h2 className="font-bold text-gray-900">Player Accuracy</h2>
+            <p className="text-sm text-gray-400 mt-0.5">Correct answers percentage per participant</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-sm text-gray-500 border-b border-gray-100">
+                  <th className="text-left px-6 py-3 font-medium">#</th>
+                  <th className="text-left px-6 py-3 font-medium">Player</th>
+                  <th className="text-right px-6 py-3 font-medium">Correct</th>
+                  <th className="text-right px-6 py-3 font-medium">Accuracy</th>
+                  <th className="text-right px-6 py-3 font-medium">Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {playerStats.map((p, i) => (
+                  <tr key={p.playerId} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-3 text-gray-400 font-medium">{i + 1}</td>
+                    <td className="px-6 py-3 font-medium text-gray-800">{p.nickname}</td>
+                    <td className="px-6 py-3 text-right text-gray-600">{p.correctAnswers}/{p.totalAnswers}</td>
+                    <td className="px-6 py-3 text-right">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-sm font-medium ${
+                        p.accuracyPercent >= 70 ? 'bg-success/10 text-success' :
+                        p.accuracyPercent >= 40 ? 'bg-warning/10 text-warning' :
+                        'bg-danger/10 text-danger'
+                      }`}>
+                        {p.accuracyPercent}%
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-right font-semibold text-gray-800">{p.totalPoints.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Leaderboard */}
       <div className="bg-surface-dark rounded-2xl shadow-sm p-6">
