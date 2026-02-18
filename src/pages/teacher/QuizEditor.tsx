@@ -337,7 +337,7 @@ export default function QuizEditor() {
         <div className="flex items-center gap-2">
           <button
             onClick={openAiModal}
-            className="px-4 py-2 bg-gradient-to-r from-brand to-accent text-white font-medium rounded-xl hover:brightness-110 transition-all flex items-center gap-2 text-sm"
+            className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-400 text-white font-medium rounded-xl hover:brightness-110 transition-all flex items-center gap-2 text-sm"
           >
             <Sparkles className="w-4 h-4" />
             AI Generate
