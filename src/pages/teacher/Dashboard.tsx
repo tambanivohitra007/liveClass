@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
@@ -65,6 +65,19 @@ export default function Dashboard() {
   // New UI state
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpenId]);
 
   const handleDelete = async (quizId: string, quizTitle: string) => {
     const { isConfirmed } = await confirmDelete(quizTitle || 'Untitled Quiz');
@@ -374,10 +387,10 @@ export default function Dashboard() {
             return (
               <div
                 key={quiz.id}
-                className="group bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col animate-fade-in"
+                className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col animate-fade-in"
               >
                 {/* Gradient Banner */}
-                <div className={`h-32 ${getCardGradient(quiz)} relative overflow-hidden`}>
+                <div className={`h-32 ${getCardGradient(quiz)} relative overflow-hidden rounded-t-2xl`}>
                   {/* Decorative shapes */}
                   <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
                   <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
@@ -416,7 +429,7 @@ export default function Dashboard() {
                       {quiz.title || 'Untitled Quiz'}
                     </h3>
                     {/* More menu */}
-                    <div className="relative">
+                    <div className="relative" ref={menuOpenId === quiz.id ? menuRef : undefined}>
                       <button
                         onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === quiz.id ? null : quiz.id); }}
                         className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -424,8 +437,6 @@ export default function Dashboard() {
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
                       {menuOpenId === quiz.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
                           <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-1.5 animate-fade-in">
                             <button
                               onClick={() => { navigate(`/quiz/${quiz.id}/preview`); setMenuOpenId(null); }}
@@ -472,7 +483,6 @@ export default function Dashboard() {
                               <Trash2 className="w-4 h-4" /> Delete
                             </button>
                           </div>
-                        </>
                       )}
                     </div>
                   </div>
