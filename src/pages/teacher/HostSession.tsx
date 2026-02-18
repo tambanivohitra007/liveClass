@@ -51,7 +51,7 @@ export default function HostSession() {
   const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
   const [muted, setMutedState] = useState(isMuted());
   const [lobbyTrack, setLobbyTrackState] = useState(getLobbyTrack());
-  const [currentQuestionId, setCurrentQuestionId] = useState('');
+
   const [answeredCount, setAnsweredCount] = useState(0);
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
@@ -97,15 +97,17 @@ export default function HostSession() {
 
   useEffect(() => {
     if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
-    // Reset immediately to prevent stale subscription data from triggering auto-end
-    setCurrentQuestionId('');
+    // Reset for new question — prevent stale data from triggering auto-end
+    timerTickedRef.current = false;
+    autoEndCalledRef.current = false;
+    // currentQuestionId reset removed — now derived from session props
     setAnsweredCount(0);
     const qIdx = session.questionOrder
       ? session.questionOrder[session.currentQuestionIndex]
       : session.currentQuestionIndex;
     const current = allQuestions[qIdx];
     setCurrentQuestionText(current?.text || '');
-    setCurrentQuestionId(current?.id || '');
+    // question ID now derived from session props in the subscription effect
     if (current?.timeLimitSec) {
       setCurrentTimeLimitSec(current.timeLimitSec);
       const startedAt = session.questionStartedAt as any;
@@ -123,48 +125,64 @@ export default function HostSession() {
   }, [session?.currentQuestionIndex, session?.questionState, allQuestions]);
 
   const autoEndCalledRef = useRef(false);
+  const timerTickedRef = useRef(false);
+
+  // Timer countdown
   useEffect(() => {
     if (!session || session.questionState !== 'live') {
       autoEndCalledRef.current = false;
+      timerTickedRef.current = false;
       return;
     }
     if (timeLeft <= 0 || session.timerPaused) return;
-    const timer = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
+    const timer = setInterval(() => {
+      timerTickedRef.current = true;
+      setTimeLeft((t) => Math.max(0, t - 1));
+    }, 1000);
     return () => clearInterval(timer);
   }, [session?.questionState, timeLeft, session?.timerPaused]);
 
+  // Timer auto-end — only after the countdown has actually ticked
   useEffect(() => {
     if (!session || session.questionState !== 'live' || session.timerPaused) return;
+    if (!timerTickedRef.current) return;
     if (timeLeft <= 0 && currentTimeLimitSec > 0 && !autoEndCalledRef.current) {
       autoEndCalledRef.current = true;
       httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
     }
   }, [timeLeft, session?.questionState, currentTimeLimitSec, session?.timerPaused]);
 
-  // Subscribe to answer count for the current question
+  // Subscribe to answer count and auto-end when all players have answered.
+  // Derives question ID directly from session props to avoid stale-state race.
   useEffect(() => {
-    if (!session || session.questionState !== 'live' || !currentQuestionId) {
+    if (!session || session.questionState !== 'live' || allQuestions.length === 0) {
       setAnsweredCount(0);
       return;
     }
+    const qIdx = session.questionOrder
+      ? session.questionOrder[session.currentQuestionIndex]
+      : session.currentQuestionIndex;
+    const qId = allQuestions[qIdx]?.id;
+    if (!qId) {
+      setAnsweredCount(0);
+      return;
+    }
+    setAnsweredCount(0);
     const q = query(
       collection(db, `sessions/${session.id}/answers`),
-      where('questionId', '==', currentQuestionId)
+      where('questionId', '==', qId)
     );
     const unsub = onSnapshot(q, (snap) => {
-      setAnsweredCount(snap.size);
+      const count = snap.size;
+      setAnsweredCount(count);
+      // Auto-end inside the callback — only fires on fresh data for the current question
+      if (count > 0 && count >= players.length && !autoEndCalledRef.current) {
+        autoEndCalledRef.current = true;
+        httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+      }
     });
     return unsub;
-  }, [session?.id, session?.questionState, currentQuestionId]);
-
-  // Auto-end when all players have answered
-  useEffect(() => {
-    if (!session || session.questionState !== 'live') return;
-    if (answeredCount > 0 && answeredCount >= players.length && !autoEndCalledRef.current) {
-      autoEndCalledRef.current = true;
-      httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
-    }
-  }, [answeredCount, players.length, session?.questionState]);
+  }, [session?.id, session?.questionState, session?.currentQuestionIndex, session?.questionOrder, allQuestions, players.length]);
 
   const startQuestionDirect = async (qIndex: number) => {
     if (!session) return;
