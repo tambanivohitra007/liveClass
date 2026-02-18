@@ -56,13 +56,18 @@ export default function HostSession() {
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
 
+  const [allQuestions, setAllQuestions] = useState<Question[]>([]);
+
   useEffect(() => {
     if (!quizId) return;
-    const loadQuestionCount = async () => {
+    const loadQuestions = async () => {
       const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
-      setTotalQuestions((await getDocs(q)).size);
+      const snap = await getDocs(q);
+      const qs = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
+      setAllQuestions(qs);
+      setTotalQuestions(qs.length);
     };
-    loadQuestionCount();
+    loadQuestions();
   }, [quizId]);
 
   const createSession = async () => {
@@ -91,37 +96,31 @@ export default function HostSession() {
   };
 
   useEffect(() => {
-    if (!session || session.questionState !== 'live') return;
+    if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
     // Reset immediately to prevent stale subscription data from triggering auto-end
     setCurrentQuestionId('');
     setAnsweredCount(0);
-    const loadCurrentQuestion = async () => {
-      const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
-      const snapshot = await getDocs(q);
-      const questions = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
-      const qIdx = session.questionOrder
-        ? session.questionOrder[session.currentQuestionIndex]
-        : session.currentQuestionIndex;
-      const current = questions[qIdx];
-      setCurrentQuestionText(current?.text || '');
-      setCurrentQuestionId(current?.id || '');
-      if (current?.timeLimitSec) {
-        setCurrentTimeLimitSec(current.timeLimitSec);
-        const startedAt = session.questionStartedAt as any;
-        const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
-        if (startMs > 0) {
-          const now = session.timerPaused && session.timerPausedAt
-            ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
-            : Date.now();
-          const elapsed = Math.floor((now - startMs) / 1000);
-          setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
-        } else {
-          setTimeLeft(current.timeLimitSec);
-        }
+    const qIdx = session.questionOrder
+      ? session.questionOrder[session.currentQuestionIndex]
+      : session.currentQuestionIndex;
+    const current = allQuestions[qIdx];
+    setCurrentQuestionText(current?.text || '');
+    setCurrentQuestionId(current?.id || '');
+    if (current?.timeLimitSec) {
+      setCurrentTimeLimitSec(current.timeLimitSec);
+      const startedAt = session.questionStartedAt as any;
+      const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+      if (startMs > 0) {
+        const now = session.timerPaused && session.timerPausedAt
+          ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
+          : Date.now();
+        const elapsed = Math.floor((now - startMs) / 1000);
+        setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
+      } else {
+        setTimeLeft(current.timeLimitSec);
       }
-    };
-    loadCurrentQuestion();
-  }, [session?.currentQuestionIndex, session?.questionState]);
+    }
+  }, [session?.currentQuestionIndex, session?.questionState, allQuestions]);
 
   const autoEndCalledRef = useRef(false);
   useEffect(() => {
@@ -167,15 +166,28 @@ export default function HostSession() {
     }
   }, [answeredCount, players.length, session?.questionState]);
 
-  const startQuestion = async () => {
+  const startQuestionDirect = async (qIndex: number) => {
     if (!session) return;
-    await httpsCallable(functions, 'startQuestion')({ sessionId: session.id, qIndex: session.currentQuestionIndex });
+    const updateData: Record<string, unknown> = {
+      status: 'live',
+      currentQuestionIndex: qIndex,
+      questionState: 'live',
+      questionStartedAt: Date.now(),
+    };
+    // Generate shuffle order on first question if enabled
+    if (qIndex === 0 && session.shuffleQuestions && allQuestions.length > 0) {
+      const indices = Array.from({ length: allQuestions.length }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      updateData.questionOrder = indices;
+    }
+    await updateDoc(doc(db, 'sessions', session.id), updateData);
   };
 
-  const nextQuestion = async () => {
-    if (!session) return;
-    await httpsCallable(functions, 'startQuestion')({ sessionId: session.id, qIndex: session.currentQuestionIndex + 1 });
-  };
+  const startQuestion = () => startQuestionDirect(session?.currentQuestionIndex ?? 0);
+  const nextQuestion = () => startQuestionDirect((session?.currentQuestionIndex ?? 0) + 1);
 
   const endQuestion = async () => {
     if (!session) return;
@@ -213,7 +225,7 @@ export default function HostSession() {
     if (!session) return;
     await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
     if (session.currentQuestionIndex < totalQuestions - 1) {
-      await httpsCallable(functions, 'startQuestion')({ sessionId: session.id, qIndex: session.currentQuestionIndex + 1 });
+      await startQuestionDirect(session.currentQuestionIndex + 1);
     }
   };
 

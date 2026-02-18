@@ -47,6 +47,7 @@ export default function PlayGame() {
   const { sessionId, playerId } = useParams<{ sessionId: string; playerId: string }>();
   const { session, setSession } = useSessionStore();
   const { addToast } = useToastStore();
+  const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [matchingPairs, setMatchingPairs] = useState<Record<string, string>>({});
@@ -87,8 +88,22 @@ export default function PlayGame() {
     });
   }, [sessionId, playerId, session?.teamMode]);
 
+  // Pre-fetch all questions once when we know the quizId
   useEffect(() => {
-    if (!session || session.questionState !== 'live') return;
+    if (!session?.quizId) return;
+    const fetchQuestions = async () => {
+      const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
+      const snapshot = await getDocs(q);
+      const qs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
+      setAllQuestions(qs);
+      setTotalQuestions(qs.length);
+    };
+    fetchQuestions();
+  }, [session?.quizId]);
+
+  // Pick current question from cache when question state changes
+  useEffect(() => {
+    if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
     setSubmitted(false);
     setSelectedAnswer('');
     setMatchingPairs({});
@@ -96,43 +111,36 @@ export default function PlayGame() {
     setOrderingItems([]);
     setFeedback(null);
 
-    const loadQuestion = async () => {
-      const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
-      const snapshot = await getDocs(q);
-      const questions = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
-      setTotalQuestions(questions.length);
-      const qIdx = session.questionOrder
-        ? session.questionOrder[session.currentQuestionIndex]
-        : session.currentQuestionIndex;
-      const current = questions[qIdx];
-      if (current) {
-        setCurrentQuestion(current);
-        // Calculate remaining time from server timestamp to survive refreshes
-        const startedAt = session.questionStartedAt as any;
-        const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
-        if (startMs > 0) {
-          const now = session.timerPaused && session.timerPausedAt
-            ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
-            : Date.now();
-          const elapsed = Math.floor((now - startMs) / 1000);
-          setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
-        } else {
-          setTimeLeft(current.timeLimitSec);
-        }
-        if (current.type === 'ordering') {
-          setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
-        }
-        if (current.type === 'matching' && current.matchOptions) {
-          setShuffledMatchOptions([...current.matchOptions].sort(() => Math.random() - 0.5));
-        }
-        if (current.type === 'fill_blank') {
-          const blankCount = (current.text.match(/___/g) || []).length;
-          setFillAnswers(Array(blankCount).fill(''));
-        }
+    const qIdx = session.questionOrder
+      ? session.questionOrder[session.currentQuestionIndex]
+      : session.currentQuestionIndex;
+    const current = allQuestions[qIdx];
+    if (current) {
+      setCurrentQuestion(current);
+      // Calculate remaining time from server timestamp to survive refreshes
+      const startedAt = session.questionStartedAt as any;
+      const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+      if (startMs > 0) {
+        const now = session.timerPaused && session.timerPausedAt
+          ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
+          : Date.now();
+        const elapsed = Math.floor((now - startMs) / 1000);
+        setTimeLeft(Math.max(0, current.timeLimitSec - elapsed));
+      } else {
+        setTimeLeft(current.timeLimitSec);
       }
-    };
-    loadQuestion();
-  }, [session?.currentQuestionIndex, session?.questionState]);
+      if (current.type === 'ordering') {
+        setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
+      }
+      if (current.type === 'matching' && current.matchOptions) {
+        setShuffledMatchOptions([...current.matchOptions].sort(() => Math.random() - 0.5));
+      }
+      if (current.type === 'fill_blank') {
+        const blankCount = (current.text.match(/___/g) || []).length;
+        setFillAnswers(Array(blankCount).fill(''));
+      }
+    }
+  }, [session?.currentQuestionIndex, session?.questionState, allQuestions]);
 
   useEffect(() => {
     if (timeLeft <= 0 || submitted || session?.timerPaused) return;
