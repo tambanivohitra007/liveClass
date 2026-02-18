@@ -856,15 +856,33 @@ Make questions educational, varied in difficulty, and factually accurate.`;
         throw new HttpsError("internal", "AI returned 0 questions — try again");
       }
 
+      // Normalize correctAnswers: AI may return correctAnswer (singular), a string, or an array
+      const normalizeCorrectAnswers = (q: Record<string, unknown>): string[] => {
+        const raw = q.correctAnswers ?? q.correctAnswer ?? q.correct_answer ?? q.answer;
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw.map(String);
+        return [String(raw)];
+      };
+
       const mapped = questions.map(
-        (q: Record<string, unknown>) => ({
-          type: questionType,
-          text: q.text || "",
-          options: (q.options as string[]) || [],
-          ...(q.matchOptions ? { matchOptions: q.matchOptions as string[] } : {}),
-          correctAnswers: (q.correctAnswers as string[]) || [],
-          timeLimitSec: (q.timeLimitSec as number) || 20,
-        })
+        (q: Record<string, unknown>) => {
+          const options = (q.options as string[]) || [];
+          const correctAnswers = normalizeCorrectAnswers(q).map((ca) => {
+            // Ensure correctAnswer text exactly matches an option
+            const exact = options.find((o) => o === ca);
+            if (exact) return exact;
+            const fuzzy = options.find((o) => o.trim().toLowerCase() === ca.trim().toLowerCase());
+            return fuzzy || ca;
+          });
+          return {
+            type: questionType,
+            text: q.text || "",
+            options,
+            ...(q.matchOptions ? { matchOptions: q.matchOptions as string[] } : {}),
+            correctAnswers,
+            timeLimitSec: (q.timeLimitSec as number) || 20,
+          };
+        }
       );
 
       return {
