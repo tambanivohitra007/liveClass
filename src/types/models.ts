@@ -24,6 +24,7 @@ export interface User {
   displayName: string;
   email: string;
   role: 'teacher' | 'student';
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
   photoUrl?: string;
   createdAt: number;
 }

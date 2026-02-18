@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
 import { useThemeStore } from './stores/themeStore';
+import { useAuthStore } from './stores/authStore';
+import { ADMIN_EMAIL } from './lib/config';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -9,6 +11,8 @@ import ToastContainer from './components/Toast';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import PendingApproval from './pages/PendingApproval';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import Dashboard from './pages/teacher/Dashboard';
 import QuizEditor from './pages/teacher/QuizEditor';
 import HostSession from './pages/teacher/HostSession';
@@ -27,6 +31,48 @@ import Flashcards from './pages/Flashcards';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 import './App.css';
+
+function TeacherRoute({ children }: { children: React.ReactNode }) {
+  const { firebaseUser, user, loading } = useAuthStore();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!firebaseUser) return <Navigate to="/login" replace />;
+  if (user?.role === 'teacher' && user.approvalStatus !== 'approved') {
+    return <Navigate to="/pending-approval" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { firebaseUser, user, loading } = useAuthStore();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!firebaseUser) return <Navigate to="/login" replace />;
+  if (user?.email !== ADMIN_EMAIL) return <Navigate to="/" replace />;
+
+  return <>{children}</>;
+}
 
 function AppContent() {
   const location = useLocation();
@@ -48,18 +94,22 @@ function AppContent() {
         <Route path="/discover" element={<Discover />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/pending-approval" element={<PendingApproval />} />
 
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+
+        <Route path="/dashboard" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
+        <Route path="/quiz/:quizId" element={<TeacherRoute><QuizEditor /></TeacherRoute>} />
+        <Route path="/quiz/:quizId/host" element={<TeacherRoute><HostSession /></TeacherRoute>} />
+        <Route path="/quiz/:quizId/preview" element={<TeacherRoute><QuizPreview /></TeacherRoute>} />
+        <Route path="/quiz/:quizId/flashcards" element={<TeacherRoute><Flashcards /></TeacherRoute>} />
+        <Route path="/session/:sessionId/results" element={<TeacherRoute><SessionResults /></TeacherRoute>} />
+        <Route path="/history" element={<TeacherRoute><SessionHistory /></TeacherRoute>} />
+        <Route path="/collection/:collectionId" element={<TeacherRoute><CollectionView /></TeacherRoute>} />
+        <Route path="/assignment/new" element={<TeacherRoute><AssignmentCreate /></TeacherRoute>} />
+
         <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-        <Route path="/quiz/:quizId" element={<ProtectedRoute><QuizEditor /></ProtectedRoute>} />
-        <Route path="/quiz/:quizId/host" element={<ProtectedRoute><HostSession /></ProtectedRoute>} />
-        <Route path="/quiz/:quizId/preview" element={<ProtectedRoute><QuizPreview /></ProtectedRoute>} />
-        <Route path="/quiz/:quizId/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
-        <Route path="/session/:sessionId/results" element={<ProtectedRoute><SessionResults /></ProtectedRoute>} />
-        <Route path="/history" element={<ProtectedRoute><SessionHistory /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/collection/:collectionId" element={<ProtectedRoute><CollectionView /></ProtectedRoute>} />
-        <Route path="/assignment/new" element={<ProtectedRoute><AssignmentCreate /></ProtectedRoute>} />
       </Routes>
       </main>
       {!hideNavbar && <Footer />}

@@ -3,24 +3,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: read own profile, write own profile
+    // Users: read own doc or admin reads all; write own doc (cannot self-approve) or admin updates any
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.auth.token.email == 'rindra.it@gmail.com'
+      );
+
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.get('approvalStatus', 'none') != 'approved';
+
+      allow update: if request.auth != null && (
+        (request.auth.uid == userId
+          && request.resource.data.get('approvalStatus', 'none') != 'approved')
+        || request.auth.token.email == 'rindra.it@gmail.com'
+      );
     }
 
-    // Collections: any authed user can read, owner can CRUD
+    // Collections: any authed user can read, owner can CRUD (pending teachers cannot create)
     match /collections/{collectionId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending';
       allow update, delete: if request.auth != null
         && resource.data.ownerId == request.auth.uid;
     }
 
-    // Quizzes: owner can CRUD, anyone can read public quizzes, authed users can read all
+    // Quizzes: owner can CRUD, anyone can read public quizzes, authed users can read all (pending teachers cannot create)
     match /quizzes/{quizId} {
       allow read: if request.auth != null || resource.data.visibility == 'public';
-      allow create: if request.auth != null;
+      allow create: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending';
       allow update, delete: if request.auth != null
         && resource.data.ownerId == request.auth.uid;
     }

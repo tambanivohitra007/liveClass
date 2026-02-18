@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
@@ -39,15 +39,36 @@ export default function Profile() {
       // Update Firebase Auth profile
       await updateProfile(firebaseUser, { displayName: displayName.trim() });
 
-      // Update Firestore user doc
-      await updateDoc(doc(db, 'users', firebaseUser.uid), {
+      // Build update payload — handle approvalStatus based on role change
+      const roleChanged = role !== user.role;
+      const updateData: Record<string, unknown> = {
         displayName: displayName.trim(),
         role,
-      });
+      };
+
+      if (roleChanged && role === 'teacher') {
+        updateData.approvalStatus = 'pending';
+      } else if (roleChanged && role === 'student') {
+        updateData.approvalStatus = deleteField();
+      }
+
+      // Update Firestore user doc
+      await updateDoc(doc(db, 'users', firebaseUser.uid), updateData);
 
       // Update local state
-      setUser({ ...user, displayName: displayName.trim(), role });
-      addToast('success', 'Profile updated successfully.');
+      const updatedUser = { ...user, displayName: displayName.trim(), role };
+      if (roleChanged && role === 'teacher') {
+        updatedUser.approvalStatus = 'pending';
+      } else if (roleChanged && role === 'student') {
+        delete updatedUser.approvalStatus;
+      }
+      setUser(updatedUser);
+
+      if (roleChanged && role === 'teacher') {
+        addToast('warning', 'Your teacher account is pending admin approval.');
+      } else {
+        addToast('success', 'Profile updated successfully.');
+      }
     } catch {
       addToast('error', 'Failed to update profile. Please try again.');
     } finally {

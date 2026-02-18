@@ -3,8 +3,9 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings, History, Sun, Moon } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, User, ChevronDown, Settings, History, Sun, Moon, Shield } from 'lucide-react';
 import { useThemeStore } from '../stores/themeStore';
+import { ADMIN_EMAIL } from '../lib/config';
 import logo from '../assets/logo.png';
 
 export default function Navbar() {
@@ -41,6 +42,8 @@ export default function Navbar() {
   }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isApprovedTeacher = user?.role === 'teacher' && user.approvalStatus === 'approved';
   const dashboardPath = user?.role === 'student' ? '/student/dashboard' : '/dashboard';
 
   const initials = user?.displayName
@@ -60,15 +63,17 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-1">
           {firebaseUser ? (
             <>
-              <Link
-                to={dashboardPath}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
-                  isActive(dashboardPath) ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
-                }`}
-              >
-                Dashboard
-              </Link>
-              {user?.role === 'teacher' && (
+              {(user?.role === 'student' || isApprovedTeacher) && (
+                <Link
+                  to={dashboardPath}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                    isActive(dashboardPath) ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+              )}
+              {isApprovedTeacher && (
                 <Link
                   to="/history"
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
@@ -76,6 +81,19 @@ export default function Navbar() {
                   }`}
                 >
                   History
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                    isActive('/admin') ? 'bg-brand/10 text-brand' : 'text-gray-600 hover:text-brand hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5" />
+                    Admin
+                  </span>
                 </Link>
               )}
               <Link
@@ -213,14 +231,22 @@ export default function Navbar() {
                     <p className="text-xs text-gray-400 truncate">{firebaseUser.email}</p>
                   </div>
                 </div>
-                <Link to={dashboardPath} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
-                  <LayoutDashboard className="w-4 h-4 text-gray-400" />
-                  Dashboard
-                </Link>
-                {user?.role === 'teacher' && (
+                {(user?.role === 'student' || isApprovedTeacher) && (
+                  <Link to={dashboardPath} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
+                    <LayoutDashboard className="w-4 h-4 text-gray-400" />
+                    Dashboard
+                  </Link>
+                )}
+                {isApprovedTeacher && (
                   <Link to="/history" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
                     <History className="w-4 h-4 text-gray-400" />
                     Session History
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link to="/admin" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">
+                    <Shield className="w-4 h-4 text-gray-400" />
+                    Admin
                   </Link>
                 )}
                 <Link to="/join" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 no-underline">

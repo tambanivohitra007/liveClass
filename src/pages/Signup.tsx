@@ -20,6 +20,7 @@ export default function Signup() {
       displayName: name,
       email: userEmail,
       role,
+      ...(role === 'teacher' ? { approvalStatus: 'pending' } : {}),
       createdAt: serverTimestamp(),
     });
   };
@@ -31,7 +32,7 @@ export default function Signup() {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await createUserDoc(cred.user.uid, email, displayName);
-      navigate('/dashboard');
+      navigate(role === 'teacher' ? '/pending-approval' : '/student/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed');
     } finally {
@@ -49,7 +50,7 @@ export default function Signup() {
         cred.user.email || '',
         cred.user.displayName || 'User'
       );
-      navigate('/dashboard');
+      navigate(role === 'teacher' ? '/pending-approval' : '/student/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google signup failed');
     } finally {
