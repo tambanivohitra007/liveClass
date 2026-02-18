@@ -201,7 +201,7 @@ export default function ShaderBackground() {
         <ShaderPlane />
       </Canvas>
       {/* Brand-tinted overlay for text readability */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#1C2B4A]/70 via-[#B94458]/30 to-[#1C2B4A]/60" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#1A3263]/70 via-[#B94458]/30 to-[#1A3263]/60" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
     </div>
   );

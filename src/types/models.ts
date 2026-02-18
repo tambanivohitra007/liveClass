@@ -1,7 +1,7 @@
 export const COLLECTION_COLORS = [
   { key: 'brand',   label: 'Rose',   bg: 'bg-brand',     text: 'text-brand' },
-  { key: 'accent',  label: 'Teal',   bg: 'bg-accent',    text: 'text-accent' },
-  { key: 'success', label: 'Green',  bg: 'bg-success',   text: 'text-success' },
+  { key: 'accent',  label: 'Orange', bg: 'bg-accent',    text: 'text-accent' },
+  { key: 'success', label: 'Olive',  bg: 'bg-success',   text: 'text-success' },
   { key: 'warning', label: 'Amber',  bg: 'bg-warning',   text: 'text-warning' },
   { key: 'info',    label: 'Blue',   bg: 'bg-info',      text: 'text-info' },
   { key: 'purple',  label: 'Purple', bg: 'bg-[#8B5CF6]', text: 'text-[#8B5CF6]' },

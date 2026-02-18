@@ -9,7 +9,7 @@ interface Particle {
   drift: number;
 }
 
-const COLORS = ['#D4566B', '#2BB5A6', '#E8A308', '#5B8FD4', '#10B981', '#8B5CF6'];
+const COLORS = ['#D4566B', '#FF7F11', '#E8A308', '#3D6BAD', '#628141', '#7C3AED'];
 
 export default function Confetti({ active }: { active: boolean }) {
   const [particles, setParticles] = useState<Particle[]>([]);

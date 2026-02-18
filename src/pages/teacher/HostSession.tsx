@@ -25,9 +25,9 @@ const AVATAR_COLORS = [
 const MESH_BG: React.CSSProperties = {
   backgroundImage: `
     radial-gradient(at 0% 0%, rgba(212, 86, 107, 0.12) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(43, 181, 166, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(255, 127, 17, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(212, 86, 107, 0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(43, 181, 166, 0.08) 0px, transparent 50%)
+    radial-gradient(at 0% 100%, rgba(255, 127, 17, 0.08) 0px, transparent 50%)
   `,
 };
 

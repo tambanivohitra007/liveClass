@@ -27,8 +27,8 @@ const AVATAR_COLORS = [
   'from-blue-400 to-blue-600',
   'from-emerald-400 to-emerald-600',
   'from-pink-400 to-pink-600',
-  'from-teal-400 to-teal-600',
   'from-orange-400 to-orange-600',
+  'from-lime-500 to-green-700',
   'from-cyan-400 to-cyan-600',
 ];
 

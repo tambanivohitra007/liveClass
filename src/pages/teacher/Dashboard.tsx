@@ -20,11 +20,11 @@ interface QuizWithMeta extends Quiz {
 }
 
 const CARD_GRADIENTS: Record<string, string> = {
-  brand: 'bg-gradient-to-br from-[#F06292] to-[#B94458]',
-  accent: 'bg-gradient-to-br from-[#4DD0C8] to-[#1F9A8D]',
-  success: 'bg-gradient-to-br from-[#34D399] to-[#059669]',
-  warning: 'bg-gradient-to-br from-[#FBBF24] to-[#D97706]',
-  info: 'bg-gradient-to-br from-[#60A5FA] to-[#2563EB]',
+  brand: 'bg-gradient-to-br from-[#E87B91] to-[#B94458]',
+  accent: 'bg-gradient-to-br from-[#FFB366] to-[#CC660E]',
+  success: 'bg-gradient-to-br from-[#8AAF5E] to-[#4A6331]',
+  warning: 'bg-gradient-to-br from-[#FFC94D] to-[#D97706]',
+  info: 'bg-gradient-to-br from-[#6B9AD4] to-[#2E5290]',
   purple: 'bg-gradient-to-br from-[#A78BFA] to-[#7C3AED]',
 };
 const DEFAULT_GRADIENT = 'bg-gradient-to-br from-[#94A3B8] to-[#64748B]';

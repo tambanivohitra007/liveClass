@@ -8,7 +8,7 @@ const swal = Swal.mixin({
     cancelButton: 'px-5 py-2.5 rounded-xl font-semibold text-sm !border-2 !border-gray-800 !shadow-[2px_2px_0px_0px_#6b7280] hover:!shadow-[4px_4px_0px_0px_#6b7280] hover:!translate-x-[-1px] hover:!translate-y-[-1px] transition-all duration-300',
   },
   buttonsStyling: true,
-  confirmButtonColor: '#e63b55',   // brand
+  confirmButtonColor: '#D4566B',   // brand
   cancelButtonColor: '#6b7280',    // gray-500
   reverseButtons: true,
 });

@@ -25,8 +25,8 @@ interface ExportParams {
   avgAccuracy: number;
 }
 
-const BRAND = 'F06292';
-const GREEN = '4CAF50';
+const BRAND = 'D4566B';
+const GREEN = '628141';
 const AMBER = 'FF9800';
 const RED = 'F44336';
 const GRAY_HEADER = 'F5F5F5';

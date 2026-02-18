@@ -24,7 +24,7 @@ export default function CircularTimer({ timeLeft, totalTime }: CircularTimerProp
         <circle
           cx="40" cy="40" r={radius}
           fill="none"
-          stroke={isUrgent ? '#E8636B' : '#2BB5A6'}
+          stroke={isUrgent ? '#E8636B' : '#FF7F11'}
           strokeWidth="6"
           strokeLinecap="round"
           strokeDasharray={circumference}
