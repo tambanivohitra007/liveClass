@@ -530,10 +530,15 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     teamScoreSnapshot.sort((a, b) => b.avgPoints - a.avgPoints);
   }
 
+  // Check if this is the last question
+  const totalQuestions = questionsArr.length;
+  const isLastQuestion = session.currentQuestionIndex >= totalQuestions - 1;
+
   await sessionDoc.ref.update({
     questionState: "reveal",
     top10Snapshot: top10,
     ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
+    ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
   });
 
   return { success: true, top10 };

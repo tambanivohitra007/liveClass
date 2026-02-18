@@ -210,12 +210,17 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (!sessionDoc.exists || sessionDoc.data()?.questionState !== "live") {
         throw new https_1.HttpsError("failed-precondition", "Question is not currently live");
     }
+    // Fetch player doc for nickname + token validation
+    const playerDoc = await db
+        .doc(`sessions/${sessionId}/players/${playerId}`)
+        .get();
+    if (!playerDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Player not found in session");
+    }
+    const playerNickname = playerDoc.data()?.nickname || "";
     // Validate session token (anti-cheat)
     if (activeToken) {
-        const playerDoc = await db
-            .doc(`sessions/${sessionId}/players/${playerId}`)
-            .get();
-        if (!playerDoc.exists || playerDoc.data()?.activeToken !== activeToken) {
+        if (playerDoc.data()?.activeToken !== activeToken) {
             throw new https_1.HttpsError("permission-denied", "Invalid session token");
         }
     }
@@ -316,6 +321,7 @@ exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
             [playerId]: {
                 totalPoints: playerData.totalPoints + pointsAwarded,
                 streak: correct ? playerData.streak + 1 : 0,
+                nickname: playerNickname,
             },
         },
     }, { merge: true });
@@ -363,15 +369,31 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
             const pdata = data;
             allPlayers.push({
                 playerId: pid,
+                nickname: pdata.nickname || "",
                 totalPoints: pdata.totalPoints,
                 streak: pdata.streak,
             });
         }
     });
+    // Backfill nicknames from player docs if missing in shards
+    const missingNicknames = allPlayers.filter((p) => !p.nickname);
+    if (missingNicknames.length > 0) {
+        const playersSnap2 = await db
+            .collection(`sessions/${sessionId}/players`)
+            .get();
+        const nicknameMap = new Map();
+        playersSnap2.docs.forEach((d) => {
+            nicknameMap.set(d.id, d.data().nickname || "");
+        });
+        missingNicknames.forEach((p) => {
+            p.nickname = nicknameMap.get(p.playerId) || "";
+        });
+    }
     // Sort by totalPoints descending, take top 10
     allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
     const top10 = allPlayers.slice(0, 10).map((p, i) => ({
         playerId: p.playerId,
+        nickname: p.nickname,
         totalPoints: p.totalPoints,
         rank: i + 1,
     }));
@@ -441,10 +463,14 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         }));
         teamScoreSnapshot.sort((a, b) => b.avgPoints - a.avgPoints);
     }
+    // Check if this is the last question
+    const totalQuestions = questionsArr.length;
+    const isLastQuestion = session.currentQuestionIndex >= totalQuestions - 1;
     await sessionDoc.ref.update({
         questionState: "reveal",
         top10Snapshot: top10,
         ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
+        ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
     });
     return { success: true, top10 };
 });
