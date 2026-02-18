@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
 import {
   Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList,
-  Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles,
+  Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, BarChart3,
 } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
@@ -328,6 +328,13 @@ export default function Dashboard() {
           <p className="text-gray-500 mt-1 text-sm">Create, manage, and host your quizzes</p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={() => navigate('/history')}
+            className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 hover:border-brand/30 transition-all duration-200 flex items-center gap-2 text-sm"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Results</span>
+          </button>
           <button
             onClick={() => setShowAiQuizModal(true)}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand to-accent text-white font-medium hover:brightness-110 transition-all duration-200 flex items-center gap-2 text-sm shadow-sm"
