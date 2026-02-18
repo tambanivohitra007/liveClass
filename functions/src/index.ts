@@ -480,10 +480,18 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     throw new HttpsError("permission-denied", "Not the host");
   }
 
+  // Parallel fetch: shards, questions, and players (for nicknames + teams)
+  const [shardsSnap, questionsSnap, playersSnap] = await Promise.all([
+    db.collection(`sessions/${sessionId}/leaderboard_shards`).get(),
+    db.collection("questions").where("quizId", "==", session.quizId).get(),
+    db.collection(`sessions/${sessionId}/players`).get(),
+  ]);
+
   // Aggregate leaderboard across all 10 shards
-  const shardsSnap = await db
-    .collection(`sessions/${sessionId}/leaderboard_shards`)
-    .get();
+  const nicknameMap = new Map<string, string>();
+  playersSnap.docs.forEach((d) => {
+    nicknameMap.set(d.id, d.data().nickname || "");
+  });
 
   const allPlayers: {
     playerId: string;
@@ -498,27 +506,12 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
       const pdata = data as { totalPoints: number; streak: number; nickname?: string };
       allPlayers.push({
         playerId: pid,
-        nickname: pdata.nickname || "",
+        nickname: pdata.nickname || nicknameMap.get(pid) || "",
         totalPoints: pdata.totalPoints,
         streak: pdata.streak,
       });
     }
   });
-
-  // Backfill nicknames from player docs if missing in shards
-  const missingNicknames = allPlayers.filter((p) => !p.nickname);
-  if (missingNicknames.length > 0) {
-    const playersSnap2 = await db
-      .collection(`sessions/${sessionId}/players`)
-      .get();
-    const nicknameMap = new Map<string, string>();
-    playersSnap2.docs.forEach((d) => {
-      nicknameMap.set(d.id, d.data().nickname || "");
-    });
-    missingNicknames.forEach((p) => {
-      p.nickname = nicknameMap.get(p.playerId) || "";
-    });
-  }
 
   // Sort by totalPoints descending, take top 10
   allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
@@ -529,17 +522,14 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     rank: i + 1,
   }));
 
-  // Get all answers for the CURRENT question (fix: filter by actual questionId)
-  const questionsSnap = await db
-    .collection("questions")
-    .where("quizId", "==", session.quizId)
-    .get();
+  // Determine current question
   const questionsArr = questionsSnap.docs.map((d) => d.id);
   const qIdx = session.questionOrder
     ? session.questionOrder[session.currentQuestionIndex]
     : session.currentQuestionIndex;
   const currentQuestionId = questionsArr[qIdx];
 
+  // Fetch answers for analytics (only read we couldn't parallelize — needs questionId)
   let totalCorrect = 0;
   let totalTime = 0;
   let totalAnswers = 0;
@@ -558,23 +548,9 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     });
   }
 
-  await db
-    .doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
-    .set({
-      questionIndex: session.currentQuestionIndex,
-      totalAnswers,
-      correctCount: totalCorrect,
-      correctPercent:
-        totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
-      avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
-    });
-
   // Compute team scores if team mode is enabled
   let teamScoreSnapshot: { teamIndex: number; name: string; color: string; avgPoints: number }[] = [];
   if (session.teamMode && session.teams) {
-    const playersSnap = await db
-      .collection(`sessions/${sessionId}/players`)
-      .get();
     const playerTeams = new Map<string, number>();
     playersSnap.docs.forEach((d) => {
       const data = d.data();
@@ -609,15 +585,22 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
   const totalQuestions = questionsArr.length;
   const isLastQuestion = session.currentQuestionIndex >= totalQuestions - 1;
 
-  await sessionDoc.ref.update({
-    questionState: "reveal",
-    top10Snapshot: top10,
-    ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
-    ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
-  });
-
-  // Clean up RTDB data for this session
+  // Write analytics, update session, and clean up RTDB in parallel
   await Promise.all([
+    db.doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
+      .set({
+        questionIndex: session.currentQuestionIndex,
+        totalAnswers,
+        correctCount: totalCorrect,
+        correctPercent: totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
+        avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
+      }),
+    sessionDoc.ref.update({
+      questionState: "reveal",
+      top10Snapshot: top10,
+      ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
+      ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
+    }),
     rtdb.ref(`liveAnswers/${sessionId}`).remove(),
     rtdb.ref(`results/${sessionId}`).remove(),
     rtdb.ref(`answerCounts/${sessionId}`).remove(),
