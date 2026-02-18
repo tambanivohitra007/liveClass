@@ -352,7 +352,7 @@ export default function PlayGame() {
       {/* Question */}
       <div className="flex-1 flex flex-col px-4 pb-4">
         <div className="text-center py-6 animate-fade-in">
-          <h2 className="text-xl md:text-2xl font-bold text-white">{currentQuestion.text}</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-white break-words">{currentQuestion.text}</h2>
           {currentQuestion.imageUrl && (
             <img src={currentQuestion.imageUrl} alt="" className="max-h-40 mx-auto mt-4 rounded-xl" />
           )}
@@ -380,7 +380,7 @@ export default function PlayGame() {
                   }
                 }}
                 disabled={submitted}
-                className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+                className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-3 transition-all ${
                   answerColors[i % answerColors.length]
                 } ${
                   selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
@@ -389,7 +389,7 @@ export default function PlayGame() {
                 }`}
               >
                 {answerIcons[i % answerIcons.length]}
-                <span className="truncate px-2">{opt}</span>
+                <span className="break-words text-center min-w-0">{opt}</span>
               </button>
             ))}
           </div>
@@ -418,7 +418,7 @@ export default function PlayGame() {
               <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
                 matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
               }`}>
-                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % answerColors.length].split(' ')[0]}`}>
+                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 max-w-[40%] break-words ${answerColors[i % answerColors.length].split(' ')[0]}`}>
                   {left}
                 </span>
                 <span className="text-white/30">&rarr;</span>
@@ -516,7 +516,7 @@ export default function PlayGame() {
                 key={i}
                 onClick={() => { if (!submitted) setSelectedAnswer(opt); }}
                 disabled={submitted}
-                className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+                className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-3 transition-all ${
                   answerColors[i % answerColors.length]
                 } ${
                   selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
@@ -525,7 +525,7 @@ export default function PlayGame() {
                 }`}
               >
                 {answerIcons[i % answerIcons.length]}
-                <span className="truncate px-2">{opt}</span>
+                <span className="break-words text-center min-w-0">{opt}</span>
               </button>
             ))}
           </div>

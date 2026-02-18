@@ -602,7 +602,7 @@ export default function HostSession() {
             </span>
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-bold text-center mb-10 max-w-3xl leading-tight animate-fade-in">
+          <h2 className="text-2xl md:text-5xl font-bold text-center mb-10 max-w-3xl leading-tight animate-fade-in break-words">
             {currentQuestionText}
           </h2>
 
