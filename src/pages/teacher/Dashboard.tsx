@@ -260,7 +260,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => navigate('/quiz/new')}
-            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors shadow-lg shadow-brand/20 flex items-center gap-2 text-sm active:scale-95"
+            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors shadow-lg shadow-brand/20 flex items-center gap-2 text-sm btn-press"
           >
             <Plus className="w-4 h-4" />
             Create New Quiz
@@ -275,7 +275,7 @@ export default function Dashboard() {
           { icon: <HelpCircle className="w-4 h-4" />, label: 'Questions', value: stats.totalQuestions, color: 'text-accent-dark bg-accent/10' },
           { icon: <Users className="w-4 h-4" />, label: 'Sessions', value: stats.totalSessions, color: 'text-success bg-success/10' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 animate-fade-in">
+          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 animate-fade-in hover-pop">
             <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center shrink-0`}>{s.icon}</div>
             <div>
               <p className="text-xl font-bold text-gray-900">{s.value}</p>
@@ -301,7 +301,7 @@ export default function Dashboard() {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 no-scrollbar">
         <button
           onClick={() => setSelectedFilter('all')}
-          className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+          className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap spring-transition ${
             selectedFilter === 'all'
               ? 'bg-brand text-white shadow-sm'
               : 'bg-white border border-gray-200 text-gray-600 hover:border-brand/40'
@@ -316,7 +316,7 @@ export default function Dashboard() {
             <div key={coll.id} className="relative group/pill">
               <button
                 onClick={() => setSelectedFilter(isActive ? 'all' : coll.id)}
-                className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap spring-transition flex items-center gap-1.5 ${
                   isActive
                     ? 'bg-brand text-white shadow-sm'
                     : 'bg-white border border-gray-200 text-gray-600 hover:border-brand/40'
@@ -374,7 +374,7 @@ export default function Dashboard() {
             return (
               <div
                 key={quiz.id}
-                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-brand/5 transition-all flex flex-col animate-fade-in"
+                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-brand/5 transition-all flex flex-col animate-fade-in card-hover"
               >
                 {/* Gradient Banner */}
                 <div className={`h-32 ${getCardGradient(quiz)} relative overflow-hidden`}>
@@ -504,7 +504,7 @@ export default function Dashboard() {
             onClick={() => navigate('/quiz/new')}
             className="min-h-[280px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all group/create"
           >
-            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4">
+            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
               <Plus className="w-7 h-7" />
             </div>
             <span className="font-bold text-gray-500 group-hover/create:text-brand transition-colors">New Quiz</span>

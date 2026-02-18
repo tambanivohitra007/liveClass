@@ -100,7 +100,7 @@ export default function AssignmentCreate() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
+          className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 btn-press"
         >
           {saving ? 'Creating...' : 'Create Assignment'}
         </button>

@@ -164,7 +164,7 @@ export default function JoinGame() {
           <h1 className="text-4xl font-black text-white">LiveClass</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm text-center">
               {error}
@@ -217,7 +217,7 @@ export default function JoinGame() {
               <button
                 type="submit"
                 disabled={pin.length < 4}
-                className="w-full mt-4 py-4 bg-brand text-white font-bold text-lg rounded-2xl hover:bg-brand-dark transition-all disabled:opacity-40 shadow-lg"
+                className="w-full mt-4 py-4 bg-brand text-white font-bold text-lg rounded-2xl hover:bg-brand-dark transition-all disabled:opacity-40 shadow-lg btn-press"
               >
                 Enter
               </button>
@@ -248,7 +248,7 @@ export default function JoinGame() {
               <button
                 type="submit"
                 disabled={joining || !nickname.trim()}
-                className="w-full mt-4 py-4 bg-success text-white font-bold text-lg rounded-2xl hover:brightness-110 transition-all disabled:opacity-40 shadow-lg"
+                className="w-full mt-4 py-4 bg-success text-white font-bold text-lg rounded-2xl hover:brightness-110 transition-all disabled:opacity-40 shadow-lg btn-press"
               >
                 {joining ? 'Joining...' : "Let's Go!"}
               </button>

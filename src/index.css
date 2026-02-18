@@ -26,6 +26,20 @@
   --color-surface: #F9FAFB;
   --color-surface-dark: #1C2B4A;
   --color-surface-card: #FFFFFF;
+
+  /* Cartoon-inspired rounder radius */
+  --radius-lg: 0.625rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+
+  /* Brand-tinted warm shadows */
+  --shadow-sm: 0 2px 8px -2px rgba(212,86,107,0.08), 0 1px 2px -1px rgba(0,0,0,0.04);
+  --shadow: 0 4px 12px -2px rgba(212,86,107,0.10), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px -2px rgba(212,86,107,0.10), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 24px -4px rgba(212,86,107,0.12), 0 4px 8px -2px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 40px -8px rgba(212,86,107,0.14), 0 8px 16px -4px rgba(0,0,0,0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(212,86,107,0.16), 0 12px 24px -6px rgba(0,0,0,0.06);
 }
 
 @layer base {
@@ -33,6 +47,10 @@
     @apply bg-surface text-gray-800 antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', 'Inter', system-ui, sans-serif;
   }
 
   /* ========================================
@@ -402,4 +420,12 @@
   .dark ::-webkit-scrollbar-thumb:hover {
     background: #475569;
   }
+}
+
+/* Brand-tinted hover shadows (outside @layer to beat utility specificity) */
+.hover\:shadow-md:hover {
+  box-shadow: 0 6px 16px -3px rgba(212,86,107,0.12), 0 3px 6px -2px rgba(0,0,0,0.04);
+}
+.hover\:shadow-xl:hover {
+  box-shadow: 0 24px 48px -10px rgba(212,86,107,0.16), 0 10px 20px -5px rgba(0,0,0,0.04);
 }

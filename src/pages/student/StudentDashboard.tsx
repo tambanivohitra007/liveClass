@@ -86,7 +86,7 @@ export default function StudentDashboard() {
         </div>
         <button
           onClick={() => navigate('/join')}
-          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors flex items-center gap-2"
+          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors flex items-center gap-2 btn-press"
         >
           <Gamepad2 className="w-4 h-4" />
           Join a Game
@@ -101,7 +101,7 @@ export default function StudentDashboard() {
           { icon: <Flame className="w-5 h-5" />, label: 'Best Streak', value: bestStreak, color: 'text-answer-red bg-answer-red/10' },
           { icon: <Target className="w-5 h-5" />, label: 'Avg Accuracy', value: `${avgAccuracy}%`, color: 'text-success bg-success/10' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-fade-in">
+          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-fade-in hover-pop">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center`}>
                 {s.icon}
@@ -119,7 +119,7 @@ export default function StudentDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Games</h2>
           <div className="space-y-3">
             {recentGames.map((game) => (
-              <div key={game.sessionId} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in">
+              <div key={game.sessionId} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in card-hover">
                 <button
                   onClick={() => setExpandedGame(expandedGame === game.sessionId ? null : game.sessionId)}
                   className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
@@ -227,7 +227,7 @@ export default function StudentDashboard() {
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeAssignments.map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border border-success/30 shadow-sm hover:shadow-md transition-all group">
+              <div key={a.id} className="bg-white rounded-2xl border border-success/30 shadow-sm hover:shadow-md transition-all group card-hover">
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs px-2 py-0.5 bg-success/10 text-success rounded-full font-medium">Active</span>

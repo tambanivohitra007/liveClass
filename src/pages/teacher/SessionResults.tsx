@@ -95,7 +95,7 @@ export default function SessionResults() {
         <button
           onClick={handleExportCsv}
           disabled={exporting}
-          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 flex items-center gap-2 btn-press"
         >
           <Download className="w-4 h-4" />
           {exporting ? 'Exporting...' : 'Export CSV'}
@@ -110,7 +110,7 @@ export default function SessionResults() {
           { icon: <Target className="w-5 h-5" />, label: 'Avg Accuracy', value: `${avgAccuracy}%`, color: 'text-success bg-success/10' },
           { icon: <Clock className="w-5 h-5" />, label: 'Duration', value: sessionDuration ? formatDuration(sessionDuration) : 'N/A', color: 'text-info bg-info/10' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-fade-in">
+          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-fade-in hover-pop">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center`}>
                 {s.icon}

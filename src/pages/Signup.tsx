@@ -67,7 +67,7 @@ export default function Signup() {
           <p className="text-gray-500 mt-1">Start creating quizzes in minutes</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm">
               {error}
@@ -144,7 +144,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 btn-press"
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>

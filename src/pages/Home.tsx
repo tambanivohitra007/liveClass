@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Play, ArrowRight, Sparkles,
+  Play, ArrowRight,
   ClipboardList, Trophy, Share2
 } from 'lucide-react';
 
@@ -90,7 +90,7 @@ export default function Home() {
           {/* Right - Hero Text */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium text-white">
-              <Sparkles className="w-4 h-4 text-warning" />
+              
               Free for educators — no credit card required
             </div>
 
@@ -103,13 +103,13 @@ export default function Home() {
 
             <p className="text-lg text-white/60 max-w-md leading-relaxed">
               Host live quizzes that spark engagement. Track understanding in real-time.
-              Works on any device, even offline.
+              Works on any device.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button
                 onClick={() => navigate('/signup')}
-                className="group px-8 py-4 bg-white text-brand font-bold rounded-xl text-lg hover:bg-gray-50 transition-all hover:scale-[1.02] shadow-lg shadow-black/20 flex items-center justify-center gap-2"
+                className="group px-8 py-4 bg-white text-brand font-bold rounded-xl text-lg hover:bg-gray-50 spring-transition hover:scale-[1.02] shadow-lg shadow-black/20 flex items-center justify-center gap-2 btn-press"
               >
                 Get Started Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -119,8 +119,8 @@ export default function Home() {
             {/* Inline Stats */}
             <div className="grid grid-cols-3 gap-8 pt-6 w-full max-w-sm">
               {[
-                { value: '50K+', label: 'Quizzes' },
-                { value: '200K+', label: 'Students' },
+                { value: '5+', label: 'Quizzes' },
+                { value: '100+', label: 'Students' },
                 { value: '99%', label: 'Uptime' },
               ].map((s) => (
                 <div key={s.label} className="text-center lg:text-left">
@@ -154,7 +154,7 @@ export default function Home() {
             {steps.map((step, i) => (
               <div
                 key={step.title}
-                className="relative group p-8 bg-white rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
+                className="relative group p-8 bg-white rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 card-hover"
               >
                 <div className="absolute -top-6 left-8 bg-brand text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl shadow-lg shadow-brand/30">
                   {i + 1}
