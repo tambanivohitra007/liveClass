@@ -117,7 +117,7 @@ export default function Navbar() {
                 </button>
 
                 {profileOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-slide-down">
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 dark:border-gray-300 overflow-hidden animate-slide-down">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="font-semibold text-gray-900 text-sm truncate">{user?.displayName || 'User'}</p>
                       <p className="text-xs text-gray-400 truncate">{firebaseUser.email}</p>
@@ -181,7 +181,7 @@ export default function Navbar() {
               </button>
               <Link
                 to="/login"
-                className="ml-1 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors no-underline"
+                className="ml-1 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300 no-underline"
               >
                 Sign In
               </Link>
@@ -255,7 +255,7 @@ export default function Navbar() {
                 <Link to="/login" className="block px-3 py-2.5 rounded-lg text-sm font-medium text-brand hover:bg-brand/5 no-underline">
                   Sign In
                 </Link>
-                <Link to="/signup" className="block mt-1 px-3 py-2.5 rounded-lg text-sm font-medium text-center bg-brand text-white no-underline">
+                <Link to="/signup" className="block mt-1 px-3 py-2.5 rounded-lg text-sm font-medium text-center bg-brand text-white border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] no-underline">
                   Get Started Free
                 </Link>
               </>
