@@ -91,14 +91,21 @@ export default function PlayGame() {
   // Pre-fetch all questions once when we know the quizId
   useEffect(() => {
     if (!session?.quizId) return;
+    let cancelled = false;
     const fetchQuestions = async () => {
-      const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
-      const snapshot = await getDocs(q);
-      const qs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
-      setAllQuestions(qs);
-      setTotalQuestions(qs.length);
+      try {
+        const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
+        const snapshot = await getDocs(q);
+        if (cancelled) return;
+        const qs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Question[];
+        setAllQuestions(qs);
+        setTotalQuestions(qs.length);
+      } catch {
+        if (!cancelled) addToast('error', 'Failed to load questions. Please refresh.');
+      }
     };
     fetchQuestions();
+    return () => { cancelled = true; };
   }, [session?.quizId]);
 
   // Pick current question from cache when question state changes
