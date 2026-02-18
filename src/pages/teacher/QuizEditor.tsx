@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
@@ -71,6 +71,12 @@ export default function QuizEditor() {
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // ── Unsaved changes tracking ──
+  const [savedSnapshot, setSavedSnapshot] = useState<string>('');
+  const justSavedRef = useRef(false);
+  const currentSnapshot = JSON.stringify({ title, description, questions, visibility, selectedCollectionId, coverImageUrl });
+  const isDirty = savedSnapshot !== '' && currentSnapshot !== savedSnapshot;
+
   useEffect(() => {
     if (isNew || !quizId) return;
     const loadQuizAndQuestions = async () => {
@@ -85,8 +91,9 @@ export default function QuizEditor() {
         setCoverImageUrl(data.coverImageUrl || '');
       }
       const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
-      const snapshot = await getDocs(q);
-      setQuestions(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as (Question & { id: string })[]);
+      const qSnapshot = await getDocs(q);
+      const loadedQuestions = qSnapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as (Question & { id: string })[];
+      setQuestions(loadedQuestions);
       setLoadingQuestions(false);
     };
     loadQuizAndQuestions();
@@ -100,6 +107,39 @@ export default function QuizEditor() {
     });
     return unsub;
   }, [user]);
+
+  // Set saved snapshot once loading completes (for existing quizzes) or on mount (for new quizzes)
+  useEffect(() => {
+    if (loadingQuestions) return;
+    if (savedSnapshot === '') {
+      setSavedSnapshot(currentSnapshot);
+    }
+  }, [loadingQuestions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Browser refresh / tab close warning
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  // In-app navigation blocking
+  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+    isDirty && !justSavedRef.current && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+    confirmAction(
+      'Unsaved changes',
+      'You have unsaved changes. Are you sure you want to leave?',
+      'Leave'
+    ).then(({ isConfirmed }) => {
+      if (isConfirmed) blocker.proceed();
+      else blocker.reset();
+    });
+  }, [blocker.state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addQuestion = () => {
     const newQ = emptyQuestion(quizId || '');
@@ -312,6 +352,7 @@ export default function QuizEditor() {
         if (question.id) await setDoc(doc(db, 'questions', question.id), questionData, { merge: true });
         else await addDoc(collection(db, 'questions'), questionData);
       }
+      justSavedRef.current = true;
       navigate('/dashboard');
     } catch {
       addToast('error', 'Failed to save quiz. Please try again.');
