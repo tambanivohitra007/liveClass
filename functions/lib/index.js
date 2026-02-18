@@ -524,7 +524,7 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "5
         throw new https_1.HttpsError("invalid-argument", "Topic must be at least 3 characters");
     }
     const clampedCount = Math.min(Math.max(count, 1), 10);
-    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         // Fallback: generate template questions without AI
         const fallbackQuestion = (i) => {
@@ -563,7 +563,6 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "5
     const metaInstruction = generateMeta
         ? 'Return ONLY valid JSON: {"title":"...","description":"...","questions":[...]}'
         : "Return ONLY a valid JSON array. Each element:";
-    const isAnthropic = !!process.env.ANTHROPIC_API_KEY;
     const prompt = `Generate ${clampedCount} quiz questions about "${topic}".
 ${description ? `Context: ${description}` : ""}
 Difficulty: ${difficulty}.
@@ -573,25 +572,16 @@ ${metaInstruction}
 ${typeTemplates[questionType] || typeTemplates.mcq}
 Make questions educational, varied in difficulty, and factually accurate.`;
     try {
-        let responseText = "";
-        if (isAnthropic) {
-            const res = await fetch("https://api.anthropic.com/v1/messages", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-                body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 4096, messages: [{ role: "user", content: prompt }] }),
-            });
-            const data = await res.json();
-            responseText = data.content?.[0]?.text || "[]";
-        }
-        else {
-            const res = await fetch("https://api.openai.com/v1/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-                body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], max_tokens: 4096 }),
-            });
-            const data = await res.json();
-            responseText = data.choices?.[0]?.message?.content || "[]";
-        }
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { maxOutputTokens: 4096, temperature: 0.7 },
+            }),
+        });
+        const data = await res.json();
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
         let questions;
         let title;
         let desc;

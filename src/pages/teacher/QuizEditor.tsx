@@ -103,6 +103,23 @@ export default function QuizEditor() {
     setActiveIndex(questions.length);
   };
 
+  const openAiModal = () => {
+    if (title.trim() && !aiTopic.trim()) {
+      setAiTopic(title.trim());
+    }
+    if (questions.length > 0 && !aiDescription.trim()) {
+      const summaries = questions
+        .filter((q) => q.text.trim())
+        .slice(0, 8)
+        .map((q, i) => `${i + 1}. ${q.text.trim()}`)
+        .join('\n');
+      if (summaries) {
+        setAiDescription(`Existing questions in this quiz:\n${summaries}\n\nGenerate new questions that complement these.`);
+      }
+    }
+    setShowAiModal(true);
+  };
+
   const handleAiGenerate = async () => {
     if (!aiTopic.trim()) return;
     setAiGenerating(true);
@@ -396,7 +413,7 @@ export default function QuizEditor() {
               Add Question
             </button>
             <button
-              onClick={() => setShowAiModal(true)}
+              onClick={openAiModal}
               className="w-full py-2.5 bg-gradient-to-r from-brand to-accent text-white text-sm font-medium rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
