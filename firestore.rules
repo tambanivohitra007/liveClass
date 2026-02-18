@@ -11,7 +11,8 @@ service cloud.firestore {
       );
 
       allow create: if request.auth != null && request.auth.uid == userId
-        && request.resource.data.get('approvalStatus', 'none') != 'approved';
+        && (request.resource.data.get('approvalStatus', 'none') != 'approved'
+          || request.auth.token.email == 'rindra.it@gmail.com');
 
       allow update: if request.auth != null && (
         (request.auth.uid == userId

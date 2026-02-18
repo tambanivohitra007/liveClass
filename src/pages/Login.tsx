@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { useNavigate, Link } from 'react-router-dom';
-import { ADMIN_EMAIL } from '../lib/config';
 import ValidatedInput from '../components/ValidatedInput';
 import logo from '../assets/logo.png';
 
@@ -32,25 +30,8 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-      // Auto-create user doc on first Google sign-in
-      const userRef = doc(db, 'users', cred.user.uid);
-      const existing = await getDoc(userRef);
-      if (!existing.exists()) {
-        const isAdmin = cred.user.email === ADMIN_EMAIL;
-        await setDoc(userRef, {
-          displayName: cred.user.displayName || 'User',
-          email: cred.user.email || '',
-          role: 'teacher',
-          approvalStatus: isAdmin ? 'approved' : 'pending',
-          createdAt: serverTimestamp(),
-        });
-        navigate(isAdmin ? '/dashboard' : '/pending-approval');
-      } else {
-        const data = existing.data();
-        const dashPath = data.role === 'student' ? '/student/dashboard' : '/dashboard';
-        navigate(dashPath);
-      }
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google login failed');
     } finally {

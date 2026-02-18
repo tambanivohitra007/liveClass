@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
+import { ADMIN_EMAIL } from '../lib/config';
 import type { User } from '../types/models';
 
 export function useAuthListener() {
@@ -21,24 +22,36 @@ export function useAuthListener() {
       }
 
       if (firebaseUser) {
-        // Initial fetch to unblock loading quickly
-        const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        let snap = await getDoc(userRef);
+
+        // Auto-create user doc on first Google sign-in
+        if (!snap.exists()) {
+          const isAdmin = firebaseUser.email === ADMIN_EMAIL;
+          await setDoc(userRef, {
+            displayName: firebaseUser.displayName || 'User',
+            email: firebaseUser.email || '',
+            role: 'teacher',
+            approvalStatus: isAdmin ? 'approved' : 'pending',
+            createdAt: serverTimestamp(),
+          });
+          snap = await getDoc(userRef);
+        }
+
         if (snap.exists()) {
           setUser({ id: snap.id, ...snap.data() } as User);
         }
         setLoading(false);
 
-        // Then subscribe for real-time updates (e.g. admin approval)
+        // Subscribe for real-time updates (e.g. admin approval)
         unsubUserDoc = onSnapshot(
-          doc(db, 'users', firebaseUser.uid),
+          userRef,
           (liveSnap) => {
             if (liveSnap.exists()) {
               setUser({ id: liveSnap.id, ...liveSnap.data() } as User);
             }
           },
-          () => {
-            // Silently ignore listener errors
-          },
+          () => {},
         );
       } else {
         setUser(null);
