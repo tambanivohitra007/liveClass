@@ -630,8 +630,8 @@ export default function Dashboard() {
 
       {/* ── AI Quiz Modal ── */}
       {showAiQuizModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAiQuizModal(false)}>
-          <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAiQuizModal(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowAiQuizModal(false); }}>
+          <div role="dialog" aria-modal="true" aria-label="AI Generate Quiz" className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-0">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-brand" />
@@ -729,8 +729,8 @@ export default function Dashboard() {
 
       {/* ── Collection Modal ── */}
       {showCollModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCollModal(false)}>
-          <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCollModal(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowCollModal(false); }}>
+          <div role="dialog" aria-modal="true" aria-label={editingColl ? 'Edit Collection' : 'New Collection'} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-0">
               <h3 className="text-lg font-bold text-gray-900">{editingColl ? 'Edit Collection' : 'New Collection'}</h3>
               <button onClick={() => setShowCollModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
