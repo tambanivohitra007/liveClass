@@ -61,7 +61,7 @@ export default function SessionResults() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="animate-pulse space-y-6">
           <div className="h-8 w-48 bg-gray-200 rounded-lg" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -76,7 +76,7 @@ export default function SessionResults() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
@@ -112,7 +112,7 @@ export default function SessionResults() {
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-fade-in">
             <div className="flex items-center gap-2 mb-3">
-              <div className={`w-8 h-8 rounded-lg ${s.color} flex items-center justify-center`}>
+              <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center`}>
                 {s.icon}
               </div>
               <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{s.label}</span>

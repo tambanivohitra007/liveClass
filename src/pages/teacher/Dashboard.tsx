@@ -538,7 +538,7 @@ export default function Dashboard() {
                   value={collName}
                   onChange={(e) => setCollName(e.target.value)}
                   placeholder="e.g. Biology"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
                   autoFocus
                 />
               </div>
@@ -549,7 +549,7 @@ export default function Dashboard() {
                   onChange={(e) => setCollDesc(e.target.value)}
                   placeholder="Optional description"
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 resize-none"
                 />
               </div>
               <div>

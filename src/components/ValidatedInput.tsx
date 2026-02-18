@@ -47,7 +47,7 @@ export default function ValidatedInput({
               ? 'border-danger focus:ring-2 focus:ring-danger/30 focus:border-danger'
               : isValid
                 ? 'border-success focus:ring-2 focus:ring-success/30 focus:border-success'
-                : 'border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand'
+                : 'border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand'
           }`}
         />
         {isValid && (

@@ -46,7 +46,7 @@ export default function AssignmentCreate() {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8">
       <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-4 flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> Back</button>
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Assignment</h1>
 
@@ -57,7 +57,7 @@ export default function AssignmentCreate() {
             value={selectedQuizId}
             onChange={(e) => setSelectedQuizId(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
           >
             <option value="">-- Choose a quiz --</option>
             {quizzes.map((q) => (
@@ -73,7 +73,7 @@ export default function AssignmentCreate() {
               value={startAt}
               onChange={(e) => setStartAt(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
             />
           </div>
           <div>
@@ -83,7 +83,7 @@ export default function AssignmentCreate() {
               value={endAt}
               onChange={(e) => setEndAt(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
             />
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function AssignmentCreate() {
             min={1}
             value={attemptsAllowed}
             onChange={(e) => setAttemptsAllowed(parseInt(e.target.value) || 1)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
           />
         </div>
         <button

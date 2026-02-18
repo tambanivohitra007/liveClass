@@ -103,7 +103,7 @@ export default function StudentDashboard() {
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-fade-in">
             <div className="flex items-center gap-2 mb-3">
-              <div className={`w-8 h-8 rounded-lg ${s.color} flex items-center justify-center`}>
+              <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center`}>
                 {s.icon}
               </div>
               <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{s.label}</span>
@@ -227,7 +227,7 @@ export default function StudentDashboard() {
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeAssignments.map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border-2 border-success/20 shadow-sm hover:shadow-md transition-all group">
+              <div key={a.id} className="bg-white rounded-2xl border border-success/30 shadow-sm hover:shadow-md transition-all group">
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs px-2 py-0.5 bg-success/10 text-success rounded-full font-medium">Active</span>

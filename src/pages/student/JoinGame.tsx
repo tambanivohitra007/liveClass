@@ -163,7 +163,7 @@ export default function JoinGame() {
           <h1 className="text-4xl font-black text-white">LiveClass</h1>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm text-center">
               {error}
@@ -183,7 +183,7 @@ export default function JoinGame() {
                   <button
                     key={ci}
                     onClick={() => handleVerify(ci)}
-                    className="flex justify-center gap-1.5 p-4 rounded-xl border-2 border-gray-200 hover:border-brand hover:bg-brand/5 transition-all"
+                    className="flex justify-center gap-1.5 p-4 rounded-xl border border-gray-200 hover:border-brand hover:bg-brand/5 transition-all"
                   >
                     {choice.map((s, i) => (
                       <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-6 h-6" />
@@ -210,7 +210,7 @@ export default function JoinGame() {
                 placeholder="000000"
                 required
                 maxLength={6}
-                className="w-full text-center text-4xl font-black tracking-[0.3em] px-4 py-5 rounded-2xl border-2 border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-200"
+                className="w-full text-center text-4xl font-black tracking-[0.3em] px-4 py-5 rounded-2xl border border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-200"
                 autoFocus
               />
               <button
@@ -232,7 +232,7 @@ export default function JoinGame() {
                   placeholder="Your nickname"
                   required
                   maxLength={20}
-                  className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border-2 border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300"
+                  className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300"
                   autoFocus
                 />
                 <button
