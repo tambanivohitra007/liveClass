@@ -4,16 +4,18 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import { useSessionAnalytics } from '../../hooks/useSessionAnalytics';
+import { exportSessionExcel } from '../../lib/excelExport';
 import Leaderboard from '../../components/Leaderboard';
 import BarChart from '../../components/charts/BarChart';
 import LineChart from '../../components/charts/LineChart';
 import HorizontalBarChart from '../../components/charts/HorizontalBarChart';
-import { Download, ArrowLeft, Users, Target, Trophy, Clock, ChevronDown, ChevronUp, ShieldAlert } from 'lucide-react';
+import { Download, FileSpreadsheet, ArrowLeft, Users, Target, Trophy, Clock, ChevronDown, ChevronUp, ShieldAlert } from 'lucide-react';
 
 export default function SessionResults() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const [exporting, setExporting] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
   const { addToast } = useToastStore();
 
@@ -49,6 +51,25 @@ export default function SessionResults() {
       addToast('error', 'CSV export failed. Please try again.');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExportingExcel(true);
+    try {
+      await exportSessionExcel({
+        quizTitle,
+        sessionPin,
+        playerStats,
+        analytics,
+        playerCount,
+        avgScore,
+        avgAccuracy,
+      });
+    } catch {
+      addToast('error', 'Excel export failed. Please try again.');
+    } finally {
+      setExportingExcel(false);
     }
   };
 
@@ -93,14 +114,24 @@ export default function SessionResults() {
           <h1 className="text-2xl font-bold text-gray-900">{quizTitle}</h1>
           {sessionPin && <p className="text-gray-500 mt-1">PIN: {sessionPin}</p>}
         </div>
-        <button
-          onClick={handleExportCsv}
-          disabled={exporting}
-          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
-        >
-          <Download className="w-4 h-4" />
-          {exporting ? 'Exporting...' : 'Export CSV'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportCsv}
+            disabled={exporting}
+            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+          <button
+            onClick={handleExportExcel}
+            disabled={exportingExcel}
+            className="px-5 py-2.5 bg-success text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#2E7D32] hover:shadow-[6px_6px_0px_0px_#2E7D32] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            {exportingExcel ? 'Exporting...' : 'Export Excel'}
+          </button>
+        </div>
       </div>
 
       {/* Summary Stats */}
