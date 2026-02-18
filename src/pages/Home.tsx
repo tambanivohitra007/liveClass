@@ -54,7 +54,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={pin.length < 4}
-                className="w-full bg-brand hover:bg-brand-dark text-white py-5 rounded-2xl text-xl font-bold transition-all active:scale-[0.98] shadow-xl shadow-brand/30 flex items-center justify-center gap-3 disabled:opacity-40"
+                className="w-full bg-brand hover:bg-brand-dark text-white py-5 rounded-2xl text-xl font-bold border-2 border-white/30 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.25)] hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.25)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-40"
               >
                 Enter Game
                 <Play className="w-6 h-6" fill="currentColor" />
@@ -70,14 +70,14 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="bg-white/5 hover:bg-white/10 text-white/80 py-3 rounded-xl text-sm font-semibold border border-white/10 transition-colors"
+                  className="bg-white/10 hover:bg-white/15 text-white py-3 rounded-2xl text-sm font-bold border-2 border-white/20 shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
                 >
                   Sign In
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/discover')}
-                  className="bg-white/5 hover:bg-white/10 text-white/80 py-3 rounded-xl text-sm font-semibold border border-white/10 transition-colors"
+                  className="bg-white/10 hover:bg-white/15 text-white py-3 rounded-2xl text-sm font-bold border-2 border-white/20 shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
                 >
                   Browse Quizzes
                 </button>
@@ -107,7 +107,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button
                 onClick={() => navigate('/signup')}
-                className="group px-8 py-4 bg-white text-brand font-bold rounded-xl text-lg hover:bg-gray-50 spring-transition hover:scale-[1.02] shadow-lg shadow-black/20 flex items-center justify-center gap-2 btn-press"
+                className="group px-8 py-4 bg-white text-brand font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
               >
                 Get Started Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -133,7 +133,7 @@ export default function Home() {
         {/* Wave divider */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1200 120" fill="none" className="w-full h-12" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.83C0,95.83,56.44,116.68,103.5,120c47.06,3.32,217.89,0,217.89,0Z" fill="#F9FAFB" />
+            
           </svg>
         </div>
       </section>
@@ -216,14 +216,14 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/signup')}
-              className="group px-8 py-4 bg-white text-brand font-bold rounded-xl text-lg hover:bg-gray-50 transition-all hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
+              className="group px-8 py-4 bg-white text-brand font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
             >
               Start for Free
               <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
             </button>
             <button
               onClick={() => navigate('/join')}
-              className="px-8 py-4 bg-white/10 backdrop-blur text-white font-bold rounded-xl text-lg border border-white/20 hover:bg-white/20 transition-all"
+              className="px-8 py-4 bg-white/10 backdrop-blur text-white font-bold rounded-2xl text-lg border-2 border-white/20 shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(255,255,255,0.15)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
             >
               Join a Game
             </button>
