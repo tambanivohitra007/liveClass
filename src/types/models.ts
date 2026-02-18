@@ -26,6 +26,9 @@ export interface User {
   role: 'teacher' | 'student';
   approvalStatus?: 'pending' | 'approved' | 'rejected';
   photoUrl?: string;
+  gender?: 'male' | 'female' | 'other' | '';
+  phone?: string;
+  address?: string;
   createdAt: number;
 }
 

@@ -6,7 +6,7 @@ import { db, storage } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
 import { useToastStore } from '../stores/toastStore';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Save, KeyRound, Mail, Shield, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Camera, Save, KeyRound, Mail, Shield, Eye, EyeOff, Phone, MapPin } from 'lucide-react';
 
 export default function Profile() {
   const { firebaseUser, user, setUser } = useAuthStore();
@@ -15,6 +15,9 @@ export default function Profile() {
 
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [role, setRole] = useState<'teacher' | 'student'>(user?.role || 'student');
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | ''>(user?.gender || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [address, setAddress] = useState(user?.address || '');
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -51,6 +54,9 @@ export default function Profile() {
       const updateData: Record<string, unknown> = {
         displayName: displayName.trim(),
         role,
+        gender: gender || '',
+        phone: phone.trim(),
+        address: address.trim(),
       };
 
       if (roleChanged && role === 'teacher') {
@@ -63,7 +69,7 @@ export default function Profile() {
       await updateDoc(doc(db, 'users', firebaseUser.uid), updateData);
 
       // Update local state
-      const updatedUser = { ...user, displayName: displayName.trim(), role };
+      const updatedUser = { ...user, displayName: displayName.trim(), role, gender, phone: phone.trim(), address: address.trim() };
       if (roleChanged && role === 'teacher') {
         updatedUser.approvalStatus = 'pending';
       } else if (roleChanged && role === 'student') {
@@ -234,6 +240,51 @@ export default function Profile() {
               {user.email}
             </div>
             <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+            <div className="grid grid-cols-3 gap-3">
+              {(['male', 'female', 'other'] as const).map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGender(gender === g ? '' : g)}
+                  className={`py-3 rounded-xl border-2 font-medium capitalize transition-all ${
+                    gender === g
+                      ? 'border-brand bg-brand/5 text-brand'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+            <div className="relative">
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+261 34 00 000 00"
+                className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+            <div className="relative">
+              <MapPin className="absolute left-4 top-3.5 w-4 h-4 text-gray-400" />
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="City, Country"
+                rows={2}
+                className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 resize-none"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
