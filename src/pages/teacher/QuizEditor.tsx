@@ -7,7 +7,11 @@ import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
 import { confirmAction } from '../../lib/swal';
-import { GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus, Sparkles, X as XIcon } from 'lucide-react';
+import {
+  GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
+  Sparkles, X as XIcon, Triangle, Diamond, Circle, Square, ArrowLeft,
+  Clock, Image as ImageIcon, Type, FileText,
+} from 'lucide-react';
 import type { Quiz, Question, QuestionType, Collection } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
@@ -29,6 +33,13 @@ const typeLabels: Record<QuestionType, string> = {
   poll: 'Poll',
   slide: 'Slide',
 };
+
+const ANSWER_CARDS = [
+  { bg: 'bg-answer-red', border: 'border-answer-red', icon: Triangle, placeholder: 'Add answer' },
+  { bg: 'bg-answer-blue', border: 'border-answer-blue', icon: Diamond, placeholder: 'Add answer' },
+  { bg: 'bg-answer-yellow', border: 'border-answer-yellow', icon: Circle, placeholder: 'Add answer' },
+  { bg: 'bg-answer-green', border: 'border-answer-green', icon: Square, placeholder: 'Add answer' },
+];
 
 export default function QuizEditor() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -53,6 +64,7 @@ export default function QuizEditor() {
   const [aiCount, setAiCount] = useState(5);
   const [aiType, setAiType] = useState<QuestionType>('mcq');
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     if (isNew || !quizId) return;
@@ -74,7 +86,6 @@ export default function QuizEditor() {
     loadQuizAndQuestions();
   }, [quizId, isNew]);
 
-  // Fetch user's collections
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, 'collections'), where('ownerId', '==', user.id));
@@ -84,7 +95,11 @@ export default function QuizEditor() {
     return unsub;
   }, [user]);
 
-  const addQuestion = () => setQuestions([...questions, emptyQuestion(quizId || '')]);
+  const addQuestion = () => {
+    const newQ = emptyQuestion(quizId || '');
+    setQuestions([...questions, newQ]);
+    setActiveIndex(questions.length);
+  };
 
   const handleAiGenerate = async () => {
     if (!aiTopic.trim()) return;
@@ -104,6 +119,7 @@ export default function QuizEditor() {
       else addToast('success', `${generated.length} questions generated`);
       setShowAiModal(false);
       setAiTopic('');
+      setActiveIndex(questions.length); // jump to first generated
     } catch {
       addToast('error', 'Failed to generate questions');
     } finally {
@@ -136,6 +152,8 @@ export default function QuizEditor() {
     );
     if (!isConfirmed) return;
     setQuestions(questions.filter((_, i) => i !== index));
+    if (activeIndex >= questions.length - 1) setActiveIndex(Math.max(0, questions.length - 2));
+    else if (index < activeIndex) setActiveIndex(activeIndex - 1);
   };
 
   const moveQuestion = (index: number, direction: -1 | 1) => {
@@ -144,6 +162,17 @@ export default function QuizEditor() {
     const reordered = [...questions];
     [reordered[index], reordered[newIndex]] = [reordered[newIndex], reordered[index]];
     setQuestions(reordered);
+    if (activeIndex === index) setActiveIndex(newIndex);
+    else if (activeIndex === newIndex) setActiveIndex(index);
+  };
+
+  const moveOption = (questionIndex: number, optionIndex: number, direction: -1 | 1) => {
+    const q = questions[questionIndex];
+    const newIdx = optionIndex + direction;
+    if (newIdx < 0 || newIdx >= q.options.length) return;
+    const newOpts = [...q.options];
+    [newOpts[optionIndex], newOpts[newIdx]] = [newOpts[newIdx], newOpts[optionIndex]];
+    updateQuestion(questionIndex, { options: newOpts });
   };
 
   const duplicateQuestion = (index: number) => {
@@ -151,6 +180,7 @@ export default function QuizEditor() {
     const updated = [...questions];
     updated.splice(index + 1, 0, copy);
     setQuestions(updated);
+    setActiveIndex(index + 1);
   };
 
   const handleDragEnd = () => {
@@ -159,6 +189,7 @@ export default function QuizEditor() {
       const [moved] = reordered.splice(dragIndex, 1);
       reordered.splice(dragOverIndex, 0, moved);
       setQuestions(reordered);
+      if (activeIndex === dragIndex) setActiveIndex(dragOverIndex);
     }
     setDragIndex(null);
     setDragOverIndex(null);
@@ -172,7 +203,7 @@ export default function QuizEditor() {
       const num = i + 1;
       if (!q.text.trim()) errors.push(`Q${num}: Question text is required.`);
       if (q.type === 'slide') {
-        // Slides just need text, no answers
+        // Slides just need text
       } else if (q.type === 'poll') {
         if (q.options.length < 2) errors.push(`Q${num}: Poll needs at least 2 options.`);
         if (q.options.some((o) => !o.trim())) errors.push(`Q${num}: All poll options must be filled in.`);
@@ -242,6 +273,8 @@ export default function QuizEditor() {
     }
   };
 
+  const activeQ = questions[activeIndex] as (Omit<Question, 'id'> & { id?: string }) | undefined;
+
   if (loadingQuestions) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -251,14 +284,28 @@ export default function QuizEditor() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{isNew ? 'Create Quiz' : 'Edit Quiz'}</h1>
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
+      {/* ── Header ── */}
+      <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 shrink-0">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Untitled Quiz"
+            className="text-lg font-bold bg-transparent border-none outline-none text-gray-900 placeholder:text-gray-300 w-64 focus:ring-0"
+          />
+        </div>
+        <div className="flex items-center gap-2">
           {!isNew && (
             <button
               onClick={() => navigate(`/quiz/${quizId}/preview`)}
-              className="px-4 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="px-4 py-2 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm"
             >
               <Eye className="w-4 h-4" />
               Preview
@@ -267,204 +314,214 @@ export default function QuizEditor() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50"
+            className="px-5 py-2 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 text-sm"
           >
-            {saving ? 'Saving...' : 'Save Quiz'}
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Quiz Meta */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Title</label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Biology Chapter 5 Review"
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief description of this quiz"
-            rows={2}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 resize-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Visibility</label>
-          <select
-            value={visibility}
-            onChange={(e) => setVisibility(e.target.value as 'private' | 'org' | 'public')}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-          >
-            <option value="private">Private — Only you</option>
-            <option value="public">Public — Anyone can discover & clone</option>
-          </select>
-        </div>
-        {collections.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Collection</label>
-            <select
-              value={selectedCollectionId}
-              onChange={(e) => setSelectedCollectionId(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
-            >
-              <option value="">None (Uncategorized)</option>
-              {collections.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* Validation Errors */}
+      {/* ── Validation Errors Banner ── */}
       {validationErrors.length > 0 && (
-        <div className="mb-6 p-4 bg-danger/10 border border-danger/20 rounded-xl">
-          <p className="font-medium text-danger text-sm mb-2">Please fix the following:</p>
-          <ul className="list-disc list-inside text-sm text-danger/80 space-y-1">
-            {validationErrors.map((err, i) => <li key={i}>{err}</li>)}
-          </ul>
+        <div className="px-4 py-2 bg-danger/10 border-b border-danger/20 flex items-start gap-3">
+          <div className="flex-1">
+            <p className="font-medium text-danger text-sm">Please fix the following:</p>
+            <ul className="list-disc list-inside text-xs text-danger/80 mt-1 space-y-0.5">
+              {validationErrors.map((err, i) => <li key={i}>{err}</li>)}
+            </ul>
+          </div>
+          <button onClick={() => setValidationErrors([])} className="p-1 text-danger/60 hover:text-danger">
+            <XIcon className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-      {/* Questions */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-900">Questions ({questions.length})</h2>
-      </div>
-
-      <div className="space-y-4">
-        {questions.map((q, i) => (
-          <div
-            key={q.id || i}
-            draggable
-            onDragStart={() => setDragIndex(i)}
-            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(i); }}
-            onDragEnd={handleDragEnd}
-            className={`bg-white rounded-2xl border shadow-sm overflow-hidden animate-fade-in transition-all ${
-              dragOverIndex === i && dragIndex !== i ? 'border-brand border-2' : 'border-gray-100'
-            } ${dragIndex === i ? 'opacity-50' : ''}`}
-          >
-            {/* Question Header */}
-            <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <GripVertical className="w-4 h-4 text-gray-300 cursor-grab active:cursor-grabbing" />
-                <span className="font-semibold text-sm text-gray-600">Question {i + 1}</span>
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── Left Sidebar – Question List ── */}
+        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
+          <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+            {questions.map((q, i) => (
+              <div
+                key={q.id || i}
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragOver={(e) => { e.preventDefault(); setDragOverIndex(i); }}
+                onDragEnd={handleDragEnd}
+                onClick={() => setActiveIndex(i)}
+                className={`group relative flex items-start gap-2 p-2.5 rounded-xl cursor-pointer transition-all ${
+                  activeIndex === i
+                    ? 'bg-brand/10 ring-2 ring-brand/30'
+                    : 'hover:bg-gray-50'
+                } ${dragOverIndex === i && dragIndex !== i ? 'ring-2 ring-brand' : ''} ${
+                  dragIndex === i ? 'opacity-40' : ''
+                }`}
+              >
+                <GripVertical className="w-3.5 h-3.5 text-gray-300 shrink-0 mt-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className={`text-xs font-bold ${activeIndex === i ? 'text-brand' : 'text-gray-400'}`}>
+                      {i + 1}
+                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                      activeIndex === i ? 'bg-brand/20 text-brand' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {typeLabels[q.type].split(' ')[0]}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 truncate leading-tight">
+                    {q.text || 'Untitled question'}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => moveQuestion(i, -1)} disabled={i === 0} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500"><ChevronUp className="w-4 h-4" /></button>
-                <button onClick={() => moveQuestion(i, 1)} disabled={i === questions.length - 1} className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 transition-colors text-gray-500"><ChevronDown className="w-4 h-4" /></button>
-                <button onClick={() => duplicateQuestion(i)} className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors text-gray-500"><Copy className="w-4 h-4" /></button>
-                <button onClick={() => removeQuestion(i)} className="p-1.5 rounded-lg hover:bg-danger/10 transition-colors text-danger"><Trash2 className="w-4 h-4" /></button>
-              </div>
-            </div>
+            ))}
+          </div>
 
-            <div className="p-6 space-y-4">
-              {/* Type Selector */}
-              <div className="flex flex-wrap gap-2">
-                {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide'] as QuestionType[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => updateQuestionType(i, t)}
-                    className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                      q.type === t ? 'bg-brand text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                  >
-                    {typeLabels[t]}
-                  </button>
-                ))}
-              </div>
+          {/* Add Question Buttons */}
+          <div className="p-3 border-t border-gray-100 space-y-2">
+            <button
+              onClick={addQuestion}
+              className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              Add Question
+            </button>
+            <button
+              onClick={() => setShowAiModal(true)}
+              className="w-full py-2.5 bg-gradient-to-r from-brand to-accent text-white text-sm font-medium rounded-xl hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              AI Generate
+            </button>
+          </div>
+        </aside>
 
+        {/* ── Center – Question Editor ── */}
+        <main className="flex-1 overflow-y-auto">
+          {activeQ ? (
+            <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
               {/* Question Text */}
-              <input
-                value={q.text}
-                onChange={(e) => updateQuestion(i, { text: e.target.value })}
-                placeholder="Enter your question"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 text-lg"
-              />
-
-              <ImageUpload
-                currentUrl={q.imageUrl}
-                onUpload={(url) => updateQuestion(i, { imageUrl: url })}
-                path={`questions/${quizId || 'new'}`}
-              />
-
-              {/* Video URL */}
-              <div>
-                <label className="text-sm font-medium text-gray-600 mb-1.5 block">Video URL (YouTube)</label>
-                <input
-                  value={q.videoUrl || ''}
-                  onChange={(e) => updateQuestion(i, { videoUrl: e.target.value || undefined })}
-                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 text-sm"
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <textarea
+                  value={activeQ.text}
+                  onChange={(e) => updateQuestion(activeIndex, { text: e.target.value })}
+                  placeholder={activeQ.type === 'fill_blank' ? 'Enter question with ___ for blanks' : 'Click to start typing your question'}
+                  rows={3}
+                  className="w-full px-6 py-5 text-xl font-medium text-center text-gray-900 placeholder:text-gray-300 border-none outline-none resize-none bg-transparent"
                 />
               </div>
 
-              {/* Time Limit */}
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-gray-600">Time limit:</label>
-                <select
-                  value={q.timeLimitSec}
-                  onChange={(e) => updateQuestion(i, { timeLimitSec: parseInt(e.target.value) })}
-                  className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700"
-                >
-                  {[5, 10, 15, 20, 30, 45, 60, 90, 120].map((s) => (
-                    <option key={s} value={s}>{s}s</option>
-                  ))}
-                </select>
+              {/* Media Upload */}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <ImageUpload
+                    currentUrl={activeQ.imageUrl}
+                    onUpload={(url) => updateQuestion(activeIndex, { imageUrl: url })}
+                    path={`questions/${quizId || 'new'}`}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-gray-300 transition-colors">
+                    <ImageIcon className="w-5 h-5 text-gray-300 mx-auto mb-1" />
+                    <input
+                      value={activeQ.videoUrl || ''}
+                      onChange={(e) => updateQuestion(activeIndex, { videoUrl: e.target.value || undefined })}
+                      placeholder="YouTube URL"
+                      className="w-full text-center text-sm bg-transparent border-none outline-none text-gray-600 placeholder:text-gray-300"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Options (MCQ / TF) */}
-              {(q.type === 'mcq' || q.type === 'tf') && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600">Answer Options</label>
-                  {q.options.map((opt, oi) => {
-                    const isCorrect = q.correctAnswers.includes(opt) && opt !== '';
+              {/* ── Answer Area ── */}
+
+              {/* MCQ / TF / Poll — Colored 2×2 Cards */}
+              {(activeQ.type === 'mcq' || activeQ.type === 'tf' || activeQ.type === 'poll') && (
+                <div className="grid grid-cols-2 gap-3">
+                  {activeQ.options.map((opt, oi) => {
+                    const card = ANSWER_CARDS[oi % ANSWER_CARDS.length];
+                    const CardIcon = card.icon;
+                    const isCorrect = activeQ.type !== 'poll' && activeQ.correctAnswers.includes(opt) && opt !== '';
                     return (
-                      <div key={oi} className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            if (opt === '') return;
-                            const correct = isCorrect
-                              ? q.correctAnswers.filter((a) => a !== opt)
-                              : [...q.correctAnswers, opt];
-                            updateQuestion(i, { correctAnswers: correct });
-                          }}
-                          className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center shrink-0 transition-colors ${
-                            isCorrect ? 'border-success bg-success text-white' : 'border-gray-300 hover:border-gray-400'
-                          }`}
-                        >
-                          {isCorrect && <Check className="w-4 h-4" />}
-                        </button>
+                      <div
+                        key={oi}
+                        className={`relative ${card.bg} rounded-2xl p-4 min-h-[80px] flex items-center gap-3 shadow-sm transition-all ${
+                          isCorrect ? 'ring-3 ring-white/60' : ''
+                        }`}
+                      >
+                        <CardIcon className="w-6 h-6 text-white/60 shrink-0" fill="rgba(255,255,255,0.2)" />
                         <input
                           value={opt}
                           onChange={(e) => {
-                            const newOpts = [...q.options];
+                            const newOpts = [...activeQ.options];
                             newOpts[oi] = e.target.value;
-                            updateQuestion(i, { options: newOpts });
+                            updateQuestion(activeIndex, { options: newOpts });
                           }}
-                          placeholder={`Option ${oi + 1}`}
-                          disabled={q.type === 'tf'}
-                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                          placeholder={card.placeholder}
+                          disabled={activeQ.type === 'tf'}
+                          className="flex-1 bg-transparent border-none outline-none text-white font-medium placeholder:text-white/40 text-base"
                         />
+                        {activeQ.type !== 'poll' && (
+                          <button
+                            onClick={() => {
+                              if (opt === '') return;
+                              const correct = isCorrect
+                                ? activeQ.correctAnswers.filter((a) => a !== opt)
+                                : [...activeQ.correctAnswers, opt];
+                              updateQuestion(activeIndex, { correctAnswers: correct });
+                            }}
+                            className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                              isCorrect
+                                ? 'border-white bg-white text-green-600'
+                                : 'border-white/40 hover:border-white/70'
+                            }`}
+                          >
+                            {isCorrect && <Check className="w-4 h-4" />}
+                          </button>
+                        )}
                       </div>
                     );
                   })}
+
+                  {/* Add/Remove option (MCQ/Poll only, not TF) */}
+                  {activeQ.type !== 'tf' && (
+                    <div className="col-span-2 flex items-center justify-center gap-3">
+                      {activeQ.options.length < 6 && (
+                        <button
+                          onClick={() => updateQuestion(activeIndex, { options: [...activeQ.options, ''] })}
+                          className="flex items-center gap-1.5 text-sm text-gray-400 font-medium hover:text-brand transition-colors"
+                        >
+                          <Plus className="w-4 h-4" /> Add option
+                        </button>
+                      )}
+                      {activeQ.options.length > 2 && (
+                        <button
+                          onClick={() => {
+                            const newOpts = activeQ.options.slice(0, -1);
+                            const removed = activeQ.options[activeQ.options.length - 1];
+                            const newCorrect = activeQ.correctAnswers.filter((a) => a !== removed);
+                            updateQuestion(activeIndex, { options: newOpts, correctAnswers: newCorrect });
+                          }}
+                          className="flex items-center gap-1.5 text-sm text-gray-400 font-medium hover:text-danger transition-colors"
+                        >
+                          <Minus className="w-4 h-4" /> Remove last
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {activeQ.type === 'poll' && (
+                    <p className="col-span-2 text-xs text-gray-400 text-center">Polls gather opinions — all answers are accepted, no scoring.</p>
+                  )}
                 </div>
               )}
 
               {/* Short Answer */}
-              {q.type === 'short' && (
-                <div>
-                  <label className="text-sm font-medium text-gray-600 mb-1.5 block">Accepted Answers (comma-separated)</label>
+              {activeQ.type === 'short' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                  <label className="text-sm font-medium text-gray-600 mb-2 block">Accepted Answers (comma-separated)</label>
                   <input
-                    value={q.correctAnswers.join(', ')}
-                    onChange={(e) => updateQuestion(i, {
+                    value={activeQ.correctAnswers.join(', ')}
+                    onChange={(e) => updateQuestion(activeIndex, {
                       correctAnswers: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
                     })}
                     placeholder="answer1, answer2"
@@ -474,39 +531,39 @@ export default function QuizEditor() {
               )}
 
               {/* Matching Editor */}
-              {q.type === 'matching' && (
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-600">Match Pairs (left item pairs with right item)</label>
-                  {q.options.map((leftItem, pi) => (
+              {activeQ.type === 'matching' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
+                  <label className="text-sm font-medium text-gray-600">Match Pairs</label>
+                  {activeQ.options.map((leftItem, pi) => (
                     <div key={pi} className="flex items-center gap-2">
                       <span className="text-xs text-gray-400 w-5 text-center shrink-0">{pi + 1}</span>
                       <input
                         value={leftItem}
                         onChange={(e) => {
-                          const newOpts = [...q.options];
+                          const newOpts = [...activeQ.options];
                           newOpts[pi] = e.target.value;
-                          updateQuestion(i, { options: newOpts });
+                          updateQuestion(activeIndex, { options: newOpts });
                         }}
                         placeholder={`Left item ${pi + 1}`}
                         className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
                       />
                       <span className="text-gray-400 text-sm">&rarr;</span>
                       <input
-                        value={q.matchOptions?.[pi] || ''}
+                        value={activeQ.matchOptions?.[pi] || ''}
                         onChange={(e) => {
-                          const newMatch = [...(q.matchOptions || [])];
+                          const newMatch = [...(activeQ.matchOptions || [])];
                           newMatch[pi] = e.target.value;
-                          updateQuestion(i, { matchOptions: newMatch });
+                          updateQuestion(activeIndex, { matchOptions: newMatch });
                         }}
                         placeholder={`Right item ${pi + 1}`}
                         className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
                       />
-                      {q.options.length > 2 && (
+                      {activeQ.options.length > 2 && (
                         <button
                           onClick={() => {
-                            const newOpts = q.options.filter((_, idx) => idx !== pi);
-                            const newMatch = (q.matchOptions || []).filter((_, idx) => idx !== pi);
-                            updateQuestion(i, { options: newOpts, matchOptions: newMatch });
+                            const newOpts = activeQ.options.filter((_, idx) => idx !== pi);
+                            const newMatch = (activeQ.matchOptions || []).filter((_, idx) => idx !== pi);
+                            updateQuestion(activeIndex, { options: newOpts, matchOptions: newMatch });
                           }}
                           className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-colors"
                         >
@@ -517,9 +574,9 @@ export default function QuizEditor() {
                   ))}
                   <button
                     onClick={() => {
-                      updateQuestion(i, {
-                        options: [...q.options, ''],
-                        matchOptions: [...(q.matchOptions || []), ''],
+                      updateQuestion(activeIndex, {
+                        options: [...activeQ.options, ''],
+                        matchOptions: [...(activeQ.matchOptions || []), ''],
                       });
                     }}
                     className="flex items-center gap-1.5 text-sm text-brand font-medium hover:text-brand-dark transition-colors"
@@ -530,27 +587,27 @@ export default function QuizEditor() {
               )}
 
               {/* Ordering Editor */}
-              {q.type === 'ordering' && (
-                <div className="space-y-3">
+              {activeQ.type === 'ordering' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
                   <label className="text-sm font-medium text-gray-600">Items in correct order (top = first)</label>
-                  {q.options.map((item, oi) => (
+                  {activeQ.options.map((item, oi) => (
                     <div key={oi} className="flex items-center gap-2">
                       <span className="text-xs text-gray-400 w-5 text-center shrink-0">{oi + 1}</span>
                       <input
                         value={item}
                         onChange={(e) => {
-                          const newOpts = [...q.options];
+                          const newOpts = [...activeQ.options];
                           newOpts[oi] = e.target.value;
-                          updateQuestion(i, { options: newOpts });
+                          updateQuestion(activeIndex, { options: newOpts });
                         }}
                         placeholder={`Item ${oi + 1}`}
                         className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
                       />
-                      <button onClick={() => moveQuestion(i, -1)} disabled={oi === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
-                      <button onClick={() => moveQuestion(i, 1)} disabled={oi === q.options.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
-                      {q.options.length > 2 && (
+                      <button onClick={() => moveOption(activeIndex, oi, -1)} disabled={oi === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                      <button onClick={() => moveOption(activeIndex, oi, 1)} disabled={oi === activeQ.options.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                      {activeQ.options.length > 2 && (
                         <button
-                          onClick={() => updateQuestion(i, { options: q.options.filter((_, idx) => idx !== oi) })}
+                          onClick={() => updateQuestion(activeIndex, { options: activeQ.options.filter((_, idx) => idx !== oi) })}
                           className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-colors"
                         >
                           <Minus className="w-4 h-4" />
@@ -559,7 +616,7 @@ export default function QuizEditor() {
                     </div>
                   ))}
                   <button
-                    onClick={() => updateQuestion(i, { options: [...q.options, ''] })}
+                    onClick={() => updateQuestion(activeIndex, { options: [...activeQ.options, ''] })}
                     className="flex items-center gap-1.5 text-sm text-brand font-medium hover:text-brand-dark transition-colors"
                   >
                     <Plus className="w-4 h-4" /> Add Item
@@ -568,58 +625,22 @@ export default function QuizEditor() {
                 </div>
               )}
 
-              {/* Poll Editor (options, no correct answer) */}
-              {q.type === 'poll' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-600">Poll Options (no correct answer)</label>
-                  {q.options.map((opt, oi) => (
-                    <div key={oi} className="flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-400 shrink-0">{oi + 1}</span>
-                      <input
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...q.options];
-                          newOpts[oi] = e.target.value;
-                          updateQuestion(i, { options: newOpts });
-                        }}
-                        placeholder={`Option ${oi + 1}`}
-                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
-                      />
-                      {q.options.length > 2 && (
-                        <button onClick={() => updateQuestion(i, { options: q.options.filter((_, idx) => idx !== oi) })} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-colors">
-                          <Minus className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {q.options.length < 6 && (
-                    <button
-                      onClick={() => updateQuestion(i, { options: [...q.options, ''] })}
-                      className="flex items-center gap-1.5 text-sm text-brand font-medium hover:text-brand-dark transition-colors"
-                    >
-                      <Plus className="w-4 h-4" /> Add Option
-                    </button>
-                  )}
-                  <p className="text-xs text-gray-400">Polls gather opinions — all answers are accepted, no scoring.</p>
-                </div>
-              )}
-
-              {/* Slide (informational, no answer needed) */}
-              {q.type === 'slide' && (
-                <div className="p-4 bg-info/5 border border-info/20 rounded-xl">
+              {/* Slide */}
+              {activeQ.type === 'slide' && (
+                <div className="p-5 bg-info/5 border border-info/20 rounded-2xl">
                   <p className="text-sm text-info">This is a content slide — no question or answer. Use the text and image fields above to present information between questions.</p>
                 </div>
               )}
 
-              {/* Fill in the Blank Editor */}
-              {q.type === 'fill_blank' && (
-                <div className="space-y-3">
+              {/* Fill in the Blank */}
+              {activeQ.type === 'fill_blank' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
                   <p className="text-xs text-gray-500">Use <code className="bg-gray-100 px-1.5 py-0.5 rounded text-brand font-mono">___</code> (three underscores) in the question text to mark each blank.</p>
                   {(() => {
-                    const blankCount = (q.text.match(/___/g) || []).length;
-                    const answers = q.correctAnswers.length >= blankCount
-                      ? q.correctAnswers.slice(0, blankCount)
-                      : [...q.correctAnswers, ...Array(blankCount - q.correctAnswers.length).fill('')];
+                    const blankCount = (activeQ.text.match(/___/g) || []).length;
+                    const answers = activeQ.correctAnswers.length >= blankCount
+                      ? activeQ.correctAnswers.slice(0, blankCount)
+                      : [...activeQ.correctAnswers, ...Array(blankCount - activeQ.correctAnswers.length).fill('')];
                     if (blankCount === 0) return <p className="text-sm text-gray-400">No blanks detected — add ___ to your question text above.</p>;
                     return (
                       <div className="space-y-2">
@@ -632,7 +653,7 @@ export default function QuizEditor() {
                               onChange={(e) => {
                                 const newAnswers = [...answers];
                                 newAnswers[ai] = e.target.value;
-                                updateQuestion(i, { correctAnswers: newAnswers });
+                                updateQuestion(activeIndex, { correctAnswers: newAnswers });
                               }}
                               placeholder={`Answer for blank ${ai + 1}`}
                               className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
@@ -646,28 +667,158 @@ export default function QuizEditor() {
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          ) : (
+            /* Empty State */
+            <div className="flex-1 flex items-center justify-center h-full">
+              <div className="text-center">
+                <FileText className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-400 mb-1">No questions yet</h3>
+                <p className="text-sm text-gray-400 mb-4">Add your first question to get started</p>
+                <button
+                  onClick={addQuestion}
+                  className="px-5 py-2.5 bg-brand text-white font-medium rounded-xl hover:bg-brand-dark transition-colors text-sm"
+                >
+                  <Plus className="w-4 h-4 inline mr-1.5" />
+                  Add Question
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* ── Right Sidebar – Settings ── */}
+        <aside className="w-72 bg-white border-l border-gray-200 flex flex-col shrink-0 overflow-y-auto">
+          {activeQ ? (
+            <div className="p-4 space-y-5">
+              {/* Question Type */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Question type</label>
+                <select
+                  value={activeQ.type}
+                  onChange={(e) => updateQuestionType(activeIndex, e.target.value as QuestionType)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
+                >
+                  {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide'] as QuestionType[]).map((t) => (
+                    <option key={t} value={t}>{typeLabels[t]}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Time Limit */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  Time limit
+                </label>
+                <select
+                  value={activeQ.timeLimitSec}
+                  onChange={(e) => updateQuestion(activeIndex, { timeLimitSec: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
+                >
+                  {[5, 10, 15, 20, 30, 45, 60, 90, 120].map((s) => (
+                    <option key={s} value={s}>{s} seconds</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quick Actions */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Actions</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => moveQuestion(activeIndex, -1)}
+                    disabled={activeIndex === 0}
+                    className="flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-100 hover:bg-gray-50 disabled:opacity-30 transition-colors text-gray-500"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                    <span className="text-[10px]">Move up</span>
+                  </button>
+                  <button
+                    onClick={() => moveQuestion(activeIndex, 1)}
+                    disabled={activeIndex === questions.length - 1}
+                    className="flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-100 hover:bg-gray-50 disabled:opacity-30 transition-colors text-gray-500"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                    <span className="text-[10px]">Move dn</span>
+                  </button>
+                  <button
+                    onClick={() => duplicateQuestion(activeIndex)}
+                    className="flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors text-gray-500"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span className="text-[10px]">Copy</span>
+                  </button>
+                </div>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* Quiz Settings */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <Type className="w-3.5 h-3.5" />
+                  Quiz settings
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Description</label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Brief description"
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Visibility</label>
+                    <select
+                      value={visibility}
+                      onChange={(e) => setVisibility(e.target.value as 'private' | 'org' | 'public')}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                    >
+                      <option value="private">Private</option>
+                      <option value="public">Public</option>
+                    </select>
+                  </div>
+                  {collections.length > 0 && (
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Collection</label>
+                      <select
+                        value={selectedCollectionId}
+                        onChange={(e) => setSelectedCollectionId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                      >
+                        <option value="">None</option>
+                        {collections.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <hr className="border-gray-100" />
+
+              {/* Delete */}
+              <button
+                onClick={() => removeQuestion(activeIndex)}
+                className="w-full py-2.5 border border-danger/20 text-danger text-sm font-medium rounded-xl hover:bg-danger/5 transition-colors flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Question
+              </button>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-4">
+              <p className="text-sm text-gray-400 text-center">Select a question to see settings</p>
+            </div>
+          )}
+        </aside>
       </div>
 
-      {/* Add Question Buttons */}
-      <div className="flex gap-3 mt-4">
-        <button
-          onClick={addQuestion}
-          className="flex-1 py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors"
-        >
-          + Add Question
-        </button>
-        <button
-          onClick={() => setShowAiModal(true)}
-          className="px-6 py-4 bg-gradient-to-r from-brand to-accent text-white font-medium rounded-2xl hover:brightness-110 transition-all shadow-sm flex items-center gap-2"
-        >
-          <Sparkles className="w-4 h-4" />
-          AI Generate
-        </button>
-      </div>
-
-      {/* AI Generate Modal */}
+      {/* ── AI Generate Modal ── */}
       {showAiModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAiModal(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
