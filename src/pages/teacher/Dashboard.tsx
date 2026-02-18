@@ -253,14 +253,14 @@ export default function Dashboard() {
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/assignment/new')}
-            className="px-4 py-2.5 rounded-xl border-2 border-gray-800 dark:border-gray-300 text-gray-600 font-medium shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center gap-2 text-sm"
+            className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 hover:border-brand/30 transition-all duration-200 flex items-center gap-2 text-sm"
           >
             <ClipboardList className="w-4 h-4" />
             <span className="hidden sm:inline">Assignment</span>
           </button>
           <button
             onClick={() => navigate('/quiz/new')}
-            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center gap-2 text-sm"
+            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 flex items-center gap-2 text-sm"
           >
             <Plus className="w-4 h-4" />
             Create New Quiz
@@ -275,7 +275,7 @@ export default function Dashboard() {
           { icon: <HelpCircle className="w-4 h-4" />, label: 'Questions', value: stats.totalQuestions, color: 'text-accent-dark bg-accent/10' },
           { icon: <Users className="w-4 h-4" />, label: 'Sessions', value: stats.totalSessions, color: 'text-success bg-success/10' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] p-4 flex items-center gap-3 animate-fade-in">
+          <div key={s.label} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3 animate-fade-in hover:shadow-md transition-shadow duration-200">
             <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center shrink-0`}>{s.icon}</div>
             <div>
               <p className="text-xl font-bold text-gray-900">{s.value}</p>
@@ -293,7 +293,7 @@ export default function Dashboard() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search your library for quizzes, topics, or folders..."
-          className="w-full pl-12 pr-4 py-3.5 bg-white rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-800 shadow-[2px_2px_0px_0px_#D4566B]"
+          className="w-full pl-12 pr-4 py-3.5 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-800"
         />
       </div>
 
@@ -357,7 +357,7 @@ export default function Dashboard() {
           <p className="text-gray-500 mb-6 text-sm">Create your first quiz to get started</p>
           <button
             onClick={() => navigate('/quiz/new')}
-            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
+            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200"
           >
             Create your first quiz
           </button>
@@ -374,7 +374,7 @@ export default function Dashboard() {
             return (
               <div
                 key={quiz.id}
-                className="group bg-white rounded-2xl overflow-hidden border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex flex-col animate-fade-in"
+                className="group bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col animate-fade-in"
               >
                 {/* Gradient Banner */}
                 <div className={`h-32 ${getCardGradient(quiz)} relative overflow-hidden`}>
@@ -426,7 +426,7 @@ export default function Dashboard() {
                       {menuOpenId === quiz.id && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
-                          <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 dark:border-gray-300 z-20 py-1.5 animate-fade-in">
+                          <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-1.5 animate-fade-in">
                             <button
                               onClick={() => { navigate(`/quiz/${quiz.id}/preview`); setMenuOpenId(null); }}
                               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
@@ -490,7 +490,7 @@ export default function Dashboard() {
                   {/* Host button */}
                   <button
                     onClick={() => navigate(`/quiz/${quiz.id}/host`)}
-                    className="w-full py-2.5 bg-brand text-white rounded-xl font-bold text-sm border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300 mt-auto"
+                    className="w-full py-2.5 bg-brand text-white rounded-xl font-bold text-sm hover:bg-brand-dark transition-colors duration-200 mt-auto"
                   >
                     Host Live
                   </button>
@@ -502,7 +502,7 @@ export default function Dashboard() {
           {/* Create Placeholder Card */}
           <button
             onClick={() => navigate('/quiz/new')}
-            className="min-h-[280px] flex flex-col items-center justify-center border-2 border-dashed border-gray-800 dark:border-gray-300 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-300 group/create"
+            className="min-h-[280px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
           >
             <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
               <Plus className="w-7 h-7" />
@@ -524,7 +524,7 @@ export default function Dashboard() {
       {/* ── Collection Modal ── */}
       {showCollModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCollModal(false)}>
-          <div className="bg-white rounded-2xl shadow-[6px_6px_0px_0px_#D4566B] border-2 border-gray-800 dark:border-gray-300 w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-0">
               <h3 className="text-lg font-bold text-gray-900">{editingColl ? 'Edit Collection' : 'New Collection'}</h3>
               <button onClick={() => setShowCollModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
@@ -569,13 +569,13 @@ export default function Dashboard() {
                 <button
                   onClick={handleSaveColl}
                   disabled={savingColl || !collName.trim()}
-                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300 disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors duration-200 disabled:opacity-50"
                 >
                   {savingColl ? 'Saving...' : editingColl ? 'Update' : 'Create'}
                 </button>
                 <button
                   onClick={() => setShowCollModal(false)}
-                  className="px-5 py-2.5 border-2 border-gray-800 dark:border-gray-300 text-gray-600 font-medium rounded-xl shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[4px_4px_0px_0px_#D4566B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
+                  className="px-5 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200"
                 >
                   Cancel
                 </button>
