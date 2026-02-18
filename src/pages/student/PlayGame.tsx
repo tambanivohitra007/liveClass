@@ -69,6 +69,7 @@ export default function PlayGame() {
   // Student-paced mode state
   const [localQIndex, setLocalQIndex] = useState(0);
   const [spFinished, setSpFinished] = useState(false);
+  const spQuestionStartRef = useRef(0);
   const isStudentPaced = session?.paceMode === 'student' && session?.questionState === 'student_paced';
   const { showWarning, dismissWarning } = useAntiCheat({
     sessionId,
@@ -186,7 +187,7 @@ export default function PlayGame() {
     const current = allQuestions[qIdx];
     if (current) {
       setCurrentQuestion(current);
-      setTimeLeft(current.timeLimitSec);
+      spQuestionStartRef.current = Date.now();
       if (current.type === 'ordering') {
         setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
       }
@@ -211,23 +212,11 @@ export default function PlayGame() {
   }, []);
 
   useEffect(() => {
-    if (timeLeft <= 0 || submitted) return;
-    if (!isStudentPaced && session?.timerPaused) return;
+    if (isStudentPaced || timeLeft <= 0 || submitted || session?.timerPaused) return;
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, submitted, session?.timerPaused, isStudentPaced]);
 
-  // Student-paced: auto-submit when timer expires
-  const spAutoSubmitRef = useRef(false);
-  useEffect(() => {
-    if (!isStudentPaced || !currentQuestion || submitted || timeLeft > 0) {
-      if (timeLeft > 0) spAutoSubmitRef.current = false;
-      return;
-    }
-    if (spAutoSubmitRef.current) return;
-    spAutoSubmitRef.current = true;
-    submitAnswer();
-  }, [timeLeft, isStudentPaced, submitted, currentQuestion]);
 
   // Keyboard shortcuts: 1-4 for MCQ, Enter to submit
   useEffect(() => {
@@ -251,10 +240,10 @@ export default function PlayGame() {
 
   // Sound effects
   useEffect(() => {
-    if (timeLeft <= 0 || timeLeft > 5 || submitted) return;
+    if (isStudentPaced || timeLeft <= 0 || timeLeft > 5 || submitted) return;
     if (timeLeft <= 3) playUrgentTick();
     else playTick();
-  }, [timeLeft, submitted]);
+  }, [timeLeft, submitted, isStudentPaced]);
 
   useEffect(() => {
     if (!feedback) return;
@@ -314,7 +303,9 @@ export default function PlayGame() {
     setSubmitted(true);
     setSubmitFailed(false);
     playSubmit();
-    const elapsedMs = (currentQuestion.timeLimitSec - timeLeft) * 1000;
+    const elapsedMs = isStudentPaced
+      ? Date.now() - spQuestionStartRef.current
+      : (currentQuestion.timeLimitSec - timeLeft) * 1000;
     const selection = getSelection();
     const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || '';
 
@@ -393,7 +384,6 @@ export default function PlayGame() {
     if (nextIdx >= totalQuestions) {
       setSpFinished(true);
     } else {
-      spAutoSubmitRef.current = false;
       setLocalQIndex(nextIdx);
     }
   };
@@ -579,6 +569,13 @@ export default function PlayGame() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
+            </div>
+          ) : isStudentPaced ? (
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-black text-white tabular-nums">
+                {localQIndex + 1}<span className="text-white/30">/{totalQuestions}</span>
+              </span>
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Your Pace</span>
             </div>
           ) : (
             <>
