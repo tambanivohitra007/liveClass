@@ -189,7 +189,7 @@ export default function SessionResults() {
           <button
             onClick={handleExportCsv}
             disabled={exporting}
-            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
             {exporting ? 'Exporting...' : 'Export CSV'}
@@ -206,21 +206,26 @@ export default function SessionResults() {
       </div>
 
       {/* Tab Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 no-scrollbar">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap spring-transition flex items-center gap-2 ${
-              activeTab === tab.id
-                ? 'bg-brand text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-brand/40'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto no-scrollbar mb-8">
+        <div className="flex border-b border-gray-200 min-w-max">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative px-5 py-3 text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-colors duration-200 ${
+                activeTab === tab.id
+                  ? 'text-brand'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -234,7 +239,7 @@ export default function SessionResults() {
               { icon: <Target className="w-5 h-5" />, label: 'Avg Accuracy', value: `${avgAccuracy}%`, color: 'text-success bg-success/10' },
               { icon: <Clock className="w-5 h-5" />, label: 'Duration', value: sessionDuration ? formatDuration(sessionDuration) : 'N/A', color: 'text-info bg-info/10' },
             ].map((s) => (
-              <div key={s.label} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] p-5 animate-fade-in">
+              <div key={s.label} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300  p-5 animate-fade-in">
                 <div className="flex items-center gap-2 mb-3">
                   <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center`}>
                     {s.icon}
@@ -248,7 +253,7 @@ export default function SessionResults() {
 
           {/* Question Performance Bar Chart */}
           {analytics.length > 0 && (
-            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden">
+            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100">
                 <h2 className="font-bold text-gray-900">Question Performance</h2>
                 <p className="text-sm text-gray-400 mt-0.5">Accuracy per question</p>
@@ -269,7 +274,7 @@ export default function SessionResults() {
 
           {/* Response Time Trend */}
           {responseTimeTrend.length > 0 && (
-            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden">
+            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100">
                 <h2 className="font-bold text-gray-900">Response Time Trend</h2>
                 <p className="text-sm text-gray-400 mt-0.5">Average response time per question</p>
@@ -302,7 +307,7 @@ export default function SessionResults() {
 
           {/* Player Stats Table */}
           {playerStats.length > 0 ? (
-            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden">
+            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100">
                 <h2 className="font-bold text-gray-900">Player Accuracy</h2>
                 <p className="text-sm text-gray-400 mt-0.5">Correct answers percentage per participant</p>
@@ -341,7 +346,7 @@ export default function SessionResults() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] px-6 py-12 text-center text-gray-400">
+            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 px-6 py-12 text-center text-gray-400">
               No participant data available
             </div>
           )}
@@ -356,7 +361,7 @@ export default function SessionResults() {
       {activeTab === 'questions' && (
         <div className="space-y-8 animate-fade-in">
           {/* Per-Question Analytics Table */}
-          <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden">
+          <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100">
               <h2 className="font-bold text-gray-900">Per-Question Analytics</h2>
             </div>
@@ -398,7 +403,7 @@ export default function SessionResults() {
 
           {/* Answer Distribution Accordion */}
           {answerDistributions.length > 0 && (
-            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden">
+            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100">
                 <h2 className="font-bold text-gray-900">Answer Distribution</h2>
                 <p className="text-sm text-gray-400 mt-0.5">Click a question to see how students answered</p>
@@ -437,7 +442,7 @@ export default function SessionResults() {
       {activeTab === 'tags' && (
         <div className="space-y-6 animate-fade-in">
           {typeGroups.size === 0 ? (
-            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] px-6 py-12 text-center">
+            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 px-6 py-12 text-center">
               <Tag className="w-10 h-10 mx-auto mb-3 text-gray-300" />
               <p className="text-gray-400">No question type data available</p>
             </div>
@@ -451,7 +456,7 @@ export default function SessionResults() {
                 : '0.0';
 
               return (
-                <div key={type} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden">
+                <div key={type} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 overflow-hidden">
                   {/* Type Header */}
                   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -507,7 +512,7 @@ export default function SessionResults() {
       {activeTab === 'anti-cheating' && (
         <div className="space-y-6 animate-fade-in">
           {violations.length === 0 ? (
-            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] px-6 py-16 text-center">
+            <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 px-6 py-16 text-center">
               <ShieldAlert className="w-12 h-12 mx-auto mb-4 text-success/40" />
               <h3 className="text-lg font-bold text-gray-900 mb-1">No suspicious activity detected</h3>
               <p className="text-sm text-gray-400">All participants appear to have played fairly.</p>
@@ -539,7 +544,7 @@ export default function SessionResults() {
               </div>
 
               {/* Violations Table */}
-              <div className="bg-white rounded-2xl border-2 border-danger/40 shadow-[4px_4px_0px_0px_#D4566B] overflow-hidden">
+              <div className="bg-white rounded-2xl border-2 border-danger/40 overflow-hidden">
                 <div className="px-6 py-4 border-b border-danger/10 flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 text-danger" />
                   <h2 className="font-bold text-gray-900">Integrity Alerts</h2>

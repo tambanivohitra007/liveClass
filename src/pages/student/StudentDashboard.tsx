@@ -101,7 +101,7 @@ export default function StudentDashboard() {
           { icon: <Flame className="w-5 h-5" />, label: 'Best Streak', value: bestStreak, color: 'text-answer-red bg-answer-red/10' },
           { icon: <Target className="w-5 h-5" />, label: 'Avg Accuracy', value: `${avgAccuracy}%`, color: 'text-success bg-success/10' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] p-5 animate-fade-in">
+          <div key={s.label} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300  p-5 animate-fade-in">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center`}>
                 {s.icon}
@@ -119,7 +119,7 @@ export default function StudentDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Games</h2>
           <div className="space-y-3">
             {recentGames.map((game) => (
-              <div key={game.sessionId} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 overflow-hidden animate-fade-in">
+              <div key={game.sessionId} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300  hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 overflow-hidden animate-fade-in">
                 <button
                   onClick={() => setExpandedGame(expandedGame === game.sessionId ? null : game.sessionId)}
                   className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
@@ -258,7 +258,7 @@ export default function StudentDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Upcoming</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {upcomingAssignments.map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] p-6 opacity-80">
+              <div key={a.id} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300  p-6 opacity-80">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs px-2 py-0.5 bg-info/10 text-info rounded-full font-medium">Upcoming</span>
                 </div>
@@ -279,7 +279,7 @@ export default function StudentDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Past</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {pastAssignments.map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] p-6 opacity-60">
+              <div key={a.id} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300  p-6 opacity-60">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium">Ended</span>
                 </div>
