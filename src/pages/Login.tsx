@@ -20,7 +20,14 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {
+        setError('Incorrect email or password.');
+      } else if (msg.includes('too-many-requests')) {
+        setError('Too many attempts. Please try again later.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
