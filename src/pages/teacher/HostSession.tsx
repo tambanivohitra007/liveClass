@@ -301,6 +301,7 @@ export default function HostSession() {
           <button
             onClick={toggleMute}
             className="p-2.5 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-white"
+            aria-label={muted ? 'Unmute' : 'Mute'}
           >
             {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
           </button>
@@ -654,6 +655,7 @@ export default function HostSession() {
                 onClick={togglePause}
                 className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
                 title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
+                aria-label={session.timerPaused ? 'Resume timer' : 'Pause timer'}
               >
                 {session.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               </button>
@@ -669,6 +671,7 @@ export default function HostSession() {
                   onClick={skipQuestion}
                   className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
                   title="Skip to next question"
+                  aria-label="Skip to next question"
                 >
                   <SkipForward className="w-4 h-4" />
                 </button>

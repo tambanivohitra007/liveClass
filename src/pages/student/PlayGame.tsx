@@ -364,7 +364,7 @@ export default function PlayGame() {
             </>
           )}
         </div>
-        <button onClick={toggleMute} className="w-20 flex justify-end">
+        <button onClick={toggleMute} className="w-20 flex justify-end" aria-label={muted ? 'Unmute' : 'Mute'}>
           {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
         </button>
       </div>
@@ -506,6 +506,7 @@ export default function PlayGame() {
                       }}
                       disabled={i === 0}
                       className="p-0.5 text-white/40 hover:text-white disabled:opacity-20"
+                      aria-label="Move up"
                     >
                       <ChevronUp className="w-4 h-4" />
                     </button>
@@ -518,6 +519,7 @@ export default function PlayGame() {
                       }}
                       disabled={i === orderingItems.length - 1}
                       className="p-0.5 text-white/40 hover:text-white disabled:opacity-20"
+                      aria-label="Move down"
                     >
                       <ChevronDown className="w-4 h-4" />
                     </button>
