@@ -245,7 +245,7 @@ export default function PlayGame() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -254,7 +254,7 @@ export default function PlayGame() {
   // Lobby
   if (session.status === 'lobby') {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white">
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex items-center justify-center text-white">
         <div className="text-center animate-fade-in">
           <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
           <h1 className="text-2xl font-bold mb-2">You're in!</h1>
@@ -272,7 +272,7 @@ export default function PlayGame() {
   // Ended
   if (session.status === 'ended') {
     return (
-      <div className="min-h-screen bg-surface-dark text-white p-6">
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
         <div className="max-w-md mx-auto text-center py-12 animate-bounce-in">
           <Trophy className="w-16 h-16 mx-auto mb-4 text-warning" />
           <h1 className="text-3xl font-black mb-2">Game Over!</h1>
@@ -290,7 +290,7 @@ export default function PlayGame() {
   // Reveal
   if (session.questionState === 'reveal') {
     return (
-      <div className="min-h-screen bg-surface-dark text-white p-6">
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
         <Confetti active={feedback?.correct === true} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-12">
@@ -328,7 +328,7 @@ export default function PlayGame() {
   // Loading question
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -336,7 +336,7 @@ export default function PlayGame() {
 
   // Live question
   return (
-    <div className="min-h-screen bg-surface-dark flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex flex-col">
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
