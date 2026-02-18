@@ -8,22 +8,24 @@ import { exportSessionExcel } from '../../lib/excelExport';
 import Leaderboard from '../../components/Leaderboard';
 import BarChart from '../../components/charts/BarChart';
 import LineChart from '../../components/charts/LineChart';
-import HorizontalBarChart from '../../components/charts/HorizontalBarChart';
+// import HorizontalBarChart from '../../components/charts/HorizontalBarChart';
 import {
   Download, FileSpreadsheet, ArrowLeft, Users, Target, Trophy, Clock,
-  ChevronDown, ChevronUp, ShieldAlert, LayoutDashboard, HelpCircle, Tag,
-  CheckCircle2, XCircle, ListOrdered, AlignLeft, ArrowLeftRight, PenLine,
-  BarChart3, MessageSquare, Presentation,
+  ChevronDown, ChevronUp, ShieldAlert,
+  HelpCircle, Tag, CheckCircle2, XCircle, ListOrdered, AlignLeft,
+  ArrowLeftRight, PenLine, MessageSquare, Presentation,
+  Printer, Mail, Share2, Trash2, MoreVertical, Check, X,
+  Eye, Zap, Search, Filter, ArrowUpDown
 } from 'lucide-react';
 
 type TabId = 'overview' | 'participants' | 'questions' | 'tags' | 'anti-cheating';
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: 'participants', label: 'Participants', icon: <Users className="w-4 h-4" /> },
-  { id: 'questions', label: 'Questions', icon: <HelpCircle className="w-4 h-4" /> },
-  { id: 'tags', label: 'Tags', icon: <Tag className="w-4 h-4" /> },
-  { id: 'anti-cheating', label: 'Anti-Cheating', icon: <ShieldAlert className="w-4 h-4" /> },
+const TABS: { id: TabId; label: string; count?: number; hasBadge?: boolean }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'participants', label: 'Participants' },
+  { id: 'questions', label: 'Questions' },
+  { id: 'tags', label: 'Tags', hasBadge: true },
+  { id: 'anti-cheating', label: 'Anti-cheating', count: 0 }, // count updated in component
 ];
 
 const TYPE_LABELS: Record<string, string> = {
@@ -48,6 +50,14 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   slide: <Presentation className="w-5 h-5" />,
 };
 
+// Colors matching the screenshot design
+const COLORS = {
+  correct: '#00C985', // Green
+  incorrect: '#FF3B5C', // Red
+  partial: '#FF9500', // Orange
+  unattempted: '#E2E8F0', // Grey
+};
+
 export default function SessionResults() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
@@ -67,10 +77,24 @@ export default function SessionResults() {
     avgAccuracy,
     sessionDuration,
     answerDistributions,
-    responseTimeTrend,
     violations,
     playerStats,
   } = useSessionAnalytics(sessionId);
+
+  // Update tabs with violation count
+  const tabs = useMemo(() => TABS.map(t => 
+    t.id === 'anti-cheating' ? { ...t, count: violations.length } : t
+  ), [violations.length]);
+
+  const completionRate = useMemo(() => {
+    if (!playerStats.length || !analytics.length) return 0;
+    const totalExpected = playerStats.length * analytics.length;
+    let totalAnswered = 0;
+    playerStats.forEach(p => {
+       totalAnswered += p.totalAnswers;
+    });
+    return Math.round((totalAnswered / totalExpected) * 100) || 0;
+  }, [playerStats, analytics]);
 
   // Group answer distributions by question type for Tags tab
   const typeGroups = useMemo(() => {
