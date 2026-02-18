@@ -51,6 +51,8 @@ export default function HostSession() {
   const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
   const [muted, setMutedState] = useState(isMuted());
   const [lobbyTrack, setLobbyTrackState] = useState(getLobbyTrack());
+  const [currentQuestionId, setCurrentQuestionId] = useState('');
+  const [answeredCount, setAnsweredCount] = useState(0);
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
 
@@ -99,6 +101,7 @@ export default function HostSession() {
         : session.currentQuestionIndex;
       const current = questions[qIdx];
       setCurrentQuestionText(current?.text || '');
+      setCurrentQuestionId(current?.id || '');
       if (current?.timeLimitSec) {
         setCurrentTimeLimitSec(current.timeLimitSec);
         const startedAt = session.questionStartedAt as any;
@@ -135,6 +138,31 @@ export default function HostSession() {
       httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
     }
   }, [timeLeft, session?.questionState, currentTimeLimitSec, session?.timerPaused]);
+
+  // Subscribe to answer count for the current question
+  useEffect(() => {
+    if (!session || session.questionState !== 'live' || !currentQuestionId) {
+      setAnsweredCount(0);
+      return;
+    }
+    const q = query(
+      collection(db, `sessions/${session.id}/answers`),
+      where('questionId', '==', currentQuestionId)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setAnsweredCount(snap.size);
+    });
+    return unsub;
+  }, [session?.id, session?.questionState, currentQuestionId]);
+
+  // Auto-end when all players have answered
+  useEffect(() => {
+    if (!session || session.questionState !== 'live') return;
+    if (answeredCount > 0 && answeredCount >= players.length && !autoEndCalledRef.current) {
+      autoEndCalledRef.current = true;
+      httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+    }
+  }, [answeredCount, players.length, session?.questionState]);
 
   const startQuestion = async () => {
     if (!session) return;
@@ -575,25 +603,33 @@ export default function HostSession() {
             {currentQuestionText}
           </h2>
 
-          {/* Timer */}
-          {currentTimeLimitSec > 0 && (
-            <div className={`inline-flex items-baseline gap-2 px-8 py-4 rounded-2xl border transition-colors animate-bounce-in ${
-              session.timerPaused
-                ? 'bg-warning/10 border-warning/20'
-                : timeLeft <= 5
-                  ? 'bg-danger/10 border-danger/20'
-                  : 'bg-white/5 border-white/10'
-            }`}>
-              <span className={`text-6xl font-black tabular-nums ${
-                session.timerPaused ? 'text-warning' :
-                timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'
-              }`}>{timeLeft}</span>
-              <span className={`text-base font-medium ${
-                session.timerPaused ? 'text-warning/60' :
-                timeLeft <= 5 ? 'text-danger/50' : 'text-white/30'
-              }`}>{session.timerPaused ? 'PAUSED' : 'sec'}</span>
+          {/* Timer + Answer Progress */}
+          <div className="flex items-center gap-6">
+            {currentTimeLimitSec > 0 && (
+              <div className={`inline-flex items-baseline gap-2 px-8 py-4 rounded-2xl border transition-colors animate-bounce-in ${
+                session.timerPaused
+                  ? 'bg-warning/10 border-warning/20'
+                  : timeLeft <= 5
+                    ? 'bg-danger/10 border-danger/20'
+                    : 'bg-white/5 border-white/10'
+              }`}>
+                <span className={`text-6xl font-black tabular-nums ${
+                  session.timerPaused ? 'text-warning' :
+                  timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'
+                }`}>{timeLeft}</span>
+                <span className={`text-base font-medium ${
+                  session.timerPaused ? 'text-warning/60' :
+                  timeLeft <= 5 ? 'text-danger/50' : 'text-white/30'
+                }`}>{session.timerPaused ? 'PAUSED' : 'sec'}</span>
+              </div>
+            )}
+            <div className="inline-flex flex-col items-center px-6 py-3 rounded-2xl bg-white/5 border border-white/10 animate-bounce-in">
+              <span className={`text-4xl font-black tabular-nums ${answeredCount >= players.length ? 'text-success' : 'text-white'}`}>
+                {answeredCount}<span className="text-white/30">/{players.length}</span>
+              </span>
+              <span className="text-xs font-medium text-white/30">answered</span>
             </div>
-          )}
+          </div>
 
           {/* Control Toolbar */}
           <div className="flex items-center gap-3 mt-10">

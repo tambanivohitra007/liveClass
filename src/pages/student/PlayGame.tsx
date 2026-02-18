@@ -329,8 +329,20 @@ export default function PlayGame() {
           )}
         </div>
         <div className="flex flex-col items-center">
-          <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
-          {session?.timerPaused && <span className="text-warning font-bold text-[10px] uppercase tracking-wider animate-pulse">Paused</span>}
+          {submitted ? (
+            <div className="w-20 h-20 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-success/20 border-2 border-success flex items-center justify-center animate-bounce-in">
+                <svg className="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+          ) : (
+            <>
+              <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
+              {session?.timerPaused && <span className="text-warning font-bold text-[10px] uppercase tracking-wider animate-pulse">Paused</span>}
+            </>
+          )}
         </div>
         <button onClick={toggleMute} className="w-20 flex justify-end">
           {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
