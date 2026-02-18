@@ -360,7 +360,7 @@ export default function PlayGame() {
           ) : (
             <>
               <CircularTimer timeLeft={timeLeft} totalTime={currentQuestion.timeLimitSec} />
-              {session?.timerPaused && <span className="text-warning font-bold text-[10px] uppercase tracking-wider animate-pulse">Paused</span>}
+              {session?.timerPaused && <span className="text-warning font-bold text-xs uppercase tracking-wider animate-pulse">Paused</span>}
             </>
           )}
         </div>

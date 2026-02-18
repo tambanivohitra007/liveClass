@@ -635,7 +635,7 @@ export default function HostSession() {
                   timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'
                 }`}>{timeLeft}</span>
                 <span className={`text-base font-medium ${
-                  session.timerPaused ? 'text-warning/60' :
+                  session.timerPaused ? 'text-warning' :
                   timeLeft <= 5 ? 'text-danger/50' : 'text-white/30'
                 }`}>{session.timerPaused ? 'PAUSED' : 'sec'}</span>
               </div>
