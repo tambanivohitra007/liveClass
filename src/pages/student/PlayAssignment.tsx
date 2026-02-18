@@ -27,6 +27,7 @@ export default function PlayAssignment() {
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -48,13 +49,17 @@ export default function PlayAssignment() {
   useEffect(() => {
     if (!assignmentId) return;
     const load = async () => {
-      const assignDoc = await getDoc(doc(db, 'assignments', assignmentId));
-      if (!assignDoc.exists()) return;
-      const assignData = { id: assignDoc.id, ...assignDoc.data() } as Assignment;
-      setAssignment(assignData);
-      if (Date.now() < assignData.startAt || Date.now() > assignData.endAt) return;
-      const q = query(collection(db, 'questions'), where('quizId', '==', assignData.quizId));
-      setQuestions((await getDocs(q)).docs.map((d) => ({ id: d.id, ...d.data() })) as Question[]);
+      try {
+        const assignDoc = await getDoc(doc(db, 'assignments', assignmentId));
+        if (!assignDoc.exists()) { setLoadError('Assignment not found.'); return; }
+        const assignData = { id: assignDoc.id, ...assignDoc.data() } as Assignment;
+        setAssignment(assignData);
+        if (Date.now() < assignData.startAt || Date.now() > assignData.endAt) return;
+        const q = query(collection(db, 'questions'), where('quizId', '==', assignData.quizId));
+        setQuestions((await getDocs(q)).docs.map((d) => ({ id: d.id, ...d.data() })) as Question[]);
+      } catch {
+        setLoadError('Failed to load assignment. Check your connection.');
+      }
     };
     load();
   }, [assignmentId]);
@@ -114,6 +119,18 @@ export default function PlayAssignment() {
       setSubmitted(true);
     }
   };
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
+        <div>
+          <Ban className="w-14 h-14 mx-auto mb-4 text-danger" />
+          <h1 className="text-2xl font-bold mb-2">Oops!</h1>
+          <p className="text-white/50">{loadError}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!assignment) {
     return (
