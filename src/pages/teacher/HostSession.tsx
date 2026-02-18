@@ -92,6 +92,9 @@ export default function HostSession() {
 
   useEffect(() => {
     if (!session || session.questionState !== 'live') return;
+    // Reset immediately to prevent stale subscription data from triggering auto-end
+    setCurrentQuestionId('');
+    setAnsweredCount(0);
     const loadCurrentQuestion = async () => {
       const q = query(collection(db, 'questions'), where('quizId', '==', session.quizId));
       const snapshot = await getDocs(q);
