@@ -6,14 +6,15 @@ import { useToastStore } from '../../stores/toastStore';
 import { useSessionAnalytics } from '../../hooks/useSessionAnalytics';
 import { exportSessionExcel } from '../../lib/excelExport';
 import SlidePanel from '../../components/SlidePanel';
-import type { ParticipantEvaluation, QuestionEvaluation } from '../../types/models';
+import type { QuestionEvaluation } from '../../types/models';
 import {
   Download, FileSpreadsheet, Users, Target,
   ShieldAlert,
   HelpCircle, CheckCircle2, XCircle, ListOrdered, AlignLeft,
   ArrowLeftRight, PenLine, MessageSquare, Presentation,
   Printer, Mail, Share2, Trash2, MoreVertical, Check, X,
-  Zap, ArrowUpDown, Sparkles, Star, TrendingUp, AlertTriangle, Loader2, MinusCircle
+  Zap, ArrowUpDown, Sparkles, TrendingUp, AlertTriangle, Loader2, MinusCircle,
+  Clock
 } from 'lucide-react';
 
 type TabId = 'overview' | 'participants' | 'questions' | 'tags' | 'anti-cheating';
@@ -64,14 +65,23 @@ export default function SessionResults() {
   const [, setExportingExcel] = useState(false);
   const { addToast } = useToastStore();
 
-  // AI Evaluation state
+  // Evaluation panel state
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelMode, setPanelMode] = useState<'participant' | 'question'>('participant');
   const [panelTitle, setPanelTitle] = useState('');
   const [panelSubtitle, setPanelSubtitle] = useState('');
   const [evaluating, setEvaluating] = useState(false);
-  const [participantEval, setParticipantEval] = useState<ParticipantEvaluation | null>(null);
   const [questionEval, setQuestionEval] = useState<QuestionEvaluation | null>(null);
+  const [playerBreakdown, setPlayerBreakdown] = useState<{
+    questionIndex: number;
+    questionText: string;
+    questionType: string;
+    status: 'correct' | 'incorrect' | 'unattempted';
+    studentAnswer: string | null;
+    correctAnswer: string;
+    points: number;
+    timeMs: number;
+  }[] | null>(null);
 
   const {
     loading,
@@ -90,43 +100,49 @@ export default function SessionResults() {
     sessionStartedAt,
   } = useSessionAnalytics(sessionId);
 
-  const handleEvaluate = useCallback(async (
-    mode: 'participant' | 'question',
-    opts: { playerId?: string; nickname?: string; questionIndex?: number }
-  ) => {
+  // Client-side participant detail panel — no Cloud Function call needed
+  const handleViewDetails = useCallback((playerId: string, nickname: string) => {
+    const breakdown = answerDistributions.map((dist, idx) => {
+      const questionId = analytics[idx]?.questionId;
+      const answer = allAnswers.find(a => a.playerId === playerId && a.questionId === questionId);
+      return {
+        questionIndex: idx,
+        questionText: dist.questionText,
+        questionType: dist.questionType,
+        status: (answer ? (answer.correct ? 'correct' : 'incorrect') : 'unattempted') as 'correct' | 'incorrect' | 'unattempted',
+        studentAnswer: answer ? String(answer.selection) : null,
+        correctAnswer: dist.correctAnswers.join(', '),
+        points: answer?.pointsAwarded ?? 0,
+        timeMs: answer?.timeMs ?? 0,
+      };
+    });
+
+    setPlayerBreakdown(breakdown);
+    setPanelTitle(nickname);
+    setPanelSubtitle('Question Details');
+    setPanelMode('participant');
+    setPanelOpen(true);
+  }, [answerDistributions, analytics, allAnswers]);
+
+  // AI evaluation for questions (still uses Cloud Function)
+  const handleEvaluateQuestion = useCallback(async (questionIndex: number) => {
     if (!sessionId) return;
 
-    setPanelMode(mode);
-    setParticipantEval(null);
+    setPanelMode('question');
     setQuestionEval(null);
     setPanelOpen(true);
     setEvaluating(true);
-
-    if (mode === 'participant') {
-      setPanelTitle(opts.nickname || 'Student');
-      setPanelSubtitle('AI Performance Report');
-    } else {
-      setPanelTitle(`Question ${(opts.questionIndex ?? 0) + 1}`);
-      setPanelSubtitle('AI Quality Analysis');
-    }
+    setPanelTitle(`Question ${questionIndex + 1}`);
+    setPanelSubtitle('AI Quality Analysis');
 
     try {
       const fn = httpsCallable<
-        { sessionId: string; mode: string; playerId?: string; questionIndex?: number },
-        { evaluation: ParticipantEvaluation | QuestionEvaluation; cached: boolean }
+        { sessionId: string; mode: string; questionIndex: number },
+        { evaluation: QuestionEvaluation; cached: boolean }
       >(functions, 'evaluateSession');
 
-      const result = await fn({
-        sessionId,
-        mode,
-        ...(mode === 'participant' ? { playerId: opts.playerId } : { questionIndex: opts.questionIndex }),
-      });
-
-      if (mode === 'participant') {
-        setParticipantEval(result.data.evaluation as ParticipantEvaluation);
-      } else {
-        setQuestionEval(result.data.evaluation as QuestionEvaluation);
-      }
+      const result = await fn({ sessionId, mode: 'question', questionIndex });
+      setQuestionEval(result.data.evaluation);
 
       if (result.data.cached) {
         addToast('info', 'Loaded cached evaluation');
@@ -526,10 +542,10 @@ export default function SessionResults() {
 
                    {/* Actions */}
                    <button
-                      onClick={() => handleEvaluate('participant', { playerId: player.playerId, nickname: player.nickname })}
+                      onClick={() => handleViewDetails(player.playerId, player.nickname)}
                       className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
                    >
-                      Evaluate <Sparkles className="w-3 h-3" />
+                      Evaluate <Target className="w-3 h-3" />
                    </button>
                    <button className="p-1 text-gray-400 hover:text-gray-600">
                       <MoreVertical className="w-4 h-4" />
@@ -577,7 +593,7 @@ export default function SessionResults() {
                            <span className="text-sm text-gray-500">Avg. time</span>
                         </div>
                         <button
-                           onClick={() => handleEvaluate('question', { questionIndex: idx })}
+                           onClick={() => handleEvaluateQuestion(idx)}
                            className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
                         >
                            Evaluate <Sparkles className="w-3 h-3" />
@@ -695,7 +711,7 @@ export default function SessionResults() {
                      </div>
 
                      <button
-                        onClick={() => handleEvaluate('question', { questionIndex: group.questions[0]?.questionIndex ?? 0 })}
+                        onClick={() => handleEvaluateQuestion(group.questions[0]?.questionIndex ?? 0)}
                         className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
                      >
                         Evaluate <Sparkles className="w-3 h-3" />
@@ -762,174 +778,118 @@ export default function SessionResults() {
 
       </div>
 
-      {/* AI Evaluation Slide Panel */}
+      {/* Evaluation Slide Panel */}
       <SlidePanel
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
         title={panelTitle}
         subtitle={panelSubtitle}
-        icon={<Sparkles className="w-5 h-5" />}
+        icon={panelMode === 'participant' ? <Target className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
       >
-        {evaluating ? (
+        {panelMode === 'question' && evaluating ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <Loader2 className="w-8 h-8 text-brand animate-spin" />
             <p className="text-gray-500 font-medium">Analyzing with AI...</p>
             <p className="text-gray-400 text-sm">This may take a few seconds</p>
           </div>
-        ) : panelMode === 'participant' && participantEval ? (
+        ) : panelMode === 'participant' && playerBreakdown ? (
           <div className="space-y-6">
-            {/* Overall Rating Badge */}
-            <div className="flex items-center gap-3">
-              <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${
-                participantEval.overallRating === 'excellent' ? 'bg-success/10 text-success' :
-                participantEval.overallRating === 'good' ? 'bg-blue-50 text-blue-600' :
-                participantEval.overallRating === 'average' ? 'bg-warning/10 text-warning' :
-                'bg-danger/10 text-danger'
-              }`}>
-                {participantEval.overallRating === 'excellent' ? '★ Excellent' :
-                 participantEval.overallRating === 'good' ? '● Good' :
-                 participantEval.overallRating === 'average' ? '◐ Average' :
-                 '▽ Needs Improvement'}
-              </span>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p className="text-gray-700 leading-relaxed">{participantEval.summary}</p>
-            </div>
-
-            {/* Question Breakdown */}
-            {participantEval.questionBreakdown && participantEval.questionBreakdown.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                    <Target className="w-4 h-4 text-brand" /> Question Breakdown
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    {participantEval.questionBreakdown.filter(q => q.status === 'correct').length}/{participantEval.questionBreakdown.length} correct
-                  </span>
+            {/* Summary Header */}
+            {(() => {
+              const correctCount = playerBreakdown.filter(q => q.status === 'correct').length;
+              const totalQuestions = playerBreakdown.length;
+              const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+              const totalScore = playerBreakdown.reduce((sum, q) => sum + q.points, 0);
+              return (
+                <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                  {/* Accuracy Circle */}
+                  <div className="w-16 h-16 relative flex items-center justify-center flex-shrink-0">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="32" cy="32" r="28" stroke="#E2E8F0" strokeWidth="4" fill="none" />
+                      <circle
+                        cx="32" cy="32" r="28"
+                        stroke={accuracy >= 50 ? COLORS.correct : COLORS.incorrect}
+                        strokeWidth="4"
+                        fill="none"
+                        strokeDasharray={175}
+                        strokeDashoffset={175 - (175 * accuracy) / 100}
+                      />
+                    </svg>
+                    <span className="absolute text-sm font-bold">{accuracy}%</span>
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900 text-lg">{totalScore.toLocaleString()} pts</div>
+                    <div className="text-sm text-gray-500">
+                      {correctCount}/{totalQuestions} correct
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {participantEval.questionBreakdown.map((q) => (
-                    <div key={q.questionIndex} className={`rounded-xl border p-3 ${
-                      q.status === 'correct' ? 'border-green-200 bg-green-50/50' :
-                      q.status === 'incorrect' ? 'border-red-200 bg-red-50/50' :
-                      'border-gray-200 bg-gray-50/50'
-                    }`}>
-                      <div className="flex items-start gap-2">
-                        {q.status === 'correct' ? (
-                          <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                        ) : q.status === 'incorrect' ? (
-                          <XCircle className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
-                        ) : (
-                          <MinusCircle className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
+              );
+            })()}
+
+            {/* Per-question list */}
+            <div>
+              <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-3">
+                <Target className="w-4 h-4 text-brand" /> Question Breakdown
+              </h3>
+              <div className="space-y-3">
+                {playerBreakdown.map((q) => (
+                  <div key={q.questionIndex} className={`rounded-xl border p-3 ${
+                    q.status === 'correct' ? 'border-green-200 bg-green-50/50' :
+                    q.status === 'incorrect' ? 'border-red-200 bg-red-50/50' :
+                    'border-gray-200 bg-gray-50/50'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      {q.status === 'correct' ? (
+                        <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                      ) : q.status === 'incorrect' ? (
+                        <XCircle className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <MinusCircle className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
                           <p className="font-medium text-gray-900 text-sm">
                             Q{q.questionIndex + 1}{' '}
                             <span className="font-normal text-gray-600">
                               {q.questionText.length > 60 ? q.questionText.slice(0, 60) + '...' : q.questionText}
                             </span>
                           </p>
-                          <div className="mt-1 text-xs text-gray-500">
-                            {q.status === 'correct' ? (
-                              <span className="text-success font-medium">Correct</span>
-                            ) : q.status === 'incorrect' ? (
-                              <>
-                                <span>Your answer: <span className="text-danger font-medium">{q.studentAnswer}</span></span>
-                                <span className="mx-1.5">·</span>
-                                <span>Correct: <span className="text-success font-medium">{q.correctAnswer}</span></span>
-                              </>
-                            ) : (
-                              <span className="text-gray-400 font-medium">Unattempted</span>
-                            )}
-                            <span className="mx-1.5">·</span>
-                            <span>{q.points} pts</span>
-                          </div>
-                          {q.explanation && (
-                            <p className="mt-1.5 text-xs text-gray-400 italic">{q.explanation}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-medium uppercase">
+                            {TYPE_LABELS[q.questionType] || q.questionType}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {q.status === 'correct' ? (
+                            <span className="text-success font-medium">Correct</span>
+                          ) : q.status === 'incorrect' ? (
+                            <>
+                              <span>Answer: <span className="text-danger font-medium">{q.studentAnswer}</span></span>
+                              <span className="mx-1.5">·</span>
+                              <span>Correct: <span className="text-success font-medium">{q.correctAnswer}</span></span>
+                            </>
+                          ) : (
+                            <span className="text-gray-400 font-medium">Unattempted</span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
+                          <span className="flex items-center gap-0.5">
+                            <Zap className="w-3 h-3" /> {q.points} pts
+                          </span>
+                          {q.status !== 'unattempted' && (
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="w-3 h-3" /> {(q.timeMs / 1000).toFixed(1)}s
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
-
-            {/* Strengths */}
-            {participantEval.strengths.length > 0 && (
-              <div>
-                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <Star className="w-4 h-4 text-success" /> Strengths
-                </h3>
-                <ul className="space-y-2">
-                  {participantEval.strengths.map((s, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Weaknesses */}
-            {participantEval.weaknesses.length > 0 && (
-              <div>
-                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-warning" /> Areas for Improvement
-                </h3>
-                <ul className="space-y-2">
-                  {participantEval.weaknesses.map((w, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <XCircle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
-                      {w}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Recommendations */}
-            {participantEval.recommendations.length > 0 && (
-              <div>
-                <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-500" /> Recommendations
-                </h3>
-                <ul className="space-y-2">
-                  {participantEval.recommendations.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {i + 1}
-                      </span>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Topic Mastery */}
-            {participantEval.topicMastery.length > 0 && (
-              <div>
-                <h3 className="font-bold text-gray-900 mb-3">Topic Mastery</h3>
-                <div className="space-y-2">
-                  {participantEval.topicMastery.map((t, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                      <span className="text-gray-700 font-medium">{t.topic}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                        t.level === 'strong' ? 'bg-success/10 text-success' :
-                        t.level === 'moderate' ? 'bg-warning/10 text-warning' :
-                        'bg-danger/10 text-danger'
-                      }`}>
-                        {t.level}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         ) : panelMode === 'question' && questionEval ? (
           <div className="space-y-6">
