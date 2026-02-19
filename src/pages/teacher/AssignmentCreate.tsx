@@ -12,7 +12,9 @@ export default function AssignmentCreate() {
   const { addToast } = useToastStore();
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [classrooms, setClassrooms] = useState<{id: string; name: string}[]>([]);
   const [selectedQuizId, setSelectedQuizId] = useState('');
+  const [selectedClassroomId, setSelectedClassroomId] = useState('');
   const [startAt, setStartAt] = useState('');
   const [endAt, setEndAt] = useState('');
   const [attemptsAllowed, setAttemptsAllowed] = useState(1);
@@ -20,11 +22,16 @@ export default function AssignmentCreate() {
 
   useEffect(() => {
     if (!user) return;
-    const loadQuizzes = async () => {
+    const loadData = async () => {
       const q = query(collection(db, 'quizzes'), where('ownerId', '==', user.id));
       setQuizzes((await getDocs(q)).docs.map((d) => ({ id: d.id, ...d.data() })) as Quiz[]);
+
+      const classSnap = await getDocs(
+        query(collection(db, 'classrooms'), where('ownerId', '==', user.id))
+      );
+      setClassrooms(classSnap.docs.map((d) => ({ id: d.id, name: d.data().name })));
     };
-    loadQuizzes();
+    loadData();
   }, [user]);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -36,6 +43,7 @@ export default function AssignmentCreate() {
         quizId: selectedQuizId, ownerId: user.id,
         startAt: new Date(startAt).getTime(), endAt: new Date(endAt).getTime(),
         attemptsAllowed, createdAt: serverTimestamp(),
+        classroomId: selectedClassroomId || null,
       });
       navigate('/dashboard');
     } catch {
@@ -63,6 +71,19 @@ export default function AssignmentCreate() {
             <option value="">-- Choose a quiz --</option>
             {quizzes.map((q) => (
               <option key={q.id} value={q.id}>{q.title}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign to Class (optional)</label>
+          <select
+            value={selectedClassroomId}
+            onChange={(e) => setSelectedClassroomId(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+          >
+            <option value="">All students (no class)</option>
+            {classrooms.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>

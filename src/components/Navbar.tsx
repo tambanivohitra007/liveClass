@@ -95,8 +95,8 @@ export default function Navbar() {
                 Join Game
               </Link>
               {user?.role === 'student' && (
-                <Link to="/join-class" className={navLinkClass('/join-class')}>
-                  Join Class
+                <Link to="/student/classes" className={navLinkClass('/student/classes')}>
+                  My Classes
                 </Link>
               )}
             </>

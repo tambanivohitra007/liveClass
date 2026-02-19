@@ -31,6 +31,8 @@ import CollectionView from './pages/teacher/CollectionView';
 import ClassList from './pages/teacher/ClassList';
 import ClassDetail from './pages/teacher/ClassDetail';
 import JoinClass from './pages/student/JoinClass';
+import StudentClasses from './pages/student/StudentClasses';
+import StudentClassDetail from './pages/student/StudentClassDetail';
 import Discover from './pages/Discover';
 import Flashcards from './pages/Flashcards';
 import Worksheet from './pages/teacher/Worksheet';
@@ -151,6 +153,8 @@ function AppContent() {
 
         <Route path="/join-class" element={<ProtectedRoute><JoinClass /></ProtectedRoute>} />
         <Route path="/student/dashboard" element={<StudentRoute><StudentDashboard /></StudentRoute>} />
+        <Route path="/student/classes" element={<StudentRoute><StudentClasses /></StudentRoute>} />
+        <Route path="/student/classroom/:classroomId" element={<StudentRoute><StudentClassDetail /></StudentRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
       </main>

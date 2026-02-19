@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { ADMIN_EMAIL } from '../lib/config';
-import { LayoutDashboard, Users, History, User, Gamepad2, Compass } from 'lucide-react';
+import { LayoutDashboard, Users, History, User, Gamepad2 } from 'lucide-react';
 
 interface Tab {
   label: string;
@@ -19,8 +19,8 @@ const teacherTabs: Tab[] = [
 
 const studentTabs: Tab[] = [
   { label: 'Home', icon: LayoutDashboard, path: '/student/dashboard', exact: true },
+  { label: 'Classes', icon: Users, path: '/student/classes' },
   { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true },
-  { label: 'Discover', icon: Compass, path: '/discover', exact: true },
   { label: 'Profile', icon: User, path: '/profile', exact: true },
 ];
 

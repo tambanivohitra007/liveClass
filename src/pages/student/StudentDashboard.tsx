@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useStudentStats } from '../../hooks/useStudentStats';
@@ -15,6 +15,7 @@ interface AvailableAssignment {
   startAt: number;
   endAt: number;
   attemptsAllowed: number;
+  classroomName?: string;
 }
 
 export default function StudentDashboard() {
@@ -37,10 +38,29 @@ export default function StudentDashboard() {
         );
 
         const assignmentsData: AvailableAssignment[] = [];
+        const classroomCache: Record<string, string> = {};
         for (const d of assignSnap.docs) {
           const data = d.data();
           const quizSnap = await getDocs(query(collection(db, 'quizzes'), where('__name__', '==', data.quizId)));
           const quizTitle = quizSnap.docs[0]?.data()?.title || 'Untitled Quiz';
+
+          let classroomName: string | undefined;
+          if (data.classroomId) {
+            if (classroomCache[data.classroomId]) {
+              classroomName = classroomCache[data.classroomId];
+            } else {
+              try {
+                const cDoc = await getDoc(doc(db, 'classrooms', data.classroomId));
+                if (cDoc.exists()) {
+                  classroomName = cDoc.data().name;
+                  classroomCache[data.classroomId] = classroomName!;
+                }
+              } catch {
+                // ignore
+              }
+            }
+          }
+
           assignmentsData.push({
             id: d.id,
             quizId: data.quizId,
@@ -48,6 +68,7 @@ export default function StudentDashboard() {
             startAt: data.startAt,
             endAt: data.endAt,
             attemptsAllowed: data.attemptsAllowed,
+            classroomName,
           });
         }
 
@@ -252,7 +273,10 @@ export default function StudentDashboard() {
                       Active
                     </span>
                     <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors mb-2">{a.quizTitle}</h3>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                    {a.classroomName && (
+                      <span className="text-xs text-gray-400 font-medium">from {a.classroomName}</span>
+                    )}
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mt-1">
                       <Clock className="w-3.5 h-3.5" />
                       Ends {new Date(a.endAt).toLocaleDateString()}
                     </div>
@@ -282,7 +306,10 @@ export default function StudentDashboard() {
                     Upcoming
                   </span>
                   <h3 className="font-bold text-gray-900 mb-2">{a.quizTitle}</h3>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                  {a.classroomName && (
+                    <span className="text-xs text-gray-400 font-medium">from {a.classroomName}</span>
+                  )}
+                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mt-1">
                     <Clock className="w-3.5 h-3.5" />
                     Opens {new Date(a.startAt).toLocaleDateString()}
                   </div>
@@ -303,7 +330,10 @@ export default function StudentDashboard() {
                     Ended
                   </span>
                   <h3 className="font-bold text-gray-900 mb-2">{a.quizTitle}</h3>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                  {a.classroomName && (
+                    <span className="text-xs text-gray-400 font-medium">from {a.classroomName}</span>
+                  )}
+                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mt-1">
                     <Clock className="w-3.5 h-3.5" />
                     Ended {new Date(a.endAt).toLocaleDateString()}
                   </div>
