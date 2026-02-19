@@ -7,6 +7,7 @@ import { confirmDelete } from '../../lib/swal';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
 import AiGenerateModal from '../../components/AiGenerateModal';
+import WaveBackground from '../../components/ui/WaveBackground';
 import {
   Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList,
   Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, BarChart3, Printer,
@@ -306,8 +307,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="relative min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
+    <WaveBackground variant="light" position="bottom" />
+    <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
