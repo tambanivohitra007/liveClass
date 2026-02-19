@@ -70,8 +70,10 @@ export default function PlayGame() {
   // Student-paced mode state
   const [localQIndex, setLocalQIndex] = useState(0);
   const [spFinished, setSpFinished] = useState(false);
+  const [questionSubset, setQuestionSubset] = useState<number[] | null>(null);
   const spQuestionStartRef = useRef(0);
   const isStudentPaced = session?.paceMode === 'student' && session?.questionState === 'student_paced';
+  const spTotalQuestions = questionSubset ? questionSubset.length : totalQuestions;
   const { showWarning, dismissWarning } = useAntiCheat({
     sessionId,
     playerId,
@@ -85,6 +87,16 @@ export default function PlayGame() {
     });
     return unsubscribe;
   }, [sessionId, setSession]);
+
+  // Fetch player's questionSubset for rotating sets
+  useEffect(() => {
+    if (!isStudentPaced || !sessionId || !playerId) return;
+    getDoc(doc(db, `sessions/${sessionId}/players`, playerId)).then((snap) => {
+      if (snap.exists() && snap.data().questionSubset) {
+        setQuestionSubset(snap.data().questionSubset);
+      }
+    });
+  }, [isStudentPaced, sessionId, playerId]);
 
   // Load player's team info
   useEffect(() => {
@@ -184,9 +196,11 @@ export default function PlayGame() {
     setOrderingItems([]);
     setFeedback(null);
 
-    const qIdx = session?.questionOrder
-      ? session.questionOrder[localQIndex]
-      : localQIndex;
+    const qIdx = questionSubset
+      ? questionSubset[localQIndex]
+      : session?.questionOrder
+        ? session.questionOrder[localQIndex]
+        : localQIndex;
     const current = allQuestions[qIdx];
     if (current) {
       setCurrentQuestion(current);
@@ -355,7 +369,7 @@ export default function PlayGame() {
           });
           // Student-paced: write progress after each answer
           if (isStudentPaced) {
-            writeProgress(localQIndex + 1, localQIndex + 1 >= totalQuestions);
+            writeProgress(localQIndex + 1, localQIndex + 1 >= spTotalQuestions);
           }
         }
       };
@@ -394,8 +408,8 @@ export default function PlayGame() {
 
   const spNextQuestion = async () => {
     const nextIdx = localQIndex + 1;
-    await writeProgress(nextIdx, nextIdx >= totalQuestions);
-    if (nextIdx >= totalQuestions) {
+    await writeProgress(nextIdx, nextIdx >= spTotalQuestions);
+    if (nextIdx >= spTotalQuestions) {
       setSpFinished(true);
     } else {
       setLocalQIndex(nextIdx);
@@ -435,10 +449,10 @@ export default function PlayGame() {
         <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
           <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-success" />
           <h1 className="text-2xl sm:text-3xl font-black mb-2">All Done!</h1>
-          <p className="text-white/50 mb-6 sm:mb-8 text-sm sm:text-base">You've completed all {totalQuestions} questions. Wait for the host to end the session.</p>
+          <p className="text-white/50 mb-6 sm:mb-8 text-sm sm:text-base">You've completed all {spTotalQuestions} questions. Wait for the host to end the session.</p>
           {sessionId && (
             <div className="bg-white/5 backdrop-blur rounded-2xl p-4 sm:p-6">
-              <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
+              <Leaderboard sessionId={sessionId} currentQuestion={spTotalQuestions} totalQuestions={spTotalQuestions} />
             </div>
           )}
         </div>
@@ -476,11 +490,11 @@ export default function PlayGame() {
             className="mt-6 px-10 py-4 bg-brand hover:bg-brand-dark text-white font-bold text-lg rounded-full transition-all flex items-center justify-center gap-2 mx-auto"
             style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
           >
-            {localQIndex + 1 >= totalQuestions ? 'See Results' : 'Next Question'}
+            {localQIndex + 1 >= spTotalQuestions ? 'See Results' : 'Next Question'}
             <Play className="w-5 h-5" />
           </button>
           <p className="text-white/30 text-sm mt-4">
-            Question {localQIndex + 1} of {totalQuestions}
+            Question {localQIndex + 1} of {spTotalQuestions}
           </p>
         </div>
       </div>
@@ -587,7 +601,7 @@ export default function PlayGame() {
           ) : isStudentPaced ? (
             <div className="flex flex-col items-center">
               <span className="text-2xl font-black text-white tabular-nums">
-                {localQIndex + 1}<span className="text-white/30">/{totalQuestions}</span>
+                {localQIndex + 1}<span className="text-white/30">/{spTotalQuestions}</span>
               </span>
               <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Your Pace</span>
             </div>

@@ -6,7 +6,7 @@ import { ref, onValue, off } from 'firebase/database';
 import { db, functions, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
@@ -232,6 +232,10 @@ export default function HostSession() {
 
   const startQuestion = async () => {
     if (session?.paceMode === 'student') {
+      // Assign rotating question subsets if enabled
+      if (session.rotatingSetSize && session.rotatingSetSize < allQuestions.length) {
+        await httpsCallable(functions, 'assignQuestionSubsets')({ sessionId: session.id });
+      }
       // Student-paced: set session live with student_paced questionState
       const updateData: Record<string, unknown> = {
         status: 'live',
@@ -649,6 +653,51 @@ export default function HostSession() {
                     </button>
                   </div>
 
+                  {/* Rotating Sets (student-paced only) */}
+                  {session.paceMode === 'student' && allQuestions.length > 2 && (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                      <div className="flex items-center gap-3">
+                        <Dices className={`w-5 h-5 ${session.rotatingSetSize ? 'text-purple-400' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
+                        <span className="text-sm font-medium">Rotating Sets</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {session.rotatingSetSize && (
+                          <select
+                            value={session.rotatingSetSize}
+                            onChange={async (e) => {
+                              await updateDoc(doc(db, 'sessions', session.id), {
+                                rotatingSetSize: parseInt(e.target.value),
+                              });
+                            }}
+                            className="px-2 py-0.5 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none"
+                          >
+                            {Array.from(
+                              { length: allQuestions.length - 1 },
+                              (_, i) => i + 1
+                            ).map((n) => (
+                              <option key={n} value={n} className="bg-gray-800">
+                                {n} of {allQuestions.length}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        <button
+                          onClick={async () => {
+                            if (session.rotatingSetSize) {
+                              await updateDoc(doc(db, 'sessions', session.id), { rotatingSetSize: null });
+                            } else {
+                              const defaultSize = Math.min(Math.ceil(allQuestions.length / 2), allQuestions.length - 1);
+                              await updateDoc(doc(db, 'sessions', session.id), { rotatingSetSize: defaultSize });
+                            }
+                          }}
+                          className={`relative w-11 h-6 rounded-full transition-colors ${session.rotatingSetSize ? 'bg-purple-500' : 'bg-white/20'}`}
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.rotatingSetSize ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Music */}
                   <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
@@ -843,7 +892,8 @@ export default function HostSession() {
                     const prog = studentProgress[p.id];
                     const answered = prog?.answered || 0;
                     const done = prog?.finished || false;
-                    const pct = totalQuestions > 0 ? Math.round((answered / totalQuestions) * 100) : 0;
+                    const questionsForPlayer = session.rotatingSetSize || totalQuestions;
+                    const pct = questionsForPlayer > 0 ? Math.round((answered / questionsForPlayer) * 100) : 0;
                     return (
                       <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-white/5">
                         <span className="font-medium text-sm truncate w-28">{p.nickname}</span>
@@ -854,7 +904,7 @@ export default function HostSession() {
                           />
                         </div>
                         <span className="text-xs text-white/40 tabular-nums w-16 text-right">
-                          {answered}/{totalQuestions}
+                          {answered}/{questionsForPlayer}
                         </span>
                         {done && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
                       </div>

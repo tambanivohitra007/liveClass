@@ -164,7 +164,70 @@ export const joinSession = onCall(FUNCTION_CONFIG, async (request) => {
     joinedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
+  // Assign rotating question subset for late joiners
+  if (session.status === "live" && session.rotatingSetSize) {
+    const questionsSnap = await db
+      .collection("questions")
+      .where("quizId", "==", session.quizId)
+      .get();
+    const total = questionsSnap.size;
+    const size = Math.min(session.rotatingSetSize, total);
+    const indices = Array.from({ length: total }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    await playerRef.update({ questionSubset: indices.slice(0, size) });
+  }
+
   return { playerId: playerRef.id, activeToken };
+});
+
+// --- Assign Question Subsets (Rotating Sets) ---
+export const assignQuestionSubsets = onCall(FUNCTION_CONFIG, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in");
+  }
+
+  const { sessionId } = request.data as { sessionId: string };
+  if (!sessionId) {
+    throw new HttpsError("invalid-argument", "sessionId is required");
+  }
+
+  const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+  if (!sessionDoc.exists) {
+    throw new HttpsError("not-found", "Session not found");
+  }
+
+  const session = sessionDoc.data()!;
+  if (session.hostId !== request.auth.uid) {
+    throw new HttpsError("permission-denied", "Not the host");
+  }
+  if (!session.rotatingSetSize) {
+    throw new HttpsError("failed-precondition", "Rotating set size not configured");
+  }
+
+  const [questionsSnap, playersSnap] = await Promise.all([
+    db.collection("questions").where("quizId", "==", session.quizId).get(),
+    db.collection(`sessions/${sessionId}/players`).get(),
+  ]);
+
+  const total = questionsSnap.size;
+  const size = Math.min(session.rotatingSetSize, total);
+
+  const batch = db.batch();
+  for (const playerDoc of playersSnap.docs) {
+    // Fisher-Yates shuffle for each player independently
+    const indices = Array.from({ length: total }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    batch.update(playerDoc.ref, { questionSubset: indices.slice(0, size) });
+  }
+
+  await batch.commit();
+  return { success: true };
 });
 
 // --- Start Question ---

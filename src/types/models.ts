@@ -100,6 +100,7 @@ export interface Session {
   timerPaused?: boolean;
   timerPausedAt?: number | null;
   classroomId?: string | null;
+  rotatingSetSize?: number;
 }
 
 export interface SessionPlayer {
@@ -109,6 +110,7 @@ export interface SessionPlayer {
   nickname: string;
   avatar?: string;
   teamIndex?: number;
+  questionSubset?: number[];
   joinedAt: number;
 }
 
