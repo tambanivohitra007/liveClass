@@ -61,8 +61,8 @@ export default function SessionResults() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const [, setExporting] = useState(false);
-  const [, setExportingExcel] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
   const [sortBy, setSortBy] = useState<'accuracy' | 'name' | 'score'>('accuracy');
   const [sortAsc, setSortAsc] = useState(false);
   const { addToast } = useToastStore();
@@ -349,11 +349,11 @@ export default function SessionResults() {
              <button onClick={() => window.print()} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md" title="Print">
                <Printer className="w-4 h-4" />
              </button>
-             <button onClick={handleExportCsv} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md" title="Download CSV">
-               <Download className="w-4 h-4" />
+             <button onClick={handleExportCsv} disabled={exporting} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download CSV">
+               {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
              </button>
-              <button onClick={handleExportExcel} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md" title="Download Excel">
-               <FileSpreadsheet className="w-4 h-4" />
+              <button onClick={handleExportExcel} disabled={exportingExcel} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download Excel">
+               {exportingExcel ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
              </button>
           </div>
           
@@ -398,7 +398,7 @@ export default function SessionResults() {
       <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 min-h-[500px] p-6">
         
         {/* Controls Row (Sort/Search) */}
-        {!['questions', 'tags'].includes(activeTab) && (
+        {(activeTab === 'overview' || activeTab === 'participants') && (
            <div className="flex justify-end mb-6">
              <div className="flex items-center gap-2">
                <span className="text-sm text-gray-500">Sort by:</span>
@@ -529,7 +529,7 @@ export default function SessionResults() {
                          <X className="w-3 h-3" /> {player.totalAnswers - player.correctAnswers}
                       </span>
                       <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs flex items-center gap-0.5">
-                         ! 0
+                         — {analytics.length - player.totalAnswers}
                       </span>
                    </div>
 
@@ -552,7 +552,7 @@ export default function SessionResults() {
                    {/* Points/Score */}
                    <div className="w-24 text-right flex-shrink-0">
                       <div className="font-bold text-gray-900">{player.correctAnswers}/{analytics.length}</div>
-                      <div className="text-xs text-gray-400">Points</div>
+                      <div className="text-xs text-gray-400">Correct</div>
                    </div>
                    <div className="w-24 text-right flex-shrink-0">
                       <div className="font-bold text-gray-900">{player.totalPoints}</div>
@@ -777,7 +777,7 @@ export default function SessionResults() {
                                {v.totalViolations}
                             </td>
                             <td className="py-4 px-6 text-right text-gray-500 font-medium text-sm">
-                               Just now
+                               {v.lastViolationAt ? new Date(v.lastViolationAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                             </td>
                          </tr>
                        ))}

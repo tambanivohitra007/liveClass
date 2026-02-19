@@ -26,6 +26,7 @@ interface ViolationSummary {
   playerId: string;
   nickname: string;
   totalViolations: number;
+  lastViolationAt: number | null;
 }
 
 interface PlayerStats {
@@ -208,11 +209,17 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
         startedAt && endedAt ? Math.round((endedAt - startedAt) / 1000) : null;
 
       const violations: ViolationSummary[] = violationsSnap.docs
-        .map((d) => ({
-          playerId: d.id,
-          nickname: (d.data().nickname as string) || 'Unknown',
-          totalViolations: (d.data().totalViolations as number) || 0,
-        }))
+        .map((d) => {
+          const data = d.data();
+          const events = (data.events as { type: string; timestamp: number }[]) || [];
+          const lastTs = events.length > 0 ? events[events.length - 1].timestamp : null;
+          return {
+            playerId: d.id,
+            nickname: (data.nickname as string) || 'Unknown',
+            totalViolations: (data.totalViolations as number) || 0,
+            lastViolationAt: lastTs,
+          };
+        })
         .filter((v) => v.totalViolations > 0)
         .sort((a, b) => b.totalViolations - a.totalViolations);
 
