@@ -44,10 +44,12 @@ const ANSWER_CARDS = [
 ];
 
 export default function QuizEditor() {
-  const { quizId } = useParams<{ quizId: string }>();
+  const { quizId: paramQuizId } = useParams<{ quizId: string }>();
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
+  const [effectiveQuizId, setEffectiveQuizId] = useState(paramQuizId);
+  const quizId = effectiveQuizId;
   const isNew = quizId === 'new';
 
   const [title, setTitle] = useState('');
@@ -303,7 +305,9 @@ export default function QuizEditor() {
           updatedAt: serverTimestamp(),
         }, { merge: true });
       }
-      for (const question of questions) {
+      const updatedQuestions = [...questions];
+      for (let i = 0; i < updatedQuestions.length; i++) {
+        const question = updatedQuestions[i];
         const questionData: Record<string, unknown> = {
           quizId: savedQuizId, type: question.type, text: question.text,
           imageUrl: question.imageUrl || null, videoUrl: question.videoUrl || null,
@@ -313,11 +317,24 @@ export default function QuizEditor() {
         if (question.type === 'matching') {
           questionData.matchOptions = question.matchOptions || [];
         }
-        if (question.id) await setDoc(doc(db, 'questions', question.id), questionData, { merge: true });
-        else await addDoc(collection(db, 'questions'), questionData);
+        if (question.id) {
+          await setDoc(doc(db, 'questions', question.id), questionData, { merge: true });
+        } else {
+          const newRef = await addDoc(collection(db, 'questions'), questionData);
+          updatedQuestions[i] = { ...question, id: newRef.id };
+        }
       }
-      justSavedRef.current = true;
-      navigate('/dashboard');
+      setQuestions(updatedQuestions);
+      // If this was a new quiz, update the URL and internal ID without a full navigation
+      if (isNew && savedQuizId) {
+        setEffectiveQuizId(savedQuizId);
+        window.history.replaceState(null, '', `/quiz/${savedQuizId}`);
+      }
+      // Reset dirty tracking so the editor knows we're clean
+      const newSnapshot = JSON.stringify({ title, description, questions: updatedQuestions, visibility, selectedCollectionId, coverImageUrl });
+      setSavedSnapshot(newSnapshot);
+      justSavedRef.current = false;
+      addToast('success', 'Quiz saved');
     } catch {
       addToast('error', 'Failed to save quiz. Please try again.');
     } finally {
