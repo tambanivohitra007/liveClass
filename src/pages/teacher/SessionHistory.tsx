@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
+import { useToastStore } from '../../stores/toastStore';
 import { SkeletonCard } from '../../components/Skeleton';
-import { ArrowLeft, Users, Target, Calendar, Hash, SortAsc, Filter } from 'lucide-react';
+import { ArrowLeft, Users, Target, Calendar, Hash, SortAsc, Filter, Trash2 } from 'lucide-react';
 
 interface SessionRecord {
   id: string;
@@ -22,6 +23,7 @@ type SortField = 'date' | 'players' | 'accuracy';
 
 export default function SessionHistory() {
   const { user } = useAuthStore();
+  const { addToast } = useToastStore();
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,8 @@ export default function SessionHistory() {
   const [quizFilter, setQuizFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('date');
   const [quizOptions, setQuizOptions] = useState<{ id: string; title: string }[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -102,6 +106,20 @@ export default function SessionHistory() {
 
     load();
   }, [user]);
+
+  const handleDelete = async (sessionId: string) => {
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'sessions', sessionId));
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      addToast('success', 'Session deleted');
+    } catch {
+      addToast('error', 'Failed to delete session');
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteId(null);
+    }
+  };
 
   // Apply filters & sort
   const now = Date.now();
@@ -198,50 +216,84 @@ export default function SessionHistory() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
           {filteredSessions.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => navigate(`/session/${s.id}/results`)}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group animate-fade-in"
-            >
-              <h3 className="font-semibold text-gray-900 group-hover:text-brand transition-colors mb-1 truncate">
-                {s.quizTitle}
-              </h3>
-              <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
-                <Calendar className="w-3 h-3" />
-                {new Date(s.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                <span className="text-gray-300">|</span>
-                <Hash className="w-3 h-3" />
-                {s.pinCode}
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <div className="flex items-center gap-1 text-gray-400 mb-1">
-                    <Users className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wider font-medium">Players</span>
-                  </div>
-                  <p className="text-lg font-bold text-gray-900">{s.playerCount}</p>
+            <div key={s.id} className="relative animate-fade-in">
+              <button
+                onClick={() => navigate(`/session/${s.id}/results`)}
+                className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-brand transition-colors mb-1 truncate">
+                    {s.quizTitle}
+                  </h3>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(s.id); }}
+                    className="p-1.5 rounded-lg text-gray-300 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
+                    title="Delete session"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <div>
-                  <div className="flex items-center gap-1 text-gray-400 mb-1">
-                    <Target className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wider font-medium">Accuracy</span>
-                  </div>
-                  <p className={`text-lg font-bold ${
-                    s.avgAccuracy >= 70 ? 'text-success' :
-                    s.avgAccuracy >= 40 ? 'text-warning' :
-                    'text-danger'
-                  }`}>
-                    {s.avgAccuracy}%
-                  </p>
+                <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(s.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <span className="text-gray-300">|</span>
+                  <Hash className="w-3 h-3" />
+                  {s.pinCode}
                 </div>
-                <div>
-                  <div className="flex items-center gap-1 text-gray-400 mb-1">
-                    <span className="text-[10px] uppercase tracking-wider font-medium">Avg Score</span>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-400 mb-1">
+                      <Users className="w-3 h-3" />
+                      <span className="text-[10px] uppercase tracking-wider font-medium">Players</span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-900">{s.playerCount}</p>
                   </div>
-                  <p className="text-lg font-bold text-gray-900">{s.avgScore.toLocaleString()}</p>
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-400 mb-1">
+                      <Target className="w-3 h-3" />
+                      <span className="text-[10px] uppercase tracking-wider font-medium">Accuracy</span>
+                    </div>
+                    <p className={`text-lg font-bold ${
+                      s.avgAccuracy >= 70 ? 'text-success' :
+                      s.avgAccuracy >= 40 ? 'text-warning' :
+                      'text-danger'
+                    }`}>
+                      {s.avgAccuracy}%
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-400 mb-1">
+                      <span className="text-[10px] uppercase tracking-wider font-medium">Avg Score</span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-900">{s.avgScore.toLocaleString()}</p>
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+
+              {/* Delete confirmation overlay */}
+              {confirmDeleteId === s.id && (
+                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
+                  <p className="text-sm font-medium text-gray-900">Delete this session?</p>
+                  <p className="text-xs text-gray-500">This action cannot be undone.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      disabled={deleting}
+                      className="px-4 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleDelete(s.id)}
+                      disabled={deleting}
+                      className="px-4 py-1.5 text-xs font-medium text-white bg-danger hover:bg-danger/90 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {deleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
