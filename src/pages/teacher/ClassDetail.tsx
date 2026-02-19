@@ -9,7 +9,7 @@ import { confirmDelete } from '../../lib/swal';
 import { SkeletonCard } from '../../components/Skeleton';
 import {
   ArrowLeft, Copy, RefreshCw, Trash2, UserPlus, Users, Shield,
-  X as XIcon, Clock, Link as LinkIcon, Mail,
+  X as XIcon, Clock, Link as LinkIcon, Mail, ClipboardList,
 } from 'lucide-react';
 import { COLLECTION_COLORS } from '../../types/models';
 import type { Classroom, ClassroomMember, ClassroomColor } from '../../types/models';
@@ -260,6 +260,13 @@ export default function ClassDetail() {
               </div>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => navigate(`/assignment/new?classroomId=${classroomId}`)}
+                className="px-3 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors flex items-center gap-1.5"
+              >
+                <ClipboardList className="w-3.5 h-3.5" />
+                Assign
+              </button>
               <button
                 onClick={() => setEditing(true)}
                 className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-500 hover:text-brand hover:border-brand/20 transition-colors"

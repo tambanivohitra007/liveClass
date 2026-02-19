@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
@@ -11,10 +11,11 @@ export default function AssignmentCreate() {
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [classrooms, setClassrooms] = useState<{id: string; name: string}[]>([]);
   const [selectedQuizId, setSelectedQuizId] = useState('');
-  const [selectedClassroomId, setSelectedClassroomId] = useState('');
+  const [selectedClassroomId, setSelectedClassroomId] = useState(searchParams.get('classroomId') || '');
   const [startAt, setStartAt] = useState('');
   const [endAt, setEndAt] = useState('');
   const [attemptsAllowed, setAttemptsAllowed] = useState(1);
