@@ -441,12 +441,16 @@ export default function QuizEditor() {
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                       activeIndex === i ? 'bg-brand/20 text-brand' : 'bg-gray-100 text-gray-500'
                     }`}>
-                      {typeLabels[q.type].split(' ')[0]}
+                      {typeLabels[q.type]}
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 truncate leading-tight">
                     {q.text || 'Untitled question'}
                   </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Clock className="w-3 h-3 text-gray-400 shrink-0" />
+                    <span className="text-[10px] text-gray-400">{q.timeLimitSec}s</span>
+                  </div>
                 </div>
               </div>
             ))}
