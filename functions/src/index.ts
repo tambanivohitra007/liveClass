@@ -234,8 +234,22 @@ interface ScoreResult {
 async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
   const { sessionId, questionId, playerId, selection, timeMs, activeToken, calledFromTrigger } = input;
 
-  // Validate session is live (skip questionState check for trigger — answer was written during live phase)
-  const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+  // Parallel fetch: session, player, dupe check, question, and shard
+  const answerId = `${questionId}_${playerId}`;
+  const shardId = getShardId(playerId);
+  const shardRef = db.doc(
+    `sessions/${sessionId}/leaderboard_shards/${shardId}`
+  );
+
+  const [sessionDoc, playerDoc, existingAnswer, questionDoc, shardSnap] = await Promise.all([
+    db.doc(`sessions/${sessionId}`).get(),
+    db.doc(`sessions/${sessionId}/players/${playerId}`).get(),
+    db.doc(`sessions/${sessionId}/answers/${answerId}`).get(),
+    db.doc(`questions/${questionId}`).get(),
+    shardRef.get(),
+  ]);
+
+  // Validate session
   if (!sessionDoc.exists) {
     throw new HttpsError("not-found", "Session not found");
   }
@@ -243,10 +257,7 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
     throw new HttpsError("failed-precondition", "Question is not currently live");
   }
 
-  // Fetch player doc for nickname + token validation
-  const playerDoc = await db
-    .doc(`sessions/${sessionId}/players/${playerId}`)
-    .get();
+  // Validate player
   if (!playerDoc.exists) {
     throw new HttpsError("not-found", "Player not found in session");
   }
@@ -259,17 +270,12 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
     }
   }
 
-  // Prevent duplicate answers (idempotency guard)
-  const answerId = `${questionId}_${playerId}`;
-  const existingAnswer = await db
-    .doc(`sessions/${sessionId}/answers/${answerId}`)
-    .get();
+  // Prevent duplicate answers
   if (existingAnswer.exists) {
     throw new HttpsError("already-exists", "Already answered this question");
   }
 
-  // Get question to check correctness
-  const questionDoc = await db.doc(`questions/${questionId}`).get();
+  // Validate question
   if (!questionDoc.exists) {
     throw new HttpsError("not-found", "Question not found");
   }
@@ -319,12 +325,7 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
     correct = question.correctAnswers.includes(selection);
   }
 
-  // Read current player state from shard to compute streak
-  const shardId = getShardId(playerId);
-  const shardRef = db.doc(
-    `sessions/${sessionId}/leaderboard_shards/${shardId}`
-  );
-  const shardSnap = await shardRef.get();
+  // Shard data (already fetched in parallel)
   const shardData = shardSnap.data() || { players: {} };
   const playerData = shardData.players[playerId] || {
     totalPoints: 0,
@@ -625,13 +626,10 @@ export const exportCsv = onCall(FUNCTION_CONFIG, async (request) => {
     throw new HttpsError("permission-denied", "Not the host");
   }
 
-  const answersSnap = await db
-    .collection(`sessions/${sessionId}/answers`)
-    .get();
-
-  const playersSnap = await db
-    .collection(`sessions/${sessionId}/players`)
-    .get();
+  const [answersSnap, playersSnap] = await Promise.all([
+    db.collection(`sessions/${sessionId}/answers`).get(),
+    db.collection(`sessions/${sessionId}/players`).get(),
+  ]);
   const playerMap = new Map<string, string>();
   playersSnap.docs.forEach((d) => {
     playerMap.set(d.id, d.data().nickname);
@@ -1478,11 +1476,21 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
     throw new HttpsError("permission-denied", "Not the host");
   }
 
-  // Aggregate leaderboard across all shards
-  const shardsSnap = await db
-    .collection(`sessions/${sessionId}/leaderboard_shards`)
-    .get();
+  // Parallel fetch: shards, questions, players, and ALL answers (single query)
+  const [shardsSnap, questionsSnap, playersSnap, allAnswersSnap] = await Promise.all([
+    db.collection(`sessions/${sessionId}/leaderboard_shards`).get(),
+    db.collection("questions").where("quizId", "==", session.quizId).get(),
+    db.collection(`sessions/${sessionId}/players`).get(),
+    db.collection(`sessions/${sessionId}/answers`).get(),
+  ]);
 
+  // Build nickname map
+  const nicknameMap = new Map<string, string>();
+  playersSnap.docs.forEach((d) => {
+    nicknameMap.set(d.id, d.data().nickname || "");
+  });
+
+  // Aggregate leaderboard across all shards
   const allPlayers: {
     playerId: string;
     nickname: string;
@@ -1496,27 +1504,12 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
       const pdata = data as { totalPoints: number; streak: number; nickname?: string };
       allPlayers.push({
         playerId: pid,
-        nickname: pdata.nickname || "",
+        nickname: pdata.nickname || nicknameMap.get(pid) || "",
         totalPoints: pdata.totalPoints,
         streak: pdata.streak,
       });
     }
   });
-
-  // Backfill nicknames
-  const missingNicknames = allPlayers.filter((p) => !p.nickname);
-  if (missingNicknames.length > 0) {
-    const playersSnap = await db
-      .collection(`sessions/${sessionId}/players`)
-      .get();
-    const nicknameMap = new Map<string, string>();
-    playersSnap.docs.forEach((d) => {
-      nicknameMap.set(d.id, d.data().nickname || "");
-    });
-    missingNicknames.forEach((p) => {
-      p.nickname = nicknameMap.get(p.playerId) || "";
-    });
-  }
 
   allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
   const top10 = allPlayers.slice(0, 10).map((p, i) => ({
@@ -1526,54 +1519,42 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
     rank: i + 1,
   }));
 
-  // Compute per-question analytics
-  const questionsSnap = await db
-    .collection("questions")
-    .where("quizId", "==", session.quizId)
-    .get();
+  // Group answers by questionId in memory (avoids N sequential queries)
+  const answersByQuestion = new Map<string, { correct: number; total: number; time: number }>();
+  allAnswersSnap.docs.forEach((d) => {
+    const data = d.data();
+    const qId = data.questionId as string;
+    const entry = answersByQuestion.get(qId) || { correct: 0, total: 0, time: 0 };
+    entry.total++;
+    if (data.correct) entry.correct++;
+    entry.time += data.timeMs || 0;
+    answersByQuestion.set(qId, entry);
+  });
 
+  // Write per-question analytics + update session + clean up RTDB in parallel
   const batch = db.batch();
   for (const qDoc of questionsSnap.docs) {
     const qId = qDoc.id;
-    const answersSnap = await db
-      .collection(`sessions/${sessionId}/answers`)
-      .where("questionId", "==", qId)
-      .get();
-
-    let totalAnswers = 0;
-    let correctCount = 0;
-    let totalTime = 0;
-
-    answersSnap.docs.forEach((d) => {
-      const data = d.data();
-      totalAnswers++;
-      if (data.correct) correctCount++;
-      totalTime += data.timeMs || 0;
-    });
-
+    const stats = answersByQuestion.get(qId) || { correct: 0, total: 0, time: 0 };
     batch.set(
       db.doc(`sessions/${sessionId}/analytics/${qId}`),
       {
-        totalAnswers,
-        correctCount,
-        correctPercent: totalAnswers > 0 ? (correctCount / totalAnswers) * 100 : 0,
-        avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
+        totalAnswers: stats.total,
+        correctCount: stats.correct,
+        correctPercent: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0,
+        avgTimeMs: stats.total > 0 ? stats.time / stats.total : 0,
       }
     );
   }
-
-  await batch.commit();
-
-  // Update session doc
-  await sessionDoc.ref.update({
+  batch.update(sessionDoc.ref, {
     status: "ended",
     endedAt: Date.now(),
     questionState: "ended",
     top10Snapshot: top10,
   });
 
-  // Clean up RTDB
   await Promise.all([
+    batch.commit(),
     rtdb.ref(`liveAnswers/${sessionId}`).remove(),
     rtdb.ref(`results/${sessionId}`).remove(),
     rtdb.ref(`answerCounts/${sessionId}`).remove(),
