@@ -4,6 +4,7 @@ import {
   Play, ArrowRight,
   ClipboardList, Trophy, Share2
 } from 'lucide-react';
+import WaveBackground from '../components/ui/WaveBackground';
 
 const ShaderBackground = lazy(() => import('../components/ui/ShaderBackground'));
 
@@ -131,16 +132,13 @@ export default function Home() {
         </div>
 
         {/* Wave divider */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 120" fill="none" className="w-full h-12" preserveAspectRatio="none">
-            
-          </svg>
-        </div>
+        <WaveBackground variant="dark" position="bottom" />
       </section>
 
       {/* How it Works */}
       <section className="py-24 relative overflow-hidden bg-gradient-to-b from-[#E8EAF0] to-surface">
-        <div className="max-w-6xl mx-auto px-4">
+        <WaveBackground variant="light" position="bottom" />
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
           {/* Section header — playful rotation */}
           <div className="text-center space-y-4 mb-20">
             <div className="text-lg text-brand font-bold rotate-[-1deg]">
