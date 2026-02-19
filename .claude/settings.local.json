@@ -37,7 +37,8 @@
       "Bash(xargs ls:*)",
       "WebSearch",
       "WebFetch(domain:help.wayground.com)",
-      "WebFetch(domain:support.wayground.com)"
+      "WebFetch(domain:support.wayground.com)",
+      "WebFetch(domain:ai.google.dev)"
     ]
   }
 }

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
+import AiGenerateModal from '../../components/AiGenerateModal';
 import { confirmAction } from '../../lib/swal';
 import {
   GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
@@ -62,12 +62,6 @@ export default function QuizEditor() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showAiModal, setShowAiModal] = useState(false);
-  const [aiTopic, setAiTopic] = useState('');
-  const [aiCount, setAiCount] = useState(5);
-  const [aiType, setAiType] = useState<QuestionType>('mcq');
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [aiDifficulty, setAiDifficulty] = useState('mixed');
-  const [aiDescription, setAiDescription] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -171,74 +165,16 @@ export default function QuizEditor() {
     setActiveIndex(questions.length);
   };
 
-  const openAiModal = () => {
-    if (title.trim() && !aiTopic.trim()) {
-      setAiTopic(title.trim());
-    }
-    if (questions.length > 0 && !aiDescription.trim()) {
-      const summaries = questions
-        .filter((q) => q.text.trim())
-        .slice(0, 8)
-        .map((q, i) => `${i + 1}. ${q.text.trim()}`)
-        .join('\n');
-      if (summaries) {
-        setAiDescription(`Existing questions in this quiz:\n${summaries}\n\nGenerate new questions that complement these.`);
-      }
-    }
-    setShowAiModal(true);
-  };
-
-  const handleAiGenerate = async () => {
-    if (!aiTopic.trim()) return;
-    setAiGenerating(true);
-    try {
-      const fn = httpsCallable<
-        Record<string, unknown>,
-        { questions: (Omit<Question, 'id' | 'quizId'> & { matchOptions?: string[] })[]; note?: string }
-      >(functions, 'generateQuestions');
-      const result = await fn({
-        topic: aiTopic,
-        count: aiCount,
-        questionType: aiType,
-        description: aiDescription,
-        difficulty: aiDifficulty,
-      });
-      const letterToIndex: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4, F: 5 };
-      const generated = result.data.questions.map((q) => {
-        // Normalize correctAnswers to match exact option text (AI may return slight mismatches or letter labels)
-        let correctAnswers = q.correctAnswers || [];
-        if (q.options && q.options.length > 0 && correctAnswers.length > 0) {
-          correctAnswers = correctAnswers.map((ca) => {
-            const exact = q.options.find((o) => o === ca);
-            if (exact) return exact;
-            const fuzzy = q.options.find((o) => o.trim().toLowerCase() === ca.trim().toLowerCase());
-            if (fuzzy) return fuzzy;
-            // Fallback: AI returned a letter label (A, B, C, D) — resolve to actual option text
-            const idx = letterToIndex[ca.trim().toUpperCase()];
-            if (idx !== undefined && idx < q.options.length) return q.options[idx];
-            return ca;
-          });
-        }
-        return {
-          ...q,
-          correctAnswers,
-          quizId: quizId || '',
-          matchOptions: q.matchOptions || undefined,
-        };
-      });
-      setQuestions([...questions, ...generated]);
-      if (result.data.note) addToast('info', result.data.note);
-      else addToast('success', `${generated.length} questions generated`);
-      setShowAiModal(false);
-      setAiTopic('');
-      setAiDescription('');
-      setActiveIndex(questions.length); // jump to first generated
-    } catch {
-      addToast('error', 'Failed to generate questions');
-    } finally {
-      setAiGenerating(false);
-    }
-  };
+  const existingQuestionsSummary = questions.length > 0
+    ? (() => {
+        const summaries = questions
+          .filter((q) => q.text.trim())
+          .slice(0, 8)
+          .map((q, i) => `${i + 1}. ${q.text.trim()}`)
+          .join('\n');
+        return summaries ? `Existing questions in this quiz:\n${summaries}\n\nGenerate new questions that complement these.` : '';
+      })()
+    : '';
 
   const updateQuestion = (index: number, updates: Partial<Question>) => {
     setQuestions(questions.map((q, i) => (i === index ? { ...q, ...updates } : q)));
@@ -419,7 +355,7 @@ export default function QuizEditor() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={openAiModal}
+            onClick={() => setShowAiModal(true)}
             className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-400 text-white font-medium rounded-xl hover:brightness-110 transition-all flex items-center gap-2 text-sm"
           >
             <Sparkles className="w-4 h-4" />
@@ -956,103 +892,22 @@ export default function QuizEditor() {
       </div>
 
       {/* ── AI Generate Modal ── */}
-      {showAiModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAiModal(false)}>
-          <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 pb-0">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-brand" />
-                AI Question Generator
-              </h3>
-              <button onClick={() => setShowAiModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Topic</label>
-                <input
-                  value={aiTopic}
-                  onChange={(e) => setAiTopic(e.target.value)}
-                  placeholder="e.g. Photosynthesis, World War II, Python basics"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description / Context</label>
-                <textarea
-                  value={aiDescription}
-                  onChange={(e) => setAiDescription(e.target.value)}
-                  placeholder="Optional: grade level, specific focus, learning objectives..."
-                  rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
-                />
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Count</label>
-                  <select
-                    value={aiCount}
-                    onChange={(e) => setAiCount(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
-                  >
-                    {[3, 5, 7, 10].map((n) => (
-                      <option key={n} value={n}>{n} questions</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
-                  <select
-                    value={aiType}
-                    onChange={(e) => setAiType(e.target.value as QuestionType)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
-                  >
-                    <option value="mcq">Multiple Choice</option>
-                    <option value="tf">True / False</option>
-                    <option value="short">Short Answer</option>
-                    <option value="matching">Matching</option>
-                    <option value="ordering">Ordering</option>
-                    <option value="fill_blank">Fill in the Blank</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
-                <select
-                  value={aiDifficulty}
-                  onChange={(e) => setAiDifficulty(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
-                >
-                  <option value="mixed">Mixed</option>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-              <button
-                onClick={handleAiGenerate}
-                disabled={aiGenerating || !aiTopic.trim()}
-                className="w-full py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
-              >
-                {aiGenerating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Generate Questions
-                  </>
-                )}
-              </button>
-              <p className="text-xs text-gray-400 text-center">Questions will be added to your quiz. Review and edit them before saving.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      <AiGenerateModal
+        open={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        generateMeta={false}
+        defaultTopic={title.trim()}
+        defaultDescription={existingQuestionsSummary}
+        onGenerated={(data) => {
+          const generated = data.questions.map((q) => ({
+            ...q,
+            quizId: quizId || '',
+            matchOptions: q.matchOptions || undefined,
+          }));
+          setQuestions([...questions, ...generated]);
+          setActiveIndex(questions.length);
+        }}
+      />
     </div>
   );
 }

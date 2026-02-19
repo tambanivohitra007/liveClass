@@ -33,9 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
+const cheerio = __importStar(require("cheerio"));
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const database_1 = require("firebase-functions/v2/database");
@@ -43,6 +44,7 @@ const params_1 = require("firebase-functions/params");
 admin.initializeApp();
 const db = admin.firestore();
 const rtdb = admin.database();
+const storageBucket = admin.storage().bucket();
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
@@ -206,18 +208,25 @@ exports.startQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
 });
 async function computeAndWriteScore(input) {
     const { sessionId, questionId, playerId, selection, timeMs, activeToken, calledFromTrigger } = input;
-    // Validate session is live (skip questionState check for trigger — answer was written during live phase)
-    const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+    // Parallel fetch: session, player, dupe check, question, and shard
+    const answerId = `${questionId}_${playerId}`;
+    const shardId = getShardId(playerId);
+    const shardRef = db.doc(`sessions/${sessionId}/leaderboard_shards/${shardId}`);
+    const [sessionDoc, playerDoc, existingAnswer, questionDoc, shardSnap] = await Promise.all([
+        db.doc(`sessions/${sessionId}`).get(),
+        db.doc(`sessions/${sessionId}/players/${playerId}`).get(),
+        db.doc(`sessions/${sessionId}/answers/${answerId}`).get(),
+        db.doc(`questions/${questionId}`).get(),
+        shardRef.get(),
+    ]);
+    // Validate session
     if (!sessionDoc.exists) {
         throw new https_1.HttpsError("not-found", "Session not found");
     }
     if (!calledFromTrigger && sessionDoc.data()?.questionState !== "live") {
         throw new https_1.HttpsError("failed-precondition", "Question is not currently live");
     }
-    // Fetch player doc for nickname + token validation
-    const playerDoc = await db
-        .doc(`sessions/${sessionId}/players/${playerId}`)
-        .get();
+    // Validate player
     if (!playerDoc.exists) {
         throw new https_1.HttpsError("not-found", "Player not found in session");
     }
@@ -228,16 +237,11 @@ async function computeAndWriteScore(input) {
             throw new https_1.HttpsError("permission-denied", "Invalid session token");
         }
     }
-    // Prevent duplicate answers (idempotency guard)
-    const answerId = `${questionId}_${playerId}`;
-    const existingAnswer = await db
-        .doc(`sessions/${sessionId}/answers/${answerId}`)
-        .get();
+    // Prevent duplicate answers
     if (existingAnswer.exists) {
         throw new https_1.HttpsError("already-exists", "Already answered this question");
     }
-    // Get question to check correctness
-    const questionDoc = await db.doc(`questions/${questionId}`).get();
+    // Validate question
     if (!questionDoc.exists) {
         throw new https_1.HttpsError("not-found", "Question not found");
     }
@@ -287,10 +291,7 @@ async function computeAndWriteScore(input) {
     else {
         correct = question.correctAnswers.includes(selection);
     }
-    // Read current player state from shard to compute streak
-    const shardId = getShardId(playerId);
-    const shardRef = db.doc(`sessions/${sessionId}/leaderboard_shards/${shardId}`);
-    const shardSnap = await shardRef.get();
+    // Shard data (already fetched in parallel)
     const shardData = shardSnap.data() || { players: {} };
     const playerData = shardData.players[playerId] || {
         totalPoints: 0,
@@ -410,10 +411,17 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (session.hostId !== request.auth.uid) {
         throw new https_1.HttpsError("permission-denied", "Not the host");
     }
+    // Parallel fetch: shards, questions, and players (for nicknames + teams)
+    const [shardsSnap, questionsSnap, playersSnap] = await Promise.all([
+        db.collection(`sessions/${sessionId}/leaderboard_shards`).get(),
+        db.collection("questions").where("quizId", "==", session.quizId).get(),
+        db.collection(`sessions/${sessionId}/players`).get(),
+    ]);
     // Aggregate leaderboard across all 10 shards
-    const shardsSnap = await db
-        .collection(`sessions/${sessionId}/leaderboard_shards`)
-        .get();
+    const nicknameMap = new Map();
+    playersSnap.docs.forEach((d) => {
+        nicknameMap.set(d.id, d.data().nickname || "");
+    });
     const allPlayers = [];
     shardsSnap.docs.forEach((shardDoc) => {
         const players = shardDoc.data().players || {};
@@ -421,26 +429,12 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
             const pdata = data;
             allPlayers.push({
                 playerId: pid,
-                nickname: pdata.nickname || "",
+                nickname: pdata.nickname || nicknameMap.get(pid) || "",
                 totalPoints: pdata.totalPoints,
                 streak: pdata.streak,
             });
         }
     });
-    // Backfill nicknames from player docs if missing in shards
-    const missingNicknames = allPlayers.filter((p) => !p.nickname);
-    if (missingNicknames.length > 0) {
-        const playersSnap2 = await db
-            .collection(`sessions/${sessionId}/players`)
-            .get();
-        const nicknameMap = new Map();
-        playersSnap2.docs.forEach((d) => {
-            nicknameMap.set(d.id, d.data().nickname || "");
-        });
-        missingNicknames.forEach((p) => {
-            p.nickname = nicknameMap.get(p.playerId) || "";
-        });
-    }
     // Sort by totalPoints descending, take top 10
     allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
     const top10 = allPlayers.slice(0, 10).map((p, i) => ({
@@ -449,16 +443,13 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         totalPoints: p.totalPoints,
         rank: i + 1,
     }));
-    // Get all answers for the CURRENT question (fix: filter by actual questionId)
-    const questionsSnap = await db
-        .collection("questions")
-        .where("quizId", "==", session.quizId)
-        .get();
+    // Determine current question
     const questionsArr = questionsSnap.docs.map((d) => d.id);
     const qIdx = session.questionOrder
         ? session.questionOrder[session.currentQuestionIndex]
         : session.currentQuestionIndex;
     const currentQuestionId = questionsArr[qIdx];
+    // Fetch answers for analytics (only read we couldn't parallelize — needs questionId)
     let totalCorrect = 0;
     let totalTime = 0;
     let totalAnswers = 0;
@@ -475,21 +466,9 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
             totalTime += data.timeMs || 0;
         });
     }
-    await db
-        .doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
-        .set({
-        questionIndex: session.currentQuestionIndex,
-        totalAnswers,
-        correctCount: totalCorrect,
-        correctPercent: totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
-        avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
-    });
     // Compute team scores if team mode is enabled
     let teamScoreSnapshot = [];
     if (session.teamMode && session.teams) {
-        const playersSnap = await db
-            .collection(`sessions/${sessionId}/players`)
-            .get();
         const playerTeams = new Map();
         playersSnap.docs.forEach((d) => {
             const data = d.data();
@@ -518,14 +497,22 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     // Check if this is the last question
     const totalQuestions = questionsArr.length;
     const isLastQuestion = session.currentQuestionIndex >= totalQuestions - 1;
-    await sessionDoc.ref.update({
-        questionState: "reveal",
-        top10Snapshot: top10,
-        ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
-        ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
-    });
-    // Clean up RTDB data for this session
+    // Write analytics, update session, and clean up RTDB in parallel
     await Promise.all([
+        db.doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
+            .set({
+            questionIndex: session.currentQuestionIndex,
+            totalAnswers,
+            correctCount: totalCorrect,
+            correctPercent: totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
+            avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
+        }),
+        sessionDoc.ref.update({
+            questionState: "reveal",
+            top10Snapshot: top10,
+            ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
+            ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
+        }),
         rtdb.ref(`liveAnswers/${sessionId}`).remove(),
         rtdb.ref(`results/${sessionId}`).remove(),
         rtdb.ref(`answerCounts/${sessionId}`).remove(),
@@ -545,12 +532,10 @@ exports.exportCsv = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (sessionDoc.data()?.hostId !== request.auth.uid) {
         throw new https_1.HttpsError("permission-denied", "Not the host");
     }
-    const answersSnap = await db
-        .collection(`sessions/${sessionId}/answers`)
-        .get();
-    const playersSnap = await db
-        .collection(`sessions/${sessionId}/players`)
-        .get();
+    const [answersSnap, playersSnap] = await Promise.all([
+        db.collection(`sessions/${sessionId}/answers`).get(),
+        db.collection(`sessions/${sessionId}/players`).get(),
+    ]);
     const playerMap = new Map();
     playersSnap.docs.forEach((d) => {
         playerMap.set(d.id, d.data().nickname);
@@ -600,32 +585,132 @@ exports.reportViolation = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) =
     }, { merge: true });
     return { success: true };
 });
+// --- PDF Helper: download from Storage and return base64 ---
+async function getPdfBase64(storagePath) {
+    const file = storageBucket.file(storagePath);
+    const [exists] = await file.exists();
+    if (!exists) {
+        throw new https_1.HttpsError("not-found", "PDF file not found in storage");
+    }
+    const [metadata] = await file.getMetadata();
+    const size = Number(metadata.size || 0);
+    if (size === 0) {
+        throw new https_1.HttpsError("invalid-argument", "PDF file is empty");
+    }
+    if (size > 10 * 1024 * 1024) {
+        throw new https_1.HttpsError("invalid-argument", "PDF file exceeds 10MB limit");
+    }
+    const [buffer] = await file.download();
+    return buffer.toString("base64");
+}
+// --- URL Helper: fetch and extract text content ---
+async function extractUrlContent(targetUrl) {
+    // Block private/internal IPs
+    const urlObj = new URL(targetUrl);
+    const hostname = urlObj.hostname.toLowerCase();
+    const blockedPatterns = ["localhost", "127.", "10.", "192.168.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.", "0.0.0.0", "::1", "[::1]"];
+    if (blockedPatterns.some((p) => hostname.startsWith(p) || hostname === p)) {
+        throw new https_1.HttpsError("invalid-argument", "Private/internal addresses are not allowed");
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+        const res = await fetch(targetUrl, {
+            signal: controller.signal,
+            headers: { "User-Agent": "LiveClassBot/1.0" },
+            redirect: "follow",
+        });
+        clearTimeout(timeout);
+        if (!res.ok) {
+            throw new https_1.HttpsError("internal", `URL returned HTTP ${res.status}`);
+        }
+        const contentType = res.headers.get("content-type") || "";
+        if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
+            throw new https_1.HttpsError("invalid-argument", "URL must point to an HTML or text page");
+        }
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        // Remove non-content elements
+        $("script, style, nav, header, footer, aside, iframe, noscript").remove();
+        // Extract title
+        const pageTitle = $("title").first().text().trim() || $("h1").first().text().trim() || "";
+        // Extract main content: prefer <article> or <main>, fallback to <body>
+        let textContent = "";
+        const mainEl = $("article").first().length ? $("article").first() : $("main").first().length ? $("main").first() : $("body");
+        textContent = mainEl.text();
+        // Clean whitespace
+        textContent = textContent.replace(/\s+/g, " ").trim();
+        // Truncate to 15000 chars
+        if (textContent.length > 15000) {
+            textContent = textContent.substring(0, 15000) + "...";
+        }
+        if (textContent.length < 50) {
+            throw new https_1.HttpsError("invalid-argument", "Not enough content extracted from URL — the page may be empty or use client-side rendering");
+        }
+        return { text: textContent, title: pageTitle };
+    }
+    catch (err) {
+        clearTimeout(timeout);
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        if (err.name === "AbortError") {
+            throw new https_1.HttpsError("deadline-exceeded", "URL took too long to respond");
+        }
+        throw new https_1.HttpsError("internal", `Could not access URL: ${err.message}`);
+    }
+}
 // --- AI Question Generator ---
-exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "512MiB", secrets: [geminiApiKey] }, async (request) => {
+exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "1GiB", secrets: [geminiApiKey] }, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
-    const { topic, count = 5, questionType = "mcq", description = "", difficulty = "mixed", generateMeta = false, } = request.data;
-    if (!topic || topic.trim().length < 3) {
-        throw new https_1.HttpsError("invalid-argument", "Topic must be at least 3 characters");
+    const { source = "topic", topic = "", count = 5, questionType = "mcq", description = "", difficulty = "mixed", generateMeta = false, pdfStoragePath, url, additionalContext = "", } = request.data;
+    // Source-specific validation
+    if (source === "topic") {
+        if (!topic || topic.trim().length < 3) {
+            throw new https_1.HttpsError("invalid-argument", "Topic must be at least 3 characters");
+        }
+    }
+    else if (source === "pdf") {
+        if (!pdfStoragePath) {
+            throw new https_1.HttpsError("invalid-argument", "PDF storage path is required");
+        }
+    }
+    else if (source === "url") {
+        if (!url) {
+            throw new https_1.HttpsError("invalid-argument", "URL is required");
+        }
+        try {
+            const parsed = new URL(url);
+            if (!["http:", "https:"].includes(parsed.protocol)) {
+                throw new Error("Invalid protocol");
+            }
+        }
+        catch {
+            throw new https_1.HttpsError("invalid-argument", "Invalid URL — must be a valid HTTP/HTTPS URL");
+        }
+    }
+    else {
+        throw new https_1.HttpsError("invalid-argument", "Invalid source — must be topic, pdf, or url");
     }
     const clampedCount = Math.min(Math.max(count, 1), 10);
     const apiKey = geminiApiKey.value();
     if (!apiKey) {
         // Fallback: generate template questions without AI
+        const label = source === "topic" ? topic : source === "url" ? "URL content" : "PDF content";
         const fallbackQuestion = (i) => {
-            const base = { type: questionType, text: `Question ${i + 1} about ${topic}` };
+            const base = { type: questionType, text: `Question ${i + 1} about ${label}` };
             switch (questionType) {
                 case "tf":
                     return { ...base, options: ["True", "False"], correctAnswers: ["True"], timeLimitSec: 15 };
                 case "short":
-                    return { ...base, options: [], correctAnswers: [topic], timeLimitSec: 30 };
+                    return { ...base, options: [], correctAnswers: [label], timeLimitSec: 30 };
                 case "matching":
-                    return { ...base, text: `Match the following about ${topic}`, options: ["Item A", "Item B", "Item C"], matchOptions: ["Match A", "Match B", "Match C"], correctAnswers: ["Item A", "Item B", "Item C"], timeLimitSec: 30 };
+                    return { ...base, text: `Match the following about ${label}`, options: ["Item A", "Item B", "Item C"], matchOptions: ["Match A", "Match B", "Match C"], correctAnswers: ["Item A", "Item B", "Item C"], timeLimitSec: 30 };
                 case "ordering":
-                    return { ...base, text: `Put these in the correct order (${topic})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
+                    return { ...base, text: `Put these in the correct order (${label})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
                 case "fill_blank":
-                    return { ...base, text: `The ___ is related to ${topic}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
+                    return { ...base, text: `The ___ is related to ${label}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
                 default:
                     return { ...base, options: ["Option A", "Option B", "Option C", "Option D"], correctAnswers: ["Option A"], timeLimitSec: 20 };
             }
@@ -633,7 +718,7 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "5
         const questions = Array.from({ length: clampedCount }, (_, i) => fallbackQuestion(i));
         return {
             questions,
-            ...(generateMeta ? { title: `Quiz: ${topic}`, description: `A quiz about ${topic}` } : {}),
+            ...(generateMeta ? { title: `Quiz: ${label}`, description: `A quiz about ${label}` } : {}),
             note: "AI API key not configured. Template questions generated — edit them manually.",
         };
     }
@@ -649,7 +734,43 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "5
     const metaInstruction = generateMeta
         ? 'Return ONLY valid JSON: {"title":"...","description":"...","questions":[...]}'
         : "Return ONLY a valid JSON array. Each element:";
-    const prompt = `Generate ${clampedCount} quiz questions about "${topic}".
+    const commonInstructions = `Generate ${clampedCount} quiz questions.
+${additionalContext ? `Additional context: ${additionalContext}` : ""}
+Difficulty: ${difficulty}.
+Question type: ${questionType}.
+
+${metaInstruction}
+${typeTemplates[questionType] || typeTemplates.mcq}
+IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
+Make questions educational, varied in difficulty, and factually accurate.`;
+    // Build source-specific prompt + Gemini parts
+    let geminiParts;
+    let maxOutputTokens = 4096;
+    if (source === "pdf") {
+        const pdfBase64 = await getPdfBase64(pdfStoragePath);
+        const pdfPrompt = `Based on the content of this PDF document, ${commonInstructions}
+${description ? `Context: ${description}` : ""}`;
+        geminiParts = [
+            { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
+            { text: pdfPrompt },
+        ];
+        maxOutputTokens = 8192;
+    }
+    else if (source === "url") {
+        const { text: webText, title: webTitle } = await extractUrlContent(url);
+        const urlPrompt = `Based on the following web page content, ${commonInstructions}
+${description ? `Context: ${description}` : ""}
+Web page title: "${webTitle}"
+
+--- WEB PAGE CONTENT ---
+${webText}
+--- END WEB PAGE CONTENT ---`;
+        geminiParts = [{ text: urlPrompt }];
+        maxOutputTokens = 8192;
+    }
+    else {
+        // topic mode (original behavior)
+        const topicPrompt = `Generate ${clampedCount} quiz questions about "${topic}".
 ${description ? `Context: ${description}` : ""}
 Difficulty: ${difficulty}.
 Question type: ${questionType}.
@@ -658,18 +779,24 @@ ${metaInstruction}
 ${typeTemplates[questionType] || typeTemplates.mcq}
 IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
 Make questions educational, varied in difficulty, and factually accurate.`;
+        geminiParts = [{ text: topicPrompt }];
+    }
     try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { maxOutputTokens: 4096, temperature: 0.7 },
+                contents: [{ parts: geminiParts }],
+                generationConfig: { maxOutputTokens, temperature: 0.7 },
             }),
         });
         if (!res.ok) {
             const errBody = await res.text();
             console.error("Gemini API HTTP error:", res.status, errBody);
+            // Check for PDF-specific errors
+            if (source === "pdf" && (errBody.includes("password") || errBody.includes("encrypted"))) {
+                throw new https_1.HttpsError("invalid-argument", "Could not read PDF — it may be password-protected");
+            }
             throw new https_1.HttpsError("internal", `Gemini API error: ${res.status}`);
         }
         const data = await res.json();
@@ -742,6 +869,10 @@ Make questions educational, varied in difficulty, and factually accurate.`;
                 timeLimitSec: q.timeLimitSec || 20,
             };
         });
+        // Clean up temporary PDF from storage after successful generation
+        if (source === "pdf" && pdfStoragePath) {
+            storageBucket.file(pdfStoragePath).delete().catch(() => { });
+        }
         return {
             questions: mapped,
             ...(generateMeta ? { title, description: desc } : {}),
@@ -1209,6 +1340,92 @@ exports.regenerateJoinCode = (0, https_1.onCall)(FUNCTION_CONFIG, async (request
         updatedAt: Date.now(),
     });
     return { joinCode, expiresAt: Date.now() + FOURTEEN_DAYS_MS };
+});
+// --- End Student-Paced Session ---
+exports.endStudentPacedSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { sessionId } = request.data;
+    const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Session not found");
+    }
+    const session = sessionDoc.data();
+    if (session.hostId !== request.auth.uid) {
+        throw new https_1.HttpsError("permission-denied", "Not the host");
+    }
+    // Parallel fetch: shards, questions, players, and ALL answers (single query)
+    const [shardsSnap, questionsSnap, playersSnap, allAnswersSnap] = await Promise.all([
+        db.collection(`sessions/${sessionId}/leaderboard_shards`).get(),
+        db.collection("questions").where("quizId", "==", session.quizId).get(),
+        db.collection(`sessions/${sessionId}/players`).get(),
+        db.collection(`sessions/${sessionId}/answers`).get(),
+    ]);
+    // Build nickname map
+    const nicknameMap = new Map();
+    playersSnap.docs.forEach((d) => {
+        nicknameMap.set(d.id, d.data().nickname || "");
+    });
+    // Aggregate leaderboard across all shards
+    const allPlayers = [];
+    shardsSnap.docs.forEach((shardDoc) => {
+        const players = shardDoc.data().players || {};
+        for (const [pid, data] of Object.entries(players)) {
+            const pdata = data;
+            allPlayers.push({
+                playerId: pid,
+                nickname: pdata.nickname || nicknameMap.get(pid) || "",
+                totalPoints: pdata.totalPoints,
+                streak: pdata.streak,
+            });
+        }
+    });
+    allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
+    const top10 = allPlayers.slice(0, 10).map((p, i) => ({
+        playerId: p.playerId,
+        nickname: p.nickname,
+        totalPoints: p.totalPoints,
+        rank: i + 1,
+    }));
+    // Group answers by questionId in memory (avoids N sequential queries)
+    const answersByQuestion = new Map();
+    allAnswersSnap.docs.forEach((d) => {
+        const data = d.data();
+        const qId = data.questionId;
+        const entry = answersByQuestion.get(qId) || { correct: 0, total: 0, time: 0 };
+        entry.total++;
+        if (data.correct)
+            entry.correct++;
+        entry.time += data.timeMs || 0;
+        answersByQuestion.set(qId, entry);
+    });
+    // Write per-question analytics + update session + clean up RTDB in parallel
+    const batch = db.batch();
+    for (const qDoc of questionsSnap.docs) {
+        const qId = qDoc.id;
+        const stats = answersByQuestion.get(qId) || { correct: 0, total: 0, time: 0 };
+        batch.set(db.doc(`sessions/${sessionId}/analytics/${qId}`), {
+            totalAnswers: stats.total,
+            correctCount: stats.correct,
+            correctPercent: stats.total > 0 ? (stats.correct / stats.total) * 100 : 0,
+            avgTimeMs: stats.total > 0 ? stats.time / stats.total : 0,
+        });
+    }
+    batch.update(sessionDoc.ref, {
+        status: "ended",
+        endedAt: Date.now(),
+        questionState: "ended",
+        top10Snapshot: top10,
+    });
+    await Promise.all([
+        batch.commit(),
+        rtdb.ref(`liveAnswers/${sessionId}`).remove(),
+        rtdb.ref(`results/${sessionId}`).remove(),
+        rtdb.ref(`answerCounts/${sessionId}`).remove(),
+        rtdb.ref(`studentProgress/${sessionId}`).remove(),
+    ]);
+    return { success: true, top10 };
 });
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({

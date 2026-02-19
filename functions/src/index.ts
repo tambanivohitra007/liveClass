@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as crypto from "crypto";
+import * as cheerio from "cheerio";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onValueCreated } from "firebase-functions/v2/database";
@@ -8,6 +9,7 @@ import { defineSecret } from "firebase-functions/params";
 admin.initializeApp();
 const db = admin.firestore();
 const rtdb = admin.database();
+const storageBucket = admin.storage().bucket();
 
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
@@ -698,32 +700,147 @@ export const reportViolation = onCall(FUNCTION_CONFIG, async (request) => {
   return { success: true };
 });
 
+// --- PDF Helper: download from Storage and return base64 ---
+async function getPdfBase64(storagePath: string): Promise<string> {
+  const file = storageBucket.file(storagePath);
+  const [exists] = await file.exists();
+  if (!exists) {
+    throw new HttpsError("not-found", "PDF file not found in storage");
+  }
+  const [metadata] = await file.getMetadata();
+  const size = Number(metadata.size || 0);
+  if (size === 0) {
+    throw new HttpsError("invalid-argument", "PDF file is empty");
+  }
+  if (size > 10 * 1024 * 1024) {
+    throw new HttpsError("invalid-argument", "PDF file exceeds 10MB limit");
+  }
+  const [buffer] = await file.download();
+  return buffer.toString("base64");
+}
+
+// --- URL Helper: fetch and extract text content ---
+async function extractUrlContent(targetUrl: string): Promise<{ text: string; title: string }> {
+  // Block private/internal IPs
+  const urlObj = new URL(targetUrl);
+  const hostname = urlObj.hostname.toLowerCase();
+  const blockedPatterns = ["localhost", "127.", "10.", "192.168.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.", "0.0.0.0", "::1", "[::1]"];
+  if (blockedPatterns.some((p) => hostname.startsWith(p) || hostname === p)) {
+    throw new HttpsError("invalid-argument", "Private/internal addresses are not allowed");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const res = await fetch(targetUrl, {
+      signal: controller.signal,
+      headers: { "User-Agent": "LiveClassBot/1.0" },
+      redirect: "follow",
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      throw new HttpsError("internal", `URL returned HTTP ${res.status}`);
+    }
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
+      throw new HttpsError("invalid-argument", "URL must point to an HTML or text page");
+    }
+
+    const html = await res.text();
+    const $ = cheerio.load(html);
+
+    // Remove non-content elements
+    $("script, style, nav, header, footer, aside, iframe, noscript").remove();
+
+    // Extract title
+    const pageTitle = $("title").first().text().trim() || $("h1").first().text().trim() || "";
+
+    // Extract main content: prefer <article> or <main>, fallback to <body>
+    let textContent = "";
+    const mainEl = $("article").first().length ? $("article").first() : $("main").first().length ? $("main").first() : $("body");
+    textContent = mainEl.text();
+
+    // Clean whitespace
+    textContent = textContent.replace(/\s+/g, " ").trim();
+
+    // Truncate to 15000 chars
+    if (textContent.length > 15000) {
+      textContent = textContent.substring(0, 15000) + "...";
+    }
+
+    if (textContent.length < 50) {
+      throw new HttpsError("invalid-argument", "Not enough content extracted from URL — the page may be empty or use client-side rendering");
+    }
+
+    return { text: textContent, title: pageTitle };
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err instanceof HttpsError) throw err;
+    if ((err as Error).name === "AbortError") {
+      throw new HttpsError("deadline-exceeded", "URL took too long to respond");
+    }
+    throw new HttpsError("internal", `Could not access URL: ${(err as Error).message}`);
+  }
+}
+
 // --- AI Question Generator ---
 export const generateQuestions = onCall(
-  { ...FUNCTION_CONFIG, memory: "512MiB" as const, secrets: [geminiApiKey] },
+  { ...FUNCTION_CONFIG, memory: "1GiB" as const, secrets: [geminiApiKey] },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Must be logged in");
     }
 
     const {
-      topic,
+      source = "topic",
+      topic = "",
       count = 5,
       questionType = "mcq",
       description = "",
       difficulty = "mixed",
       generateMeta = false,
+      pdfStoragePath,
+      url,
+      additionalContext = "",
     } = request.data as {
-      topic: string;
+      source?: "topic" | "pdf" | "url";
+      topic?: string;
       count?: number;
       questionType?: string;
       description?: string;
       difficulty?: string;
       generateMeta?: boolean;
+      pdfStoragePath?: string;
+      url?: string;
+      additionalContext?: string;
     };
 
-    if (!topic || topic.trim().length < 3) {
-      throw new HttpsError("invalid-argument", "Topic must be at least 3 characters");
+    // Source-specific validation
+    if (source === "topic") {
+      if (!topic || topic.trim().length < 3) {
+        throw new HttpsError("invalid-argument", "Topic must be at least 3 characters");
+      }
+    } else if (source === "pdf") {
+      if (!pdfStoragePath) {
+        throw new HttpsError("invalid-argument", "PDF storage path is required");
+      }
+    } else if (source === "url") {
+      if (!url) {
+        throw new HttpsError("invalid-argument", "URL is required");
+      }
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+          throw new Error("Invalid protocol");
+        }
+      } catch {
+        throw new HttpsError("invalid-argument", "Invalid URL — must be a valid HTTP/HTTPS URL");
+      }
+    } else {
+      throw new HttpsError("invalid-argument", "Invalid source — must be topic, pdf, or url");
     }
 
     const clampedCount = Math.min(Math.max(count, 1), 10);
@@ -731,19 +848,20 @@ export const generateQuestions = onCall(
     const apiKey = geminiApiKey.value();
     if (!apiKey) {
       // Fallback: generate template questions without AI
+      const label = source === "topic" ? topic : source === "url" ? "URL content" : "PDF content";
       const fallbackQuestion = (i: number) => {
-        const base = { type: questionType, text: `Question ${i + 1} about ${topic}` };
+        const base = { type: questionType, text: `Question ${i + 1} about ${label}` };
         switch (questionType) {
           case "tf":
             return { ...base, options: ["True", "False"], correctAnswers: ["True"], timeLimitSec: 15 };
           case "short":
-            return { ...base, options: [], correctAnswers: [topic], timeLimitSec: 30 };
+            return { ...base, options: [], correctAnswers: [label], timeLimitSec: 30 };
           case "matching":
-            return { ...base, text: `Match the following about ${topic}`, options: ["Item A", "Item B", "Item C"], matchOptions: ["Match A", "Match B", "Match C"], correctAnswers: ["Item A", "Item B", "Item C"], timeLimitSec: 30 };
+            return { ...base, text: `Match the following about ${label}`, options: ["Item A", "Item B", "Item C"], matchOptions: ["Match A", "Match B", "Match C"], correctAnswers: ["Item A", "Item B", "Item C"], timeLimitSec: 30 };
           case "ordering":
-            return { ...base, text: `Put these in the correct order (${topic})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
+            return { ...base, text: `Put these in the correct order (${label})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
           case "fill_blank":
-            return { ...base, text: `The ___ is related to ${topic}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
+            return { ...base, text: `The ___ is related to ${label}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
           default:
             return { ...base, options: ["Option A", "Option B", "Option C", "Option D"], correctAnswers: ["Option A"], timeLimitSec: 20 };
         }
@@ -751,7 +869,7 @@ export const generateQuestions = onCall(
       const questions = Array.from({ length: clampedCount }, (_, i) => fallbackQuestion(i));
       return {
         questions,
-        ...(generateMeta ? { title: `Quiz: ${topic}`, description: `A quiz about ${topic}` } : {}),
+        ...(generateMeta ? { title: `Quiz: ${label}`, description: `A quiz about ${label}` } : {}),
         note: "AI API key not configured. Template questions generated — edit them manually.",
       };
     }
@@ -770,8 +888,8 @@ export const generateQuestions = onCall(
       ? 'Return ONLY valid JSON: {"title":"...","description":"...","questions":[...]}'
       : "Return ONLY a valid JSON array. Each element:";
 
-    const prompt = `Generate ${clampedCount} quiz questions about "${topic}".
-${description ? `Context: ${description}` : ""}
+    const commonInstructions = `Generate ${clampedCount} quiz questions.
+${additionalContext ? `Additional context: ${additionalContext}` : ""}
 Difficulty: ${difficulty}.
 Question type: ${questionType}.
 
@@ -780,6 +898,44 @@ ${typeTemplates[questionType] || typeTemplates.mcq}
 IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
 Make questions educational, varied in difficulty, and factually accurate.`;
 
+    // Build source-specific prompt + Gemini parts
+    let geminiParts: Record<string, unknown>[];
+    let maxOutputTokens = 4096;
+
+    if (source === "pdf") {
+      const pdfBase64 = await getPdfBase64(pdfStoragePath!);
+      const pdfPrompt = `Based on the content of this PDF document, ${commonInstructions}
+${description ? `Context: ${description}` : ""}`;
+      geminiParts = [
+        { inline_data: { mime_type: "application/pdf", data: pdfBase64 } },
+        { text: pdfPrompt },
+      ];
+      maxOutputTokens = 8192;
+    } else if (source === "url") {
+      const { text: webText, title: webTitle } = await extractUrlContent(url!);
+      const urlPrompt = `Based on the following web page content, ${commonInstructions}
+${description ? `Context: ${description}` : ""}
+Web page title: "${webTitle}"
+
+--- WEB PAGE CONTENT ---
+${webText}
+--- END WEB PAGE CONTENT ---`;
+      geminiParts = [{ text: urlPrompt }];
+      maxOutputTokens = 8192;
+    } else {
+      // topic mode (original behavior)
+      const topicPrompt = `Generate ${clampedCount} quiz questions about "${topic}".
+${description ? `Context: ${description}` : ""}
+Difficulty: ${difficulty}.
+Question type: ${questionType}.
+
+${metaInstruction}
+${typeTemplates[questionType] || typeTemplates.mcq}
+IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
+Make questions educational, varied in difficulty, and factually accurate.`;
+      geminiParts = [{ text: topicPrompt }];
+    }
+
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -787,8 +943,8 @@ Make questions educational, varied in difficulty, and factually accurate.`;
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 4096, temperature: 0.7 },
+            contents: [{ parts: geminiParts }],
+            generationConfig: { maxOutputTokens, temperature: 0.7 },
           }),
         }
       );
@@ -796,6 +952,10 @@ Make questions educational, varied in difficulty, and factually accurate.`;
       if (!res.ok) {
         const errBody = await res.text();
         console.error("Gemini API HTTP error:", res.status, errBody);
+        // Check for PDF-specific errors
+        if (source === "pdf" && (errBody.includes("password") || errBody.includes("encrypted"))) {
+          throw new HttpsError("invalid-argument", "Could not read PDF — it may be password-protected");
+        }
         throw new HttpsError("internal", `Gemini API error: ${res.status}`);
       }
 
@@ -872,6 +1032,11 @@ Make questions educational, varied in difficulty, and factually accurate.`;
           };
         }
       );
+
+      // Clean up temporary PDF from storage after successful generation
+      if (source === "pdf" && pdfStoragePath) {
+        storageBucket.file(pdfStoragePath).delete().catch(() => {});
+      }
 
       return {
         questions: mapped,
