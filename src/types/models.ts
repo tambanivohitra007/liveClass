@@ -1,10 +1,10 @@
 export const COLLECTION_COLORS = [
-  { key: 'brand',   label: 'Rose',   bg: 'bg-brand',     text: 'text-brand' },
-  { key: 'accent',  label: 'Orange', bg: 'bg-accent',    text: 'text-accent' },
-  { key: 'success', label: 'Olive',  bg: 'bg-success',   text: 'text-success' },
-  { key: 'warning', label: 'Amber',  bg: 'bg-warning',   text: 'text-warning' },
-  { key: 'info',    label: 'Blue',   bg: 'bg-info',      text: 'text-info' },
-  { key: 'purple',  label: 'Purple', bg: 'bg-[#8B5CF6]', text: 'text-[#8B5CF6]' },
+  { key: 'brand',   label: 'Rose',   bg: 'bg-gradient-to-br from-[#E87B91] to-[#B94458]', text: 'text-brand' },
+  { key: 'accent',  label: 'Orange', bg: 'bg-gradient-to-br from-[#FFB366] to-[#CC660E]', text: 'text-accent' },
+  { key: 'success', label: 'Olive',  bg: 'bg-gradient-to-br from-[#8AAF5E] to-[#4A6331]', text: 'text-success' },
+  { key: 'warning', label: 'Amber',  bg: 'bg-gradient-to-br from-[#FFC94D] to-[#D97706]', text: 'text-warning' },
+  { key: 'info',    label: 'Blue',   bg: 'bg-gradient-to-br from-[#6B9AD4] to-[#2E5290]', text: 'text-info' },
+  { key: 'purple',  label: 'Purple', bg: 'bg-gradient-to-br from-[#A78BFA] to-[#7C3AED]', text: 'text-[#8B5CF6]' },
 ] as const;
 
 export type CollectionColor = typeof COLLECTION_COLORS[number]['key'];

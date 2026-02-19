@@ -199,7 +199,7 @@ export default function ClassDetail() {
       </button>
 
       {/* Header Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6 animate-fade-in">
+      <div className="bg-white border border-gray-100 shadow-sm overflow-hidden mb-6 animate-fade-in">
         <div className={`h-2 ${colorMeta.bg}`} />
         {editing ? (
           <div className="p-6 space-y-4">

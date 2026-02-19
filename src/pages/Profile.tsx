@@ -295,16 +295,20 @@ export default function Profile() {
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
+                  disabled={user?.approvalStatus === 'pending'}
                   className={`py-3 rounded-xl border-2 font-medium capitalize transition-all ${
                     role === r
                       ? 'border-brand bg-brand/5 text-brand'
                       : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                  }`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {r}
                 </button>
               ))}
             </div>
+            {user?.approvalStatus === 'pending' && (
+              <p className="text-xs text-amber-600 mt-1.5">Role is locked while your teacher account is pending approval.</p>
+            )}
           </div>
           <button
             onClick={handleSaveProfile}
