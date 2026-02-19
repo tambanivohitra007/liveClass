@@ -38,7 +38,10 @@
       "WebSearch",
       "WebFetch(domain:help.wayground.com)",
       "WebFetch(domain:support.wayground.com)",
-      "WebFetch(domain:ai.google.dev)"
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(node -e:*)",
+      "Bash(del /f \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\node_modules\\\\.tmp\\\\tsconfig.app.tsbuildinfo\")",
+      "Bash(npx vite build:*)"
     ]
   }
 }

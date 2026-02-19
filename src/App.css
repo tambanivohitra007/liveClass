@@ -320,6 +320,20 @@
   }
 }
 
+@keyframes overtake-glow {
+  0% { box-shadow: 0 0 0 0 rgba(212, 86, 107, 0.6); }
+  50% { box-shadow: 0 0 20px 4px rgba(212, 86, 107, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 86, 107, 0); }
+}
+.leaderboard-overtake { animation: overtake-glow 1s ease-out; }
+
+@keyframes leader-celebrate {
+  0% { box-shadow: 0 0 0 0 rgba(232, 163, 8, 0.7); }
+  40% { box-shadow: 0 0 30px 8px rgba(232, 163, 8, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 163, 8, 0); }
+}
+.new-leader-celebrate { animation: leader-celebrate 1.2s ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

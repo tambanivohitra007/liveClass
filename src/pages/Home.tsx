@@ -95,7 +95,7 @@ export default function Home() {
 
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
               Make Learning
-              <span className="block text-4xl md:text-8xl font-black tracking-tighter hero-highlight">
+              <span className="block text-4xl md:text-8xl font-black tracking-tighter hero-highlight p-2">
                 Unforgettable
               </span>
             </h1>
