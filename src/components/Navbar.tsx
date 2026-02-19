@@ -56,7 +56,7 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className="bg-surface-dark border-b border-white/10 sticky top-0 z-50 shadow-lg">
+    <nav className="bg-gradient-to-r from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] border-b border-white/10 sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 no-underline group">
