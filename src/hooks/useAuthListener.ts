@@ -22,7 +22,14 @@ export function useAuthListener() {
 
       if (firebaseUser) {
         const userRef = doc(db, 'users', firebaseUser.uid);
-        const snap = await getDoc(userRef);
+        let snap;
+        try {
+          snap = await getDoc(userRef);
+        } catch {
+          // Network or permission error — still stop loading so the app doesn't hang
+          setLoading(false);
+          return;
+        }
 
         // New user without a doc — flag for role selection
         if (!snap.exists()) {

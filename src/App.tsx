@@ -76,7 +76,8 @@ function StudentRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!firebaseUser) return <Navigate to="/login" replace />;
-  if (user?.role === 'teacher' && (user.approvalStatus === 'approved' || user.email === ADMIN_EMAIL)) {
+  if (!user) return <Navigate to="/choose-role" replace />;
+  if (user.role === 'teacher' && (user.approvalStatus === 'approved' || user.email === ADMIN_EMAIL)) {
     return <Navigate to="/dashboard" replace />;
   }
 

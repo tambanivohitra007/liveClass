@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
 import ValidatedInput from '../components/ValidatedInput';
 import WaveBackground from '../components/ui/WaveBackground';
 import logo from '../assets/logo.png';
@@ -11,7 +12,19 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [waitingForAuth, setWaitingForAuth] = useState(false);
   const navigate = useNavigate();
+  const { user, firebaseUser, loading: authLoading } = useAuthStore();
+
+  // Redirect after auth state settles
+  useEffect(() => {
+    if (!waitingForAuth || authLoading) return;
+    if (!firebaseUser) return;
+    if (user) {
+      navigate(user.role === 'student' ? '/student/dashboard' : '/dashboard', { replace: true });
+      setWaitingForAuth(false);
+    }
+  }, [waitingForAuth, authLoading, firebaseUser, user]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +32,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
+      setWaitingForAuth(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {
@@ -39,7 +52,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
-      navigate('/dashboard');
+      setWaitingForAuth(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google login failed');
     } finally {
