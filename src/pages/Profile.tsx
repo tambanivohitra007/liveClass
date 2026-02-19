@@ -93,6 +93,10 @@ export default function Profile() {
 
       if (roleChanged && role === 'teacher') {
         addToast('warning', 'Your teacher account is pending admin approval.');
+        navigate('/pending-approval');
+      } else if (roleChanged && role === 'student') {
+        addToast('success', 'Switched to student. Welcome!');
+        navigate('/student/dashboard');
       } else {
         addToast('success', 'Profile updated successfully.');
       }

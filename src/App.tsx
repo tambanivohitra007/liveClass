@@ -52,8 +52,31 @@ function TeacherRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!firebaseUser) return <Navigate to="/login" replace />;
+  if (user?.role === 'student') return <Navigate to="/student/dashboard" replace />;
   if (user?.role === 'teacher' && user.approvalStatus !== 'approved' && user.email !== ADMIN_EMAIL) {
     return <Navigate to="/pending-approval" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function StudentRoute({ children }: { children: React.ReactNode }) {
+  const { firebaseUser, user, loading } = useAuthStore();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!firebaseUser) return <Navigate to="/login" replace />;
+  if (user?.role === 'teacher' && (user.approvalStatus === 'approved' || user.email === ADMIN_EMAIL)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -118,7 +141,7 @@ function AppContent() {
         <Route path="/classroom/:classroomId" element={<TeacherRoute><ClassDetail /></TeacherRoute>} />
 
         <Route path="/join-class" element={<ProtectedRoute><JoinClass /></ProtectedRoute>} />
-        <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+        <Route path="/student/dashboard" element={<StudentRoute><StudentDashboard /></StudentRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
       </main>
