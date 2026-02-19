@@ -176,6 +176,15 @@ export interface ParticipantEvaluation {
   recommendations: string[];
   overallRating: 'excellent' | 'good' | 'average' | 'needs_improvement';
   topicMastery: { topic: string; level: 'strong' | 'moderate' | 'weak' }[];
+  questionBreakdown?: {
+    questionIndex: number;
+    questionText: string;
+    status: 'correct' | 'incorrect' | 'unattempted';
+    studentAnswer: string | null;
+    correctAnswer: string;
+    points: number;
+    explanation: string;
+  }[];
 }
 
 export interface QuestionEvaluation {

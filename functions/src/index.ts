@@ -1107,6 +1107,16 @@ export const evaluateSession = onCall(
     // Gather data based on mode
     let prompt: string;
 
+    // Store question details for merging after AI response (participant mode)
+    let questionDetailsForMerge: {
+      questionIndex: number;
+      questionText: string;
+      status: "correct" | "incorrect" | "unattempted";
+      studentAnswer: string | null;
+      correctAnswer: string;
+      points: number;
+    }[] = [];
+
     if (mode === "participant") {
       if (!playerId) {
         throw new HttpsError("invalid-argument", "playerId is required for participant mode");
@@ -1130,33 +1140,75 @@ export const evaluateSession = onCall(
         .collection("questions")
         .where("quizId", "==", session.quizId)
         .get();
-      const questionsMap = new Map<string, { text: string; type: string; correctAnswers: string[] }>();
-      questionsSnap.docs.forEach((d) => {
-        const data = d.data();
-        questionsMap.set(d.id, {
-          text: data.text,
-          type: data.type,
-          correctAnswers: data.correctAnswers || [],
+      const questionsArr = questionsSnap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      // Build answers map keyed by questionId for O(1) lookup
+      const answersMap = new Map<string, { selection: string | string[]; correct: boolean; pointsAwarded: number; timeMs: number }>();
+      answersSnap.docs.forEach((d) => {
+        const a = d.data();
+        answersMap.set(a.questionId, {
+          selection: a.selection,
+          correct: a.correct,
+          pointsAwarded: a.pointsAwarded,
+          timeMs: a.timeMs,
         });
       });
 
-      // Build answer details
-      const answerDetails = answersSnap.docs.map((d) => {
-        const a = d.data();
-        const q = questionsMap.get(a.questionId);
-        return {
-          question: q?.text || "Unknown",
-          type: q?.type || "mcq",
-          selected: a.selection,
-          correct: a.correct,
-          points: a.pointsAwarded,
-          timeMs: a.timeMs,
-        };
-      });
+      // Use questionOrder if available, otherwise natural order
+      const questionOrder = session.questionOrder || questionsArr.map((_: unknown, i: number) => i);
 
-      const totalQuestions = questionsSnap.size;
-      const correctCount = answerDetails.filter((a) => a.correct).length;
-      const totalPoints = answerDetails.reduce((s, a) => s + a.points, 0);
+      // Build answer details for ALL questions (including unattempted)
+      const answerLines: string[] = [];
+      questionDetailsForMerge = [];
+      let correctCount = 0;
+      let totalPoints = 0;
+
+      for (let qi = 0; qi < questionOrder.length; qi++) {
+        const actualIdx = questionOrder[qi];
+        const q = questionsArr[actualIdx] as Record<string, unknown> | undefined;
+        if (!q) continue;
+
+        const qId = q.id as string;
+        const qText = (q.text as string) || "Unknown";
+        const qType = (q.type as string) || "mcq";
+        const correctAnswers = (q.correctAnswers as string[]) || [];
+        const answer = answersMap.get(qId);
+
+        if (answer) {
+          const status = answer.correct ? "correct" : "incorrect";
+          if (answer.correct) correctCount++;
+          totalPoints += answer.pointsAwarded;
+
+          answerLines.push(
+            `Q${qi + 1} [${qType}]: "${qText}" → answered "${answer.selection}" → ${answer.correct ? "CORRECT" : "INCORRECT"} (${answer.pointsAwarded}pts, ${(answer.timeMs / 1000).toFixed(1)}s)`
+          );
+          questionDetailsForMerge.push({
+            questionIndex: qi,
+            questionText: qText,
+            status,
+            studentAnswer: String(answer.selection),
+            correctAnswer: correctAnswers.join(", "),
+            points: answer.pointsAwarded,
+          });
+        } else {
+          answerLines.push(
+            `Q${qi + 1} [${qType}]: "${qText}" → UNATTEMPTED (0pts)`
+          );
+          questionDetailsForMerge.push({
+            questionIndex: qi,
+            questionText: qText,
+            status: "unattempted",
+            studentAnswer: null,
+            correctAnswer: correctAnswers.join(", "),
+            points: 0,
+          });
+        }
+      }
+
+      const totalQuestions = questionOrder.length;
 
       prompt = `You are an educational AI evaluator. Analyze this student's quiz performance and return a JSON evaluation.
 
@@ -1165,7 +1217,7 @@ Quiz: ${totalQuestions} questions
 Score: ${correctCount}/${totalQuestions} correct (${totalPoints} points)
 
 Answer details:
-${answerDetails.map((a, i) => `Q${i + 1} [${a.type}]: "${a.question}" → answered "${a.selected}" → ${a.correct ? "CORRECT" : "INCORRECT"} (${a.points}pts, ${(a.timeMs / 1000).toFixed(1)}s)`).join("\n")}
+${answerLines.join("\n")}
 
 Return ONLY valid JSON with this exact structure:
 {
@@ -1174,8 +1226,11 @@ Return ONLY valid JSON with this exact structure:
   "weaknesses": ["weakness1", "weakness2"],
   "recommendations": ["recommendation1", "recommendation2"],
   "overallRating": "excellent|good|average|needs_improvement",
-  "topicMastery": [{"topic": "topic name", "level": "strong|moderate|weak"}]
-}`;
+  "topicMastery": [{"topic": "topic name", "level": "strong|moderate|weak"}],
+  "questionBreakdown": [{"questionIndex": 0, "status": "correct|incorrect|unattempted", "explanation": "Brief explanation of performance on this question"}]
+}
+
+For questionBreakdown, include one entry per question in order. The explanation should be 1 sentence: why the answer was correct, what went wrong, or why skipping matters.`;
     } else {
       if (questionIndex === undefined || questionIndex === null) {
         throw new HttpsError("invalid-argument", "questionIndex is required for question mode");
@@ -1287,6 +1342,20 @@ Return ONLY valid JSON with this exact structure:
       }
 
       const evaluation = JSON.parse(jsonMatch[0]);
+
+      // Merge structural question data into questionBreakdown (participant mode)
+      if (mode === "participant" && questionDetailsForMerge.length > 0) {
+        const aiBreakdown = evaluation.questionBreakdown || [];
+        evaluation.questionBreakdown = questionDetailsForMerge.map((detail) => {
+          const aiEntry = aiBreakdown.find(
+            (e: { questionIndex: number }) => e.questionIndex === detail.questionIndex
+          );
+          return {
+            ...detail,
+            explanation: aiEntry?.explanation || "",
+          };
+        });
+      }
 
       // Cache to Firestore
       await cacheRef.set({

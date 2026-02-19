@@ -13,7 +13,7 @@ import {
   HelpCircle, CheckCircle2, XCircle, ListOrdered, AlignLeft,
   ArrowLeftRight, PenLine, MessageSquare, Presentation,
   Printer, Mail, Share2, Trash2, MoreVertical, Check, X,
-  Zap, ArrowUpDown, Sparkles, Star, TrendingUp, AlertTriangle, Loader2
+  Zap, ArrowUpDown, Sparkles, Star, TrendingUp, AlertTriangle, Loader2, MinusCircle
 } from 'lucide-react';
 
 type TabId = 'overview' | 'participants' | 'questions' | 'tags' | 'anti-cheating';
@@ -797,6 +797,65 @@ export default function SessionResults() {
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
               <p className="text-gray-700 leading-relaxed">{participantEval.summary}</p>
             </div>
+
+            {/* Question Breakdown */}
+            {participantEval.questionBreakdown && participantEval.questionBreakdown.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                    <Target className="w-4 h-4 text-brand" /> Question Breakdown
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    {participantEval.questionBreakdown.filter(q => q.status === 'correct').length}/{participantEval.questionBreakdown.length} correct
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {participantEval.questionBreakdown.map((q) => (
+                    <div key={q.questionIndex} className={`rounded-xl border p-3 ${
+                      q.status === 'correct' ? 'border-green-200 bg-green-50/50' :
+                      q.status === 'incorrect' ? 'border-red-200 bg-red-50/50' :
+                      'border-gray-200 bg-gray-50/50'
+                    }`}>
+                      <div className="flex items-start gap-2">
+                        {q.status === 'correct' ? (
+                          <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                        ) : q.status === 'incorrect' ? (
+                          <XCircle className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <MinusCircle className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm">
+                            Q{q.questionIndex + 1}{' '}
+                            <span className="font-normal text-gray-600">
+                              {q.questionText.length > 60 ? q.questionText.slice(0, 60) + '...' : q.questionText}
+                            </span>
+                          </p>
+                          <div className="mt-1 text-xs text-gray-500">
+                            {q.status === 'correct' ? (
+                              <span className="text-success font-medium">Correct</span>
+                            ) : q.status === 'incorrect' ? (
+                              <>
+                                <span>Your answer: <span className="text-danger font-medium">{q.studentAnswer}</span></span>
+                                <span className="mx-1.5">·</span>
+                                <span>Correct: <span className="text-success font-medium">{q.correctAnswer}</span></span>
+                              </>
+                            ) : (
+                              <span className="text-gray-400 font-medium">Unattempted</span>
+                            )}
+                            <span className="mx-1.5">·</span>
+                            <span>{q.points} pts</span>
+                          </div>
+                          {q.explanation && (
+                            <p className="mt-1.5 text-xs text-gray-400 italic">{q.explanation}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Strengths */}
             {participantEval.strengths.length > 0 && (
