@@ -109,6 +109,7 @@ export default function Dashboard() {
         description: quiz.description,
         visibility: 'private',
         collectionId: quiz.collectionId || null,
+        color: quiz.color || null,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
@@ -276,6 +277,7 @@ export default function Dashboard() {
     quizzes.filter((q) => q.collectionId === collId).length;
 
   const getCardGradient = (quiz: QuizWithMeta): string => {
+    if (quiz.color) return CARD_GRADIENTS[quiz.color] || DEFAULT_GRADIENT;
     if (!quiz.collectionId) return DEFAULT_GRADIENT;
     const coll = collections.find((c) => c.id === quiz.collectionId);
     if (!coll) return DEFAULT_GRADIENT;

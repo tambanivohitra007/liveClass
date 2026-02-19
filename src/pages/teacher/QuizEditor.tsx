@@ -12,7 +12,8 @@ import {
   Sparkles, X as XIcon, Triangle, Diamond, Circle, Square, Hexagon, Star, ArrowLeft,
   Clock, Image as ImageIcon, Type, FileText,
 } from 'lucide-react';
-import type { Quiz, Question, QuestionType, Collection } from '../../types/models';
+import { COLLECTION_COLORS } from '../../types/models';
+import type { Quiz, Question, QuestionType, Collection, CollectionColor } from '../../types/models';
 
 const emptyQuestion = (quizId: string): Omit<Question, 'id'> => ({
   quizId,
@@ -65,12 +66,13 @@ export default function QuizEditor() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showAiModal, setShowAiModal] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [selectedColor, setSelectedColor] = useState<CollectionColor | ''>('');
   const [activeIndex, setActiveIndex] = useState(0);
 
   // ── Unsaved changes tracking ──
   const [savedSnapshot, setSavedSnapshot] = useState<string>('');
   const justSavedRef = useRef(false);
-  const currentSnapshot = JSON.stringify({ title, description, questions, visibility, selectedCollectionId, coverImageUrl });
+  const currentSnapshot = JSON.stringify({ title, description, questions, visibility, selectedCollectionId, coverImageUrl, selectedColor });
   const isDirty = savedSnapshot !== '' && currentSnapshot !== savedSnapshot;
 
   useEffect(() => {
@@ -85,6 +87,7 @@ export default function QuizEditor() {
         setVisibility(data.visibility || 'private');
         setSelectedCollectionId(data.collectionId || '');
         setCoverImageUrl(data.coverImageUrl || '');
+        setSelectedColor(data.color || '');
       }
       const q = query(collection(db, 'questions'), where('quizId', '==', quizId));
       const qSnapshot = await getDocs(q);
@@ -294,6 +297,7 @@ export default function QuizEditor() {
           ownerId: user.id, title, description, visibility,
           collectionId: selectedCollectionId || null,
           coverImageUrl: coverImageUrl || null,
+          color: selectedColor || null,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
         });
         savedQuizId = quizRef.id;
@@ -302,6 +306,7 @@ export default function QuizEditor() {
           ownerId: user.id, title, description, visibility,
           collectionId: selectedCollectionId || null,
           coverImageUrl: coverImageUrl || null,
+          color: selectedColor || null,
           updatedAt: serverTimestamp(),
         }, { merge: true });
       }
@@ -331,7 +336,7 @@ export default function QuizEditor() {
         window.history.replaceState(null, '', `/quiz/${savedQuizId}`);
       }
       // Reset dirty tracking so the editor knows we're clean
-      const newSnapshot = JSON.stringify({ title, description, questions: updatedQuestions, visibility, selectedCollectionId, coverImageUrl });
+      const newSnapshot = JSON.stringify({ title, description, questions: updatedQuestions, visibility, selectedCollectionId, coverImageUrl, selectedColor });
       setSavedSnapshot(newSnapshot);
       justSavedRef.current = false;
       addToast('success', 'Quiz saved');
@@ -853,6 +858,21 @@ export default function QuizEditor() {
                       onUpload={(url) => setCoverImageUrl(url)}
                       path={`quizzes/${quizId || 'new'}`}
                     />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Card Color</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {COLLECTION_COLORS.map((c) => (
+                        <button
+                          key={c.key}
+                          onClick={() => setSelectedColor(selectedColor === c.key ? '' : c.key)}
+                          className={`w-8 h-8 rounded-full ${c.bg} border-2 border-gray-800 transition-all ${
+                            selectedColor === c.key ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'
+                          }`}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Description</label>

@@ -40,6 +40,7 @@ export interface Quiz {
   visibility: 'private' | 'org' | 'public';
   collectionId?: string | null;
   coverImageUrl?: string;
+  color?: CollectionColor;
   createdAt: number;
   updatedAt: number;
 }
