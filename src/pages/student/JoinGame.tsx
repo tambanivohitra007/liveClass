@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
-import { Shuffle, Triangle, Diamond, Circle, Square } from 'lucide-react';
+import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, ShieldCheck, User } from 'lucide-react';
+import WaveBackground from '../../components/ui/WaveBackground';
 
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
@@ -38,27 +39,23 @@ const ShapeIcon = ({ shape, color, size = 'w-8 h-8' }: { shape: string; color: s
 };
 
 function generatePattern() {
-  // Create a 3-item pattern as the target
   const target = Array.from({ length: 3 }, () => ({
     shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
     color: SHAPE_COLORS[Math.floor(Math.random() * SHAPE_COLORS.length)],
   }));
 
-  // Create 4 choices: 1 correct + 3 wrong
   const choices = [target];
   while (choices.length < 4) {
     const alt = Array.from({ length: 3 }, () => ({
       shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
       color: SHAPE_COLORS[Math.floor(Math.random() * SHAPE_COLORS.length)],
     }));
-    // Make sure it's different from target
     const key = (p: typeof target) => p.map((s) => `${s.shape}-${s.color}`).join(',');
     if (key(alt) !== key(target) && !choices.some((c) => key(c) === key(alt))) {
       choices.push(alt);
     }
   }
 
-  // Shuffle choices
   for (let i = choices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [choices[i], choices[j]] = [choices[j], choices[i]];
@@ -66,6 +63,12 @@ function generatePattern() {
 
   return { target, choices };
 }
+
+const STEPS = [
+  { key: 'pin', label: 'Game PIN', icon: Gamepad2 },
+  { key: 'verify', label: 'Verify', icon: ShieldCheck },
+  { key: 'nickname', label: 'Nickname', icon: User },
+] as const;
 
 export default function JoinGame() {
   const [pin, setPin] = useState('');
@@ -78,12 +81,12 @@ export default function JoinGame() {
   const [searchParams] = useSearchParams();
   const pattern = useMemo(() => generatePattern(), [step === 'verify' ? sessionId : null]); // eslint-disable-line
 
-  // Auto-fill and auto-submit PIN from URL query param (e.g. /join?pin=123456)
+  const stepIdx = STEPS.findIndex((s) => s.key === step);
+
   useEffect(() => {
     const pinParam = searchParams.get('pin');
     if (pinParam && /^\d{4,6}$/.test(pinParam) && step === 'pin') {
       setPin(pinParam);
-      // Auto-submit: look up the session
       (async () => {
         const sessionsRef = collection(db, 'sessions');
         const q = query(sessionsRef, where('pinCode', '==', pinParam), where('status', '!=', 'ended'));
@@ -157,110 +160,161 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark relative">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark relative overflow-hidden">
+      <WaveBackground variant="dark" position="both" />
       <div className="absolute inset-0 pattern-grid pointer-events-none" />
-      <div className="w-full max-w-sm animate-bounce-in">
+
+      <div className="relative z-10 w-full max-w-md animate-bounce-in">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-white">LiveClass</h1>
+          <h1 className="text-5xl font-black text-white tracking-tight">Join Game</h1>
+          <p className="text-white/50 mt-2 text-sm font-medium">Enter the PIN your host shared</p>
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-8">
-          {error && (
-            <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm text-center">
-              {error}
-            </div>
-          )}
+        {/* Step progress */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          {STEPS.map((s, i) => {
+            const Icon = s.icon;
+            const isActive = i === stepIdx;
+            const isDone = i < stepIdx;
+            return (
+              <div key={s.key} className="flex items-center gap-2">
+                {i > 0 && (
+                  <div className={`w-8 h-0.5 rounded-full transition-colors duration-300 ${isDone ? 'bg-brand' : 'bg-white/15'}`} />
+                )}
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
+                    isActive
+                      ? 'bg-white text-brand shadow-lg scale-105'
+                      : isDone
+                        ? 'bg-brand/30 text-white'
+                        : 'bg-white/10 text-white/40'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{s.label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-          {step === 'verify' ? (
-            <div>
-              <label className="block text-center text-sm font-medium text-gray-500 mb-4">Pick the matching pattern</label>
-              <div className="flex justify-center gap-2 mb-6 p-4 bg-gray-50 rounded-xl">
-                {pattern.target.map((s, i) => (
-                  <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-10 h-10" />
-                ))}
+        {/* Card */}
+        <div className="relative group">
+          <div className="absolute inset-0 bg-white rounded-3xl border-2 border-gray-800 shadow-[5px_5px_0px_0px_#D4566B] transition-shadow duration-300 group-hover:shadow-[7px_7px_0px_0px_#D4566B]" />
+
+          <div className="relative p-8">
+            {/* Error */}
+            {error && (
+              <div className="mb-5 p-3 bg-white rounded-xl border-2 border-gray-800 shadow-[2px_2px_0px_0px_#EF4444] text-danger text-sm font-bold text-center animate-fade-in">
+                {error}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                {pattern.choices.map((choice, ci) => (
-                  <button
-                    key={ci}
-                    onClick={() => handleVerify(ci)}
-                    className="flex justify-center gap-1.5 p-4 rounded-xl border-2 border-gray-800 hover:border-brand hover:bg-brand/5 shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[4px_4px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
-                  >
-                    {choice.map((s, i) => (
-                      <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-6 h-6" />
-                    ))}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => { setStep('pin'); setError(''); }}
-                className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-gray-600"
-              >
-                &larr; Change PIN
-              </button>
-            </div>
-          ) : step === 'pin' ? (
-            <form onSubmit={handlePinSubmit}>
-              <label className="block text-center text-sm font-medium text-gray-500 mb-3">Enter Game PIN</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                required
-                maxLength={6}
-                className="w-full text-center text-4xl font-black tracking-[0.3em] px-4 py-5 rounded-2xl border border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-200"
-                autoFocus
-              />
-              <button
-                type="submit"
-                disabled={pin.length < 4}
-                className="w-full mt-4 py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
-              >
-                Enter
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleJoin}>
-              <label className="block text-center text-sm font-medium text-gray-500 mb-3">Choose a Nickname</label>
-              <div className="relative">
+            )}
+
+            {/* Step: PIN */}
+            {step === 'pin' && (
+              <form onSubmit={handlePinSubmit} className="animate-fade-in">
+                <label className="block text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                  Game PIN
+                </label>
                 <input
                   type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder="Your nickname"
+                  inputMode="numeric"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000 000"
                   required
-                  maxLength={20}
-                  className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300"
+                  maxLength={6}
+                  className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-2xl border-2 border-gray-800 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-200"
                   autoFocus
                 />
                 <button
-                  type="button"
-                  onClick={() => setNickname(randomNickname())}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-brand/10 hover:bg-brand/20 text-brand transition-colors"
-                  title="Random nickname"
+                  type="submit"
+                  disabled={pin.length < 4}
+                  className="w-full mt-5 py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
                 >
-                  <Shuffle className="w-5 h-5" />
+                  Next
+                </button>
+              </form>
+            )}
+
+            {/* Step: Verify */}
+            {step === 'verify' && (
+              <div className="animate-fade-in">
+                <label className="block text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                  Pick the matching pattern
+                </label>
+                <div className="flex justify-center gap-3 mb-6 p-5 bg-gray-50 rounded-2xl border-2 border-gray-200">
+                  {pattern.target.map((s, i) => (
+                    <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-10 h-10" />
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {pattern.choices.map((choice, ci) => (
+                    <button
+                      key={ci}
+                      onClick={() => handleVerify(ci)}
+                      className="flex justify-center gap-2 p-4 rounded-2xl border-2 border-gray-800 bg-white hover:bg-brand/5 shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[4px_4px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
+                    >
+                      {choice.map((s, i) => (
+                        <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-7 h-7" />
+                      ))}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setStep('pin'); setError(''); }}
+                  className="w-full mt-5 py-2.5 text-sm font-semibold text-gray-400 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
                 </button>
               </div>
-              <button
-                type="submit"
-                disabled={joining || !nickname.trim()}
-                className="w-full mt-4 py-4 bg-success text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
-              >
-                {joining ? 'Joining...' : "Let's Go!"}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStep('pin'); setError(''); }}
-                className="w-full mt-2 py-2 text-sm text-gray-400 hover:text-gray-600"
-              >
-                &larr; Change PIN
-              </button>
-            </form>
-          )}
+            )}
+
+            {/* Step: Nickname */}
+            {step === 'nickname' && (
+              <form onSubmit={handleJoin} className="animate-fade-in">
+                <label className="block text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                  Choose your name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="Your nickname"
+                    required
+                    maxLength={20}
+                    className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border-2 border-gray-800 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300 pr-14"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNickname(randomNickname())}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-xl border-2 border-gray-800 bg-brand/10 hover:bg-brand/20 text-brand shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[3px_3px_0px_0px_#D4566B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
+                    title="Random nickname"
+                  >
+                    <Shuffle className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  type="submit"
+                  disabled={joining || !nickname.trim()}
+                  className="w-full mt-5 py-4 bg-success text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#22C55E] hover:shadow-[6px_6px_0px_0px_#22C55E] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#22C55E] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
+                >
+                  {joining ? 'Joining...' : "Let's Go!"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setStep('pin'); setError(''); }}
+                  className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-400 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </div>
