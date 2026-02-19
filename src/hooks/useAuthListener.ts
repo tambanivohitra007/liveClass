@@ -1,13 +1,12 @@
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { ADMIN_EMAIL } from '../lib/config';
 import type { User } from '../types/models';
 
 export function useAuthListener() {
-  const { setFirebaseUser, setUser, setLoading } = useAuthStore();
+  const { setFirebaseUser, setUser, setLoading, setNeedsRoleSelection } = useAuthStore();
 
   useEffect(() => {
     let unsubUserDoc: (() => void) | null = null;
@@ -23,19 +22,24 @@ export function useAuthListener() {
 
       if (firebaseUser) {
         const userRef = doc(db, 'users', firebaseUser.uid);
-        let snap = await getDoc(userRef);
+        const snap = await getDoc(userRef);
 
-        // Auto-create user doc on first Google sign-in
+        // New user without a doc — flag for role selection
         if (!snap.exists()) {
-          const isAdmin = firebaseUser.email === ADMIN_EMAIL;
-          await setDoc(userRef, {
-            displayName: firebaseUser.displayName || 'User',
-            email: firebaseUser.email || '',
-            role: 'teacher',
-            approvalStatus: isAdmin ? 'approved' : 'pending',
-            createdAt: serverTimestamp(),
-          });
-          snap = await getDoc(userRef);
+          setNeedsRoleSelection(true);
+          setLoading(false);
+
+          // Subscribe so when ChooseRole/Signup creates the doc, user state updates
+          unsubUserDoc = onSnapshot(
+            userRef,
+            (liveSnap) => {
+              if (liveSnap.exists()) {
+                setUser({ id: liveSnap.id, ...liveSnap.data() } as User);
+              }
+            },
+            () => {},
+          );
+          return;
         }
 
         if (snap.exists()) {
@@ -55,6 +59,7 @@ export function useAuthListener() {
         );
       } else {
         setUser(null);
+        setNeedsRoleSelection(false);
         setLoading(false);
       }
     });
@@ -63,5 +68,5 @@ export function useAuthListener() {
       unsubAuth();
       if (unsubUserDoc) unsubUserDoc();
     };
-  }, [setFirebaseUser, setUser, setLoading]);
+  }, [setFirebaseUser, setUser, setLoading, setNeedsRoleSelection]);
 }

@@ -12,6 +12,7 @@ import ToastContainer from './components/Toast';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ChooseRole from './pages/ChooseRole';
 import PendingApproval from './pages/PendingApproval';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Dashboard from './pages/teacher/Dashboard';
@@ -103,8 +104,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { firebaseUser } = useAuthStore();
+  const { firebaseUser, needsRoleSelection } = useAuthStore();
   const location = useLocation();
+
+  // Redirect new Google users to role selection
+  if (firebaseUser && needsRoleSelection && location.pathname !== '/choose-role') {
+    return <Navigate to="/choose-role" replace />;
+  }
+
   // Hide navbar on full-screen game pages
   const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
@@ -123,6 +130,7 @@ function AppContent() {
         <Route path="/discover" element={<Discover />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/choose-role" element={<ChooseRole />} />
         <Route path="/pending-approval" element={<PendingApproval />} />
 
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
