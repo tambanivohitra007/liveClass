@@ -225,7 +225,7 @@ export default function JoinGame() {
                   placeholder="000 000"
                   required
                   maxLength={6}
-                  className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-2xl border-2 border-gray-800 bg-gray-900 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-white placeholder:text-gray-500"
+                  className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-2xl border-2 border-gray-800 bg-gray-700 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-white placeholder:text-gray-500"
                   autoFocus
                 />
                 <button
