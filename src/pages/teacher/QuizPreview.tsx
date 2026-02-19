@@ -36,6 +36,7 @@ export default function QuizPreview() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [matchingPairs, setMatchingPairs] = useState<Record<string, string>>({});
   const [fillAnswers, setFillAnswers] = useState<string[]>([]);
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
@@ -71,6 +72,7 @@ export default function QuizPreview() {
     if (q) {
       setTimeLeft(q.timeLimitSec);
       setSelectedAnswer('');
+      setSelectedAnswers([]);
       setMatchingPairs({});
       setFillAnswers([]);
       setState('answering');
@@ -107,7 +109,14 @@ export default function QuizPreview() {
 
   const handleSelect = (opt: string) => {
     if (state !== 'answering') return;
-    setSelectedAnswer(opt);
+    const q = questions[currentIndex];
+    if (q?.type === 'mcq' && q.correctAnswers.length > 1) {
+      setSelectedAnswers((prev) =>
+        prev.includes(opt) ? prev.filter((a) => a !== opt) : [...prev, opt]
+      );
+    } else {
+      setSelectedAnswer(opt);
+    }
   };
 
   const calculatePoints = (timeRemaining: number) => {
@@ -118,6 +127,10 @@ export default function QuizPreview() {
     } else if (q.type === 'fill_blank') {
       correct = fillAnswers.length === q.correctAnswers.length &&
         fillAnswers.every((a, idx) => a.trim().toLowerCase() === q.correctAnswers[idx].trim().toLowerCase());
+    } else if (q.type === 'mcq' && q.correctAnswers.length > 1) {
+      correct = selectedAnswers.length === q.correctAnswers.length &&
+        selectedAnswers.every((a) => q.correctAnswers.includes(a)) &&
+        q.correctAnswers.every((a) => selectedAnswers.includes(a));
     } else {
       correct = q.correctAnswers.includes(selectedAnswer);
     }
@@ -141,6 +154,7 @@ export default function QuizPreview() {
   const canSubmitPreview = (): boolean => {
     const q = questions[currentIndex];
     if (!q) return false;
+    if (q.type === 'mcq' && q.correctAnswers.length > 1) return selectedAnswers.length > 0;
     if (q.type === 'matching') return q.options.every((opt) => matchingPairs[opt]?.trim());
     if (q.type === 'fill_blank') return fillAnswers.every((a) => a.trim());
     return selectedAnswer !== '';
@@ -188,6 +202,7 @@ export default function QuizPreview() {
 
   const question = questions[currentIndex];
   const isCorrect = (opt: string) => question.correctAnswers.includes(opt);
+  const isMultiAnswer = question.type === 'mcq' && question.correctAnswers.length > 1;
   const isAnswerCorrect = (): boolean => {
     if (question.type === 'matching') {
       return question.options.every((left, idx) => matchingPairs[left] === question.matchOptions?.[idx]);
@@ -196,11 +211,17 @@ export default function QuizPreview() {
       return fillAnswers.length === question.correctAnswers.length &&
         fillAnswers.every((a, idx) => a.trim().toLowerCase() === question.correctAnswers[idx].trim().toLowerCase());
     }
+    if (isMultiAnswer) {
+      return selectedAnswers.length === question.correctAnswers.length &&
+        selectedAnswers.every((a) => question.correctAnswers.includes(a)) &&
+        question.correctAnswers.every((a) => selectedAnswers.includes(a));
+    }
     return question.correctAnswers.includes(selectedAnswer);
   };
   const hasAnswer = (): boolean => {
     if (question.type === 'matching') return question.options.some((opt) => matchingPairs[opt]);
     if (question.type === 'fill_blank') return fillAnswers.some((a) => a.trim());
+    if (isMultiAnswer) return selectedAnswers.length > 0;
     return selectedAnswer !== '';
   };
 
@@ -258,7 +279,7 @@ export default function QuizPreview() {
           {timeLeft}
         </div>
         <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50 capitalize">
-          {question.type === 'mcq' ? 'Multiple Choice' : question.type === 'tf' ? 'True / False' : question.type === 'matching' ? 'Matching' : question.type === 'fill_blank' ? 'Fill Blank' : 'Short Answer'}
+          {question.type === 'mcq' ? (isMultiAnswer ? 'Multiple Answer' : 'Multiple Choice') : question.type === 'tf' ? 'True / False' : question.type === 'matching' ? 'Matching' : question.type === 'fill_blank' ? 'Fill Blank' : 'Short Answer'}
         </span>
       </div>
 
@@ -283,47 +304,56 @@ export default function QuizPreview() {
 
         {/* Answer options */}
         {(question.type === 'mcq' || question.type === 'tf') && (
-          <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
-            {question.options.map((opt, i) => {
-              const correct = isCorrect(opt);
-              const selected = selectedAnswer === opt;
-              const revealed = state === 'revealed';
+          <>
+            {isMultiAnswer && state === 'answering' && (
+              <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
+            )}
+            <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
+              {question.options.map((opt, i) => {
+                const correct = isCorrect(opt);
+                const selected = isMultiAnswer ? selectedAnswers.includes(opt) : selectedAnswer === opt;
+                const revealed = state === 'revealed';
 
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleSelect(opt)}
-                  disabled={revealed}
-                  className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all relative ${
-                    answerColors[i % answerColors.length]
-                  } ${
-                    selected && !revealed ? 'ring-4 ring-white scale-95' : ''
-                  } ${
-                    revealed && correct ? 'ring-4 ring-success scale-95 brightness-110' : ''
-                  } ${
-                    revealed && selected && !correct ? 'ring-4 ring-danger scale-95 opacity-60' : ''
-                  } ${
-                    revealed && !correct && !selected ? 'opacity-40' : ''
-                  } ${
-                    !revealed ? 'active:scale-95' : ''
-                  }`}
-                >
-                  {answerIcons[i % answerIcons.length]}
-                  <span className="truncate px-2">{opt}</span>
-                  {revealed && correct && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-success rounded-full flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                  {revealed && selected && !correct && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-danger rounded-full flex items-center justify-center">
-                      <XIcon className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleSelect(opt)}
+                    disabled={revealed}
+                    className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-2 transition-all relative ${
+                      answerColors[i % answerColors.length]
+                    } ${
+                      selected && !revealed ? 'ring-4 ring-white scale-95' : ''
+                    } ${
+                      revealed && correct ? 'ring-4 ring-success scale-95 brightness-110' : ''
+                    } ${
+                      revealed && selected && !correct ? 'ring-4 ring-danger scale-95 opacity-60' : ''
+                    } ${
+                      revealed && !correct && !selected ? 'opacity-40' : ''
+                    } ${
+                      !revealed ? 'active:scale-95' : ''
+                    }`}
+                  >
+                    {isMultiAnswer && selected && !revealed ? (
+                      <Check className="w-5 h-5 shrink-0" />
+                    ) : (
+                      answerIcons[i % answerIcons.length]
+                    )}
+                    <span className="truncate px-2">{opt}</span>
+                    {revealed && correct && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-success rounded-full flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5" />
+                      </div>
+                    )}
+                    {revealed && selected && !correct && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-danger rounded-full flex items-center justify-center">
+                        <XIcon className="w-3.5 h-3.5" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {question.type === 'short' && (

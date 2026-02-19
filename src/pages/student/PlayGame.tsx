@@ -6,7 +6,7 @@ import { db, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
-import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Hexagon, Star, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Hexagon, Star, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
@@ -656,7 +656,11 @@ export default function PlayGame() {
                       submitted ? 'opacity-60' : 'active:scale-95'
                     }`}
                   >
-                    {answerIcons[i % answerIcons.length]}
+                    {isMultiAnswer && isSelected ? (
+                      <Check className="w-5 h-5 shrink-0" />
+                    ) : (
+                      answerIcons[i % answerIcons.length]
+                    )}
                     <span className="break-words text-center min-w-0">{opt}</span>
                   </button>
                 );

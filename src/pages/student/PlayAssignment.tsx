@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import { queueAnswer, syncPendingAnswers } from '../../lib/offlineQueue';
-import { Clock, Ban, CircleCheckBig } from 'lucide-react';
+import { Clock, Ban, CircleCheckBig, Check } from 'lucide-react';
 import type { Assignment, Question } from '../../types/models';
 
 const answerColors = [
@@ -254,6 +254,7 @@ export default function PlayAssignment() {
                       answerColors[i % answerColors.length]
                     } ${isSelected ? 'ring-4 ring-white scale-95' : 'active:scale-95'}`}
                   >
+                    {isMultiAnswer && isSelected && <Check className="w-5 h-5 shrink-0" />}
                     {opt}
                   </button>
                 );
