@@ -258,6 +258,15 @@
     radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 }
 
+/* Bottom tab bar enter */
+@keyframes tab-bar-enter {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.animate-tab-bar-enter {
+  animation: tab-bar-enter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* Slide panel */
 @keyframes slide-in-right {
   from { transform: translateX(100%); }

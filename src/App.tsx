@@ -6,6 +6,7 @@ import { useAuthStore } from './stores/authStore';
 import { ADMIN_EMAIL } from './lib/config';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BottomTabBar from './components/BottomTabBar';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastContainer from './components/Toast';
 import Home from './pages/Home';
@@ -79,6 +80,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
+  const { firebaseUser } = useAuthStore();
   const location = useLocation();
   // Hide navbar on full-screen game pages
   const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
@@ -87,7 +89,7 @@ function AppContent() {
     <div className="flex flex-col min-h-screen">
       {!hideNavbar && <Navbar />}
       <ToastContainer />
-      <main className="flex-1 pattern-dots">
+      <main className={`flex-1 pattern-dots ${!hideNavbar && firebaseUser ? 'pb-20 md:pb-0' : ''}`}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -120,7 +122,12 @@ function AppContent() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       </Routes>
       </main>
-      {!hideNavbar && <Footer />}
+      {!hideNavbar && (
+        <div className={firebaseUser ? 'hidden md:block' : undefined}>
+          <Footer />
+        </div>
+      )}
+      {!hideNavbar && <BottomTabBar />}
     </div>
   );
 }
