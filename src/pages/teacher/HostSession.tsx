@@ -176,6 +176,7 @@ export default function HostSession() {
       setAnsweredCount(count);
       if (count > 0 && count >= players.length && !autoEndCalledRef.current) {
         autoEndCalledRef.current = true;
+        setTimeLeft(0);
         httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
       }
     };
