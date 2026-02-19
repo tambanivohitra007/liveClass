@@ -22,6 +22,7 @@ export default function PlayAssignment() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [matchingPairs, setMatchingPairs] = useState<Record<string, string>>({});
   const [fillAnswers, setFillAnswers] = useState<string[]>([]);
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
@@ -69,6 +70,7 @@ export default function PlayAssignment() {
   useEffect(() => {
     const q = questions[currentIndex];
     setSelectedAnswer('');
+    setSelectedAnswers([]);
     setMatchingPairs({});
     setFillAnswers([]);
     if (q?.type === 'matching' && q.matchOptions) {
@@ -80,9 +82,13 @@ export default function PlayAssignment() {
     }
   }, [currentIndex, questions]);
 
+  const currentQ = questions[currentIndex];
+  const isMultiAnswer = currentQ?.type === 'mcq' && currentQ.correctAnswers.length > 1;
+
   const getSelection = (): string => {
     const q = questions[currentIndex];
     if (!q) return selectedAnswer;
+    if (q.type === 'mcq' && q.correctAnswers.length > 1) return JSON.stringify(selectedAnswers);
     if (q.type === 'matching') return JSON.stringify(matchingPairs);
     if (q.type === 'fill_blank') return JSON.stringify(fillAnswers);
     return selectedAnswer;
@@ -91,6 +97,7 @@ export default function PlayAssignment() {
   const canSubmit = (): boolean => {
     const q = questions[currentIndex];
     if (!q) return false;
+    if (q.type === 'mcq' && q.correctAnswers.length > 1) return selectedAnswers.length > 0;
     if (q.type === 'matching') return q.options.every((opt) => matchingPairs[opt]?.trim());
     if (q.type === 'fill_blank') return fillAnswers.every((a) => a.trim());
     return selectedAnswer !== '';
@@ -222,19 +229,37 @@ export default function PlayAssignment() {
         </div>
 
         {(question.type === 'mcq' || question.type === 'tf') && (
-          <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
-            {question.options.map((opt, i) => (
-              <button
-                key={i}
-                onClick={() => setSelectedAnswer(opt)}
-                className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center transition-all ${
-                  answerColors[i % answerColors.length]
-                } ${selectedAnswer === opt ? 'ring-4 ring-white scale-95' : 'active:scale-95'}`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
+          <>
+            {isMultiAnswer && (
+              <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
+            )}
+            <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
+              {question.options.map((opt, i) => {
+                const isSelected = isMultiAnswer
+                  ? selectedAnswers.includes(opt)
+                  : selectedAnswer === opt;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (isMultiAnswer) {
+                        setSelectedAnswers((prev) =>
+                          prev.includes(opt) ? prev.filter((a) => a !== opt) : [...prev, opt]
+                        );
+                      } else {
+                        setSelectedAnswer(opt);
+                      }
+                    }}
+                    className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center transition-all ${
+                      answerColors[i % answerColors.length]
+                    } ${isSelected ? 'ring-4 ring-white scale-95' : 'active:scale-95'}`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {question.type === 'short' && (

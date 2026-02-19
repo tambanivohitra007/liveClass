@@ -323,6 +323,18 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
     } catch {
       correct = false;
     }
+  } else if (question.type === 'mcq' && question.correctAnswers.length > 1) {
+    // Multi-answer MCQ: selection is a JSON array of chosen options
+    try {
+      const chosen = JSON.parse(selection) as string[];
+      const expected: string[] = question.correctAnswers;
+      correct = chosen.length === expected.length &&
+        chosen.every((c: string) => expected.includes(c)) &&
+        expected.every((e: string) => chosen.includes(e));
+    } catch {
+      // Fallback: single string sent for a multi-answer question
+      correct = false;
+    }
   } else {
     correct = question.correctAnswers.includes(selection);
   }

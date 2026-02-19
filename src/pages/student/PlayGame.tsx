@@ -51,6 +51,7 @@ export default function PlayGame() {
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [matchingPairs, setMatchingPairs] = useState<Record<string, string>>({});
   const [fillAnswers, setFillAnswers] = useState<string[]>([]);
   const [orderingItems, setOrderingItems] = useState<string[]>([]);
@@ -130,6 +131,7 @@ export default function PlayGame() {
     setSubmitted(false);
     setSubmitFailed(false);
     setSelectedAnswer('');
+    setSelectedAnswers([]);
     setMatchingPairs({});
     setFillAnswers([]);
     setOrderingItems([]);
@@ -176,6 +178,7 @@ export default function PlayGame() {
     setSubmitted(false);
     setSubmitFailed(false);
     setSelectedAnswer('');
+    setSelectedAnswers([]);
     setMatchingPairs({});
     setFillAnswers([]);
     setOrderingItems([]);
@@ -227,10 +230,17 @@ export default function PlayGame() {
         submitAnswer();
         return;
       }
-      if ((currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && /^[1-4]$/.test(e.key)) {
+      if ((currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && /^[1-6]$/.test(e.key)) {
         const idx = parseInt(e.key) - 1;
         if (idx < currentQuestion.options.length) {
-          setSelectedAnswer(currentQuestion.options[idx]);
+          const opt = currentQuestion.options[idx];
+          if (currentQuestion.type === 'mcq' && currentQuestion.correctAnswers.length > 1) {
+            setSelectedAnswers((prev) =>
+              prev.includes(opt) ? prev.filter((a) => a !== opt) : [...prev, opt]
+            );
+          } else {
+            setSelectedAnswer(opt);
+          }
         }
       }
     };
@@ -272,8 +282,11 @@ export default function PlayGame() {
     return () => clearInterval(timer);
   }, [session?.status, navigate]);
 
+  const isMultiAnswer = currentQuestion?.type === 'mcq' && currentQuestion.correctAnswers.length > 1;
+
   const getSelection = (): string => {
     if (!currentQuestion) return selectedAnswer;
+    if (isMultiAnswer) return JSON.stringify(selectedAnswers);
     if (currentQuestion.type === 'matching') return JSON.stringify(matchingPairs);
     if (currentQuestion.type === 'fill_blank') return JSON.stringify(fillAnswers);
     if (currentQuestion.type === 'ordering') return JSON.stringify(orderingItems);
@@ -283,6 +296,7 @@ export default function PlayGame() {
   const canSubmit = (): boolean => {
     if (!currentQuestion) return false;
     if (currentQuestion.type === 'slide') return false;
+    if (isMultiAnswer) return selectedAnswers.length > 0;
     if (currentQuestion.type === 'matching') {
       return currentQuestion.options.every((opt) => matchingPairs[opt]?.trim());
     }
@@ -610,29 +624,45 @@ export default function PlayGame() {
 
         {/* Answer buttons */}
         {(currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && (
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[400px]">
-            {currentQuestion.options.map((opt, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (!submitted) {
-                    setSelectedAnswer(opt);
-                  }
-                }}
-                disabled={submitted}
-                className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-3 transition-all ${
-                  answerColors[i % answerColors.length]
-                } ${
-                  selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
-                } ${
-                  submitted ? 'opacity-60' : 'active:scale-95'
-                }`}
-              >
-                {answerIcons[i % answerIcons.length]}
-                <span className="break-words text-center min-w-0">{opt}</span>
-              </button>
-            ))}
-          </div>
+          <>
+            {isMultiAnswer && (
+              <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
+            )}
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[400px]">
+              {currentQuestion.options.map((opt, i) => {
+                const isSelected = isMultiAnswer
+                  ? selectedAnswers.includes(opt)
+                  : selectedAnswer === opt;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (!submitted) {
+                        if (isMultiAnswer) {
+                          setSelectedAnswers((prev) =>
+                            prev.includes(opt) ? prev.filter((a) => a !== opt) : [...prev, opt]
+                          );
+                        } else {
+                          setSelectedAnswer(opt);
+                        }
+                      }
+                    }}
+                    disabled={submitted}
+                    className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-3 transition-all ${
+                      answerColors[i % answerColors.length]
+                    } ${
+                      isSelected ? 'ring-4 ring-white scale-95' : ''
+                    } ${
+                      submitted ? 'opacity-60' : 'active:scale-95'
+                    }`}
+                  >
+                    {answerIcons[i % answerIcons.length]}
+                    <span className="break-words text-center min-w-0">{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {currentQuestion.type === 'short' && (
