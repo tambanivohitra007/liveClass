@@ -415,6 +415,17 @@ export default function QuizEditor() {
       <div className="flex flex-1 overflow-hidden">
         {/* ── Left Sidebar – Question List ── */}
         <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 overflow-hidden">
+          {/* Add Question Button */}
+          <div className="p-3 border-b border-gray-100">
+            <button
+              onClick={addQuestion}
+              className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              Add Question
+            </button>
+          </div>
+
           <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
             {questions.map((q, i) => (
               <div
@@ -454,17 +465,6 @@ export default function QuizEditor() {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Add Question Button */}
-          <div className="p-3 border-t border-gray-100">
-            <button
-              onClick={addQuestion}
-              className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              Add Question
-            </button>
           </div>
         </aside>
 
