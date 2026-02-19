@@ -90,6 +90,7 @@ export default function Discover() {
   );
 
   return (
+    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand/10 text-brand rounded-full text-sm font-medium mb-4">
@@ -140,11 +141,11 @@ export default function Discover() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
           {filtered.map((quiz) => (
-            <div key={quiz.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all animate-fade-in overflow-hidden">
+            <div key={quiz.id} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 animate-fade-in overflow-hidden">
               <div className="h-1.5 bg-brand" />
               <div className="p-6">
                 <h3 className="font-semibold text-gray-900 line-clamp-1 mb-1">{quiz.title}</h3>
-                <p className="text-sm text-gray-400 line-clamp-2 mb-3">{quiz.description || 'No description'}</p>
+                <p className="text-sm text-gray-500 line-clamp-2 mb-3">{quiz.description || 'No description'}</p>
                 <div className="flex items-center gap-3 text-xs text-gray-400">
                   <span className="flex items-center gap-1">
                     <HelpCircle className="w-3 h-3" />
@@ -166,6 +167,7 @@ export default function Discover() {
           ))}
         </div>
       )}
+    </div>
     </div>
   );
 }

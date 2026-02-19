@@ -244,10 +244,10 @@ export default function SessionResults() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 bg-gray-50 min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-gradient-to-b from-[#E8EAF0] to-surface min-h-screen">
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
              <Target className="w-6 h-6" />
           </div>
@@ -259,7 +259,7 @@ export default function SessionResults() {
           </div>
         </div>
         
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
              <CheckCircle2 className="w-6 h-6" />
           </div>
@@ -271,7 +271,7 @@ export default function SessionResults() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
              <Users className="w-6 h-6" />
           </div>
@@ -283,7 +283,7 @@ export default function SessionResults() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
              <HelpCircle className="w-6 h-6" />
           </div>

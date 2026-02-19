@@ -164,7 +164,7 @@ export default function JoinGame() {
           <h1 className="text-4xl font-black text-white">LiveClass</h1>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 p-8">
+        <div className="bg-white rounded-3xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm text-center">
               {error}

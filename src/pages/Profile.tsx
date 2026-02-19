@@ -170,6 +170,7 @@ export default function Profile() {
   const photoUrl = user.photoUrl || firebaseUser.photoURL;
 
   return (
+    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-2xl mx-auto px-4 py-8">
       <button
         onClick={() => navigate(-1)}
@@ -181,7 +182,7 @@ export default function Profile() {
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Profile Settings</h1>
 
       {/* Avatar Section */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 animate-fade-in">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 mb-6 animate-fade-in">
         <div className="flex items-center gap-6">
           <div className="relative group">
             {photoUrl ? (
@@ -221,7 +222,7 @@ export default function Profile() {
       </div>
 
       {/* Profile Info Form */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 animate-fade-in">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 mb-6 animate-fade-in">
         <h3 className="font-semibold text-gray-900 mb-4">Personal Information</h3>
         <div className="space-y-4">
           <div>
@@ -308,7 +309,7 @@ export default function Profile() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="w-full py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Changes'}
@@ -317,7 +318,7 @@ export default function Profile() {
       </div>
 
       {/* Security Section */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-fade-in">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 animate-fade-in">
         <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Shield className="w-4 h-4 text-gray-400" />
           Security
@@ -440,6 +441,7 @@ export default function Profile() {
           </p>
         </div>
       </div>
+    </div>
     </div>
   );
 }

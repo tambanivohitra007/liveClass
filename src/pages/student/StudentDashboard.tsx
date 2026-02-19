@@ -75,6 +75,7 @@ export default function StudentDashboard() {
   }
 
   return (
+    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -86,7 +87,7 @@ export default function StudentDashboard() {
         </div>
         <button
           onClick={() => navigate('/join')}
-          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center gap-2"
+          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 flex items-center gap-2"
         >
           <Gamepad2 className="w-4 h-4" />
           Join a Game
@@ -101,7 +102,7 @@ export default function StudentDashboard() {
           { icon: <Flame className="w-5 h-5" />, label: 'Best Streak', value: bestStreak, color: 'text-answer-red bg-answer-red/10' },
           { icon: <Target className="w-5 h-5" />, label: 'Avg Accuracy', value: `${avgAccuracy}%`, color: 'text-success bg-success/10' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border-2 border-gray-800  p-5 animate-fade-in">
+          <div key={s.label} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-5 animate-fade-in">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center`}>
                 {s.icon}
@@ -119,7 +120,7 @@ export default function StudentDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Games</h2>
           <div className="space-y-3">
             {recentGames.map((game) => (
-              <div key={game.sessionId} className="bg-white rounded-2xl border-2 border-gray-800  hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 overflow-hidden animate-fade-in">
+              <div key={game.sessionId} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 overflow-hidden animate-fade-in">
                 <button
                   onClick={() => setExpandedGame(expandedGame === game.sessionId ? null : game.sessionId)}
                   className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
@@ -227,7 +228,7 @@ export default function StudentDashboard() {
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeAssignments.map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border-2 border-gray-800 shadow-[3px_3px_0px_0px_#22C55E] hover:shadow-[6px_6px_0px_0px_#22C55E] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 group">
+              <div key={a.id} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 group">
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs px-2 py-0.5 bg-success/10 text-success rounded-full font-medium">Active</span>
@@ -241,7 +242,7 @@ export default function StudentDashboard() {
                 <div className="px-6 py-3 border-t border-gray-50">
                   <button
                     onClick={() => navigate(`/assignment/${a.id}`)}
-                    className="w-full py-2 text-sm font-medium text-white bg-success rounded-lg border-2 border-gray-800 shadow-[3px_3px_0px_0px_#22C55E] hover:shadow-[5px_5px_0px_0px_#22C55E] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300 flex items-center justify-center gap-1"
+                    className="w-full py-2 text-sm font-medium text-white bg-success rounded-lg shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 flex items-center justify-center gap-1"
                   >
                     Start <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -258,7 +259,7 @@ export default function StudentDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Upcoming</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {upcomingAssignments.map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border-2 border-gray-800  p-6 opacity-80">
+              <div key={a.id} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 opacity-80">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs px-2 py-0.5 bg-info/10 text-info rounded-full font-medium">Upcoming</span>
                 </div>
@@ -279,7 +280,7 @@ export default function StudentDashboard() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Past</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {pastAssignments.map((a) => (
-              <div key={a.id} className="bg-white rounded-2xl border-2 border-gray-800  p-6 opacity-60">
+              <div key={a.id} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 opacity-60">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-medium">Ended</span>
                 </div>
@@ -304,12 +305,13 @@ export default function StudentDashboard() {
           <p className="text-gray-500 mb-6">Join a live game using a PIN from your teacher</p>
           <button
             onClick={() => navigate('/join')}
-            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
+            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200"
           >
             Join a Game
           </button>
         </div>
       )}
+    </div>
     </div>
   );
 }

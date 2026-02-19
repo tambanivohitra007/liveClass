@@ -47,7 +47,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-gray-50 to-gray-100 relative">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-[#E8EAF0] to-surface relative">
       <div className="absolute inset-0 pattern-dots pointer-events-none" />
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
@@ -56,7 +56,7 @@ export default function Login() {
           <p className="text-gray-500 mt-1">Sign in to your account</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 p-8">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm">
               {error}
@@ -66,7 +66,7 @@ export default function Login() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-800 rounded-xl text-gray-700 font-medium hover:bg-gray-50 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 mb-6 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 shadow-[2px_2px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 mb-6 disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -107,7 +107,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50"
+              className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>

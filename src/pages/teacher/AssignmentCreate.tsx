@@ -46,11 +46,12 @@ export default function AssignmentCreate() {
   };
 
   return (
+    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-2xl mx-auto px-4 py-8">
       <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-4 flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> Back</button>
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Assignment</h1>
 
-      <form onSubmit={handleCreate} className="bg-white rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] p-6 space-y-5">
+      <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Quiz</label>
           <select
@@ -100,11 +101,12 @@ export default function AssignmentCreate() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50"
+          className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 disabled:opacity-50"
         >
           {saving ? 'Creating...' : 'Create Assignment'}
         </button>
       </form>
+    </div>
     </div>
   );
 }

@@ -117,6 +117,7 @@ export default function ClassList() {
   }
 
   return (
+    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -156,7 +157,7 @@ export default function ClassList() {
               <div
                 key={cls.id}
                 onClick={() => navigate(`/classroom/${cls.id}`)}
-                className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
+                className="group bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
               >
                 {/* Color banner */}
                 <div className={`h-24 ${CARD_GRADIENTS[cls.color] || DEFAULT_GRADIENT} relative overflow-hidden rounded-t-2xl`}>
@@ -176,7 +177,7 @@ export default function ClassList() {
                     {cls.name}
                   </h3>
                   {cls.description && (
-                    <p className="text-sm text-gray-400 line-clamp-1 mb-3">{cls.description}</p>
+                    <p className="text-sm text-gray-500 line-clamp-1 mb-3">{cls.description}</p>
                   )}
 
                   {/* Stats */}
@@ -304,6 +305,7 @@ export default function ClassList() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

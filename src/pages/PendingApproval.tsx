@@ -11,10 +11,10 @@ export default function PendingApproval() {
   const isRejected = user?.approvalStatus === 'rejected';
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-gray-50 to-gray-100 relative">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-[#E8EAF0] to-surface relative">
       <div className="absolute inset-0 pattern-dots pointer-events-none" />
       <div className="w-full max-w-md animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 p-8 text-center">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-8 text-center">
           <img src={logo} alt="LiveClass" className="w-14 h-14 rounded-2xl mx-auto mb-6" />
 
           {isRejected ? (

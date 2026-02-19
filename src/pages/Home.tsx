@@ -139,7 +139,7 @@ export default function Home() {
       </section>
 
       {/* How it Works */}
-      <section className="py-24 relative overflow-hidden">
+      <section className="py-24 relative overflow-hidden bg-gradient-to-b from-[#E8EAF0] to-surface">
         <div className="max-w-6xl mx-auto px-4">
           {/* Section header — playful rotation */}
           <div className="text-center space-y-4 mb-20">

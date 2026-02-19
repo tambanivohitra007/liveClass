@@ -306,6 +306,7 @@ export default function Dashboard() {
   }
 
   return (
+    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -354,7 +355,7 @@ export default function Dashboard() {
           { icon: <HelpCircle className="w-4 h-4" />, label: 'Questions', value: stats.totalQuestions, color: 'text-accent-dark bg-accent/10' },
           { icon: <Users className="w-4 h-4" />, label: 'Sessions', value: stats.totalSessions, color: 'text-success bg-success/10' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center gap-3 animate-fade-in hover:shadow-md transition-shadow duration-200">
+          <div key={s.label} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-4 flex items-center gap-3 animate-fade-in">
             <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center shrink-0`}>{s.icon}</div>
             <div>
               <p className="text-xl font-bold text-gray-900">{s.value}</p>
@@ -453,7 +454,7 @@ export default function Dashboard() {
             return (
               <div
                 key={quiz.id}
-                className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col animate-fade-in"
+                className="group bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 flex flex-col animate-fade-in"
               >
                 {/* Banner */}
                 <div className={`h-32 ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} relative overflow-hidden rounded-t-2xl`}>
@@ -680,6 +681,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
