@@ -354,28 +354,29 @@ export default function HostSession() {
     <div className="min-h-screen bg-surface-dark text-white flex flex-col" style={MESH_BG}>
 
       {/* ══════════ Top Navigation Bar ══════════ */}
-      <header className="flex items-center justify-between px-8 py-5 w-full max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="bg-brand p-2 rounded-lg flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+      <header className="flex items-center justify-between px-4 sm:px-8 py-3 sm:py-5 w-full max-w-7xl mx-auto">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="bg-brand p-1.5 sm:p-2 rounded-lg flex items-center justify-center">
+            <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">
+          <h1 className="text-base sm:text-xl font-bold tracking-tight">
             LiveClass <span className="text-brand">Game</span>
           </h1>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md px-5 py-2 rounded-full border border-white/5">
-            <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse" />
-            <span className="text-sm font-semibold">
-              {players.length} Player{players.length !== 1 && 's'} Joined
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 bg-white/10 backdrop-blur-md px-3 sm:px-5 py-1.5 sm:py-2 rounded-full border border-white/5">
+            <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-success rounded-full animate-pulse" />
+            <span className="text-xs sm:text-sm font-semibold">
+              <span className="hidden sm:inline">{players.length} Player{players.length !== 1 && 's'} Joined</span>
+              <span className="sm:hidden">{players.length}</span>
             </span>
           </div>
           <button
             onClick={toggleMute}
-            className="p-2.5 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-white"
+            className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-white"
             aria-label={muted ? 'Unmute' : 'Mute'}
           >
-            {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            {muted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
         </div>
       </header>
@@ -383,30 +384,30 @@ export default function HostSession() {
       {/* ══════════════════ LOBBY ══════════════════ */}
       {session.status === 'lobby' && (
         <>
-          <main className="flex-grow flex flex-col lg:flex-row gap-8 px-8 py-4 max-w-7xl mx-auto w-full">
+          <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-8 px-4 sm:px-8 py-4 max-w-7xl mx-auto w-full">
 
             {/* ── Left Column: PIN Hero + Players ── */}
-            <div className="flex-grow flex flex-col gap-8">
+            <div className="flex-grow flex flex-col gap-4 sm:gap-8">
 
               {/* Hero PIN + QR Section */}
-              <div className="relative flex flex-col items-center py-12 px-8 bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm animate-bounce-in">
+              <div className="relative flex flex-col items-center py-6 sm:py-12 px-4 sm:px-8 bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm animate-bounce-in">
                 <div className="absolute inset-0 bg-gradient-to-br from-brand/10 to-accent/10 opacity-50" />
-                <h2 className="relative text-base font-medium text-white/60 mb-6 uppercase tracking-[0.2em]">
+                <h2 className="relative text-sm sm:text-base font-medium text-white/60 mb-4 sm:mb-6 uppercase tracking-[0.2em]">
                   Join the Game
                 </h2>
-                <div className="relative flex flex-col sm:flex-row items-center gap-8">
+                <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
                   {/* PIN */}
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm font-medium text-brand">Enter Game PIN</p>
                     <div
-                      className="bg-white text-surface-dark px-10 py-5 rounded-2xl flex items-center gap-3"
+                      className="bg-white text-surface-dark px-6 sm:px-10 py-3 sm:py-5 rounded-2xl flex items-center gap-2 sm:gap-3"
                       style={{ boxShadow: '0 0 60px rgba(212, 86, 107, 0.3)' }}
                     >
-                      <span className="text-5xl md:text-6xl font-black tracking-tight">
+                      <span className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight">
                         {session.pinCode.slice(0, 3)}
                       </span>
-                      <div className="w-1.5 h-12 bg-gray-200 rounded-full" />
-                      <span className="text-5xl md:text-6xl font-black tracking-tight">
+                      <div className="w-1 sm:w-1.5 h-8 sm:h-12 bg-gray-200 rounded-full" />
+                      <span className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight">
                         {session.pinCode.slice(3)}
                       </span>
                     </div>
@@ -419,7 +420,7 @@ export default function HostSession() {
                     <div className="flex-1 w-px bg-gradient-to-b from-transparent via-white/15 to-transparent" />
                   </div>
                   {/* Horizontal divider (mobile) */}
-                  <div className="flex sm:hidden items-center gap-4 w-full">
+                  <div className="flex sm:hidden items-center gap-3 w-full">
                     <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
                     <span className="text-[10px] uppercase tracking-widest text-white/30 font-medium">or</span>
                     <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
@@ -429,13 +430,14 @@ export default function HostSession() {
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm font-medium text-brand">Scan to Join</p>
                     <div
-                      className="bg-white p-3 rounded-2xl"
+                      className="bg-white p-2 sm:p-3 rounded-2xl"
                       style={{ boxShadow: '0 0 40px rgba(212, 86, 107, 0.2)' }}
                     >
                       <QRCodeSVG
                         value={`${window.location.origin}/join?pin=${session.pinCode}`}
-                        size={128}
+                        size={100}
                         level="M"
+                        className="sm:w-[128px] sm:h-[128px]"
                       />
                     </div>
                   </div>
@@ -523,8 +525,8 @@ export default function HostSession() {
             </div>
 
             {/* ── Right Column: Host Controls Sidebar ── */}
-            <aside className="w-full lg:w-80 flex flex-col gap-6 shrink-0">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col gap-6 h-full">
+            <aside className="w-full lg:w-80 flex flex-col gap-4 sm:gap-6 shrink-0">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 h-full">
 
                 {/* Settings Header */}
                 <h3 className="text-lg font-bold flex items-center gap-2">
@@ -713,9 +715,9 @@ export default function HostSession() {
 
       {/* ══════════════════ LIVE QUESTION ══════════════════ */}
       {session.questionState === 'live' && (
-        <main className="flex-grow flex flex-col items-center justify-center px-8 py-8 max-w-4xl mx-auto w-full">
+        <main className="flex-grow flex flex-col items-center justify-center px-4 sm:px-8 py-6 sm:py-8 max-w-4xl mx-auto w-full">
           {/* Question counter */}
-          <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/5 mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/5 mb-4 sm:mb-8 animate-fade-in">
             <span className="text-xs text-white/50 uppercase tracking-wider font-medium">Question</span>
             <span className="text-sm font-bold">
               {session.currentQuestionIndex + 1}
@@ -724,32 +726,32 @@ export default function HostSession() {
             </span>
           </div>
 
-          <h2 className="text-2xl md:text-5xl font-bold text-center mb-10 max-w-3xl leading-tight animate-fade-in break-words">
+          <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in break-words">
             {currentQuestionText}
           </h2>
 
           {/* Timer + Answer Progress */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
             {currentTimeLimitSec > 0 && (
-              <div className={`inline-flex items-baseline gap-2 px-8 py-4 rounded-2xl border transition-colors animate-bounce-in ${
+              <div className={`inline-flex items-baseline gap-2 px-5 sm:px-8 py-3 sm:py-4 rounded-2xl border transition-colors animate-bounce-in ${
                 session.timerPaused
                   ? 'bg-warning/10 border-warning/20'
                   : timeLeft <= 5
                     ? 'bg-danger/10 border-danger/20'
                     : 'bg-white/5 border-white/10'
               }`}>
-                <span className={`text-6xl font-black tabular-nums ${
+                <span className={`text-4xl sm:text-6xl font-black tabular-nums ${
                   session.timerPaused ? 'text-warning' :
                   timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'
                 }`}>{timeLeft}</span>
-                <span className={`text-base font-medium ${
+                <span className={`text-sm sm:text-base font-medium ${
                   session.timerPaused ? 'text-warning' :
                   timeLeft <= 5 ? 'text-danger/50' : 'text-white/30'
                 }`}>{session.timerPaused ? 'PAUSED' : 'sec'}</span>
               </div>
             )}
-            <div className="inline-flex flex-col items-center px-6 py-3 rounded-2xl bg-white/5 border border-white/10 animate-bounce-in">
-              <span className={`text-4xl font-black tabular-nums ${answeredCount >= players.length ? 'text-success' : 'text-white'}`}>
+            <div className="inline-flex flex-col items-center px-5 sm:px-6 py-2 sm:py-3 rounded-2xl bg-white/5 border border-white/10 animate-bounce-in">
+              <span className={`text-2xl sm:text-4xl font-black tabular-nums ${answeredCount >= players.length ? 'text-success' : 'text-white'}`}>
                 {answeredCount}<span className="text-white/30">/{players.length}</span>
               </span>
               <span className="text-xs font-medium text-white/30">answered</span>
@@ -757,11 +759,11 @@ export default function HostSession() {
           </div>
 
           {/* Control Toolbar */}
-          <div className="flex items-center gap-3 mt-10">
+          <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-10">
             <div className="inline-flex items-center gap-1 bg-white/5 rounded-full p-1.5 border border-white/10 backdrop-blur-sm">
               <button
                 onClick={togglePause}
-                className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+                className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
                 title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
                 aria-label={session.timerPaused ? 'Resume timer' : 'Pause timer'}
               >
@@ -769,7 +771,7 @@ export default function HostSession() {
               </button>
               <button
                 onClick={extendTimer}
-                className="px-4 py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold"
+                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold"
                 title="Add 30 seconds"
               >
                 +30s
@@ -777,7 +779,7 @@ export default function HostSession() {
               {!isLastQuestion && (
                 <button
                   onClick={skipQuestion}
-                  className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+                  className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
                   title="Skip to next question"
                   aria-label="Skip to next question"
                 >
@@ -787,14 +789,14 @@ export default function HostSession() {
             </div>
             <button
               onClick={endQuestion}
-              className="px-8 py-3.5 bg-danger text-white font-bold rounded-full hover:brightness-110 transition-all"
+              className="px-6 sm:px-8 py-3 sm:py-3.5 bg-danger text-white font-bold rounded-full hover:brightness-110 transition-all w-full sm:w-auto"
               style={{ boxShadow: '0 4px 20px rgba(232, 99, 107, 0.35)' }}
             >
               End Question
             </button>
           </div>
 
-          <p className="text-white/15 text-xs mt-10">
+          <p className="hidden sm:block text-white/15 text-xs mt-10">
             Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to advance
           </p>
         </main>
@@ -806,17 +808,17 @@ export default function HostSession() {
         const totalPlayers = players.length;
         const progressPercent = totalPlayers > 0 ? Math.round((finishedCount / totalPlayers) * 100) : 0;
         return (
-          <main className="flex-grow flex flex-col lg:flex-row gap-8 px-8 py-8 max-w-7xl mx-auto w-full">
+          <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-8 px-4 sm:px-8 py-4 sm:py-8 max-w-7xl mx-auto w-full">
             {/* Left: Progress */}
-            <div className="flex-grow flex flex-col gap-6">
+            <div className="flex-grow flex flex-col gap-4 sm:gap-6">
               {/* Progress Card */}
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-fade-in">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold flex items-center gap-2">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 animate-fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                  <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-success" />
                     Student Progress
                   </h3>
-                  <span className="text-2xl font-black tabular-nums">
+                  <span className="text-xl sm:text-2xl font-black tabular-nums">
                     {finishedCount}<span className="text-white/30">/{totalPlayers}</span>
                     <span className="text-sm font-medium text-white/40 ml-2">finished</span>
                   </span>
@@ -831,7 +833,7 @@ export default function HostSession() {
               </div>
 
               {/* Per-student progress list */}
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-fade-in">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 animate-fade-in">
                 <h4 className="text-sm font-bold text-white/60 mb-4 uppercase tracking-wider">Individual Progress</h4>
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                   {players.map((p) => {
@@ -860,8 +862,8 @@ export default function HostSession() {
             </div>
 
             {/* Right: Leaderboard + End Button */}
-            <div className="w-full lg:w-96 flex flex-col gap-6 shrink-0">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-slide-up">
+            <div className="w-full lg:w-96 flex flex-col gap-4 sm:gap-6 shrink-0">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 animate-slide-up">
                 <Leaderboard sessionId={session.id} currentQuestion={undefined} totalQuestions={totalQuestions} />
               </div>
 
@@ -881,7 +883,7 @@ export default function HostSession() {
                 )}
               </button>
 
-              <p className="text-white/15 text-xs text-center">
+              <p className="hidden sm:block text-white/15 text-xs text-center">
                 Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to end session
               </p>
             </div>
@@ -891,10 +893,10 @@ export default function HostSession() {
 
       {/* ══════════════════ REVEAL ══════════════════ */}
       {session.questionState === 'reveal' && (
-        <main className="flex-grow flex flex-col px-8 py-8 max-w-4xl mx-auto w-full">
+        <main className="flex-grow flex flex-col px-4 sm:px-8 py-4 sm:py-8 max-w-4xl mx-auto w-full">
           {session.teamMode && session.teamScoreSnapshot && (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-4 animate-bounce-in">
-              <h3 className="text-lg font-bold mb-4">Team Standings</h3>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 mb-4 animate-bounce-in">
+              <h3 className="text-base sm:text-lg font-bold mb-4">Team Standings</h3>
               <div className="space-y-3">
                 {session.teamScoreSnapshot.map((team, i) => (
                   <div key={team.teamIndex} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
@@ -909,12 +911,12 @@ export default function HostSession() {
             </div>
           )}
 
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-4 animate-slide-up">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 mb-4 animate-slide-up">
             <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} currentQuestion={session.currentQuestionIndex + 1} totalQuestions={totalQuestions} />
           </div>
 
           {violations.size > 0 && (
-            <div className="bg-danger/10 backdrop-blur rounded-2xl p-4 mb-6 animate-fade-in border border-danger/10">
+            <div className="bg-danger/10 backdrop-blur rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 animate-fade-in border border-danger/10">
               <div className="flex items-center gap-2 mb-3">
                 <ShieldAlert className="w-4 h-4 text-danger" />
                 <h3 className="text-sm font-bold text-danger">Flagged Activity</h3>
@@ -929,11 +931,11 @@ export default function HostSession() {
             </div>
           )}
 
-          <div className="flex justify-center gap-4 mt-6">
+          <div className="flex justify-center gap-4 mt-4 sm:mt-6">
             {!isLastQuestion && (
               <button
                 onClick={nextQuestion}
-                className="px-10 py-4 bg-brand text-white font-bold text-lg rounded-full hover:bg-brand-dark transition-all flex items-center gap-2 group"
+                className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all flex items-center gap-2 group w-full sm:w-auto justify-center"
                 style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
               >
                 Next Question
@@ -943,7 +945,7 @@ export default function HostSession() {
             {isLastQuestion && (
               <button
                 onClick={() => navigate(`/session/${session.id}/results`)}
-                className="px-10 py-4 bg-brand text-white font-bold text-lg rounded-full hover:bg-brand-dark transition-all"
+                className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all w-full sm:w-auto"
                 style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
               >
                 View Results
@@ -951,7 +953,7 @@ export default function HostSession() {
             )}
           </div>
 
-          <p className="text-center text-white/15 text-xs mt-8">
+          <p className="hidden sm:block text-center text-white/15 text-xs mt-8">
             Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to advance
           </p>
         </main>

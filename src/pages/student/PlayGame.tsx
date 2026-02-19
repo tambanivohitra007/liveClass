@@ -417,13 +417,13 @@ export default function PlayGame() {
   // Student-paced: All done screen
   if (isStudentPaced && spFinished) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
-        <div className="max-w-md mx-auto text-center py-12 animate-bounce-in">
-          <PartyPopper className="w-16 h-16 mx-auto mb-4 text-success" />
-          <h1 className="text-3xl font-black mb-2">All Done!</h1>
-          <p className="text-white/50 mb-8">You've completed all {totalQuestions} questions. Wait for the host to end the session.</p>
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
+          <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-success" />
+          <h1 className="text-2xl sm:text-3xl font-black mb-2">All Done!</h1>
+          <p className="text-white/50 mb-6 sm:mb-8 text-sm sm:text-base">You've completed all {totalQuestions} questions. Wait for the host to end the session.</p>
           {sessionId && (
-            <div className="bg-white/5 backdrop-blur rounded-2xl p-6">
+            <div className="bg-white/5 backdrop-blur rounded-2xl p-4 sm:p-6">
               <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -435,20 +435,20 @@ export default function PlayGame() {
   // Student-paced: Feedback + Next question
   if (isStudentPaced && feedback && submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
         <Confetti active={feedback.correct} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
-        <div className="max-w-md mx-auto text-center py-12">
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12">
           <div className="animate-bounce-in">
             <div className="flex justify-center mb-4">
               {feedback.correct
-                ? <PartyPopper className="w-16 h-16 text-success" />
-                : <Frown className="w-16 h-16 text-danger" />}
+                ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
+                : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
             </div>
-            <h2 className={`text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+            <h2 className={`text-2xl sm:text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
               {feedback.correct ? 'Correct!' : 'Wrong!'}
             </h2>
-            <p className="text-4xl font-black text-white mb-2">+{feedback.points}</p>
+            <p className="text-3xl sm:text-4xl font-black text-white mb-2">+{feedback.points}</p>
             {feedback.rank > 0 && (
               <p className="text-white/50 text-sm mb-6">
                 You're in <span className="text-white font-bold">{ordinal(feedback.rank)} place</span>
@@ -476,13 +476,13 @@ export default function PlayGame() {
   // Ended
   if (session.status === 'ended') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
-        <div className="max-w-md mx-auto text-center py-12 animate-bounce-in">
-          <Trophy className="w-16 h-16 mx-auto mb-4 text-warning" />
-          <h1 className="text-3xl font-black mb-2">Game Over!</h1>
-          <p className="text-white/50 mb-8">Thanks for playing!</p>
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
+          <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-warning" />
+          <h1 className="text-2xl sm:text-3xl font-black mb-2">Game Over!</h1>
+          <p className="text-white/50 mb-6 sm:mb-8">Thanks for playing!</p>
           {sessionId && (
-            <div className="bg-white/5 backdrop-blur rounded-2xl p-6">
+            <div className="bg-white/5 backdrop-blur rounded-2xl p-4 sm:p-6">
               <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -503,21 +503,21 @@ export default function PlayGame() {
   // Reveal
   if (session.questionState === 'reveal') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-6">
+      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
         <Confetti active={feedback?.correct === true} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
-        <div className="max-w-md mx-auto text-center py-12">
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12">
           {feedback && (
             <div className="animate-bounce-in">
               <div className="flex justify-center mb-4">
                 {feedback.correct
-                  ? <PartyPopper className="w-16 h-16 text-success" />
-                  : <Frown className="w-16 h-16 text-danger" />}
+                  ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
+                  : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
               </div>
-              <h2 className={`text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+              <h2 className={`text-2xl sm:text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
                 {feedback.correct ? 'Correct!' : 'Wrong!'}
               </h2>
-              <p className="text-4xl font-black text-white mb-2">+{feedback.points}</p>
+              <p className="text-3xl sm:text-4xl font-black text-white mb-2">+{feedback.points}</p>
               {feedback.rank > 0 && (
                 <p className="text-white/50 text-sm mb-6">
                   You're in <span className="text-white font-bold">{ordinal(feedback.rank)} place</span>
@@ -528,7 +528,7 @@ export default function PlayGame() {
             </div>
           )}
           {sessionId && (
-            <div className="bg-white/5 backdrop-blur rounded-2xl p-6 animate-slide-up">
+            <div className="bg-white/5 backdrop-blur rounded-2xl p-4 sm:p-6 animate-slide-up">
               <Leaderboard sessionId={sessionId} compact currentQuestion={(session.currentQuestionIndex || 0) + 1} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -610,7 +610,7 @@ export default function PlayGame() {
 
         {/* Answer buttons */}
         {(currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && (
-          <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[400px]">
             {currentQuestion.options.map((opt, i) => (
               <button
                 key={i}
@@ -653,20 +653,20 @@ export default function PlayGame() {
 
         {/* Matching UI */}
         {currentQuestion.type === 'matching' && (
-          <div className="flex-1 space-y-3 max-w-md mx-auto w-full">
+          <div className="flex-1 space-y-2 sm:space-y-3 max-w-md mx-auto w-full">
             {currentQuestion.options.map((left, i) => (
-              <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 ${
+              <div key={i} className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border-2 ${
                 matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
               }`}>
-                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 max-w-[40%] break-words ${answerColors[i % answerColors.length].split(' ')[0]}`}>
+                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 break-words ${answerColors[i % answerColors.length].split(' ')[0]}`}>
                   {left}
                 </span>
-                <span className="text-white/30">&rarr;</span>
+                <span className="hidden sm:inline text-white/30">&rarr;</span>
                 <select
                   value={matchingPairs[left] || ''}
                   onChange={(e) => setMatchingPairs({ ...matchingPairs, [left]: e.target.value })}
                   disabled={submitted}
-                  className="flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 outline-none focus:border-brand"
+                  className="w-full sm:flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 outline-none focus:border-brand"
                 >
                   <option value="" className="bg-gray-800">Select...</option>
                   {shuffledMatchOptions.map((right) => (
@@ -682,7 +682,7 @@ export default function PlayGame() {
         {currentQuestion.type === 'fill_blank' && (
           <div className="flex-1 flex items-center">
             <div className="w-full max-w-lg mx-auto space-y-4">
-              <div className="text-lg text-white leading-relaxed text-center">
+              <div className="text-base sm:text-lg text-white leading-relaxed text-center">
                 {currentQuestion.text.split('___').map((part, i, arr) => (
                   <span key={i}>
                     {part}
@@ -697,7 +697,7 @@ export default function PlayGame() {
                         }}
                         disabled={submitted}
                         placeholder={`Blank ${i + 1}`}
-                        className="inline-block w-32 mx-1 px-2 py-1 text-center font-bold rounded-lg border-2 border-brand/50 bg-white/10 text-white placeholder:text-white/30 outline-none focus:border-brand"
+                        className="inline-block w-24 sm:w-32 mx-1 px-2 py-1 text-center font-bold rounded-lg border-2 border-brand/50 bg-white/10 text-white placeholder:text-white/30 outline-none focus:border-brand"
                       />
                     )}
                   </span>
@@ -752,7 +752,7 @@ export default function PlayGame() {
 
         {/* Poll UI */}
         {currentQuestion.type === 'poll' && (
-          <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[400px]">
             {currentQuestion.options.map((opt, i) => (
               <button
                 key={i}
