@@ -405,18 +405,21 @@ export default function SessionResults() {
                        <span className="text-xs text-gray-400 font-normal">Out of {analytics.length * 1000}</span>
                      </div>
                   </th>
-                  {analytics.map((q, i) => (
-                    <th key={i} className="text-center py-3 px-2 w-24 border-l border-gray-100">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="font-semibold text-gray-900">Q{i + 1}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded text-white ${
-                            q.correctPercent >= 60 ? 'bg-warning' : 'bg-danger'
-                        }`}>
-                          {Math.round(q.correctPercent)}%
-                        </span>
-                      </div>
-                    </th>
-                  ))}
+                  {analytics.map((q, i) => {
+                    const pct = playerCount > 0 ? (q.correctCount / playerCount) * 100 : 0;
+                    return (
+                      <th key={i} className="text-center py-3 px-2 w-24 border-l border-gray-100">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="font-semibold text-gray-900">Q{i + 1}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded text-white ${
+                              pct >= 60 ? 'bg-warning' : 'bg-danger'
+                          }`}>
+                            {Math.round(pct)}%
+                          </span>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
@@ -544,23 +547,28 @@ export default function SessionResults() {
                 Questions tab shows the accumulated data of all participant attempts.
               </div>
 
-              {analytics.map((q, idx) => (
+              {analytics.map((q, idx) => {
+                const dist = answerDistributions.find(d => d.questionIndex === idx);
+                const pct = playerCount > 0 ? (q.correctCount / playerCount) * 100 : 0;
+                const unanswered = playerCount - q.totalAnswers;
+
+                return (
                 <div key={idx} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                    {/* Question Header */}
                    <div className="flex justify-between items-start mb-6">
                       <div className="flex gap-2">
                         <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-md flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Multiple Choice
+                          <CheckCircle2 className="w-3 h-3" /> {dist ? TYPE_LABELS[dist.questionType] || 'Multiple Choice' : 'Multiple Choice'}
                         </span>
                         <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-md flex items-center gap-1">
                           <ListOrdered className="w-3 h-3" /> 1 point
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
-                           <div className={`w-3 h-3 rounded-full ${q.correctPercent > 50 ? 'bg-warning' : 'bg-danger'}`} />
-                           <span className="font-bold text-gray-900">{q.correctPercent.toFixed(0)}%</span>
+                           <div className={`w-3 h-3 rounded-full ${pct > 50 ? 'bg-warning' : 'bg-danger'}`} />
+                           <span className="font-bold text-gray-900">{Math.round(pct)}%</span>
                            <span className="text-sm text-gray-500">Accuracy</span>
                         </div>
                         <div className="h-4 w-px bg-gray-200" />
@@ -581,9 +589,7 @@ export default function SessionResults() {
                    <div className="mb-6">
                       <h3 className="font-bold text-gray-900 mb-1">Question {idx + 1}</h3>
                       <p className="text-gray-800 text-lg">
-                        {/* We don't have the question text in analytics object directly in this context unless we join it. 
-                            Using placeholder or mapping from answerDistributions */}
-                        {answerDistributions.find(d => d.questionIndex === idx)?.questionText || 'Question text not available'}
+                        {dist?.questionText || 'Question text not available'}
                       </p>
                    </div>
 
@@ -591,11 +597,10 @@ export default function SessionResults() {
                    <div className="flex gap-8">
                       {/* Options List */}
                       <div className="flex-1 space-y-3">
-                         {answerDistributions.find(d => d.questionIndex === idx)?.distribution.map((option, optIdx) => {
-                           const isCorrect = option.label === 'A' || option.label === 'C'; // Mock logic since we don't have correct answer metadata here
+                         {dist?.distribution.map((option, optIdx) => {
                            const letters = ['A', 'B', 'C', 'D'];
                            const colors = ['bg-red-100 text-red-700', 'bg-blue-100 text-blue-700', 'bg-green-100 text-green-700', 'bg-yellow-100 text-yellow-700'];
-                           
+
                            return (
                              <div key={optIdx} className="relative">
                                <div className={`p-3 rounded-lg border ${option.count > 0 ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100 opacity-60'} flex justify-between items-center z-10 relative`}>
@@ -605,23 +610,23 @@ export default function SessionResults() {
                                    </div>
                                    <span className="font-medium text-gray-800">{option.label}</span>
                                  </div>
-                                 
+
                                  <div className="flex items-center gap-3">
-                                   {isCorrect && <Check className="w-5 h-5 text-success" />}
+                                   {option.isCorrect && <Check className="w-5 h-5 text-success" />}
                                    <span className="text-sm text-gray-500">{option.count} answered</span>
                                  </div>
                                </div>
                                {/* Progress Bar Background */}
-                               <div 
-                                 className={`absolute top-0 bottom-0 left-0 rounded-lg opacity-10 z-0 ${isCorrect ? 'bg-success' : 'bg-danger'}`}
-                                 style={{ width: `${(option.count / (q.totalAnswers || 1)) * 100}%` }}
+                               <div
+                                 className={`absolute top-0 bottom-0 left-0 rounded-lg opacity-10 z-0 ${option.isCorrect ? 'bg-success' : 'bg-danger'}`}
+                                 style={{ width: `${(option.count / (playerCount || 1)) * 100}%` }}
                                />
                              </div>
                            )
                          })}
                       </div>
 
-                      {/* Right Stats (Correct vs Incorrect) */}
+                      {/* Right Stats (Correct / Incorrect / Unanswered) */}
                       <div className="w-64 flex-shrink-0">
                          <div className="space-y-6">
                             <div>
@@ -630,7 +635,7 @@ export default function SessionResults() {
                                   <span className="text-gray-900 font-bold">{q.correctCount} students</span>
                                </div>
                                <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                                  <div className="h-full bg-success" style={{ width: `${q.correctPercent}%` }} />
+                                  <div className="h-full bg-success" style={{ width: `${pct}%` }} />
                                </div>
                             </div>
                             <div>
@@ -639,14 +644,26 @@ export default function SessionResults() {
                                   <span className="text-gray-900 font-bold">{q.totalAnswers - q.correctCount} students</span>
                                </div>
                                <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                                  <div className="h-full bg-danger" style={{ width: `${100 - q.correctPercent}%` }} />
+                                  <div className="h-full bg-danger" style={{ width: `${playerCount > 0 ? ((q.totalAnswers - q.correctCount) / playerCount) * 100 : 0}%` }} />
                                </div>
                             </div>
+                            {unanswered > 0 && (
+                            <div>
+                               <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-gray-400 font-medium">Unanswered</span>
+                                  <span className="text-gray-900 font-bold">{unanswered} students</span>
+                               </div>
+                               <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gray-300" style={{ width: `${(unanswered / playerCount) * 100}%` }} />
+                               </div>
+                            </div>
+                            )}
                          </div>
                       </div>
                    </div>
                 </div>
-              ))}
+                );
+              })}
            </div>
         )}
 
@@ -655,8 +672,9 @@ export default function SessionResults() {
            <div className="space-y-6">
              {/* Reused existing logic but improved UI */}
              {Array.from(typeGroups.entries()).map(([type, group]) => {
-                const avgAcc = group.totalAnswers > 0
-                  ? ((group.totalCorrect / group.totalAnswers) * 100).toFixed(0)
+                const expectedAnswers = playerCount * group.questions.length;
+                const avgAcc = expectedAnswers > 0
+                  ? ((group.totalCorrect / expectedAnswers) * 100).toFixed(0)
                   : '0';
                 
                 return (

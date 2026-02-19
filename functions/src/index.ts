@@ -607,7 +607,7 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
         questionIndex: session.currentQuestionIndex,
         totalAnswers,
         correctCount: totalCorrect,
-        correctPercent: totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
+        correctPercent: playersSnap.size > 0 ? (totalCorrect / playersSnap.size) * 100 : 0,
         avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
       }),
     sessionDoc.ref.update({
