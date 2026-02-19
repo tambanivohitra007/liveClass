@@ -214,6 +214,8 @@ export default function HostSession() {
       currentQuestionIndex: qIndex,
       questionState: 'live',
       questionStartedAt: Date.now(),
+      timerPaused: false,
+      timerPausedAt: null,
     };
     // Generate shuffle order on first question if enabled
     if (qIndex === 0 && session.shuffleQuestions && allQuestions.length > 0) {
