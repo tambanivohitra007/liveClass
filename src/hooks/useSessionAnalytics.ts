@@ -198,8 +198,10 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
 
       // Compute aggregate stats
       const playerCount = playersSnap.size;
+      const totalQuestions = orderedQuestionIds.length;
       const totalCorrect = allAnswers.filter((a) => a.correct).length;
-      const avgAccuracy = allAnswers.length > 0 ? (totalCorrect / allAnswers.length) * 100 : 0;
+      const totalExpected = playerCount * totalQuestions;
+      const avgAccuracy = totalExpected > 0 ? (totalCorrect / totalExpected) * 100 : 0;
       const totalPoints = allAnswers.reduce((sum, a) => sum + a.pointsAwarded, 0);
       const avgScore = playerCount > 0 ? Math.round(totalPoints / playerCount) : 0;
       const sessionDuration =
@@ -221,6 +223,10 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
       });
 
       const playerAccMap = new Map<string, { total: number; correct: number; points: number }>();
+      // Initialize all players so those who answered nothing still appear
+      playersSnap.docs.forEach((d) => {
+        playerAccMap.set(d.id, { total: 0, correct: 0, points: 0 });
+      });
       for (const a of allAnswers) {
         const entry = playerAccMap.get(a.playerId) || { total: 0, correct: 0, points: 0 };
         entry.total++;
@@ -235,7 +241,7 @@ export function useSessionAnalytics(sessionId: string | undefined): SessionAnaly
           nickname: playerNicknames.get(playerId) || 'Unknown',
           totalAnswers: stats.total,
           correctAnswers: stats.correct,
-          accuracyPercent: stats.total > 0 ? parseFloat(((stats.correct / stats.total) * 100).toFixed(1)) : 0,
+          accuracyPercent: totalQuestions > 0 ? parseFloat(((stats.correct / totalQuestions) * 100).toFixed(1)) : 0,
           totalPoints: stats.points,
         }))
         .sort((a, b) => b.totalPoints - a.totalPoints);
