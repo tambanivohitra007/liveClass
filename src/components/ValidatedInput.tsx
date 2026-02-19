@@ -42,7 +42,7 @@ export default function ValidatedInput({
           onBlur={() => setTouched(true)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full px-4 py-3 pr-10 rounded-xl border outline-none transition-all text-gray-900 ${
+          className={`w-full px-4 py-3 pr-10 rounded-xl border outline-none transition-all bg-white text-gray-900 ${
             error
               ? 'border-danger focus:ring-2 focus:ring-danger/30 focus:border-danger'
               : isValid

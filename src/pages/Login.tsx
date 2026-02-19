@@ -115,6 +115,7 @@ export default function Login() {
                 placeholder="Enter password"
                 required
                 minLength={6}
+                
               />
               <button
                 type="submit"
