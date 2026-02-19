@@ -5,6 +5,7 @@ import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
 import { LayoutDashboard, LogOut, Settings, Shield, ChevronDown } from 'lucide-react';
 import { ADMIN_EMAIL } from '../lib/config';
+import NotificationBell from './NotificationBell';
 import logo from '../assets/logo.png';
 
 export default function Navbar() {
@@ -118,9 +119,11 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Profile dropdown — visible on all breakpoints */}
+        {/* Notifications + Profile dropdown — visible on all breakpoints */}
         {firebaseUser ? (
-          <div ref={profileRef} className="relative md:ml-2">
+          <div className="flex items-center gap-1">
+          <NotificationBell />
+          <div ref={profileRef} className="relative">
             <button
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl hover:bg-white/10 transition-colors"
@@ -168,6 +171,7 @@ export default function Navbar() {
                 </div>
               </div>
             )}
+          </div>
           </div>
         ) : (
           <Link

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
+import { useNotificationListener } from './hooks/useNotificationListener';
 import { useThemeStore } from './stores/themeStore';
 import { useAuthStore } from './stores/authStore';
 import { ADMIN_EMAIL } from './lib/config';
@@ -170,6 +171,7 @@ function AppContent() {
 
 function App() {
   useAuthListener();
+  useNotificationListener();
   const { theme } = useThemeStore();
 
   useEffect(() => {

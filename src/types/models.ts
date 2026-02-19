@@ -212,3 +212,23 @@ export interface ViolationDoc {
   totalViolations: number;
   events: ViolationEvent[];
 }
+
+export type NotificationType = 'new_assignment' | 'session_started' | 'class_joined' | 'class_removed';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: number;
+  metadata: {
+    classroomId?: string;
+    classroomName?: string;
+    assignmentId?: string;
+    sessionId?: string;
+    pinCode?: string;
+    quizTitle?: string;
+  };
+}

@@ -1,9 +1,11 @@
 import * as admin from "firebase-admin";
 import * as crypto from "crypto";
 import * as cheerio from "cheerio";
+import * as nodemailer from "nodemailer";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onValueCreated } from "firebase-functions/v2/database";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { defineSecret } from "firebase-functions/params";
 
 admin.initializeApp();
@@ -38,13 +40,110 @@ function getShardId(playerId: string): number {
   return Math.abs(hash) % NUM_SHARDS;
 }
 
+// --- Email Helper ---
+function getMailer(): nodemailer.Transporter | null {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass) return null;
+  return nodemailer.createTransport({
+    host,
+    port: 587,
+    secure: false,
+    auth: { user, pass },
+  });
+}
+
+async function sendNotificationEmail(
+  to: string,
+  subject: string,
+  body: string
+): Promise<void> {
+  try {
+    const mailer = getMailer();
+    if (!mailer) return;
+    await mailer.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      html: body,
+    });
+  } catch (err) {
+    console.warn("Email send failed (non-fatal):", err);
+  }
+}
+
+// --- Notification Helper ---
+type NotificationType = "new_assignment" | "session_started" | "class_joined" | "class_removed";
+
+interface NotificationPayload {
+  type: NotificationType;
+  title: string;
+  message: string;
+  metadata: Record<string, string | undefined>;
+}
+
+async function createNotificationsForClassroom(
+  classroomId: string,
+  excludeUserId: string,
+  payload: NotificationPayload
+): Promise<void> {
+  const classroomDoc = await db.doc(`classrooms/${classroomId}`).get();
+  if (!classroomDoc.exists) return;
+  const classroomName = classroomDoc.data()?.name || "Unknown Class";
+
+  const membersSnap = await db
+    .collection(`classrooms/${classroomId}/members`)
+    .where("role", "==", "student")
+    .get();
+
+  if (membersSnap.empty) return;
+
+  const members = membersSnap.docs.filter((d) => d.data().userId !== excludeUserId);
+  if (members.length === 0) return;
+
+  const now = Date.now();
+
+  // Batch write in chunks of 500
+  for (let i = 0; i < members.length; i += 500) {
+    const chunk = members.slice(i, i + 500);
+    const batch = db.batch();
+    for (const memberDoc of chunk) {
+      const member = memberDoc.data();
+      const notifRef = db.collection("notifications").doc();
+      batch.set(notifRef, {
+        userId: member.userId,
+        type: payload.type,
+        title: payload.title,
+        message: payload.message,
+        read: false,
+        createdAt: now,
+        metadata: { ...payload.metadata, classroomId, classroomName },
+      });
+    }
+    await batch.commit();
+  }
+
+  // Fire-and-forget emails
+  for (const memberDoc of members) {
+    const email = memberDoc.data().email;
+    if (email) {
+      sendNotificationEmail(
+        email,
+        `${payload.title} — ${classroomName}`,
+        `<h3>${payload.title}</h3><p>${payload.message}</p><p>Class: ${classroomName}</p>`
+      );
+    }
+  }
+}
+
 // --- Create Session ---
 export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
   }
 
-  const { quizId } = request.data as { quizId: string };
+  const { quizId, classroomId } = request.data as { quizId: string; classroomId?: string };
   if (!quizId) {
     throw new HttpsError("invalid-argument", "quizId is required");
   }
@@ -87,6 +186,7 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
     antiCheatEnabled: true,
     startedAt: null,
     endedAt: null,
+    ...(classroomId ? { classroomId } : {}),
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -98,6 +198,17 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   }
 
   await batch.commit();
+
+  // Fire-and-forget: notify classroom students about the live session
+  if (classroomId) {
+    const quizTitle = quizDoc.data()?.title || "a quiz";
+    createNotificationsForClassroom(classroomId, request.auth!.uid, {
+      type: "session_started",
+      title: "Live Session Started",
+      message: `A live session for "${quizTitle}" has started! Join with PIN: ${pinCode}`,
+      metadata: { sessionId: sessionRef.id, pinCode, quizTitle },
+    }).catch((err) => console.warn("Notification error (non-fatal):", err));
+  }
 
   return { sessionId: sessionRef.id };
 });
@@ -1569,6 +1680,26 @@ export const joinClassroom = onCall(FUNCTION_CONFIG, async (request) => {
 
   await batch.commit();
 
+  // Fire-and-forget: notify the joining student
+  db.collection("notifications").add({
+    userId: request.auth!.uid,
+    type: "class_joined",
+    title: "Joined Class",
+    message: `You have joined "${classroom.name}"`,
+    read: false,
+    createdAt: Date.now(),
+    metadata: { classroomId: classroomDoc.id, classroomName: classroom.name },
+  }).catch((err) => console.warn("Notification error (non-fatal):", err));
+
+  const memberEmail = userData.email || request.auth!.token.email || "";
+  if (memberEmail) {
+    sendNotificationEmail(
+      memberEmail,
+      `Joined Class — ${classroom.name}`,
+      `<h3>Joined Class</h3><p>You have joined "${classroom.name}".</p>`
+    );
+  }
+
   return { classroomId: classroomDoc.id, name: classroom.name };
 });
 
@@ -1703,6 +1834,9 @@ export const removeClassroomMember = onCall(FUNCTION_CONFIG, async (request) => 
   const memberRole = memberDoc.data()?.role;
   const countField = memberRole === "co-teacher" ? "coTeacherCount" : "studentCount";
 
+  const memberEmail = memberDoc.data()?.email || "";
+  const classroomName = classroom.name || "Unknown Class";
+
   const batch = db.batch();
   batch.delete(memberDoc.ref);
   batch.update(classroomDoc.ref, {
@@ -1711,6 +1845,25 @@ export const removeClassroomMember = onCall(FUNCTION_CONFIG, async (request) => 
   });
 
   await batch.commit();
+
+  // Fire-and-forget: notify the removed student
+  db.collection("notifications").add({
+    userId,
+    type: "class_removed",
+    title: "Removed from Class",
+    message: `You have been removed from "${classroomName}"`,
+    read: false,
+    createdAt: Date.now(),
+    metadata: { classroomId, classroomName },
+  }).catch((err) => console.warn("Notification error (non-fatal):", err));
+
+  if (memberEmail) {
+    sendNotificationEmail(
+      memberEmail,
+      `Removed from Class — ${classroomName}`,
+      `<h3>Removed from Class</h3><p>You have been removed from "${classroomName}".</p>`
+    );
+  }
 
   return { success: true };
 });
@@ -1872,6 +2025,38 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
 
   return { success: true, top10 };
 });
+
+// --- Firestore Trigger: Assignment Created ---
+export const onAssignmentCreated = onDocumentCreated(
+  { document: "assignments/{assignmentId}", region: REGION, memory: "256MiB" },
+  async (event) => {
+    const data = event.data?.data();
+    if (!data) return;
+
+    const classroomId = data.classroomId as string | undefined;
+    if (!classroomId) return;
+
+    const ownerId = data.ownerId as string;
+    const assignmentId = event.params.assignmentId;
+
+    // Fetch quiz title
+    let quizTitle = "a quiz";
+    const quizId = data.quizId as string | undefined;
+    if (quizId) {
+      const quizDoc = await db.doc(`quizzes/${quizId}`).get();
+      if (quizDoc.exists) {
+        quizTitle = quizDoc.data()?.title || quizTitle;
+      }
+    }
+
+    await createNotificationsForClassroom(classroomId, ownerId, {
+      type: "new_assignment",
+      title: "New Assignment",
+      message: `A new assignment for "${quizTitle}" has been posted`,
+      metadata: { assignmentId, quizTitle },
+    });
+  }
+);
 
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 export const cleanupExpiredSessions = onSchedule(

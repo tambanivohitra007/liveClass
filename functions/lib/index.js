@@ -33,13 +33,15 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const cheerio = __importStar(require("cheerio"));
+const nodemailer = __importStar(require("nodemailer"));
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const database_1 = require("firebase-functions/v2/database");
+const firestore_1 = require("firebase-functions/v2/firestore");
 const params_1 = require("firebase-functions/params");
 admin.initializeApp();
 const db = admin.firestore();
@@ -67,12 +69,84 @@ function getShardId(playerId) {
     }
     return Math.abs(hash) % NUM_SHARDS;
 }
+// --- Email Helper ---
+function getMailer() {
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    if (!host || !user || !pass)
+        return null;
+    return nodemailer.createTransport({
+        host,
+        port: 587,
+        secure: false,
+        auth: { user, pass },
+    });
+}
+async function sendNotificationEmail(to, subject, body) {
+    try {
+        const mailer = getMailer();
+        if (!mailer)
+            return;
+        await mailer.sendMail({
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to,
+            subject,
+            html: body,
+        });
+    }
+    catch (err) {
+        console.warn("Email send failed (non-fatal):", err);
+    }
+}
+async function createNotificationsForClassroom(classroomId, excludeUserId, payload) {
+    const classroomDoc = await db.doc(`classrooms/${classroomId}`).get();
+    if (!classroomDoc.exists)
+        return;
+    const classroomName = classroomDoc.data()?.name || "Unknown Class";
+    const membersSnap = await db
+        .collection(`classrooms/${classroomId}/members`)
+        .where("role", "==", "student")
+        .get();
+    if (membersSnap.empty)
+        return;
+    const members = membersSnap.docs.filter((d) => d.data().userId !== excludeUserId);
+    if (members.length === 0)
+        return;
+    const now = Date.now();
+    // Batch write in chunks of 500
+    for (let i = 0; i < members.length; i += 500) {
+        const chunk = members.slice(i, i + 500);
+        const batch = db.batch();
+        for (const memberDoc of chunk) {
+            const member = memberDoc.data();
+            const notifRef = db.collection("notifications").doc();
+            batch.set(notifRef, {
+                userId: member.userId,
+                type: payload.type,
+                title: payload.title,
+                message: payload.message,
+                read: false,
+                createdAt: now,
+                metadata: { ...payload.metadata, classroomId, classroomName },
+            });
+        }
+        await batch.commit();
+    }
+    // Fire-and-forget emails
+    for (const memberDoc of members) {
+        const email = memberDoc.data().email;
+        if (email) {
+            sendNotificationEmail(email, `${payload.title} — ${classroomName}`, `<h3>${payload.title}</h3><p>${payload.message}</p><p>Class: ${classroomName}</p>`);
+        }
+    }
+}
 // --- Create Session ---
 exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
-    const { quizId } = request.data;
+    const { quizId, classroomId } = request.data;
     if (!quizId) {
         throw new https_1.HttpsError("invalid-argument", "quizId is required");
     }
@@ -111,6 +185,7 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
         antiCheatEnabled: true,
         startedAt: null,
         endedAt: null,
+        ...(classroomId ? { classroomId } : {}),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     for (let i = 0; i < NUM_SHARDS; i++) {
@@ -118,6 +193,16 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
         batch.set(shardRef, { players: {} });
     }
     await batch.commit();
+    // Fire-and-forget: notify classroom students about the live session
+    if (classroomId) {
+        const quizTitle = quizDoc.data()?.title || "a quiz";
+        createNotificationsForClassroom(classroomId, request.auth.uid, {
+            type: "session_started",
+            title: "Live Session Started",
+            message: `A live session for "${quizTitle}" has started! Join with PIN: ${pinCode}`,
+            metadata: { sessionId: sessionRef.id, pinCode, quizTitle },
+        }).catch((err) => console.warn("Notification error (non-fatal):", err));
+    }
     return { sessionId: sessionRef.id };
 });
 // --- Join Session ---
@@ -167,7 +252,61 @@ exports.joinSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
         ...(teamIndex !== null ? { teamIndex } : {}),
         joinedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    // Assign rotating question subset for late joiners
+    if (session.status === "live" && session.rotatingSetSize) {
+        const questionsSnap = await db
+            .collection("questions")
+            .where("quizId", "==", session.quizId)
+            .get();
+        const total = questionsSnap.size;
+        const size = Math.min(session.rotatingSetSize, total);
+        const indices = Array.from({ length: total }, (_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        await playerRef.update({ questionSubset: indices.slice(0, size) });
+    }
     return { playerId: playerRef.id, activeToken };
+});
+// --- Assign Question Subsets (Rotating Sets) ---
+exports.assignQuestionSubsets = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { sessionId } = request.data;
+    if (!sessionId) {
+        throw new https_1.HttpsError("invalid-argument", "sessionId is required");
+    }
+    const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Session not found");
+    }
+    const session = sessionDoc.data();
+    if (session.hostId !== request.auth.uid) {
+        throw new https_1.HttpsError("permission-denied", "Not the host");
+    }
+    if (!session.rotatingSetSize) {
+        throw new https_1.HttpsError("failed-precondition", "Rotating set size not configured");
+    }
+    const [questionsSnap, playersSnap] = await Promise.all([
+        db.collection("questions").where("quizId", "==", session.quizId).get(),
+        db.collection(`sessions/${sessionId}/players`).get(),
+    ]);
+    const total = questionsSnap.size;
+    const size = Math.min(session.rotatingSetSize, total);
+    const batch = db.batch();
+    for (const playerDoc of playersSnap.docs) {
+        // Fisher-Yates shuffle for each player independently
+        const indices = Array.from({ length: total }, (_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        batch.update(playerDoc.ref, { questionSubset: indices.slice(0, size) });
+    }
+    await batch.commit();
+    return { success: true };
 });
 // --- Start Question ---
 exports.startQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
@@ -285,6 +424,20 @@ async function computeAndWriteScore(input) {
             correct = answers.length === expected.length && answers.every((a, idx) => a.trim().toLowerCase() === expected[idx].trim().toLowerCase());
         }
         catch {
+            correct = false;
+        }
+    }
+    else if (question.type === 'mcq' && question.correctAnswers.length > 1) {
+        // Multi-answer MCQ: selection is a JSON array of chosen options
+        try {
+            const chosen = JSON.parse(selection);
+            const expected = question.correctAnswers;
+            correct = chosen.length === expected.length &&
+                chosen.every((c) => expected.includes(c)) &&
+                expected.every((e) => chosen.includes(e));
+        }
+        catch {
+            // Fallback: single string sent for a multi-answer question
             correct = false;
         }
     }
@@ -504,7 +657,7 @@ exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
             questionIndex: session.currentQuestionIndex,
             totalAnswers,
             correctCount: totalCorrect,
-            correctPercent: totalAnswers > 0 ? (totalCorrect / totalAnswers) * 100 : 0,
+            correctPercent: playersSnap.size > 0 ? (totalCorrect / playersSnap.size) * 100 : 0,
             avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
         }),
         sessionDoc.ref.update({
@@ -915,6 +1068,8 @@ exports.evaluateSession = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "512
     }
     // Gather data based on mode
     let prompt;
+    // Store question details for merging after AI response (participant mode)
+    let questionDetailsForMerge = [];
     if (mode === "participant") {
         if (!playerId) {
             throw new https_1.HttpsError("invalid-argument", "playerId is required for participant mode");
@@ -935,31 +1090,66 @@ exports.evaluateSession = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "512
             .collection("questions")
             .where("quizId", "==", session.quizId)
             .get();
-        const questionsMap = new Map();
-        questionsSnap.docs.forEach((d) => {
-            const data = d.data();
-            questionsMap.set(d.id, {
-                text: data.text,
-                type: data.type,
-                correctAnswers: data.correctAnswers || [],
+        const questionsArr = questionsSnap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+        }));
+        // Build answers map keyed by questionId for O(1) lookup
+        const answersMap = new Map();
+        answersSnap.docs.forEach((d) => {
+            const a = d.data();
+            answersMap.set(a.questionId, {
+                selection: a.selection,
+                correct: a.correct,
+                pointsAwarded: a.pointsAwarded,
+                timeMs: a.timeMs,
             });
         });
-        // Build answer details
-        const answerDetails = answersSnap.docs.map((d) => {
-            const a = d.data();
-            const q = questionsMap.get(a.questionId);
-            return {
-                question: q?.text || "Unknown",
-                type: q?.type || "mcq",
-                selected: a.selection,
-                correct: a.correct,
-                points: a.pointsAwarded,
-                timeMs: a.timeMs,
-            };
-        });
-        const totalQuestions = questionsSnap.size;
-        const correctCount = answerDetails.filter((a) => a.correct).length;
-        const totalPoints = answerDetails.reduce((s, a) => s + a.points, 0);
+        // Use questionOrder if available, otherwise natural order
+        const questionOrder = session.questionOrder || questionsArr.map((_, i) => i);
+        // Build answer details for ALL questions (including unattempted)
+        const answerLines = [];
+        questionDetailsForMerge = [];
+        let correctCount = 0;
+        let totalPoints = 0;
+        for (let qi = 0; qi < questionOrder.length; qi++) {
+            const actualIdx = questionOrder[qi];
+            const q = questionsArr[actualIdx];
+            if (!q)
+                continue;
+            const qId = q.id;
+            const qText = q.text || "Unknown";
+            const qType = q.type || "mcq";
+            const correctAnswers = q.correctAnswers || [];
+            const answer = answersMap.get(qId);
+            if (answer) {
+                const status = answer.correct ? "correct" : "incorrect";
+                if (answer.correct)
+                    correctCount++;
+                totalPoints += answer.pointsAwarded;
+                answerLines.push(`Q${qi + 1} [${qType}]: "${qText}" → answered "${answer.selection}" → ${answer.correct ? "CORRECT" : "INCORRECT"} (${answer.pointsAwarded}pts, ${(answer.timeMs / 1000).toFixed(1)}s)`);
+                questionDetailsForMerge.push({
+                    questionIndex: qi,
+                    questionText: qText,
+                    status,
+                    studentAnswer: String(answer.selection),
+                    correctAnswer: correctAnswers.join(", "),
+                    points: answer.pointsAwarded,
+                });
+            }
+            else {
+                answerLines.push(`Q${qi + 1} [${qType}]: "${qText}" → UNATTEMPTED (0pts)`);
+                questionDetailsForMerge.push({
+                    questionIndex: qi,
+                    questionText: qText,
+                    status: "unattempted",
+                    studentAnswer: null,
+                    correctAnswer: correctAnswers.join(", "),
+                    points: 0,
+                });
+            }
+        }
+        const totalQuestions = questionOrder.length;
         prompt = `You are an educational AI evaluator. Analyze this student's quiz performance and return a JSON evaluation.
 
 Student: ${nickname}
@@ -967,7 +1157,7 @@ Quiz: ${totalQuestions} questions
 Score: ${correctCount}/${totalQuestions} correct (${totalPoints} points)
 
 Answer details:
-${answerDetails.map((a, i) => `Q${i + 1} [${a.type}]: "${a.question}" → answered "${a.selected}" → ${a.correct ? "CORRECT" : "INCORRECT"} (${a.points}pts, ${(a.timeMs / 1000).toFixed(1)}s)`).join("\n")}
+${answerLines.join("\n")}
 
 Return ONLY valid JSON with this exact structure:
 {
@@ -976,8 +1166,11 @@ Return ONLY valid JSON with this exact structure:
   "weaknesses": ["weakness1", "weakness2"],
   "recommendations": ["recommendation1", "recommendation2"],
   "overallRating": "excellent|good|average|needs_improvement",
-  "topicMastery": [{"topic": "topic name", "level": "strong|moderate|weak"}]
-}`;
+  "topicMastery": [{"topic": "topic name", "level": "strong|moderate|weak"}],
+  "questionBreakdown": [{"questionIndex": 0, "status": "correct|incorrect|unattempted", "explanation": "Brief explanation of performance on this question"}]
+}
+
+For questionBreakdown, include one entry per question in order. The explanation should be 1 sentence: why the answer was correct, what went wrong, or why skipping matters.`;
     }
     else {
         if (questionIndex === undefined || questionIndex === null) {
@@ -1073,6 +1266,17 @@ Return ONLY valid JSON with this exact structure:
             throw new https_1.HttpsError("internal", "Failed to parse AI evaluation response");
         }
         const evaluation = JSON.parse(jsonMatch[0]);
+        // Merge structural question data into questionBreakdown (participant mode)
+        if (mode === "participant" && questionDetailsForMerge.length > 0) {
+            const aiBreakdown = evaluation.questionBreakdown || [];
+            evaluation.questionBreakdown = questionDetailsForMerge.map((detail) => {
+                const aiEntry = aiBreakdown.find((e) => e.questionIndex === detail.questionIndex);
+                return {
+                    ...detail,
+                    explanation: aiEntry?.explanation || "",
+                };
+            });
+        }
         // Cache to Firestore
         await cacheRef.set({
             evaluation,
@@ -1191,6 +1395,20 @@ exports.joinClassroom = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
         updatedAt: Date.now(),
     });
     await batch.commit();
+    // Fire-and-forget: notify the joining student
+    db.collection("notifications").add({
+        userId: request.auth.uid,
+        type: "class_joined",
+        title: "Joined Class",
+        message: `You have joined "${classroom.name}"`,
+        read: false,
+        createdAt: Date.now(),
+        metadata: { classroomId: classroomDoc.id, classroomName: classroom.name },
+    }).catch((err) => console.warn("Notification error (non-fatal):", err));
+    const memberEmail = userData.email || request.auth.token.email || "";
+    if (memberEmail) {
+        sendNotificationEmail(memberEmail, `Joined Class — ${classroom.name}`, `<h3>Joined Class</h3><p>You have joined "${classroom.name}".</p>`);
+    }
     return { classroomId: classroomDoc.id, name: classroom.name };
 });
 // --- Add Co-Teacher ---
@@ -1289,6 +1507,8 @@ exports.removeClassroomMember = (0, https_1.onCall)(FUNCTION_CONFIG, async (requ
     }
     const memberRole = memberDoc.data()?.role;
     const countField = memberRole === "co-teacher" ? "coTeacherCount" : "studentCount";
+    const memberEmail = memberDoc.data()?.email || "";
+    const classroomName = classroom.name || "Unknown Class";
     const batch = db.batch();
     batch.delete(memberDoc.ref);
     batch.update(classroomDoc.ref, {
@@ -1296,6 +1516,19 @@ exports.removeClassroomMember = (0, https_1.onCall)(FUNCTION_CONFIG, async (requ
         updatedAt: Date.now(),
     });
     await batch.commit();
+    // Fire-and-forget: notify the removed student
+    db.collection("notifications").add({
+        userId,
+        type: "class_removed",
+        title: "Removed from Class",
+        message: `You have been removed from "${classroomName}"`,
+        read: false,
+        createdAt: Date.now(),
+        metadata: { classroomId, classroomName },
+    }).catch((err) => console.warn("Notification error (non-fatal):", err));
+    if (memberEmail) {
+        sendNotificationEmail(memberEmail, `Removed from Class — ${classroomName}`, `<h3>Removed from Class</h3><p>You have been removed from "${classroomName}".</p>`);
+    }
     return { success: true };
 });
 // --- Regenerate Join Code ---
@@ -1426,6 +1659,32 @@ exports.endStudentPacedSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (req
         rtdb.ref(`studentProgress/${sessionId}`).remove(),
     ]);
     return { success: true, top10 };
+});
+// --- Firestore Trigger: Assignment Created ---
+exports.onAssignmentCreated = (0, firestore_1.onDocumentCreated)({ document: "assignments/{assignmentId}", region: REGION, memory: "256MiB" }, async (event) => {
+    const data = event.data?.data();
+    if (!data)
+        return;
+    const classroomId = data.classroomId;
+    if (!classroomId)
+        return;
+    const ownerId = data.ownerId;
+    const assignmentId = event.params.assignmentId;
+    // Fetch quiz title
+    let quizTitle = "a quiz";
+    const quizId = data.quizId;
+    if (quizId) {
+        const quizDoc = await db.doc(`quizzes/${quizId}`).get();
+        if (quizDoc.exists) {
+            quizTitle = quizDoc.data()?.title || quizTitle;
+        }
+    }
+    await createNotificationsForClassroom(classroomId, ownerId, {
+        type: "new_assignment",
+        title: "New Assignment",
+        message: `A new assignment for "${quizTitle}" has been posted`,
+        metadata: { assignmentId, quizTitle },
+    });
 });
 // --- TTL Cleanup: delete sessions older than 24 hours ---
 exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({

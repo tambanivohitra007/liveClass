@@ -103,6 +103,14 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow create, delete: if false;
+    }
+
     // Classrooms
     match /classrooms/{classroomId} {
       allow read: if request.auth != null;
