@@ -6,6 +6,7 @@ import { db, storage } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
 import { useToastStore } from '../stores/toastStore';
 import { useNavigate } from 'react-router-dom';
+import { confirmAction } from '../lib/swal';
 import { ArrowLeft, Camera, Save, KeyRound, Mail, Shield, Eye, EyeOff, Phone, MapPin } from 'lucide-react';
 
 export default function Profile() {
@@ -34,6 +35,19 @@ export default function Profile() {
   const currentPwRef = useRef<HTMLInputElement>(null);
   const newPwRef = useRef<HTMLInputElement>(null);
   const confirmPwRef = useRef<HTMLInputElement>(null);
+
+  const handleRoleChange = async (newRole: 'teacher' | 'student') => {
+    if (newRole === role) return;
+    if (user?.role === 'teacher' && user.approvalStatus === 'approved' && newRole === 'student') {
+      const { isConfirmed } = await confirmAction(
+        'Switch to student?',
+        'You will lose teacher access. Switching back to teacher will require admin approval again.',
+        'Switch to Student'
+      );
+      if (!isConfirmed) return;
+    }
+    setRole(newRole);
+  };
 
   const isEmailUser = firebaseUser?.providerData[0]?.providerId === 'password';
 
@@ -294,7 +308,7 @@ export default function Profile() {
                 <button
                   key={r}
                   type="button"
-                  onClick={() => setRole(r)}
+                  onClick={() => handleRoleChange(r)}
                   disabled={user?.approvalStatus === 'pending'}
                   className={`py-3 rounded-xl border-2 font-medium capitalize transition-all ${
                     role === r
