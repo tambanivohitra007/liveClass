@@ -31,26 +31,30 @@ export default function StudentDashboard() {
     if (!user) return;
     const loadAssignments = async () => {
       setAssignmentsLoading(true);
-      const assignSnap = await getDocs(
-        query(collection(db, 'assignments'), orderBy('startAt', 'desc'), limit(20))
-      );
+      try {
+        const assignSnap = await getDocs(
+          query(collection(db, 'assignments'), orderBy('startAt', 'desc'), limit(20))
+        );
 
-      const assignmentsData: AvailableAssignment[] = [];
-      for (const d of assignSnap.docs) {
-        const data = d.data();
-        const quizSnap = await getDocs(query(collection(db, 'quizzes'), where('__name__', '==', data.quizId)));
-        const quizTitle = quizSnap.docs[0]?.data()?.title || 'Untitled Quiz';
-        assignmentsData.push({
-          id: d.id,
-          quizId: data.quizId,
-          quizTitle,
-          startAt: data.startAt,
-          endAt: data.endAt,
-          attemptsAllowed: data.attemptsAllowed,
-        });
+        const assignmentsData: AvailableAssignment[] = [];
+        for (const d of assignSnap.docs) {
+          const data = d.data();
+          const quizSnap = await getDocs(query(collection(db, 'quizzes'), where('__name__', '==', data.quizId)));
+          const quizTitle = quizSnap.docs[0]?.data()?.title || 'Untitled Quiz';
+          assignmentsData.push({
+            id: d.id,
+            quizId: data.quizId,
+            quizTitle,
+            startAt: data.startAt,
+            endAt: data.endAt,
+            attemptsAllowed: data.attemptsAllowed,
+          });
+        }
+
+        setAssignments(assignmentsData);
+      } catch {
+        // Query failed — show empty state rather than infinite loading
       }
-
-      setAssignments(assignmentsData);
       setAssignmentsLoading(false);
     };
     loadAssignments();
