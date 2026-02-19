@@ -144,6 +144,15 @@ export default function SessionResults() {
     t.id === 'anti-cheating' ? { ...t, count: violations.length } : t
   ), [violations.length]);
 
+  // Build lookup: "questionId:playerId" → Answer for O(1) cell lookups
+  const answerLookup = useMemo(() => {
+    const map = new Map<string, { correct: boolean; pointsAwarded: number }>();
+    for (const a of allAnswers) {
+      map.set(`${a.questionId}:${a.playerId}`, { correct: a.correct, pointsAwarded: a.pointsAwarded });
+    }
+    return map;
+  }, [allAnswers]);
+
   const completionRate = useMemo(() => {
     if (!playerStats.length || !analytics.length) return 0;
     const totalExpected = playerStats.length * analytics.length;
@@ -422,12 +431,18 @@ export default function SessionResults() {
                         <span className="text-gray-500 text-sm ml-1">({player.accuracyPercent}%)</span>
                       </div>
                     </td>
-                    {analytics.map((_, i) => {
-                       const isCorrect = Math.random() > 0.3; // Placeholder for visual consistency
+                    {analytics.map((q, i) => {
+                       const answer = answerLookup.get(`${q.questionId}:${player.playerId}`);
+                       const answered = answer !== undefined;
+                       const isCorrect = answered && answer.correct;
                        return (
-                         <td key={i} className={`p-0 border-l border-white ${isCorrect ? 'bg-success' : 'bg-danger'}`}>
+                         <td key={i} className={`p-0 border-l border-white ${
+                           !answered ? 'bg-gray-200' : isCorrect ? 'bg-success' : 'bg-danger'
+                         }`}>
                            <div className="h-12 w-full flex items-center justify-center text-white">
-                             {isCorrect ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
+                             {!answered ? <span className="text-gray-400 text-xs">—</span>
+                               : isCorrect ? <Check className="w-5 h-5" />
+                               : <X className="w-5 h-5" />}
                            </div>
                          </td>
                        );
@@ -436,9 +451,6 @@ export default function SessionResults() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-4 text-center text-gray-400 text-sm italic">
-               * Question detail view requires update to session data structure for matrix grid.
-            </div>
           </div>
         )}
 
