@@ -63,6 +63,8 @@ export default function SessionResults() {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [, setExporting] = useState(false);
   const [, setExportingExcel] = useState(false);
+  const [sortBy, setSortBy] = useState<'accuracy' | 'name' | 'score'>('accuracy');
+  const [sortAsc, setSortAsc] = useState(false);
   const { addToast } = useToastStore();
 
   // Evaluation panel state
@@ -178,6 +180,15 @@ export default function SessionResults() {
     });
     return Math.round((totalAnswered / totalExpected) * 100) || 0;
   }, [playerStats, analytics]);
+
+  const sortedPlayerStats = useMemo(() => {
+    const sorted = [...playerStats].sort((a, b) => {
+      if (sortBy === 'name') return a.nickname.localeCompare(b.nickname);
+      if (sortBy === 'score') return b.totalPoints - a.totalPoints;
+      return b.accuracyPercent - a.accuracyPercent; // accuracy default
+    });
+    return sortAsc ? sorted.reverse() : sorted;
+  }, [playerStats, sortBy, sortAsc]);
 
   // Group answer distributions by question type for Tags tab
   const typeGroups = useMemo(() => {
@@ -392,14 +403,22 @@ export default function SessionResults() {
              <div className="flex items-center gap-2">
                <span className="text-sm text-gray-500">Sort by:</span>
                <div className="relative">
-                 <select className="appearance-none bg-white border border-gray-200 text-gray-700 py-1.5 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20">
-                   <option>Accuracy</option>
-                   <option>Name</option>
-                   <option>Score</option>
+                 <select
+                   value={sortBy}
+                   onChange={(e) => setSortBy(e.target.value as 'accuracy' | 'name' | 'score')}
+                   className="appearance-none bg-white border border-gray-200 text-gray-700 py-1.5 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
+                 >
+                   <option value="accuracy">Accuracy</option>
+                   <option value="name">Name</option>
+                   <option value="score">Score</option>
                  </select>
                  <ArrowUpDown className="w-3 h-3 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                </div>
-               <button className="p-1.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50">
+               <button
+                 onClick={() => setSortAsc(prev => !prev)}
+                 className={`p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${sortAsc ? 'text-brand bg-brand/5' : 'text-gray-500'}`}
+                 title={sortAsc ? 'Ascending' : 'Descending'}
+               >
                  <ArrowUpDown className="w-4 h-4" />
                </button>
              </div>
@@ -439,7 +458,7 @@ export default function SessionResults() {
                 </tr>
               </thead>
               <tbody>
-                {playerStats.map((player) => (
+                {sortedPlayerStats.map((player) => (
                   <tr key={player.playerId} className="border-b border-gray-50 hover:bg-gray-50/50">
                     <td className="py-3 px-4">
                       <div className="font-medium text-gray-900">{player.nickname}</div>
@@ -483,7 +502,7 @@ export default function SessionResults() {
                 <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-gray-300"></span> Unattempted</div>
               </div>
 
-              {playerStats.map((player) => (
+              {sortedPlayerStats.map((player) => (
                 <div key={player.playerId} className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                   {/* Avatar */}
                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg flex-shrink-0">
