@@ -225,7 +225,7 @@ export default function JoinGame() {
                   placeholder="000 000"
                   required
                   maxLength={6}
-                  className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-2xl border-2 border-gray-800 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-200"
+                  className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-2xl border-2 border-gray-800 bg-white focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-200"
                   autoFocus
                 />
                 <button
@@ -286,7 +286,7 @@ export default function JoinGame() {
                     placeholder="Your nickname"
                     required
                     maxLength={20}
-                    className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border-2 border-gray-800 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300 pr-14"
+                    className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border-2 border-gray-800 bg-white focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300 pr-14"
                     autoFocus
                   />
                   <button

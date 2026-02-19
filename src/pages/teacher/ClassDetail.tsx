@@ -176,7 +176,7 @@ export default function ClassDetail() {
     }
   };
 
-  const colorMeta = COLLECTION_COLORS.find((c) => c.key === (classroom?.color || 'brand')) || COLLECTION_COLORS[0];
+  const colorMeta = COLLECTION_COORS.find((c) => c.key === (classroom?.color || 'brand')) || COLLECTION_COLORS[0];
 
   if (loading || !classroom) {
     return (
