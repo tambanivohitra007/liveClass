@@ -164,7 +164,7 @@ export default function JoinGame() {
           <h1 className="text-4xl font-black text-white">LiveClass</h1>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 dark:border-gray-300 p-8">
+        <div className="bg-white rounded-3xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm text-center">
               {error}
@@ -184,7 +184,7 @@ export default function JoinGame() {
                   <button
                     key={ci}
                     onClick={() => handleVerify(ci)}
-                    className="flex justify-center gap-1.5 p-4 rounded-xl border-2 border-gray-800 dark:border-gray-300 hover:border-brand hover:bg-brand/5 shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[4px_4px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
+                    className="flex justify-center gap-1.5 p-4 rounded-xl border-2 border-gray-800 hover:border-brand hover:bg-brand/5 shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[4px_4px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
                   >
                     {choice.map((s, i) => (
                       <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-6 h-6" />
@@ -217,7 +217,7 @@ export default function JoinGame() {
               <button
                 type="submit"
                 disabled={pin.length < 4}
-                className="w-full mt-4 py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
+                className="w-full mt-4 py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
               >
                 Enter
               </button>
@@ -248,7 +248,7 @@ export default function JoinGame() {
               <button
                 type="submit"
                 disabled={joining || !nickname.trim()}
-                className="w-full mt-4 py-4 bg-success text-white font-bold text-lg rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
+                className="w-full mt-4 py-4 bg-success text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
               >
                 {joining ? 'Joining...' : "Let's Go!"}
               </button>

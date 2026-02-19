@@ -620,7 +620,7 @@ export default function Dashboard() {
       {/* ── Collection Modal ── */}
       {showCollModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCollModal(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowCollModal(false); }}>
-          <div role="dialog" aria-modal="true" aria-label={editingColl ? 'Edit Collection' : 'New Collection'} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label={editingColl ? 'Edit Collection' : 'New Collection'} className="bg-white rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-0">
               <h3 className="text-lg font-bold text-gray-900">{editingColl ? 'Edit Collection' : 'New Collection'}</h3>
               <button onClick={() => setShowCollModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
@@ -634,7 +634,7 @@ export default function Dashboard() {
                   value={collName}
                   onChange={(e) => setCollName(e.target.value)}
                   placeholder="e.g. Biology"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
                   autoFocus
                 />
               </div>
@@ -645,7 +645,7 @@ export default function Dashboard() {
                   onChange={(e) => setCollDesc(e.target.value)}
                   placeholder="Optional description"
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-gray-300 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 resize-none"
                 />
               </div>
               <div>
@@ -655,7 +655,7 @@ export default function Dashboard() {
                     <button
                       key={c.key}
                       onClick={() => setCollColor(c.key)}
-                      className={`w-8 h-8 rounded-full ${c.bg} border-2 border-gray-800 dark:border-gray-300 transition-all ${collColor === c.key ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
+                      className={`w-8 h-8 rounded-full ${c.bg} border-2 border-gray-800 transition-all ${collColor === c.key ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
                       title={c.label}
                     />
                   ))}
@@ -665,13 +665,13 @@ export default function Dashboard() {
                 <button
                   onClick={handleSaveColl}
                   disabled={savingColl || !collName.trim()}
-                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50"
                 >
                   {savingColl ? 'Saving...' : editingColl ? 'Update' : 'Create'}
                 </button>
                 <button
                   onClick={() => setShowCollModal(false)}
-                  className="px-5 py-2.5 border-2 border-gray-800 dark:border-gray-300 text-gray-600 font-medium rounded-xl shadow-[2px_2px_0px_0px_#6b7280] hover:shadow-[4px_4px_0px_0px_#6b7280] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
+                  className="px-5 py-2.5 border-2 border-gray-800 text-gray-600 font-medium rounded-xl shadow-[2px_2px_0px_0px_#6b7280] hover:shadow-[4px_4px_0px_0px_#6b7280] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
                 >
                   Cancel
                 </button>

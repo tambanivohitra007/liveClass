@@ -168,17 +168,17 @@ export default function Home() {
                 }`}
               >
                 {/* Background card with comic offset shadow */}
-                <div className="absolute inset-0 bg-white border-2 border-gray-800 dark:border-gray-300 rounded-2xl shadow-[4px_4px_0px_0px_#D4566B] transition-all duration-300 group-hover:shadow-[8px_8px_0px_0px_#D4566B] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
+                <div className="absolute inset-0 bg-white border-2 border-gray-800 rounded-2xl shadow-[4px_4px_0px_0px_#D4566B] transition-all duration-300 group-hover:shadow-[8px_8px_0px_0px_#D4566B] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
 
                 {/* Content */}
                 <div className="relative p-8 pt-10">
                   {/* Number badge — rotated comic pill */}
-                  <div className="absolute -top-4 -right-3 bg-brand text-white w-11 h-11 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-800 dark:border-gray-300 rotate-12">
+                  <div className="absolute -top-4 -right-3 bg-brand text-white w-11 h-11 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-800 rotate-12">
                     {i + 1}
                   </div>
 
                   {/* Icon in bordered circle */}
-                  <div className="w-14 h-14 rounded-full border-2 border-gray-800 dark:border-gray-300 flex items-center justify-center text-brand mb-5 bg-brand/5 group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-full border-2 border-gray-800 flex items-center justify-center text-brand mb-5 bg-brand/5 group-hover:scale-110 transition-transform">
                     {step.icon}
                   </div>
 

@@ -8,7 +8,7 @@ export function Skeleton({ className = '' }: SkeletonProps) {
 
 export function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] p-6 space-y-4">
+    <div className="bg-white rounded-2xl border-2 border-gray-800 shadow-[3px_3px_0px_0px_#D4566B] p-6 space-y-4">
       <div className="flex items-start justify-between">
         <Skeleton className="h-5 w-2/3" />
         <Skeleton className="h-5 w-12 rounded-full" />
@@ -42,7 +42,7 @@ export function SkeletonStats() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-2xl border-2 border-gray-800 dark:border-gray-300 shadow-[3px_3px_0px_0px_#D4566B] p-5">
+        <div key={i} className="bg-white rounded-2xl border-2 border-gray-800 shadow-[3px_3px_0px_0px_#D4566B] p-5">
           <Skeleton className="h-4 w-20 mb-3" />
           <Skeleton className="h-8 w-16" />
         </div>
