@@ -95,7 +95,7 @@ export default function Home() {
 
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
               Make Learning
-              <span className="block bg-gradient-to-r from-accent via-success to-accent bg-clip-text text-transparent">
+              <span className="block text-4xl md:text-8xl font-black tracking-tighter hero-highlight">
                 Unforgettable
               </span>
             </h1>
@@ -118,7 +118,7 @@ export default function Home() {
             {/* Inline Stats */}
             <div className="grid grid-cols-3 gap-8 pt-6 w-full max-w-sm">
               {[
-                { value: '5+', label: 'Quizzes' },
+                { value: '50+', label: 'Quizzes' },
                 { value: '100+', label: 'Students' },
                 { value: '99%', label: 'Uptime' },
               ].map((s) => (
@@ -218,8 +218,7 @@ export default function Home() {
                 <h2 className="text-3xl md:text-5xl font-extrabold rotate-[-0.5deg]">
                   Ready to transform your classroom?
                 </h2>
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-56 h-3 bg-brand/30 rotate-[-1deg] rounded-full blur-sm" />
-                <span className="absolute -right-8 -top-4 rotate-12 text-2xl select-none" aria-hidden>✨</span>
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-56 h-3 bg-brand/30 rotate-[-1deg] rounded-full blur-sm" />                
               </div>
               <p className="text-lg text-white/70 mb-10 max-w-xl mx-auto">
                 Join thousands of educators using LiveClass to make learning interactive, measurable, and fun.

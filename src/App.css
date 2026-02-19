@@ -45,6 +45,24 @@
   100% { background-position: 200% 0; }
 }
 
+.hero-highlight {
+  background: linear-gradient(
+    90deg,
+    #FFB347 0%,
+    #FF6B6B 20%,
+    #FFD700 40%,
+    #FF6B6B 60%,
+    #FFB347 80%,
+    #FF6B6B 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+  text-shadow: 0 0 40px rgba(255,107,107,0.3), 0 0 80px rgba(255,179,71,0.15);
+}
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
