@@ -329,6 +329,11 @@ export default function HostSession() {
       }
       else if (session.questionState === 'live') endQuestion();
       else if (session.questionState === 'reveal' && session.currentQuestionIndex < totalQuestions - 1) nextQuestion();
+      else if (session.questionState === 'reveal' && session.currentQuestionIndex >= totalQuestions - 1) {
+        updateDoc(doc(db, 'sessions', session.id), { status: 'ended', endedAt: Date.now() }).then(() => {
+          navigate(`/session/${session.id}/results`);
+        });
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -997,7 +1002,10 @@ export default function HostSession() {
             )}
             {isLastQuestion && (
               <button
-                onClick={() => navigate(`/session/${session.id}/results`)}
+                onClick={async () => {
+                  await updateDoc(doc(db, 'sessions', session.id), { status: 'ended', endedAt: Date.now() });
+                  navigate(`/session/${session.id}/results`);
+                }}
                 className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all w-full sm:w-auto"
                 style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
               >

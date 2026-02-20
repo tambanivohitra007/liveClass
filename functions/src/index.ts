@@ -770,10 +770,6 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     teamScoreSnapshot.sort((a, b) => b.avgPoints - a.avgPoints);
   }
 
-  // Check if this is the last question
-  const totalQuestions = questionsArr.length;
-  const isLastQuestion = session.currentQuestionIndex >= totalQuestions - 1;
-
   // Write analytics, update session, and clean up RTDB in parallel
   await Promise.all([
     db.doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
@@ -788,7 +784,8 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
       questionState: "reveal",
       top10Snapshot: top10,
       ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
-      ...(isLastQuestion ? { status: "ended", endedAt: Date.now() } : {}),
+      // Don't set status:"ended" here for last question — let the host
+      // trigger it from "View Results" so students can see their feedback first.
     }),
     rtdb.ref(`liveAnswers/${sessionId}`).remove(),
     rtdb.ref(`results/${sessionId}`).remove(),
