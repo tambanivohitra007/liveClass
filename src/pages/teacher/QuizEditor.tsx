@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
 import AiGenerateModal from '../../components/AiGenerateModal';
+import CodeBlock from '../../components/CodeBlock';
 import { confirmAction } from '../../lib/swal';
 import {
   GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
@@ -749,13 +750,44 @@ export default function QuizEditor() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600 mb-2 block">Code Snippet</label>
-                    <textarea
-                      value={activeQ.codeSnippet || ''}
-                      onChange={(e) => updateQuestion(activeIndex, { codeSnippet: e.target.value })}
-                      placeholder="Paste your code here..."
-                      rows={6}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 font-mono text-sm resize-y"
-                    />
+                    <div className="relative rounded-xl overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-brand/30 focus-within:border-brand">
+                      <div className="flex items-center justify-between bg-gray-800 px-4 py-2 border-b border-gray-700">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+                          <span className="ml-3 text-xs text-gray-400">{activeQ.codeLanguage || 'code'}</span>
+                        </div>
+                      </div>
+                      <div className="flex bg-gray-900">
+                        {/* Line numbers */}
+                        <div className="select-none text-right pr-3 pl-3 py-3 text-xs font-mono text-gray-600 leading-relaxed border-r border-gray-800" aria-hidden="true">
+                          {(activeQ.codeSnippet || '\n').split('\n').map((_, i) => (
+                            <div key={i}>{i + 1}</div>
+                          ))}
+                        </div>
+                        <textarea
+                          value={activeQ.codeSnippet || ''}
+                          onChange={(e) => updateQuestion(activeIndex, { codeSnippet: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Tab') {
+                              e.preventDefault();
+                              const ta = e.currentTarget;
+                              const start = ta.selectionStart;
+                              const end = ta.selectionEnd;
+                              const val = ta.value;
+                              const updated = val.substring(0, start) + '  ' + val.substring(end);
+                              updateQuestion(activeIndex, { codeSnippet: updated });
+                              requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = start + 2; });
+                            }
+                          }}
+                          placeholder="Write or paste your code here..."
+                          rows={8}
+                          spellCheck={false}
+                          className="flex-1 px-4 py-3 bg-gray-900 text-gray-100 font-mono text-sm leading-relaxed outline-none resize-y placeholder:text-gray-600 min-h-[200px]"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600 mb-2 block">Expected Output (comma-separated for multiple accepted answers)</label>
@@ -768,6 +800,23 @@ export default function QuizEditor() {
                       className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                     />
                   </div>
+
+                  {/* Live Preview */}
+                  {activeQ.codeSnippet?.trim() && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600 mb-2 flex items-center gap-1.5">
+                        <Eye className="w-3.5 h-3.5" />
+                        Student Preview
+                      </label>
+                      <div className="rounded-xl bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] p-5 space-y-4">
+                        <p className="text-white font-bold text-center text-base">{activeQ.text || 'Question text will appear here'}</p>
+                        <CodeBlock code={activeQ.codeSnippet} language={activeQ.codeLanguage} />
+                        <div className="max-w-xs mx-auto px-4 py-3 rounded-xl border-2 border-white/20 bg-white/10 text-center text-white/30 text-sm">
+                          Student types answer here...
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
