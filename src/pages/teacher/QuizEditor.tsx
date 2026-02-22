@@ -150,7 +150,7 @@ export default function QuizEditor() {
   }, []);
 
   // Ctrl+S / Cmd+S keyboard shortcut to save
-  const handleSaveRef = useRef<() => void>();
+  const handleSaveRef = useRef<() => void>(null);
   useEffect(() => { handleSaveRef.current = handleSave; });
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
