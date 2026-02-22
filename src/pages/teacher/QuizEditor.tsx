@@ -149,6 +149,20 @@ export default function QuizEditor() {
     return () => window.removeEventListener('popstate', handler);
   }, []);
 
+  // Ctrl+S / Cmd+S keyboard shortcut to save
+  const handleSaveRef = useRef<() => void>();
+  useEffect(() => { handleSaveRef.current = handleSave; });
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSaveRef.current?.();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   // Guard for in-app navigate calls (back button, preview, etc.)
   const navigateGuard = useCallback(async (to: string) => {
     if (!isDirty || justSavedRef.current) {
@@ -208,6 +222,12 @@ export default function QuizEditor() {
       'Yes, remove'
     );
     if (!isConfirmed) return;
+    setQuestions(questions.filter((_, i) => i !== index));
+    if (activeIndex >= questions.length - 1) setActiveIndex(Math.max(0, questions.length - 2));
+    else if (index < activeIndex) setActiveIndex(activeIndex - 1);
+  };
+
+  const quickRemoveQuestion = (index: number) => {
     setQuestions(questions.filter((_, i) => i !== index));
     if (activeIndex >= questions.length - 1) setActiveIndex(Math.max(0, questions.length - 2));
     else if (index < activeIndex) setActiveIndex(activeIndex - 1);
@@ -478,6 +498,13 @@ export default function QuizEditor() {
                     <span className="text-[10px] text-gray-400">{q.timeLimitSec}s</span>
                   </div>
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); quickRemoveQuestion(i); }}
+                  className="absolute top-1.5 right-1.5 p-1 rounded-lg bg-white/80 text-gray-400 hover:bg-danger/10 hover:text-danger opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+                  title="Remove question"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
