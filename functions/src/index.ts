@@ -1079,6 +1079,10 @@ export const generateQuestions = onCall(
       ? 'Return ONLY valid JSON: {"title":"...","description":"...","questions":[...]}'
       : "Return ONLY a valid JSON array. Each element:";
 
+    const codeOutputInstruction = questionType === "code_output"
+      ? `For code_output questions: generate a realistic code snippet in "codeSnippet" that tests understanding of programming concepts (variable tracing, loops, functions, type coercion, etc.). Set "codeLanguage" to the language used (e.g. "python", "javascript", "java"). Set "options" to []. Put the exact expected program/console output as a string in "correctAnswers". The "text" field should be a short prompt like "What does this code output?" or "What is printed by this program?". Vary the languages and concepts across questions.`
+      : "";
+
     const commonInstructions = `Generate ${clampedCount} quiz questions.
 ${additionalContext ? `Additional context: ${additionalContext}` : ""}
 Difficulty: ${difficulty}.
@@ -1087,6 +1091,7 @@ Question type: ${questionType}.
 ${metaInstruction}
 ${typeTemplates[questionType] || typeTemplates.mcq}
 IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
+${codeOutputInstruction}
 Make questions educational, varied in difficulty, and factually accurate.`;
 
     // Build source-specific prompt + Gemini parts
@@ -1123,6 +1128,7 @@ Question type: ${questionType}.
 ${metaInstruction}
 ${typeTemplates[questionType] || typeTemplates.mcq}
 IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
+${codeOutputInstruction}
 Make questions educational, varied in difficulty, and factually accurate.`;
       geminiParts = [{ text: topicPrompt }];
     }
