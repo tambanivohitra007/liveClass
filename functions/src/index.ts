@@ -1080,7 +1080,7 @@ export const generateQuestions = onCall(
       : "Return ONLY a valid JSON array. Each element:";
 
     const codeOutputInstruction = questionType === "code_output"
-      ? `For code_output questions: generate a realistic code snippet in "codeSnippet" that tests understanding of programming concepts (variable tracing, loops, functions, type coercion, etc.). Set "codeLanguage" to the language used (e.g. "python", "javascript", "java"). Set "options" to []. Put the exact expected program/console output as a string in "correctAnswers". The "text" field should be a short prompt like "What does this code output?" or "What is printed by this program?". Vary the languages and concepts across questions.`
+      ? `For code_output questions: generate a realistic code snippet in "codeSnippet" that tests understanding of programming concepts (variable tracing, loops, functions, type coercion, etc.). Set "codeLanguage" to the language used — choose from: javascript, python, java, c, c++, c#, php, typescript, dart, go, ruby, kotlin, swift, rust. Set "options" to []. Put the exact expected program/console output as a string in "correctAnswers". The "text" field should be a short prompt like "What does this code output?" or "What is printed by this program?". Vary the languages and concepts across questions.`
       : "";
 
     const commonInstructions = `Generate ${clampedCount} quiz questions.

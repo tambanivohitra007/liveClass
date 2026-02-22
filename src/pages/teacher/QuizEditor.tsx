@@ -742,7 +742,7 @@ export default function QuizEditor() {
                       onChange={(e) => updateQuestion(activeIndex, { codeLanguage: e.target.value })}
                       className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                     >
-                      {['JavaScript', 'Python', 'Java', 'C', 'C++', 'C#', 'PHP', 'TypeScript', 'Go', 'Ruby', 'Kotlin', 'Swift', 'Rust', 'SQL', 'HTML', 'CSS'].map((lang) => (
+                      {['JavaScript', 'Python', 'Java', 'C', 'C++', 'C#', 'PHP', 'TypeScript', 'Dart', 'Go', 'Ruby', 'Kotlin', 'Swift', 'Rust', 'SQL', 'HTML', 'CSS'].map((lang) => (
                         <option key={lang} value={lang.toLowerCase()}>{lang}</option>
                       ))}
                     </select>
