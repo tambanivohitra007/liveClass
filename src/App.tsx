@@ -117,7 +117,8 @@ function AppContent() {
   }
 
   // Hide navbar on full-screen game pages
-  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
+  const isQuizEditor = location.pathname.startsWith('/quiz/') && !location.pathname.endsWith('/host') && !location.pathname.endsWith('/preview') && !location.pathname.endsWith('/worksheet') && !location.pathname.endsWith('/flashcards');
+  const hideNavbar = location.pathname.startsWith('/play/') || isQuizEditor || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
   return (
     <div className="flex flex-col min-h-screen">

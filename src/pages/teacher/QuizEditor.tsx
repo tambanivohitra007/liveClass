@@ -513,7 +513,61 @@ export default function QuizEditor() {
         {/* ── Center – Question Editor ── */}
         <main className="flex-1 overflow-y-auto">
           {activeQ ? (
-            <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+            <div className="max-w-2xl mx-auto px-6 py-6 space-y-4">
+              {/* Inline toolbar: type + time + actions */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <select
+                  value={activeQ.type}
+                  onChange={(e) => updateQuestionType(activeIndex, e.target.value as QuestionType)}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white"
+                >
+                  {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide', 'code_output'] as QuestionType[]).map((t) => (
+                    <option key={t} value={t}>{typeLabels[t]}</option>
+                  ))}
+                </select>
+                <select
+                  value={activeQ.timeLimitSec}
+                  onChange={(e) => updateQuestion(activeIndex, { timeLimitSec: parseInt(e.target.value) })}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white"
+                >
+                  {[5, 10, 15, 20, 30, 45, 60, 90, 120].map((s) => (
+                    <option key={s} value={s}>{s}s</option>
+                  ))}
+                </select>
+                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white ml-auto">
+                  <button
+                    onClick={() => moveQuestion(activeIndex, -1)}
+                    disabled={activeIndex === 0}
+                    className="p-1.5 hover:bg-gray-50 disabled:opacity-30 transition-colors text-gray-500 border-r border-gray-200"
+                    title="Move up"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => moveQuestion(activeIndex, 1)}
+                    disabled={activeIndex === questions.length - 1}
+                    className="p-1.5 hover:bg-gray-50 disabled:opacity-30 transition-colors text-gray-500 border-r border-gray-200"
+                    title="Move down"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => duplicateQuestion(activeIndex)}
+                    className="p-1.5 hover:bg-gray-50 transition-colors text-gray-500 border-r border-gray-200"
+                    title="Duplicate"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => removeQuestion(activeIndex)}
+                    className="p-1.5 hover:bg-danger/10 transition-colors text-gray-400 hover:text-danger"
+                    title="Delete question"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
               {/* Question Text */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
                 <textarea
@@ -901,158 +955,75 @@ export default function QuizEditor() {
           )}
         </main>
 
-        {/* ── Right Sidebar – Settings ── */}
-        <aside className="w-72 bg-white border-l border-gray-200 flex flex-col shrink-0 overflow-y-auto">
-          {activeQ ? (
-            <div className="p-4 space-y-5">
-              {/* Question Type */}
+        {/* ── Right Sidebar – Quiz Settings ── */}
+        <aside className="w-64 bg-white border-l border-gray-200 flex flex-col shrink-0 overflow-y-auto">
+          <div className="p-4 space-y-4">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+              <Type className="w-3.5 h-3.5" />
+              Quiz settings
+            </label>
+            <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Question type</label>
-                <select
-                  value={activeQ.type}
-                  onChange={(e) => updateQuestionType(activeIndex, e.target.value as QuestionType)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
-                >
-                  {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide', 'code_output'] as QuestionType[]).map((t) => (
-                    <option key={t} value={t}>{typeLabels[t]}</option>
-                  ))}
-                </select>
+                <label className="text-xs text-gray-500 mb-1 block">Cover Image</label>
+                <ImageUpload
+                  currentUrl={coverImageUrl}
+                  onUpload={(url) => setCoverImageUrl(url)}
+                  path={`quizzes/${quizId || 'new'}`}
+                />
               </div>
-
-              {/* Time Limit */}
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  Time limit
-                </label>
-                <select
-                  value={activeQ.timeLimitSec}
-                  onChange={(e) => updateQuestion(activeIndex, { timeLimitSec: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
-                >
-                  {[5, 10, 15, 20, 30, 45, 60, 90, 120].map((s) => (
-                    <option key={s} value={s}>{s} seconds</option>
+                <label className="text-xs text-gray-500 mb-1 block">Card Color</label>
+                <div className="flex gap-2 flex-wrap">
+                  {COLLECTION_COLORS.map((c) => (
+                    <button
+                      key={c.key}
+                      onClick={() => setSelectedColor(selectedColor === c.key ? '' : c.key)}
+                      className={`w-7 h-7 rounded-full ${c.bg} border-2 border-gray-800 transition-all ${
+                        selectedColor === c.key ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'
+                      }`}
+                      title={c.label}
+                    />
                   ))}
-                </select>
-              </div>
-
-              {/* Quick Actions */}
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Actions</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => moveQuestion(activeIndex, -1)}
-                    disabled={activeIndex === 0}
-                    className="flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-100 hover:bg-gray-50 disabled:opacity-30 transition-colors text-gray-500"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                    <span className="text-[10px]">Move up</span>
-                  </button>
-                  <button
-                    onClick={() => moveQuestion(activeIndex, 1)}
-                    disabled={activeIndex === questions.length - 1}
-                    className="flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-100 hover:bg-gray-50 disabled:opacity-30 transition-colors text-gray-500"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                    <span className="text-[10px]">Move dn</span>
-                  </button>
-                  <button
-                    onClick={() => duplicateQuestion(activeIndex)}
-                    className="flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors text-gray-500"
-                  >
-                    <Copy className="w-4 h-4" />
-                    <span className="text-[10px]">Copy</span>
-                  </button>
                 </div>
               </div>
-
-              <hr className="border-gray-100" />
-
-              {/* Quiz Settings */}
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                  <Type className="w-3.5 h-3.5" />
-                  Quiz settings
-                </label>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Cover Image</label>
-                    <ImageUpload
-                      currentUrl={coverImageUrl}
-                      onUpload={(url) => setCoverImageUrl(url)}
-                      path={`quizzes/${quizId || 'new'}`}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Card Color</label>
-                    <div className="flex gap-2 flex-wrap">
-                      {COLLECTION_COLORS.map((c) => (
-                        <button
-                          key={c.key}
-                          onClick={() => setSelectedColor(selectedColor === c.key ? '' : c.key)}
-                          className={`w-8 h-8 rounded-full ${c.bg} border-2 border-gray-800 transition-all ${
-                            selectedColor === c.key ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'
-                          }`}
-                          title={c.label}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Description</label>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Brief description"
-                      rows={2}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Visibility</label>
-                    <select
-                      value={visibility}
-                      onChange={(e) => setVisibility(e.target.value as 'private' | 'org' | 'public')}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
-                    >
-                      <option value="private">Private</option>
-                      <option value="public">Public</option>
-                    </select>
-                  </div>
-                  {collections.length > 0 && (
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Collection</label>
-                      <select
-                        value={selectedCollectionId}
-                        onChange={(e) => setSelectedCollectionId(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
-                      >
-                        <option value="">None</option>
-                        {collections.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
+                <label className="text-xs text-gray-500 mb-1 block">Description</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief description"
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 resize-none"
+                />
               </div>
-
-              <hr className="border-gray-100" />
-
-              {/* Delete */}
-              <button
-                onClick={() => removeQuestion(activeIndex)}
-                className="w-full py-2.5 border border-danger/20 text-danger text-sm font-medium rounded-xl hover:bg-danger/5 transition-colors flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Question
-              </button>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Visibility</label>
+                <select
+                  value={visibility}
+                  onChange={(e) => setVisibility(e.target.value as 'private' | 'org' | 'public')}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                >
+                  <option value="private">Private</option>
+                  <option value="public">Public</option>
+                </select>
+              </div>
+              {collections.length > 0 && (
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Collection</label>
+                  <select
+                    value={selectedCollectionId}
+                    onChange={(e) => setSelectedCollectionId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                  >
+                    <option value="">None</option>
+                    {collections.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center p-4">
-              <p className="text-sm text-gray-400 text-center">Select a question to see settings</p>
-            </div>
-          )}
+          </div>
         </aside>
       </div>
 
