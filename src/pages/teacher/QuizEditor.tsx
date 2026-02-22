@@ -33,6 +33,7 @@ const typeLabels: Record<QuestionType, string> = {
   ordering: 'Ordering',
   poll: 'Poll',
   slide: 'Slide',
+  code_output: 'Code Output',
 };
 
 const ANSWER_CARDS = [
@@ -194,6 +195,7 @@ export default function QuizEditor() {
     else if (type === 'ordering') { updates.options = ['', '', '', '']; updates.correctAnswers = []; updates.matchOptions = undefined; }
     else if (type === 'poll') { updates.options = ['', '', '', '']; updates.correctAnswers = []; updates.matchOptions = undefined; }
     else if (type === 'slide') { updates.options = []; updates.correctAnswers = []; updates.matchOptions = undefined; }
+    else if (type === 'code_output') { updates.options = []; updates.correctAnswers = []; updates.matchOptions = undefined; updates.codeSnippet = ''; updates.codeLanguage = 'javascript'; }
     else { updates.options = []; updates.correctAnswers = []; updates.matchOptions = undefined; }
     updateQuestion(index, updates);
   };
@@ -274,6 +276,9 @@ export default function QuizEditor() {
         if (blankCount === 0) errors.push(`Q${num}: Use ___ to mark blanks in the question text.`);
         if (q.correctAnswers.length !== blankCount) errors.push(`Q${num}: Provide exactly ${blankCount} answer(s) for ${blankCount} blank(s).`);
         if (q.correctAnswers.some((a) => !a.trim())) errors.push(`Q${num}: All blank answers must be filled in.`);
+      } else if (q.type === 'code_output') {
+        if (!q.codeSnippet?.trim()) errors.push(`Q${num}: Code snippet is required.`);
+        if (q.correctAnswers.length === 0 || q.correctAnswers.every((a) => !a.trim())) errors.push(`Q${num}: At least one expected output is required.`);
       } else {
         if (q.correctAnswers.length === 0) errors.push(`Q${num}: Mark at least one correct answer.`);
         if (q.type !== 'short' && q.options.some((o) => !o.trim())) {
@@ -321,6 +326,10 @@ export default function QuizEditor() {
         };
         if (question.type === 'matching') {
           questionData.matchOptions = question.matchOptions || [];
+        }
+        if (question.type === 'code_output') {
+          questionData.codeSnippet = question.codeSnippet || '';
+          questionData.codeLanguage = question.codeLanguage || 'javascript';
         }
         if (question.id) {
           await setDoc(doc(db, 'questions', question.id), questionData, { merge: true });
@@ -723,6 +732,45 @@ export default function QuizEditor() {
                 </div>
               )}
 
+              {/* Code Output */}
+              {activeQ.type === 'code_output' && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Language</label>
+                    <select
+                      value={activeQ.codeLanguage || 'javascript'}
+                      onChange={(e) => updateQuestion(activeIndex, { codeLanguage: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                    >
+                      {['JavaScript', 'Python', 'Java', 'C', 'C++', 'C#', 'PHP', 'TypeScript', 'Go', 'Ruby', 'Kotlin', 'Swift', 'Rust', 'SQL', 'HTML', 'CSS'].map((lang) => (
+                        <option key={lang} value={lang.toLowerCase()}>{lang}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Code Snippet</label>
+                    <textarea
+                      value={activeQ.codeSnippet || ''}
+                      onChange={(e) => updateQuestion(activeIndex, { codeSnippet: e.target.value })}
+                      placeholder="Paste your code here..."
+                      rows={6}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 font-mono text-sm resize-y"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Expected Output (comma-separated for multiple accepted answers)</label>
+                    <input
+                      value={activeQ.correctAnswers.join(', ')}
+                      onChange={(e) => updateQuestion(activeIndex, {
+                        correctAnswers: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                      })}
+                      placeholder="e.g. 42, hello world"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Fill in the Blank */}
               {activeQ.type === 'fill_blank' && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
@@ -789,7 +837,7 @@ export default function QuizEditor() {
                   onChange={(e) => updateQuestionType(activeIndex, e.target.value as QuestionType)}
                   className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
                 >
-                  {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide'] as QuestionType[]).map((t) => (
+                  {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide', 'code_output'] as QuestionType[]).map((t) => (
                     <option key={t} value={t}>{typeLabels[t]}</option>
                   ))}
                 </select>

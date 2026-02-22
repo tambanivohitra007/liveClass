@@ -9,6 +9,7 @@ import Leaderboard from '../../components/Leaderboard';
 import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
+import CodeBlock from '../../components/CodeBlock';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
 
@@ -46,6 +47,8 @@ export default function HostSession() {
   const { session, setSession, players, setPlayers } = useSessionStore();
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
+  const [currentCodeSnippet, setCurrentCodeSnippet] = useState('');
+  const [currentCodeLanguage, setCurrentCodeLanguage] = useState('');
   const [currentTimeLimitSec, setCurrentTimeLimitSec] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [error, setError] = useState('');
@@ -110,6 +113,8 @@ export default function HostSession() {
       : session.currentQuestionIndex;
     const current = allQuestions[qIdx];
     setCurrentQuestionText(current?.text || '');
+    setCurrentCodeSnippet(current?.codeSnippet || '');
+    setCurrentCodeLanguage(current?.codeLanguage || '');
     // question ID now derived from session props in the subscription effect
     if (current?.timeLimitSec) {
       setCurrentTimeLimitSec(current.timeLimitSec);
@@ -786,6 +791,10 @@ export default function HostSession() {
           <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in break-words">
             {currentQuestionText}
           </h2>
+
+          {currentCodeSnippet && (
+            <CodeBlock code={currentCodeSnippet} language={currentCodeLanguage} className="w-full max-w-2xl mb-6 sm:mb-10 animate-fade-in" />
+          )}
 
           {/* Timer + Answer Progress */}
           <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">

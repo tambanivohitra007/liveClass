@@ -5,6 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
 import { queueAnswer, syncPendingAnswers } from '../../lib/offlineQueue';
 import { Clock, Ban, CircleCheckBig, Check } from 'lucide-react';
+import CodeBlock from '../../components/CodeBlock';
 import type { Assignment, Question } from '../../types/models';
 
 const answerColors = [
@@ -270,6 +271,22 @@ export default function PlayAssignment() {
               value={selectedAnswer}
               onChange={(e) => setSelectedAnswer(e.target.value)}
               placeholder="Type your answer..."
+              className="w-full max-w-md mx-auto text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand outline-none backdrop-blur"
+              autoFocus
+            />
+          </div>
+        )}
+
+        {question.type === 'code_output' && (
+          <div className="flex-1 flex flex-col items-center gap-4">
+            {question.codeSnippet && (
+              <CodeBlock code={question.codeSnippet} language={question.codeLanguage} className="w-full max-w-lg" />
+            )}
+            <input
+              type="text"
+              value={selectedAnswer}
+              onChange={(e) => setSelectedAnswer(e.target.value)}
+              placeholder="What will this code output?"
               className="w-full max-w-md mx-auto text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand outline-none backdrop-blur"
               autoFocus
             />

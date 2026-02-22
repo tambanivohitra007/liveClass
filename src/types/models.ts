@@ -45,7 +45,7 @@ export interface Quiz {
   updatedAt: number;
 }
 
-export type QuestionType = 'mcq' | 'tf' | 'short' | 'matching' | 'fill_blank' | 'ordering' | 'poll' | 'slide';
+export type QuestionType = 'mcq' | 'tf' | 'short' | 'matching' | 'fill_blank' | 'ordering' | 'poll' | 'slide' | 'code_output';
 
 export interface Question {
   id: string;
@@ -56,6 +56,8 @@ export interface Question {
   videoUrl?: string;
   options: string[];
   matchOptions?: string[];
+  codeSnippet?: string;
+  codeLanguage?: string;
   correctAnswers: string[];
   timeLimitSec: number;
 }

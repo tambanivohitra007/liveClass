@@ -509,6 +509,11 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
       // Fallback: single string sent for a multi-answer question
       correct = false;
     }
+  } else if (question.type === 'code_output') {
+    const expected: string[] = question.correctAnswers || [];
+    correct = expected.some(
+      (a: string) => a.trim().toLowerCase() === selection.trim().toLowerCase()
+    );
   } else {
     correct = question.correctAnswers.includes(selection);
   }
@@ -1045,6 +1050,8 @@ export const generateQuestions = onCall(
             return { ...base, text: `Put these in the correct order (${label})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
           case "fill_blank":
             return { ...base, text: `The ___ is related to ${label}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
+          case "code_output":
+            return { ...base, text: `What does this code output?`, options: [], correctAnswers: ["output"], codeSnippet: "console.log('Hello');", codeLanguage: "javascript", timeLimitSec: 30 };
           default:
             return { ...base, options: ["Option A", "Option B", "Option C", "Option D"], correctAnswers: ["Option A"], timeLimitSec: 20 };
         }
@@ -1065,6 +1072,7 @@ export const generateQuestions = onCall(
       matching: '{"text":"Match the following","options":["left1","left2","left3"],"matchOptions":["right1","right2","right3"],"correctAnswers":["left1","left2","left3"],"timeLimitSec":30}',
       ordering: '{"text":"Put these in order","options":["first","second","third","fourth"],"correctAnswers":["first","second","third","fourth"],"timeLimitSec":30}',
       fill_blank: '{"text":"The ___ is the powerhouse of the ___","options":[],"correctAnswers":["mitochondria","cell"],"timeLimitSec":25}',
+      code_output: '{"text":"What does this code output?","options":[],"correctAnswers":["Hello World"],"codeSnippet":"print(\'Hello World\')","codeLanguage":"python","timeLimitSec":30}',
     };
 
     const metaInstruction = generateMeta
@@ -1210,6 +1218,8 @@ Make questions educational, varied in difficulty, and factually accurate.`;
             text: q.text || "",
             options,
             ...(q.matchOptions ? { matchOptions: q.matchOptions as string[] } : {}),
+            ...(q.codeSnippet ? { codeSnippet: q.codeSnippet as string } : {}),
+            ...(q.codeLanguage ? { codeLanguage: q.codeLanguage as string } : {}),
             correctAnswers,
             timeLimitSec: (q.timeLimitSec as number) || 20,
           };

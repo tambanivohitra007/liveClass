@@ -11,7 +11,7 @@ import {
   Download, FileSpreadsheet, Users, Target,
   ShieldAlert,
   HelpCircle, CheckCircle2, XCircle, ListOrdered, AlignLeft,
-  ArrowLeftRight, PenLine, MessageSquare, Presentation,
+  ArrowLeftRight, PenLine, MessageSquare, Presentation, Code2,
   Printer, Mail, Share2, Trash2, MoreVertical, Check, X,
   Zap, ArrowUpDown, Sparkles, TrendingUp, AlertTriangle, Loader2, MinusCircle,
   Clock
@@ -36,6 +36,7 @@ const TYPE_LABELS: Record<string, string> = {
   ordering: 'Ordering',
   poll: 'Poll',
   slide: 'Slide',
+  code_output: 'Code Output',
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -47,6 +48,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   ordering: <ListOrdered className="w-5 h-5" />,
   poll: <MessageSquare className="w-5 h-5" />,
   slide: <Presentation className="w-5 h-5" />,
+  code_output: <Code2 className="w-5 h-5" />,
 };
 
 // Colors matching the screenshot design

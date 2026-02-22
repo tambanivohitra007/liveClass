@@ -9,6 +9,7 @@ import Leaderboard from '../../components/Leaderboard';
 import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Hexagon, Star, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
+import CodeBlock from '../../components/CodeBlock';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
 import { playCorrect, playWrong, playTick, playUrgentTick, playSubmit, playPodium, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
@@ -691,6 +692,25 @@ export default function PlayGame() {
                 value={selectedAnswer}
                 onChange={(e) => setSelectedAnswer(e.target.value)}
                 placeholder="Type your answer..."
+                disabled={submitted}
+                className="w-full text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none backdrop-blur"
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
+
+        {currentQuestion.type === 'code_output' && (
+          <div className="flex-1 flex flex-col items-center gap-4">
+            {currentQuestion.codeSnippet && (
+              <CodeBlock code={currentQuestion.codeSnippet} language={currentQuestion.codeLanguage} className="w-full max-w-lg" />
+            )}
+            <div className="w-full max-w-md">
+              <input
+                type="text"
+                value={selectedAnswer}
+                onChange={(e) => setSelectedAnswer(e.target.value)}
+                placeholder="What will this code output?"
                 disabled={submitted}
                 className="w-full text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none backdrop-blur"
                 autoFocus

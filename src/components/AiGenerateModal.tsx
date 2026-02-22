@@ -373,6 +373,7 @@ export default function AiGenerateModal({
                 <option value="matching">Matching</option>
                 <option value="ordering">Ordering</option>
                 <option value="fill_blank">Fill in the Blank</option>
+                <option value="code_output">Code Output</option>
               </select>
             </div>
           </div>

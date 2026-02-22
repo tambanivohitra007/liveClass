@@ -6,6 +6,7 @@ import {
   ArrowLeft, Eye, ChevronLeft, ChevronRight, Clock, Flame, Trophy,
   Triangle, Diamond, Circle, Square, Hexagon, Star, Check, X as XIcon, Zap
 } from 'lucide-react';
+import CodeBlock from '../../components/CodeBlock';
 import type { Quiz, Question } from '../../types/models';
 
 const answerColors = [
@@ -131,6 +132,8 @@ export default function QuizPreview() {
       correct = selectedAnswers.length === q.correctAnswers.length &&
         selectedAnswers.every((a) => q.correctAnswers.includes(a)) &&
         q.correctAnswers.every((a) => selectedAnswers.includes(a));
+    } else if (q.type === 'code_output') {
+      correct = q.correctAnswers.some((a) => a.trim().toLowerCase() === selectedAnswer.trim().toLowerCase());
     } else {
       correct = q.correctAnswers.includes(selectedAnswer);
     }
@@ -216,6 +219,9 @@ export default function QuizPreview() {
         selectedAnswers.every((a) => question.correctAnswers.includes(a)) &&
         question.correctAnswers.every((a) => selectedAnswers.includes(a));
     }
+    if (question.type === 'code_output') {
+      return question.correctAnswers.some((a) => a.trim().toLowerCase() === selectedAnswer.trim().toLowerCase());
+    }
     return question.correctAnswers.includes(selectedAnswer);
   };
   const hasAnswer = (): boolean => {
@@ -279,7 +285,7 @@ export default function QuizPreview() {
           {timeLeft}
         </div>
         <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50 capitalize">
-          {question.type === 'mcq' ? (isMultiAnswer ? 'Multiple Answer' : 'Multiple Choice') : question.type === 'tf' ? 'True / False' : question.type === 'matching' ? 'Matching' : question.type === 'fill_blank' ? 'Fill Blank' : 'Short Answer'}
+          {question.type === 'mcq' ? (isMultiAnswer ? 'Multiple Answer' : 'Multiple Choice') : question.type === 'tf' ? 'True / False' : question.type === 'matching' ? 'Matching' : question.type === 'fill_blank' ? 'Fill Blank' : question.type === 'code_output' ? 'Code Output' : 'Short Answer'}
         </span>
       </div>
 
@@ -370,6 +376,30 @@ export default function QuizPreview() {
             {state === 'revealed' && (
               <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
                 <p className="text-white/50 text-sm mb-1">Accepted answers:</p>
+                <p className="text-success font-bold">{question.correctAnswers.join(', ')}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Code Output Preview */}
+        {question.type === 'code_output' && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            {question.codeSnippet && (
+              <CodeBlock code={question.codeSnippet} language={question.codeLanguage} className="w-full max-w-lg" />
+            )}
+            <input
+              type="text"
+              value={selectedAnswer}
+              onChange={(e) => state === 'answering' && setSelectedAnswer(e.target.value)}
+              placeholder="What will this code output?"
+              disabled={state === 'revealed'}
+              className="w-full max-w-md text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand outline-none backdrop-blur"
+              autoFocus
+            />
+            {state === 'revealed' && (
+              <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
+                <p className="text-white/50 text-sm mb-1">Accepted outputs:</p>
                 <p className="text-success font-bold">{question.correctAnswers.join(', ')}</p>
               </div>
             )}
