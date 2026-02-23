@@ -32,19 +32,30 @@ const CARD_GRADIENTS: Record<string, string> = {
 };
 const DEFAULT_GRADIENT = 'bg-gradient-to-br from-[#94A3B8] to-[#64748B]';
 
-function timeAgo(ts: number): string {
-  if (!ts) return '';
-  const sec = Math.floor((Date.now() - ts) / 1000);
-  if (sec < 60) return 'Just now';
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  const d = Math.floor(hr / 24);
-  if (d < 7) return `${d}d ago`;
-  const w = Math.floor(d / 7);
-  if (w < 5) return `${w}w ago`;
-  return `${Math.floor(d / 30)}mo ago`;
+function toMs(ts: unknown): number {
+  if (!ts) return 0;
+  if (typeof ts === 'number') return ts;
+  // Firestore Timestamp object
+  if (typeof ts === 'object' && ts !== null && 'toMillis' in ts && typeof (ts as { toMillis: () => number }).toMillis === 'function') {
+    return (ts as { toMillis: () => number }).toMillis();
+  }
+  return 0;
+}
+
+function formatDate(ts: unknown): string {
+  const ms = toMs(ts);
+  if (!ms) return '';
+  const date = new Date(ms);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  if (isToday) return `Today, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  if (isYesterday) return `Yesterday, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  if (date.getFullYear() === now.getFullYear()) return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function Dashboard() {
@@ -631,7 +642,7 @@ export default function Dashboard() {
                       {quiz.questionCount ?? '?'} Qs
                     </span>
                     <span className="w-1 h-1 rounded-full bg-gray-300" />
-                    <span>{timeAgo(quiz.updatedAt)}</span>
+                    <span>{formatDate(quiz.updatedAt)}</span>
                   </div>
 
                   {/* Host button */}
