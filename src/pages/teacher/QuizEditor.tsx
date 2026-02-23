@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc, deleteDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
@@ -336,14 +336,27 @@ export default function QuizEditor() {
           updatedAt: serverTimestamp(),
         }, { merge: true });
       }
+      // Collect IDs of questions still in the editor
       const updatedQuestions = [...questions];
+      const keepIds = new Set(updatedQuestions.map((q) => q.id).filter(Boolean));
+
+      // Delete questions that were removed from the UI
+      if (!isNew && savedQuizId) {
+        const existingSnap = await getDocs(query(collection(db, 'questions'), where('quizId', '==', savedQuizId)));
+        await Promise.all(
+          existingSnap.docs
+            .filter((d) => !keepIds.has(d.id))
+            .map((d) => deleteDoc(d.ref)),
+        );
+      }
+
       for (let i = 0; i < updatedQuestions.length; i++) {
         const question = updatedQuestions[i];
         const questionData: Record<string, unknown> = {
-          quizId: savedQuizId, type: question.type, text: question.text,
+          quizId: savedQuizId, type: question.type || 'mcq', text: question.text || '',
           imageUrl: question.imageUrl || null, videoUrl: question.videoUrl || null,
-          options: question.options,
-          correctAnswers: question.correctAnswers, timeLimitSec: question.timeLimitSec,
+          options: question.options || [],
+          correctAnswers: question.correctAnswers || [], timeLimitSec: question.timeLimitSec ?? 20,
         };
         if (question.type === 'matching') {
           questionData.matchOptions = question.matchOptions || [];
@@ -370,8 +383,9 @@ export default function QuizEditor() {
       setSavedSnapshot(newSnapshot);
       justSavedRef.current = false;
       addToast('success', 'Quiz saved');
-    } catch {
-      addToast('error', 'Failed to save quiz. Please try again.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      addToast('error', `Failed to save quiz: ${msg}`);
     } finally {
       setSaving(false);
     }
