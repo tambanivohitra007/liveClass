@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams, useBlocker } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { ref, onValue, off } from 'firebase/database';
@@ -357,31 +357,38 @@ export default function HostSession() {
     }
   }, [session?.status, session?.paceMode]);
 
-  // beforeunload: warn on browser close/refresh when session is active
-  useEffect(() => {
-    const isActive = session?.status === 'lobby' || session?.status === 'live';
-    if (!isActive) return;
+  // Custom navigation blocker (works with BrowserRouter)
+  const isSessionActive = session?.status === 'lobby' || session?.status === 'live';
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const pendingNavigationRef = useRef<(() => void) | null>(null);
+  const leavingRef = useRef(false);
 
+  // Block browser tab close / refresh
+  useEffect(() => {
+    if (!isSessionActive) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [session?.status]);
+  }, [isSessionActive]);
 
-  // useBlocker: block in-app navigation when session is active
-  const isSessionActive = session?.status === 'lobby' || session?.status === 'live';
-  const blocker = useBlocker(
-    useCallback(
-      ({ nextLocation }) => {
-        if (!isSessionActive) return false;
-        // Allow navigation to results page
-        if (nextLocation.pathname.includes('/results')) return false;
-        return true;
-      },
-      [isSessionActive],
-    ),
-  );
+  // Block browser back/forward button
+  useEffect(() => {
+    if (!isSessionActive) return;
+    window.history.pushState(null, '', window.location.href);
+    const handler = () => {
+      if (leavingRef.current) return;
+      window.history.pushState(null, '', window.location.href);
+      setShowLeaveDialog(true);
+      pendingNavigationRef.current = () => {
+        leavingRef.current = true;
+        window.history.go(-1);
+      };
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, [isSessionActive]);
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-dark">
@@ -1100,7 +1107,7 @@ export default function HostSession() {
       )}
 
       {/* ══════════ Navigation Blocker Dialog ══════════ */}
-      {blocker.state === 'blocked' && (
+      {showLeaveDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-surface-dark border border-white/10 rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
@@ -1116,13 +1123,13 @@ export default function HostSession() {
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => blocker.reset?.()}
+                onClick={() => { setShowLeaveDialog(false); pendingNavigationRef.current = null; }}
                 className="flex-1 px-5 py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors"
               >
                 Stay
               </button>
               <button
-                onClick={() => blocker.proceed?.()}
+                onClick={() => { setShowLeaveDialog(false); pendingNavigationRef.current?.(); pendingNavigationRef.current = null; }}
                 className="flex-1 px-5 py-3 bg-danger text-white font-semibold rounded-xl hover:brightness-110 transition-all"
               >
                 Leave &amp; End

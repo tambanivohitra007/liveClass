@@ -59,6 +59,22 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { activeSession, endActiveSession } = useActiveSession();
 
+  const handleEndActiveSession = async () => {
+    if (!activeSession) return;
+    const { isConfirmed } = await confirmAction(
+      'End active session?',
+      `This will end the session for "${activeSession.quizTitle}" (PIN: ${activeSession.pinCode}). All players will be disconnected.`,
+      'End session',
+    );
+    if (!isConfirmed) return;
+    try {
+      await endActiveSession();
+      addToast('success', 'Session ended successfully');
+    } catch {
+      addToast('error', 'Failed to end session. Please try again.');
+    }
+  };
+
   // Collection modal state
   const [showCollModal, setShowCollModal] = useState(false);
   const [editingColl, setEditingColl] = useState<Collection | null>(null);
@@ -404,7 +420,7 @@ export default function Dashboard() {
 
       {/* ── Active Session Banner ── */}
       {activeSession && (
-        <ActiveSessionBanner session={activeSession} onEnd={endActiveSession} />
+        <ActiveSessionBanner session={activeSession} onEnd={handleEndActiveSession} />
       )}
 
       {/* ── Search Bar ── */}
