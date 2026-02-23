@@ -4,7 +4,8 @@ import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/fir
 import { db } from '../../lib/firebase';
 import { SkeletonCard } from '../../components/Skeleton';
 import WaveBackground from '../../components/ui/WaveBackground';
-import { ArrowLeft, Users, Clock, ArrowRight } from 'lucide-react';
+import { Users, Clock, ArrowRight } from 'lucide-react';
+import BackButton from '../../components/BackButton';
 import type { Classroom } from '../../types/models';
 
 const CARD_GRADIENTS: Record<string, string> = {
@@ -125,12 +126,9 @@ export default function StudentClassDetail() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
         {/* Back button */}
-        <button
-          onClick={() => navigate('/student/classes')}
-          className="text-sm text-gray-400 hover:text-brand mb-4 flex items-center gap-1"
-        >
-          <ArrowLeft className="w-3 h-3" /> Back to My Classes
-        </button>
+        <div className="mb-4">
+          <BackButton to="/student/classes" label="Back to My Classes" />
+        </div>
 
         {/* Header card */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] overflow-hidden mb-8">

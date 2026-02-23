@@ -4,7 +4,7 @@ import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'fire
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
-import { ArrowLeft } from 'lucide-react';
+import BackButton from '../../components/BackButton';
 import type { Quiz } from '../../types/models';
 
 export default function AssignmentCreate() {
@@ -57,7 +57,9 @@ export default function AssignmentCreate() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-4 flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> Back</button>
+      <div className="mb-4">
+        <BackButton to="/dashboard" />
+      </div>
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Assignment</h1>
 
       <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 space-y-5">

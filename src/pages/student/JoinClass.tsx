@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
+import BackButton from '../../components/BackButton';
 
 export default function JoinClass() {
   const [code, setCode] = useState('');
@@ -50,6 +51,9 @@ export default function JoinClass() {
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark relative">
       <div className="absolute inset-0 pattern-grid pointer-events-none" />
       <div className="w-full max-w-sm animate-bounce-in">
+        <div className="mb-4">
+          <BackButton to="/student/classes" label="Back to My Classes" />
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-white">Join Class</h1>
           <p className="text-white/60 mt-2 text-sm">Enter the code from your teacher</p>

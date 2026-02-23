@@ -5,7 +5,8 @@ import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { SkeletonCard } from '../../components/Skeleton';
-import { ArrowLeft, Users, Target, Calendar, Hash, SortAsc, Filter, Trash2 } from 'lucide-react';
+import { Users, Target, Calendar, Hash, SortAsc, Filter, Trash2 } from 'lucide-react';
+import BackButton from '../../components/BackButton';
 
 interface SessionRecord {
   id: string;
@@ -140,9 +141,7 @@ export default function SessionHistory() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-400 hover:text-brand mb-2 flex items-center gap-1">
-          <ArrowLeft className="w-3 h-3" /> Back to Dashboard
-        </button>
+        <BackButton to="/dashboard" label="Back to Dashboard" />
         <h1 className="text-2xl font-bold text-gray-900">Session History</h1>
         <p className="text-gray-500 mt-1">Review past game sessions and results</p>
       </div>

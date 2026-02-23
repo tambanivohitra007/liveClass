@@ -7,7 +7,8 @@ import { useAuthStore } from '../stores/authStore';
 import { useToastStore } from '../stores/toastStore';
 import { useNavigate } from 'react-router-dom';
 import { confirmAction } from '../lib/swal';
-import { ArrowLeft, Camera, Save, KeyRound, Mail, Shield, Eye, EyeOff, Phone, MapPin } from 'lucide-react';
+import { Camera, Save, KeyRound, Mail, Shield, Eye, EyeOff, Phone, MapPin } from 'lucide-react';
+import BackButton from '../components/BackButton';
 
 export default function Profile() {
   const { firebaseUser, user, setUser } = useAuthStore();
@@ -190,12 +191,9 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <button
-        onClick={() => navigate(-1)}
-        className="text-sm text-gray-400 hover:text-brand mb-6 flex items-center gap-1"
-      >
-        <ArrowLeft className="w-3 h-3" /> Back
-      </button>
+      <div className="mb-6">
+        <BackButton onClick={() => navigate(-1)} />
+      </div>
 
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Profile Settings</h1>
 

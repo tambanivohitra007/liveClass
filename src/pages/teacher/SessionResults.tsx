@@ -16,6 +16,7 @@ import {
   Zap, ArrowUpDown, Sparkles, TrendingUp, AlertTriangle, Loader2, MinusCircle,
   Clock
 } from 'lucide-react';
+import BackButton from '../../components/BackButton';
 
 type TabId = 'overview' | 'participants' | 'questions' | 'tags' | 'anti-cheating';
 
@@ -283,6 +284,10 @@ export default function SessionResults() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 bg-gradient-to-b from-[#E8EAF0] to-surface min-h-screen">
+      <div className="mb-6">
+        <BackButton to="/history" label="Back to History" />
+      </div>
+
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
