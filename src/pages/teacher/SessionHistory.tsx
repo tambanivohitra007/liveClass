@@ -216,9 +216,12 @@ export default function SessionHistory() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
           {filteredSessions.map((s) => (
             <div key={s.id} className="relative animate-fade-in">
-              <button
+              <div
                 onClick={() => navigate(`/session/${s.id}/results`)}
-                className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/session/${s.id}/results`); }}
+                className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-semibold text-gray-900 group-hover:text-brand transition-colors mb-1 truncate">
@@ -267,7 +270,7 @@ export default function SessionHistory() {
                     <p className="text-lg font-bold text-gray-900">{s.avgScore.toLocaleString()}</p>
                   </div>
                 </div>
-              </button>
+              </div>
 
               {/* Delete confirmation overlay */}
               {confirmDeleteId === s.id && (

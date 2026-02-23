@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
@@ -13,6 +13,7 @@ import WaveBackground from '../../components/ui/WaveBackground';
 import {
   Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList,
   Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, BarChart3, Printer,
+  Clock, ArrowRight,
 } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
@@ -20,6 +21,15 @@ import type { Quiz, Collection, CollectionColor } from '../../types/models';
 
 interface QuizWithMeta extends Quiz {
   questionCount?: number;
+}
+
+interface RecentSession {
+  id: string;
+  quizId: string;
+  quizTitle: string;
+  pinCode: string;
+  endedAt: number;
+  playerCount: number;
 }
 
 const CARD_GRADIENTS: Record<string, string> = {
@@ -67,6 +77,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({ totalQuizzes: 0, totalQuestions: 0, totalSessions: 0 });
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const navigate = useNavigate();
   const { activeSession, endActiveSession } = useActiveSession();
 
@@ -187,7 +198,27 @@ export default function Dashboard() {
 
       const sessionsSnap = await getDocs(query(collection(db, 'sessions'), where('hostId', '==', user.id)));
 
+      // Extract recent ended sessions from the same query (no extra reads)
+      const quizTitleMap = new Map<string, string>();
+      enriched.forEach((q) => quizTitleMap.set(q.id, q.title));
+
+      type SessionDoc = { id: string; status: string; endedAt: unknown; quizId: string; pinCode: string; top10Snapshot?: unknown[] };
+      const endedSessions = sessionsSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as SessionDoc)
+        .filter((s) => s.status === 'ended' && s.endedAt)
+        .sort((a, b) => toMs(b.endedAt) - toMs(a.endedAt))
+        .slice(0, 3)
+        .map((s) => ({
+          id: s.id,
+          quizId: s.quizId,
+          quizTitle: quizTitleMap.get(s.quizId) || 'Untitled Quiz',
+          pinCode: s.pinCode || '',
+          endedAt: toMs(s.endedAt),
+          playerCount: Array.isArray(s.top10Snapshot) ? s.top10Snapshot.length : 0,
+        }));
+
       setQuizzes(enriched);
+      setRecentSessions(endedSessions);
       setStats({
         totalQuizzes: enriched.length,
         totalQuestions: totalQ,
@@ -349,7 +380,22 @@ export default function Dashboard() {
     return collections.find((c) => c.id === quiz.collectionId)?.name || null;
   };
 
+  const showQuickStart = quizzes.length >= 4;
+
+  const quickStartQuizzes = useMemo(
+    () => [...quizzes].sort((a, b) => toMs(b.updatedAt) - toMs(a.updatedAt)).slice(0, 3),
+    [quizzes],
+  );
+
+  const quickStartIds = useMemo(
+    () => showQuickStart ? new Set(quickStartQuizzes.map((q) => q.id)) : new Set<string>(),
+    [quickStartQuizzes, showQuickStart],
+  );
+
+  const isDefaultView = selectedFilter === 'all' && !searchQuery;
+
   const filtered = quizzes
+    .filter((q) => !(isDefaultView && quickStartIds.has(q.id)))
     .filter((q) => selectedFilter === 'all' || q.collectionId === selectedFilter)
     .filter((q) =>
       q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -415,15 +461,30 @@ export default function Dashboard() {
       {/* ── Stats Row ── */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
-          { icon: <FileText className="w-4 h-4" />, label: 'Quizzes', value: stats.totalQuizzes, color: 'text-brand bg-brand/10' },
-          { icon: <HelpCircle className="w-4 h-4" />, label: 'Questions', value: stats.totalQuestions, color: 'text-accent-dark bg-accent/10' },
-          { icon: <Users className="w-4 h-4" />, label: 'Sessions', value: stats.totalSessions, color: 'text-success bg-success/10' },
+          {
+            icon: <FileText className="w-4 h-4" />, label: 'Quizzes', value: stats.totalQuizzes, color: 'text-brand bg-brand/10',
+            sub: stats.totalQuizzes > 0 ? `${collections.length} collection${collections.length !== 1 ? 's' : ''}` : 'Create your first quiz',
+          },
+          {
+            icon: <HelpCircle className="w-4 h-4" />, label: 'Questions', value: stats.totalQuestions, color: 'text-accent-dark bg-accent/10',
+            sub: stats.totalQuizzes > 0 ? `~${Math.round(stats.totalQuestions / stats.totalQuizzes)} per quiz` : '',
+          },
+          {
+            icon: <Users className="w-4 h-4" />, label: 'Sessions', value: stats.totalSessions, color: 'text-success bg-success/10',
+            sub: recentSessions.length > 0 ? `Last: ${formatDate(recentSessions[0].endedAt)}` : 'No sessions yet',
+            onClick: () => navigate('/history'),
+          },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-4 flex items-center gap-3 animate-fade-in">
+          <div
+            key={s.label}
+            className={`bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-4 flex items-center gap-3 animate-fade-in ${'onClick' in s && s.onClick ? 'cursor-pointer hover:border-brand/30 transition-colors' : ''}`}
+            onClick={'onClick' in s ? (s as { onClick: () => void }).onClick : undefined}
+          >
             <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center shrink-0`}>{s.icon}</div>
             <div>
               <p className="text-xl font-bold text-gray-900">{s.value}</p>
               <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{s.label}</p>
+              {s.sub && <p className="text-[11px] text-gray-400 mt-0.5">{s.sub}</p>}
             </div>
           </div>
         ))}
@@ -432,6 +493,73 @@ export default function Dashboard() {
       {/* ── Active Session Banner ── */}
       {activeSession && (
         <ActiveSessionBanner session={activeSession} onEnd={handleEndActiveSession} />
+      )}
+
+      {/* ── Quick Start ── */}
+      {showQuickStart && (
+        <div className="mb-8 animate-fade-in">
+          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Quick Start</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {quickStartQuizzes.map((quiz) => (
+              <button
+                key={quiz.id}
+                onClick={() => handleHostLive(quiz.id)}
+                className="bg-white rounded-xl border border-gray-200 shadow-[2px_2px_0px_0px_rgba(212,86,107,0.1)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 p-3 flex items-center gap-3 text-left group"
+              >
+                <div className={`w-10 h-10 rounded-lg ${getCardGradient(quiz)} flex items-center justify-center shrink-0`}>
+                  <Play className="w-4 h-4 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm text-gray-900 truncate group-hover:text-brand transition-colors">
+                    {quiz.title || 'Untitled Quiz'}
+                  </p>
+                  <p className="text-[11px] text-gray-400">
+                    {quiz.questionCount ?? 0} Qs &middot; {formatDate(quiz.updatedAt)}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Recent Sessions ── */}
+      {recentSessions.length > 0 && (
+        <div className="mb-8 animate-fade-in">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Recent Sessions</h2>
+            <button
+              onClick={() => navigate('/history')}
+              className="text-xs font-medium text-brand hover:text-brand-dark flex items-center gap-1 transition-colors"
+            >
+              View all <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {recentSessions.map((session) => (
+              <button
+                key={session.id}
+                onClick={() => navigate(`/session/${session.id}/results`)}
+                className="bg-white rounded-xl border border-gray-200 shadow-[2px_2px_0px_0px_rgba(212,86,107,0.1)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 p-3 text-left group"
+              >
+                <p className="font-semibold text-sm text-gray-900 truncate group-hover:text-brand transition-colors">
+                  {session.quizTitle}
+                </p>
+                <div className="flex items-center gap-2 mt-1.5 text-[11px] text-gray-400">
+                  <span className="flex items-center gap-0.5">
+                    <Users className="w-3 h-3" />
+                    {session.playerCount}{session.playerCount >= 10 ? '+' : ''} players
+                  </span>
+                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                  <span className="flex items-center gap-0.5">
+                    <Clock className="w-3 h-3" />
+                    {formatDate(session.endedAt)}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* ── Search Bar ── */}
@@ -674,7 +802,7 @@ export default function Dashboard() {
       {filtered.length > 0 && (
         <div className="mt-10 flex items-center justify-between py-5 border-t border-gray-200">
           <p className="text-sm text-gray-500">
-            Showing {filtered.length} of {quizzes.length} quiz{quizzes.length !== 1 ? 'zes' : ''}
+            Showing {filtered.length + (isDefaultView && showQuickStart ? quickStartQuizzes.length : 0)} of {quizzes.length} quiz{quizzes.length !== 1 ? 'zes' : ''}
           </p>
         </div>
       )}
