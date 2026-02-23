@@ -5,6 +5,8 @@ import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'f
 import { ref, onValue, off } from 'firebase/database';
 import { db, functions, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
+import { useToastStore } from '../../stores/toastStore';
+import { confirmAction } from '../../lib/swal';
 import Leaderboard from '../../components/Leaderboard';
 import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices, AlertTriangle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -62,10 +64,22 @@ export default function HostSession() {
   const [endingSession, setEndingSession] = useState(false);
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
+  const addToast = useToastStore((s) => s.addToast);
 
   // Refs for listener cleanup and unmount logic
   const unsubscribesRef = useRef<(() => void)[]>([]);
   const sessionRef = useRef<Session | null>(null);
+
+  // Refs for keyboard handler (avoids re-registering listener on every render)
+  const playersLengthRef = useRef(0);
+  const totalQuestionsRef = useRef(0);
+  const keyboardActionsRef = useRef<{
+    startQuestion: () => void;
+    endQuestion: () => void;
+    nextQuestion: () => void;
+    endStudentPacedSessionFn: () => void;
+    navigate: ReturnType<typeof useNavigate>;
+  } | null>(null);
 
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
 
@@ -418,25 +432,50 @@ export default function HostSession() {
 
   const isLastQuestion = session ? session.currentQuestionIndex >= totalQuestions - 1 : false;
 
+  // Sync refs for the keyboard handler (runs every render, but does NOT register listeners)
+  useEffect(() => { playersLengthRef.current = players.length; });
+  useEffect(() => { totalQuestionsRef.current = totalQuestions; });
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || !session) return;
+    keyboardActionsRef.current = { startQuestion, endQuestion, nextQuestion, endStudentPacedSessionFn, navigate };
+  });
+
+  // Keyboard handler — registers ONCE via [] deps, reads live state from refs
+  useEffect(() => {
+    const handler = async (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      const s = sessionRef.current;
+      if (!s) return;
       e.preventDefault();
-      if (session.status === 'lobby' && players.length > 0) startQuestion();
-      else if (session.questionState === 'student_paced') {
-        if (confirm('End the session for all students?')) endStudentPacedSessionFn();
-      }
-      else if (session.questionState === 'live') endQuestion();
-      else if (session.questionState === 'reveal' && session.currentQuestionIndex < totalQuestions - 1) nextQuestion();
-      else if (session.questionState === 'reveal' && session.currentQuestionIndex >= totalQuestions - 1) {
-        updateDoc(doc(db, 'sessions', session.id), { status: 'ended', endedAt: Date.now() }).then(() => {
-          navigate(`/session/${session.id}/results`);
-        });
+      const actions = keyboardActionsRef.current;
+      if (!actions) return;
+      const pLen = playersLengthRef.current;
+      const tQ = totalQuestionsRef.current;
+
+      if (s.status === 'lobby' && pLen > 0) {
+        actions.startQuestion();
+      } else if (s.questionState === 'student_paced') {
+        const { isConfirmed } = await confirmAction(
+          'End session?',
+          'End the session for all students?',
+          'Yes, end session',
+        );
+        if (isConfirmed) actions.endStudentPacedSessionFn();
+      } else if (s.questionState === 'live') {
+        actions.endQuestion();
+      } else if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
+        actions.nextQuestion();
+      } else if (s.questionState === 'reveal' && s.currentQuestionIndex >= tQ - 1) {
+        try {
+          await updateDoc(doc(db, 'sessions', s.id), { status: 'ended', endedAt: Date.now() });
+          actions.navigate(`/session/${s.id}/results`);
+        } catch {
+          useToastStore.getState().addToast('error', 'Failed to end session');
+        }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  });
+  }, []);
 
   useEffect(() => {
     if (session?.status === 'lobby' && !muted) startLobbyMusic();
@@ -453,6 +492,15 @@ export default function HostSession() {
     const next = !muted;
     setSoundMuted(next);
     setMutedState(next);
+  };
+
+  const safeUpdateSession = async (data: Record<string, unknown>) => {
+    if (!session) return;
+    try {
+      await updateDoc(doc(db, 'sessions', session.id), data);
+    } catch {
+      addToast('error', 'Failed to update session setting');
+    }
   };
 
   if (!session) return (
@@ -654,10 +702,7 @@ export default function HostSession() {
                       <span className="text-sm font-medium">Anti-Cheat</span>
                     </div>
                     <button
-                      onClick={async () => {
-                        const newVal = session.antiCheatEnabled === false;
-                        await updateDoc(doc(db, 'sessions', session.id), { antiCheatEnabled: newVal });
-                      }}
+                      onClick={() => safeUpdateSession({ antiCheatEnabled: session.antiCheatEnabled === false })}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.antiCheatEnabled !== false ? 'bg-success' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.antiCheatEnabled !== false ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -672,9 +717,7 @@ export default function HostSession() {
                     </div>
                     <div className="flex items-center bg-white/10 rounded-full p-0.5 gap-0.5">
                       <button
-                        onClick={async () => {
-                          await updateDoc(doc(db, 'sessions', session.id), { paceMode: 'teacher' });
-                        }}
+                        onClick={() => safeUpdateSession({ paceMode: 'teacher' })}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.paceMode !== 'student'
                             ? 'bg-brand text-white shadow'
@@ -685,9 +728,7 @@ export default function HostSession() {
                         Led
                       </button>
                       <button
-                        onClick={async () => {
-                          await updateDoc(doc(db, 'sessions', session.id), { paceMode: 'student' });
-                        }}
+                        onClick={() => safeUpdateSession({ paceMode: 'student' })}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.paceMode === 'student'
                             ? 'bg-info text-white shadow'
@@ -710,12 +751,9 @@ export default function HostSession() {
                       {session.teamMode && (
                         <select
                           value={session.teamCount || 2}
-                          onChange={async (e) => {
+                          onChange={(e) => {
                             const count = parseInt(e.target.value);
-                            await updateDoc(doc(db, 'sessions', session.id), {
-                              teamCount: count,
-                              teams: TEAM_PRESETS.slice(0, count),
-                            });
+                            safeUpdateSession({ teamCount: count, teams: TEAM_PRESETS.slice(0, count) });
                           }}
                           className="px-2 py-0.5 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none"
                         >
@@ -725,14 +763,9 @@ export default function HostSession() {
                         </select>
                       )}
                       <button
-                        onClick={async () => {
-                          const newVal = !session.teamMode;
+                        onClick={() => {
                           const teamCount = session.teamCount || 2;
-                          await updateDoc(doc(db, 'sessions', session.id), {
-                            teamMode: newVal,
-                            teamCount,
-                            teams: TEAM_PRESETS.slice(0, teamCount),
-                          });
+                          safeUpdateSession({ teamMode: !session.teamMode, teamCount, teams: TEAM_PRESETS.slice(0, teamCount) });
                         }}
                         className={`relative w-11 h-6 rounded-full transition-colors ${session.teamMode ? 'bg-info' : 'bg-white/20'}`}
                       >
@@ -748,9 +781,7 @@ export default function HostSession() {
                       <span className="text-sm font-medium">Shuffle</span>
                     </div>
                     <button
-                      onClick={async () => {
-                        await updateDoc(doc(db, 'sessions', session.id), { shuffleQuestions: !session.shuffleQuestions });
-                      }}
+                      onClick={() => safeUpdateSession({ shuffleQuestions: !session.shuffleQuestions })}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleQuestions ? 'bg-warning' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleQuestions ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -768,11 +799,7 @@ export default function HostSession() {
                         {session.rotatingSetSize && (
                           <select
                             value={session.rotatingSetSize}
-                            onChange={async (e) => {
-                              await updateDoc(doc(db, 'sessions', session.id), {
-                                rotatingSetSize: parseInt(e.target.value),
-                              });
-                            }}
+                            onChange={(e) => safeUpdateSession({ rotatingSetSize: parseInt(e.target.value) })}
                             className="px-2 py-0.5 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none"
                           >
                             {Array.from(
@@ -786,12 +813,12 @@ export default function HostSession() {
                           </select>
                         )}
                         <button
-                          onClick={async () => {
+                          onClick={() => {
                             if (session.rotatingSetSize) {
-                              await updateDoc(doc(db, 'sessions', session.id), { rotatingSetSize: null });
+                              safeUpdateSession({ rotatingSetSize: null });
                             } else {
                               const defaultSize = Math.min(Math.ceil(allQuestions.length / 2), allQuestions.length - 1);
-                              await updateDoc(doc(db, 'sessions', session.id), { rotatingSetSize: defaultSize });
+                              safeUpdateSession({ rotatingSetSize: defaultSize });
                             }
                           }}
                           className={`relative w-11 h-6 rounded-full transition-colors ${session.rotatingSetSize ? 'bg-purple-500' : 'bg-white/20'}`}
@@ -1106,8 +1133,12 @@ export default function HostSession() {
             {isLastQuestion && (
               <button
                 onClick={async () => {
-                  await updateDoc(doc(db, 'sessions', session.id), { status: 'ended', endedAt: Date.now() });
-                  navigate(`/session/${session.id}/results`);
+                  try {
+                    await updateDoc(doc(db, 'sessions', session.id), { status: 'ended', endedAt: Date.now() });
+                    navigate(`/session/${session.id}/results`);
+                  } catch {
+                    addToast('error', 'Failed to end session');
+                  }
                 }}
                 className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all w-full sm:w-auto"
                 style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
