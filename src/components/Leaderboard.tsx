@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { ref, onValue, off } from 'firebase/database';
+import { db, rtdb } from '../lib/firebase';
 import { Trophy, Flame, Crown, ChevronUp } from 'lucide-react';
 import gsap from 'gsap';
 import { Flip } from 'gsap/all';
@@ -117,35 +118,29 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
       return;
     }
 
-    const unsubscribe = onSnapshot(
-      collection(db, `sessions/${sessionId}/leaderboard_shards`),
-      (snapshot) => {
-        const allPlayers: Record<string, { totalPoints: number; streak: number; nickname?: string }> = {};
-        snapshot.docs.forEach((shardDoc) => {
-          const players = shardDoc.data().players || {};
-          for (const [pid, data] of Object.entries(players)) {
-            const pdata = data as { totalPoints: number; streak: number; nickname?: string };
-            allPlayers[pid] = pdata;
-          }
-        });
-
-        const sorted = Object.entries(allPlayers)
-          .map(([playerId, data]) => ({
+    // Subscribe to RTDB scores for live leaderboard (faster than Firestore shards)
+    const scoresRef = ref(rtdb, `scores/${sessionId}`);
+    const handler = onValue(scoresRef, (snapshot) => {
+      const allScores = snapshot.val() || {};
+      const sorted = Object.entries(allScores)
+        .map(([playerId, score]) => {
+          const s = score as { totalPoints: number; streak: number; nickname?: string };
+          return {
             playerId,
-            nickname: data.nickname || nicknameMap[playerId],
-            totalPoints: data.totalPoints,
-            streak: data.streak,
+            nickname: s.nickname || nicknameMap[playerId],
+            totalPoints: s.totalPoints,
+            streak: s.streak,
             rank: 0,
-          }))
-          .sort((a, b) => b.totalPoints - a.totalPoints)
-          .slice(0, 10)
-          .map((p, i) => ({ ...p, rank: i + 1 }));
+          };
+        })
+        .sort((a, b) => b.totalPoints - a.totalPoints)
+        .slice(0, 10)
+        .map((p, i) => ({ ...p, rank: i + 1 }));
 
-        setEntries(sorted);
-      }
-    );
+      setEntries(sorted);
+    });
 
-    return unsubscribe;
+    return () => off(scoresRef, 'value', handler);
   }, [sessionId, top10Snapshot, nicknameMap]);
 
   // Compute overtakers and new-leader detection

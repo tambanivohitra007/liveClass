@@ -24,6 +24,106 @@ const FUNCTION_CONFIG = {
   maxInstances: 20,
 };
 
+// --- In-memory caches (persist across warm invocations) ---
+const sessionDataCache = new Map<string, FirebaseFirestore.DocumentData>();
+const questionDataCache = new Map<string, FirebaseFirestore.DocumentData>();
+const playerDataCache = new Map<string, FirebaseFirestore.DocumentData>();
+
+async function getSessionCached(sessionId: string): Promise<FirebaseFirestore.DocumentData | null> {
+  if (sessionDataCache.has(sessionId)) return sessionDataCache.get(sessionId)!;
+  const snap = await db.doc(`sessions/${sessionId}`).get();
+  if (!snap.exists) return null;
+  const data = snap.data()!;
+  sessionDataCache.set(sessionId, data);
+  return data;
+}
+
+async function getQuestionCached(questionId: string): Promise<FirebaseFirestore.DocumentData | null> {
+  if (questionDataCache.has(questionId)) return questionDataCache.get(questionId)!;
+  const snap = await db.doc(`questions/${questionId}`).get();
+  if (!snap.exists) return null;
+  const data = snap.data()!;
+  questionDataCache.set(questionId, data);
+  return data;
+}
+
+async function getPlayerCached(sessionId: string, playerId: string): Promise<FirebaseFirestore.DocumentData | null> {
+  const key = `${sessionId}_${playerId}`;
+  if (playerDataCache.has(key)) return playerDataCache.get(key)!;
+  const snap = await db.doc(`sessions/${sessionId}/players/${playerId}`).get();
+  if (!snap.exists) return null;
+  const data = snap.data()!;
+  playerDataCache.set(key, data);
+  return data;
+}
+
+// --- Correctness checker (extracted for RTDB-only scoring) ---
+function checkCorrectness(selection: string, question: FirebaseFirestore.DocumentData): boolean {
+  const isPoll = question.type === "poll";
+  const isSlide = question.type === "slide";
+
+  if (isSlide) return false;
+  if (isPoll) return true;
+
+  if (question.type === "ordering") {
+    try {
+      const submitted = JSON.parse(selection) as string[];
+      const expected: string[] = question.options || [];
+      return submitted.length === expected.length &&
+        submitted.every((item: string, idx: number) => item === expected[idx]);
+    } catch {
+      return false;
+    }
+  }
+
+  if (question.type === "matching") {
+    try {
+      const pairs = JSON.parse(selection) as Record<string, string>;
+      const options: string[] = question.options || [];
+      const matchOpts: string[] = question.matchOptions || [];
+      return options.length > 0 && options.every((left: string, idx: number) =>
+        pairs[left] === matchOpts[idx]
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  if (question.type === "fill_blank") {
+    try {
+      const answers = JSON.parse(selection) as string[];
+      const expected: string[] = question.correctAnswers || [];
+      return answers.length === expected.length && answers.every(
+        (a: string, idx: number) => a.trim().toLowerCase() === expected[idx].trim().toLowerCase()
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  if (question.type === "mcq" && question.correctAnswers && question.correctAnswers.length > 1) {
+    try {
+      const chosen = JSON.parse(selection) as string[];
+      const expected: string[] = question.correctAnswers;
+      return chosen.length === expected.length &&
+        chosen.every((c: string) => expected.includes(c)) &&
+        expected.every((e: string) => chosen.includes(e));
+    } catch {
+      return false;
+    }
+  }
+
+  if (question.type === "code_output") {
+    const expected: string[] = question.correctAnswers || [];
+    return expected.some(
+      (a: string) => a.trim().toLowerCase() === selection.trim().toLowerCase()
+    );
+  }
+
+  // Default: mcq, tf
+  return (question.correctAnswers || []).includes(selection);
+}
+
 function generatePin(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -273,6 +373,13 @@ export const joinSession = onCall(FUNCTION_CONFIG, async (request) => {
     activeToken,
     ...(teamIndex !== null ? { teamIndex } : {}),
     joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Initialize RTDB score for live leaderboard
+  await rtdb.ref(`scores/${sessionId}/${playerRef.id}`).set({
+    totalPoints: 0,
+    streak: 0,
+    nickname,
   });
 
   // Assign rotating question subset for late joiners
@@ -605,6 +712,7 @@ export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
 });
 
 // --- Process Answer (RTDB trigger — used by PlayGame live mode) ---
+// Zero Firestore ops during active answering. All scoring via RTDB + in-memory cache.
 export const processAnswer = onValueCreated(
   {
     ref: "/liveAnswers/{sessionId}/{questionId}/{playerId}",
@@ -622,22 +730,96 @@ export const processAnswer = onValueCreated(
     await countRef.transaction((current: number | null) => (current || 0) + 1);
 
     try {
-      const result = await computeAndWriteScore({
-        sessionId,
-        questionId,
-        playerId,
-        selection: data.selection,
-        timeMs: data.timeMs,
-        activeToken: data.activeToken,
-        calledFromTrigger: true,
+      // Fetch from in-memory cache (0 Firestore ops after first call)
+      const [session, question, player] = await Promise.all([
+        getSessionCached(sessionId),
+        getQuestionCached(questionId),
+        getPlayerCached(sessionId, playerId),
+      ]);
+
+      if (!session) throw new HttpsError("not-found", "Session not found");
+      if (!question) throw new HttpsError("not-found", "Question not found");
+      if (!player) throw new HttpsError("not-found", "Player not found");
+
+      // Validate anti-cheat token
+      if (data.activeToken && player.activeToken !== data.activeToken) {
+        throw new HttpsError("permission-denied", "Invalid session token");
+      }
+
+      // Slide type: no scoring
+      if (question.type === "slide") {
+        await resultRef.set({
+          correct: false, pointsAwarded: 0, rank: 0,
+          totalPoints: 0, behindBy: 0,
+          processedAt: admin.database.ServerValue.TIMESTAMP,
+        });
+        return;
+      }
+
+      // Check correctness using extracted helper
+      const correct = checkCorrectness(data.selection, question);
+      const isPoll = question.type === "poll";
+
+      // Read current score from RTDB
+      const scoreRef = rtdb.ref(`scores/${sessionId}/${playerId}`);
+      const currentScoreSnap = await scoreRef.get();
+      const currentScore = currentScoreSnap.val() || { totalPoints: 0, streak: 0 };
+
+      // Calculate points: base(1000) * timeRemaining% + streak bonus
+      let pointsAwarded = 0;
+      let newStreak = 0;
+      if (correct && !isPoll) {
+        const timeFactor = Math.max(
+          0,
+          (question.timeLimitSec * 1000 - data.timeMs) / (question.timeLimitSec * 1000)
+        );
+        pointsAwarded = Math.round(1000 * timeFactor);
+        newStreak = currentScore.streak + 1;
+        pointsAwarded += newStreak * 50;
+      } else if (correct) {
+        // Poll: correct but 0 points
+        newStreak = currentScore.streak;
+      }
+
+      const newTotalPoints = currentScore.totalPoints + pointsAwarded;
+
+      // Update RTDB score atomically
+      await scoreRef.transaction((current: { totalPoints: number; streak: number; nickname: string } | null) => {
+        if (!current) return { totalPoints: pointsAwarded, streak: correct ? 1 : 0, nickname: player.nickname || "" };
+        return {
+          totalPoints: current.totalPoints + pointsAwarded,
+          streak: correct && !isPoll ? current.streak + 1 : (correct ? current.streak : 0),
+          nickname: current.nickname || player.nickname || "",
+        };
       });
 
+      // Store answer in _pending for batch persist at endQuestion
+      await rtdb.ref(`_pending/${sessionId}/${questionId}/${playerId}`).set({
+        selection: data.selection,
+        timeMs: data.timeMs,
+        correct,
+        pointsAwarded,
+      });
+
+      // Compute rank from RTDB scores
+      const allScoresSnap = await rtdb.ref(`scores/${sessionId}`).get();
+      const allScores = allScoresSnap.val() || {};
+      const ranked: { pid: string; pts: number }[] = [];
+      for (const [pid, score] of Object.entries(allScores)) {
+        const s = score as { totalPoints: number };
+        ranked.push({ pid, pts: pid === playerId ? newTotalPoints : s.totalPoints });
+      }
+      ranked.sort((a, b) => b.pts - a.pts);
+      const rank = ranked.findIndex((p) => p.pid === playerId) + 1;
+      const behindBy = rank > 1 ? ranked[rank - 2].pts - newTotalPoints : 0;
+
+      // Write result for student feedback
       await resultRef.set({
-        correct: result.correct,
-        pointsAwarded: result.pointsAwarded,
-        rank: result.rank,
-        totalPoints: result.totalPoints,
-        behindBy: result.behindBy,
+        correct,
+        pointsAwarded,
+        rank,
+        totalPoints: newTotalPoints,
+        behindBy,
         processedAt: admin.database.ServerValue.TIMESTAMP,
       });
     } catch (err) {
@@ -657,6 +839,7 @@ export const processAnswer = onValueCreated(
 );
 
 // --- End Question ---
+// Reads scores + pending answers from RTDB, batch-persists to Firestore
 export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
@@ -674,19 +857,32 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     throw new HttpsError("permission-denied", "Not the host");
   }
 
-  // Parallel fetch: shards, questions, and players (for nicknames + teams)
-  const [shardsSnap, questionsSnap, playersSnap] = await Promise.all([
-    db.collection(`sessions/${sessionId}/leaderboard_shards`).get(),
-    db.collection("questions").where("quizId", "==", session.quizId).get(),
+  // Determine current question ID
+  const questionsSnap = await db
+    .collection("questions")
+    .where("quizId", "==", session.quizId)
+    .get();
+  const questionsArr = questionsSnap.docs.map((d) => d.id);
+  const qIdx = session.questionOrder
+    ? session.questionOrder[session.currentQuestionIndex]
+    : session.currentQuestionIndex;
+  const currentQuestionId = questionsArr[qIdx];
+
+  // Parallel fetch: RTDB scores, RTDB pending answers, Firestore players
+  const [scoresSnap, pendingSnap, playersSnap] = await Promise.all([
+    rtdb.ref(`scores/${sessionId}`).get(),
+    currentQuestionId ? rtdb.ref(`_pending/${sessionId}/${currentQuestionId}`).get() : Promise.resolve(null),
     db.collection(`sessions/${sessionId}/players`).get(),
   ]);
 
-  // Aggregate leaderboard across all 10 shards
+  // Build nickname map from players
   const nicknameMap = new Map<string, string>();
   playersSnap.docs.forEach((d) => {
     nicknameMap.set(d.id, d.data().nickname || "");
   });
 
+  // Build leaderboard from RTDB scores
+  const allScores = scoresSnap.val() || {};
   const allPlayers: {
     playerId: string;
     nickname: string;
@@ -694,20 +890,16 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     streak: number;
   }[] = [];
 
-  shardsSnap.docs.forEach((shardDoc) => {
-    const players = shardDoc.data().players || {};
-    for (const [pid, data] of Object.entries(players)) {
-      const pdata = data as { totalPoints: number; streak: number; nickname?: string };
-      allPlayers.push({
-        playerId: pid,
-        nickname: pdata.nickname || nicknameMap.get(pid) || "",
-        totalPoints: pdata.totalPoints,
-        streak: pdata.streak,
-      });
-    }
-  });
+  for (const [pid, score] of Object.entries(allScores)) {
+    const s = score as { totalPoints: number; streak: number; nickname?: string };
+    allPlayers.push({
+      playerId: pid,
+      nickname: s.nickname || nicknameMap.get(pid) || "",
+      totalPoints: s.totalPoints,
+      streak: s.streak,
+    });
+  }
 
-  // Sort by totalPoints descending, take top 10
   allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
   const top10 = allPlayers.slice(0, 10).map((p, i) => ({
     playerId: p.playerId,
@@ -716,31 +908,64 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     rank: i + 1,
   }));
 
-  // Determine current question
-  const questionsArr = questionsSnap.docs.map((d) => d.id);
-  const qIdx = session.questionOrder
-    ? session.questionOrder[session.currentQuestionIndex]
-    : session.currentQuestionIndex;
-  const currentQuestionId = questionsArr[qIdx];
-
-  // Fetch answers for analytics (only read we couldn't parallelize — needs questionId)
+  // Compute analytics from pending answers
   let totalCorrect = 0;
   let totalTime = 0;
   let totalAnswers = 0;
+  const pendingAnswers = pendingSnap?.val() || {};
 
-  if (currentQuestionId) {
-    const answersSnap = await db
-      .collection(`sessions/${sessionId}/answers`)
-      .where("questionId", "==", currentQuestionId)
-      .get();
+  // Batch-write: answer docs + leaderboard shards + analytics + session update
+  const batch = db.batch();
 
-    answersSnap.docs.forEach((d) => {
-      const data = d.data();
-      totalAnswers++;
-      if (data.correct) totalCorrect++;
-      totalTime += data.timeMs || 0;
+  for (const [pid, answer] of Object.entries(pendingAnswers)) {
+    const a = answer as { selection: string; timeMs: number; correct: boolean; pointsAwarded: number };
+    totalAnswers++;
+    if (a.correct) totalCorrect++;
+    totalTime += a.timeMs || 0;
+
+    // Persist answer doc to Firestore
+    const answerId = `${currentQuestionId}_${pid}`;
+    batch.set(db.doc(`sessions/${sessionId}/answers/${answerId}`), {
+      sessionId,
+      playerId: pid,
+      questionId: currentQuestionId,
+      selection: a.selection,
+      timeMs: a.timeMs,
+      correct: a.correct,
+      pointsAwarded: a.pointsAwarded,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   }
+
+  // Sync RTDB scores → Firestore leaderboard_shards
+  const shardGroups = new Map<number, Record<string, { totalPoints: number; streak: number; nickname: string }>>();
+  for (const p of allPlayers) {
+    const shardId = getShardId(p.playerId);
+    if (!shardGroups.has(shardId)) shardGroups.set(shardId, {});
+    shardGroups.get(shardId)![p.playerId] = {
+      totalPoints: p.totalPoints,
+      streak: p.streak,
+      nickname: p.nickname,
+    };
+  }
+  for (const [shardId, players] of shardGroups) {
+    batch.set(
+      db.doc(`sessions/${sessionId}/leaderboard_shards/${shardId}`),
+      { players }
+    );
+  }
+
+  // Analytics doc
+  batch.set(
+    db.doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`),
+    {
+      questionIndex: session.currentQuestionIndex,
+      totalAnswers,
+      correctCount: totalCorrect,
+      correctPercent: playersSnap.size > 0 ? (totalCorrect / playersSnap.size) * 100 : 0,
+      avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
+    }
+  );
 
   // Compute team scores if team mode is enabled
   let teamScoreSnapshot: { teamIndex: number; name: string; color: string; avgPoints: number }[] = [];
@@ -775,27 +1000,25 @@ export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
     teamScoreSnapshot.sort((a, b) => b.avgPoints - a.avgPoints);
   }
 
-  // Write analytics, update session, and clean up RTDB in parallel
+  // Session update
+  batch.update(sessionDoc.ref, {
+    questionState: "reveal",
+    top10Snapshot: top10,
+    ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
+  });
+
+  // Commit Firestore batch + clean up RTDB in parallel
   await Promise.all([
-    db.doc(`sessions/${sessionId}/analytics/${currentQuestionId || session.currentQuestionIndex}`)
-      .set({
-        questionIndex: session.currentQuestionIndex,
-        totalAnswers,
-        correctCount: totalCorrect,
-        correctPercent: playersSnap.size > 0 ? (totalCorrect / playersSnap.size) * 100 : 0,
-        avgTimeMs: totalAnswers > 0 ? totalTime / totalAnswers : 0,
-      }),
-    sessionDoc.ref.update({
-      questionState: "reveal",
-      top10Snapshot: top10,
-      ...(teamScoreSnapshot.length > 0 ? { teamScoreSnapshot } : {}),
-      // Don't set status:"ended" here for last question — let the host
-      // trigger it from "View Results" so students can see their feedback first.
-    }),
+    batch.commit(),
     rtdb.ref(`liveAnswers/${sessionId}`).remove(),
     rtdb.ref(`results/${sessionId}`).remove(),
     rtdb.ref(`answerCounts/${sessionId}`).remove(),
+    currentQuestionId ? rtdb.ref(`_pending/${sessionId}/${currentQuestionId}`).remove() : Promise.resolve(),
+    // Do NOT clean scores/ — needed for next question + Leaderboard subscriptions
   ]);
+
+  // Clear question cache for this question (won't be needed again)
+  if (currentQuestionId) questionDataCache.delete(currentQuestionId);
 
   return { success: true, top10 };
 });
@@ -1958,6 +2181,7 @@ export const regenerateJoinCode = onCall(FUNCTION_CONFIG, async (request) => {
 });
 
 // --- End Student-Paced Session ---
+// Reads scores + ALL pending answers from RTDB, batch-persists to Firestore
 export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
@@ -1975,12 +2199,12 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
     throw new HttpsError("permission-denied", "Not the host");
   }
 
-  // Parallel fetch: shards, questions, players, and ALL answers (single query)
-  const [shardsSnap, questionsSnap, playersSnap, allAnswersSnap] = await Promise.all([
-    db.collection(`sessions/${sessionId}/leaderboard_shards`).get(),
+  // Parallel fetch: RTDB scores, RTDB pending (all questions), Firestore questions + players
+  const [scoresSnap, pendingSnap, questionsSnap, playersSnap] = await Promise.all([
+    rtdb.ref(`scores/${sessionId}`).get(),
+    rtdb.ref(`_pending/${sessionId}`).get(),
     db.collection("questions").where("quizId", "==", session.quizId).get(),
     db.collection(`sessions/${sessionId}/players`).get(),
-    db.collection(`sessions/${sessionId}/answers`).get(),
   ]);
 
   // Build nickname map
@@ -1989,7 +2213,8 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
     nicknameMap.set(d.id, d.data().nickname || "");
   });
 
-  // Aggregate leaderboard across all shards
+  // Build leaderboard from RTDB scores
+  const allScores = scoresSnap.val() || {};
   const allPlayers: {
     playerId: string;
     nickname: string;
@@ -1997,18 +2222,15 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
     streak: number;
   }[] = [];
 
-  shardsSnap.docs.forEach((shardDoc) => {
-    const players = shardDoc.data().players || {};
-    for (const [pid, data] of Object.entries(players)) {
-      const pdata = data as { totalPoints: number; streak: number; nickname?: string };
-      allPlayers.push({
-        playerId: pid,
-        nickname: pdata.nickname || nicknameMap.get(pid) || "",
-        totalPoints: pdata.totalPoints,
-        streak: pdata.streak,
-      });
-    }
-  });
+  for (const [pid, score] of Object.entries(allScores)) {
+    const s = score as { totalPoints: number; streak: number; nickname?: string };
+    allPlayers.push({
+      playerId: pid,
+      nickname: s.nickname || nicknameMap.get(pid) || "",
+      totalPoints: s.totalPoints,
+      streak: s.streak,
+    });
+  }
 
   allPlayers.sort((a, b) => b.totalPoints - a.totalPoints);
   const top10 = allPlayers.slice(0, 10).map((p, i) => ({
@@ -2018,20 +2240,56 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
     rank: i + 1,
   }));
 
-  // Group answers by questionId in memory (avoids N sequential queries)
+  // Process ALL pending answers across all questions
+  const allPending = pendingSnap?.val() || {};
   const answersByQuestion = new Map<string, { correct: number; total: number; time: number }>();
-  allAnswersSnap.docs.forEach((d) => {
-    const data = d.data();
-    const qId = data.questionId as string;
-    const entry = answersByQuestion.get(qId) || { correct: 0, total: 0, time: 0 };
-    entry.total++;
-    if (data.correct) entry.correct++;
-    entry.time += data.timeMs || 0;
-    answersByQuestion.set(qId, entry);
-  });
 
-  // Write per-question analytics + update session + clean up RTDB in parallel
   const batch = db.batch();
+
+  for (const [questionId, players] of Object.entries(allPending)) {
+    const playerAnswers = players as Record<string, { selection: string; timeMs: number; correct: boolean; pointsAwarded: number }>;
+    for (const [pid, a] of Object.entries(playerAnswers)) {
+      // Persist answer doc to Firestore
+      const answerId = `${questionId}_${pid}`;
+      batch.set(db.doc(`sessions/${sessionId}/answers/${answerId}`), {
+        sessionId,
+        playerId: pid,
+        questionId,
+        selection: a.selection,
+        timeMs: a.timeMs,
+        correct: a.correct,
+        pointsAwarded: a.pointsAwarded,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Accumulate analytics per question
+      const stats = answersByQuestion.get(questionId) || { correct: 0, total: 0, time: 0 };
+      stats.total++;
+      if (a.correct) stats.correct++;
+      stats.time += a.timeMs || 0;
+      answersByQuestion.set(questionId, stats);
+    }
+  }
+
+  // Sync RTDB scores → Firestore leaderboard_shards
+  const shardGroups = new Map<number, Record<string, { totalPoints: number; streak: number; nickname: string }>>();
+  for (const p of allPlayers) {
+    const shardId = getShardId(p.playerId);
+    if (!shardGroups.has(shardId)) shardGroups.set(shardId, {});
+    shardGroups.get(shardId)![p.playerId] = {
+      totalPoints: p.totalPoints,
+      streak: p.streak,
+      nickname: p.nickname,
+    };
+  }
+  for (const [shardId, players] of shardGroups) {
+    batch.set(
+      db.doc(`sessions/${sessionId}/leaderboard_shards/${shardId}`),
+      { players }
+    );
+  }
+
+  // Write per-question analytics
   for (const qDoc of questionsSnap.docs) {
     const qId = qDoc.id;
     const stats = answersByQuestion.get(qId) || { correct: 0, total: 0, time: 0 };
@@ -2045,6 +2303,7 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
       }
     );
   }
+
   batch.update(sessionDoc.ref, {
     status: "ended",
     endedAt: Date.now(),
@@ -2058,7 +2317,12 @@ export const endStudentPacedSession = onCall(FUNCTION_CONFIG, async (request) =>
     rtdb.ref(`results/${sessionId}`).remove(),
     rtdb.ref(`answerCounts/${sessionId}`).remove(),
     rtdb.ref(`studentProgress/${sessionId}`).remove(),
+    rtdb.ref(`scores/${sessionId}`).remove(),
+    rtdb.ref(`_pending/${sessionId}`).remove(),
   ]);
+
+  // Clear caches for this session
+  sessionDataCache.delete(sessionId);
 
   return { success: true, top10 };
 });
@@ -2129,6 +2393,8 @@ export const cleanupExpiredSessions = onSchedule(
             rtdb.ref(`liveAnswers/${d.id}`).remove(),
             rtdb.ref(`results/${d.id}`).remove(),
             rtdb.ref(`answerCounts/${d.id}`).remove(),
+            rtdb.ref(`scores/${d.id}`).remove(),
+            rtdb.ref(`_pending/${d.id}`).remove(),
           ])
         )
       );
