@@ -441,6 +441,10 @@ async function computeAndWriteScore(input) {
             correct = false;
         }
     }
+    else if (question.type === 'code_output') {
+        const expected = question.correctAnswers || [];
+        correct = expected.some((a) => a.trim().toLowerCase() === selection.trim().toLowerCase());
+    }
     else {
         correct = question.correctAnswers.includes(selection);
     }
@@ -849,9 +853,11 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "1
     if (!apiKey) {
         // Fallback: generate template questions without AI
         const label = source === "topic" ? topic : source === "url" ? "URL content" : "PDF content";
+        const mixedTypes = ["mcq", "tf", "short", "matching", "fill_blank"];
         const fallbackQuestion = (i) => {
-            const base = { type: questionType, text: `Question ${i + 1} about ${label}` };
-            switch (questionType) {
+            const effectiveType = isMixed ? mixedTypes[i % mixedTypes.length] : questionType;
+            const base = { type: effectiveType, text: `Question ${i + 1} about ${label}` };
+            switch (effectiveType) {
                 case "tf":
                     return { ...base, options: ["True", "False"], correctAnswers: ["True"], timeLimitSec: 15 };
                 case "short":
@@ -862,6 +868,8 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "1
                     return { ...base, text: `Put these in the correct order (${label})`, options: ["First", "Second", "Third", "Fourth"], correctAnswers: ["First", "Second", "Third", "Fourth"], timeLimitSec: 30 };
                 case "fill_blank":
                     return { ...base, text: `The ___ is related to ${label}`, options: [], correctAnswers: ["answer"], timeLimitSec: 25 };
+                case "code_output":
+                    return { ...base, text: `What does this code output?`, options: [], correctAnswers: ["output"], codeSnippet: "console.log('Hello');", codeLanguage: "javascript", timeLimitSec: 30 };
                 default:
                     return { ...base, options: ["Option A", "Option B", "Option C", "Option D"], correctAnswers: ["Option A"], timeLimitSec: 20 };
             }
@@ -881,18 +889,46 @@ exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "1
         matching: '{"text":"Match the following","options":["left1","left2","left3"],"matchOptions":["right1","right2","right3"],"correctAnswers":["left1","left2","left3"],"timeLimitSec":30}',
         ordering: '{"text":"Put these in order","options":["first","second","third","fourth"],"correctAnswers":["first","second","third","fourth"],"timeLimitSec":30}',
         fill_blank: '{"text":"The ___ is the powerhouse of the ___","options":[],"correctAnswers":["mitochondria","cell"],"timeLimitSec":25}',
+        code_output: '{"text":"What does this code output?","options":[],"correctAnswers":["Hello World"],"codeSnippet":"print(\'Hello World\')","codeLanguage":"python","timeLimitSec":30}',
     };
     const metaInstruction = generateMeta
         ? 'Return ONLY valid JSON: {"title":"...","description":"...","questions":[...]}'
         : "Return ONLY a valid JSON array. Each element:";
+    const isMixed = questionType === "mixed";
+    const codeOutputInstruction = (questionType === "code_output" || isMixed)
+        ? `For code_output questions: generate a realistic code snippet in "codeSnippet" that tests understanding of programming concepts (variable tracing, loops, functions, type coercion, etc.). Set "codeLanguage" to the language used — choose from: javascript, python, java, c, c++, c#, php, typescript, dart, go, ruby, kotlin, swift, rust. Set "options" to []. Put the exact expected program/console output as a string in "correctAnswers". The "text" field should be a short prompt like "What does this code output?" or "What is printed by this program?". Vary the languages and concepts across questions.`
+        : "";
+    // Templates with "type" field included for mixed mode
+    const mixedTemplates = {
+        mcq: '{"type":"mcq","text":"What is the capital of France?","options":["Paris","London","Berlin","Madrid"],"correctAnswers":["Paris"],"timeLimitSec":20}',
+        tf: '{"type":"tf","text":"The Earth is flat.","options":["True","False"],"correctAnswers":["False"],"timeLimitSec":15}',
+        short: '{"type":"short","text":"What gas do plants absorb?","options":[],"correctAnswers":["carbon dioxide"],"timeLimitSec":30}',
+        matching: '{"type":"matching","text":"Match the following","options":["left1","left2","left3"],"matchOptions":["right1","right2","right3"],"correctAnswers":["left1","left2","left3"],"timeLimitSec":30}',
+        ordering: '{"type":"ordering","text":"Put these in order","options":["first","second","third","fourth"],"correctAnswers":["first","second","third","fourth"],"timeLimitSec":30}',
+        fill_blank: '{"type":"fill_blank","text":"The ___ is the powerhouse of the ___","options":[],"correctAnswers":["mitochondria","cell"],"timeLimitSec":25}',
+        code_output: '{"type":"code_output","text":"What does this code output?","options":[],"correctAnswers":["Hello World"],"codeSnippet":"print(\'Hello World\')","codeLanguage":"python","timeLimitSec":30}',
+    };
+    const mixedTypeInstructions = isMixed
+        ? `Generate a VARIETY of question types. Each question MUST include a "type" field with one of: "mcq", "tf", "short", "matching", "ordering", "fill_blank", "code_output".
+Try to use at least 3 different types. Here are the JSON templates for each type:
+MCQ: ${mixedTemplates.mcq}
+True/False: ${mixedTemplates.tf}
+Short Answer: ${mixedTemplates.short}
+Matching: ${mixedTemplates.matching}
+Ordering: ${mixedTemplates.ordering}
+Fill in the Blank: ${mixedTemplates.fill_blank}
+Code Output: ${mixedTemplates.code_output}`
+        : `Question type: ${questionType}.
+
+${metaInstruction}
+${typeTemplates[questionType] || typeTemplates.mcq}`;
     const commonInstructions = `Generate ${clampedCount} quiz questions.
 ${additionalContext ? `Additional context: ${additionalContext}` : ""}
 Difficulty: ${difficulty}.
-Question type: ${questionType}.
-
-${metaInstruction}
-${typeTemplates[questionType] || typeTemplates.mcq}
+${mixedTypeInstructions}
+${!isMixed ? "" : metaInstruction}
 IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
+${codeOutputInstruction}
 Make questions educational, varied in difficulty, and factually accurate.`;
     // Build source-specific prompt + Gemini parts
     let geminiParts;
@@ -921,15 +957,8 @@ ${webText}
     }
     else {
         // topic mode (original behavior)
-        const topicPrompt = `Generate ${clampedCount} quiz questions about "${topic}".
-${description ? `Context: ${description}` : ""}
-Difficulty: ${difficulty}.
-Question type: ${questionType}.
-
-${metaInstruction}
-${typeTemplates[questionType] || typeTemplates.mcq}
-IMPORTANT: "correctAnswers" must contain the FULL TEXT of the correct option, copied exactly from the "options" array (same text, same casing). Do NOT use letter labels like "A", "B", "C", "D" — use the actual option text.
-Make questions educational, varied in difficulty, and factually accurate.`;
+        const topicPrompt = `About "${topic}". ${commonInstructions}
+${description ? `Context: ${description}` : ""}`;
         geminiParts = [{ text: topicPrompt }];
     }
     try {
@@ -1011,11 +1040,17 @@ Make questions educational, varied in difficulty, and factually accurate.`;
                     return options[idx];
                 return ca;
             });
+            const validTypes = ["mcq", "tf", "short", "matching", "ordering", "fill_blank", "code_output"];
+            const resolvedType = isMixed && validTypes.includes(q.type)
+                ? q.type
+                : (isMixed ? "mcq" : questionType);
             return {
-                type: questionType,
+                type: resolvedType,
                 text: q.text || "",
                 options,
                 ...(q.matchOptions ? { matchOptions: q.matchOptions } : {}),
+                ...(q.codeSnippet ? { codeSnippet: q.codeSnippet } : {}),
+                ...(q.codeLanguage ? { codeLanguage: q.codeLanguage } : {}),
                 correctAnswers,
                 timeLimitSec: q.timeLimitSec || 20,
             };

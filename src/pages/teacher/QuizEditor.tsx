@@ -1051,8 +1051,10 @@ export default function QuizEditor() {
         defaultTopic={title.trim()}
         defaultDescription={existingQuestionsSummary}
         onGenerated={(data) => {
+          const validTypes: QuestionType[] = ['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide', 'code_output'];
           const generated = data.questions.map((q) => ({
             ...q,
+            type: validTypes.includes(q.type) ? q.type : 'mcq',
             quizId: quizId || '',
             matchOptions: q.matchOptions || undefined,
           }));
