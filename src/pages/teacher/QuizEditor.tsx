@@ -887,14 +887,15 @@ export default function QuizEditor() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600 mb-2 block">Expected Output (comma-separated for multiple accepted answers)</label>
-                    <input
-                      value={activeQ.correctAnswers.join(', ')}
+                    <label className="text-sm font-medium text-gray-600 mb-2 block">Expected Output (one accepted answer per line)</label>
+                    <textarea
+                      value={activeQ.correctAnswers.join('\n')}
                       onChange={(e) => updateQuestion(activeIndex, {
-                        correctAnswers: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                        correctAnswers: e.target.value.split('\n').filter((s) => s.trim()),
                       })}
-                      placeholder="e.g. 42, hello world"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                      placeholder={'e.g.\nGuest\nRindra'}
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none font-mono text-sm"
                     />
                   </div>
 
