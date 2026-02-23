@@ -10,7 +10,7 @@ import CodeBlock from '../../components/CodeBlock';
 import { confirmAction } from '../../lib/swal';
 import {
   GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
-  Sparkles, X as XIcon, Triangle, Diamond, Circle, Square, Hexagon, Star, ArrowLeft,
+  Sparkles, X as XIcon, ArrowLeft,
   Clock, Image as ImageIcon, Type, FileText,
 } from 'lucide-react';
 import { COLLECTION_COLORS } from '../../types/models';
@@ -38,12 +38,12 @@ const typeLabels: Record<QuestionType, string> = {
 };
 
 const ANSWER_CARDS = [
-  { bg: 'bg-answer-red', border: 'border-answer-red', icon: Triangle, placeholder: 'Add answer' },
-  { bg: 'bg-answer-blue', border: 'border-answer-blue', icon: Diamond, placeholder: 'Add answer' },
-  { bg: 'bg-answer-yellow', border: 'border-answer-yellow', icon: Circle, placeholder: 'Add answer' },
-  { bg: 'bg-answer-green', border: 'border-answer-green', icon: Square, placeholder: 'Add answer' },
-  { bg: 'bg-answer-purple', border: 'border-answer-purple', icon: Hexagon, placeholder: 'Add answer' },
-  { bg: 'bg-answer-orange', border: 'border-answer-orange', icon: Star, placeholder: 'Add answer' },
+  { bg: 'bg-answer-red', border: 'border-answer-red', placeholder: 'Add answer' },
+  { bg: 'bg-answer-blue', border: 'border-answer-blue', placeholder: 'Add answer' },
+  { bg: 'bg-answer-yellow', border: 'border-answer-yellow', placeholder: 'Add answer' },
+  { bg: 'bg-answer-green', border: 'border-answer-green', placeholder: 'Add answer' },
+  { bg: 'bg-answer-purple', border: 'border-answer-purple', placeholder: 'Add answer' },
+  { bg: 'bg-answer-orange', border: 'border-answer-orange', placeholder: 'Add answer' },
 ];
 
 export default function QuizEditor() {
@@ -633,7 +633,6 @@ export default function QuizEditor() {
                 <div className="grid grid-cols-2 gap-3">
                   {activeQ.options.map((opt, oi) => {
                     const card = ANSWER_CARDS[oi % ANSWER_CARDS.length];
-                    const CardIcon = card.icon;
                     const isCorrect = activeQ.type !== 'poll' && activeQ.correctAnswers.includes(opt) && opt !== '';
                     return (
                       <div
@@ -642,7 +641,6 @@ export default function QuizEditor() {
                           isCorrect ? 'ring-3 ring-white/60' : ''
                         }`}
                       >
-                        <CardIcon className="w-6 h-6 text-white/60 shrink-0 mt-1" fill="rgba(255,255,255,0.2)" />
                         <textarea
                           value={opt}
                           onChange={(e) => {
