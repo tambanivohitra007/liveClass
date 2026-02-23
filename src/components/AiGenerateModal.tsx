@@ -45,7 +45,7 @@ export default function AiGenerateModal({
 
   // Shared controls
   const [count, setCount] = useState(5);
-  const [questionType, setQuestionType] = useState<QuestionType>('mcq');
+  const [questionType, setQuestionType] = useState<QuestionType | 'mixed'>('mixed');
   const [difficulty, setDifficulty] = useState('mixed');
   const [generating, setGenerating] = useState(false);
 
@@ -74,7 +74,7 @@ export default function AiGenerateModal({
     setUrl('');
     setUrlContext('');
     setCount(5);
-    setQuestionType('mcq');
+    setQuestionType('mixed');
     setDifficulty('mixed');
   }, []);
 
@@ -364,9 +364,10 @@ export default function AiGenerateModal({
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
               <select
                 value={questionType}
-                onChange={(e) => setQuestionType(e.target.value as QuestionType)}
+                onChange={(e) => setQuestionType(e.target.value as QuestionType | 'mixed')}
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
               >
+                <option value="mixed">Mixed (Variety)</option>
                 <option value="mcq">Multiple Choice</option>
                 <option value="tf">True / False</option>
                 <option value="short">Short Answer</option>
