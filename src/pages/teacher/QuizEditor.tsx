@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, collection, addDoc, deleteDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, serverTimestamp, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
@@ -315,6 +315,10 @@ export default function QuizEditor() {
     const errors = validate();
     setValidationErrors(errors);
     if (errors.length > 0) return;
+    if (isNew && user.approvalStatus === 'pending' && user.email !== 'rindra.it@gmail.com') {
+      addToast('error', 'Your teacher account is pending approval. You cannot create new quizzes yet.');
+      return;
+    }
     setSaving(true);
     try {
       let savedQuizId = quizId;
@@ -328,13 +332,13 @@ export default function QuizEditor() {
         });
         savedQuizId = quizRef.id;
       } else if (savedQuizId) {
-        await setDoc(doc(db, 'quizzes', savedQuizId), {
-          ownerId: user.id, title, description, visibility,
+        await updateDoc(doc(db, 'quizzes', savedQuizId), {
+          title, description, visibility,
           collectionId: selectedCollectionId || null,
           coverImageUrl: coverImageUrl || null,
           color: selectedColor || null,
           updatedAt: serverTimestamp(),
-        }, { merge: true });
+        });
       }
       // Collect IDs of questions still in the editor
       const updatedQuestions = [...questions];

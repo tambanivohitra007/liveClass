@@ -34,11 +34,12 @@ service cloud.firestore {
         && resource.data.ownerId == request.auth.uid;
     }
 
-    // Quizzes: owner can CRUD, anyone can read public quizzes, authed users can read all (pending teachers cannot create)
+    // Quizzes: owner can CRUD, anyone can read public quizzes, authed users can read all (pending teachers cannot create, admin always can)
     match /quizzes/{quizId} {
       allow read: if request.auth != null || resource.data.visibility == 'public';
       allow create: if request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending';
+        && (request.auth.token.email == 'rindra.it@gmail.com'
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending');
       allow update, delete: if request.auth != null
         && resource.data.ownerId == request.auth.uid;
     }
