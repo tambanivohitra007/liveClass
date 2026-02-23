@@ -387,15 +387,7 @@ export default function Dashboard() {
     [quizzes],
   );
 
-  const quickStartIds = useMemo(
-    () => showQuickStart ? new Set(quickStartQuizzes.map((q) => q.id)) : new Set<string>(),
-    [quickStartQuizzes, showQuickStart],
-  );
-
-  const isDefaultView = selectedFilter === 'all' && !searchQuery;
-
   const filtered = quizzes
-    .filter((q) => !(isDefaultView && quickStartIds.has(q.id)))
     .filter((q) => selectedFilter === 'all' || q.collectionId === selectedFilter)
     .filter((q) =>
       q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -802,7 +794,7 @@ export default function Dashboard() {
       {filtered.length > 0 && (
         <div className="mt-10 flex items-center justify-between py-5 border-t border-gray-200">
           <p className="text-sm text-gray-500">
-            Showing {filtered.length + (isDefaultView && showQuickStart ? quickStartQuizzes.length : 0)} of {quizzes.length} quiz{quizzes.length !== 1 ? 'zes' : ''}
+            Showing {filtered.length} of {quizzes.length} quiz{quizzes.length !== 1 ? 'zes' : ''}
           </p>
         </div>
       )}
