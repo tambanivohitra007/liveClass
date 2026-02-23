@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useParams, useNavigate, useSearchParams, useBlocker } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { ref, onValue, off } from 'firebase/database';
 import { db, functions, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices } from 'lucide-react';
+import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices, AlertTriangle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import CodeBlock from '../../components/CodeBlock';
@@ -44,6 +44,7 @@ const MARQUEE_ITEMS = [
 
 export default function HostSession() {
   const { quizId } = useParams<{ quizId: string }>();
+  const [searchParams] = useSearchParams();
   const { session, setSession, players, setPlayers } = useSessionStore();
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
@@ -61,6 +62,10 @@ export default function HostSession() {
   const [endingSession, setEndingSession] = useState(false);
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
+
+  // Refs for listener cleanup and unmount logic
+  const unsubscribesRef = useRef<(() => void)[]>([]);
+  const sessionRef = useRef<Session | null>(null);
 
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
 
@@ -88,17 +93,27 @@ export default function HostSession() {
   };
 
   const subscribeToSession = (sessionId: string) => {
-    onSnapshot(doc(db, 'sessions', sessionId), (snap) => {
-      if (snap.exists()) setSession({ id: snap.id, ...snap.data() } as Session);
+    // Clean up any existing listeners first
+    unsubscribesRef.current.forEach((unsub) => unsub());
+    unsubscribesRef.current = [];
+
+    const unsub1 = onSnapshot(doc(db, 'sessions', sessionId), (snap) => {
+      if (snap.exists()) {
+        const s = { id: snap.id, ...snap.data() } as Session;
+        setSession(s);
+        sessionRef.current = s;
+      }
     });
-    onSnapshot(collection(db, `sessions/${sessionId}/players`), (snap) => {
+    const unsub2 = onSnapshot(collection(db, `sessions/${sessionId}/players`), (snap) => {
       setPlayers(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as SessionPlayer[]);
     });
-    onSnapshot(collection(db, `sessions/${sessionId}/violations`), (snap) => {
+    const unsub3 = onSnapshot(collection(db, `sessions/${sessionId}/violations`), (snap) => {
       const map = new Map<string, ViolationDoc>();
       snap.docs.forEach((d) => map.set(d.id, d.data() as ViolationDoc));
       setViolations(map);
     });
+
+    unsubscribesRef.current = [unsub1, unsub2, unsub3];
   };
 
   useEffect(() => {
@@ -304,7 +319,36 @@ export default function HostSession() {
     }
   };
 
-  useEffect(() => { createSession(); }, [quizId]);
+  // Init: resume existing session or create new one
+  useEffect(() => {
+    const existingSessionId = searchParams.get('sessionId');
+    if (existingSessionId) {
+      subscribeToSession(existingSessionId);
+    } else {
+      createSession();
+    }
+
+    return () => {
+      // Unsubscribe all listeners
+      unsubscribesRef.current.forEach((unsub) => unsub());
+      unsubscribesRef.current = [];
+
+      // End session if still active
+      const s = sessionRef.current;
+      if (s && (s.status === 'lobby' || s.status === 'live')) {
+        updateDoc(doc(db, 'sessions', s.id), {
+          status: 'ended',
+          endedAt: Date.now(),
+        }).catch(() => {
+          // Best-effort; TTL cleanup is the safety net
+        });
+      }
+
+      // Clear Zustand store
+      setSession(null);
+      setPlayers([]);
+    };
+  }, [quizId]);
 
   // Navigate to results when student-paced session ends
   useEffect(() => {
@@ -312,6 +356,32 @@ export default function HostSession() {
       navigate(`/session/${session.id}/results`);
     }
   }, [session?.status, session?.paceMode]);
+
+  // beforeunload: warn on browser close/refresh when session is active
+  useEffect(() => {
+    const isActive = session?.status === 'lobby' || session?.status === 'live';
+    if (!isActive) return;
+
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [session?.status]);
+
+  // useBlocker: block in-app navigation when session is active
+  const isSessionActive = session?.status === 'lobby' || session?.status === 'live';
+  const blocker = useBlocker(
+    useCallback(
+      ({ nextLocation }) => {
+        if (!isSessionActive) return false;
+        // Allow navigation to results page
+        if (nextLocation.pathname.includes('/results')) return false;
+        return true;
+      },
+      [isSessionActive],
+    ),
+  );
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-dark">
@@ -1027,6 +1097,39 @@ export default function HostSession() {
             Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to advance
           </p>
         </main>
+      )}
+
+      {/* ══════════ Navigation Blocker Dialog ══════════ */}
+      {blocker.state === 'blocked' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface-dark border border-white/10 rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-warning" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Leave session?</h3>
+            </div>
+            <p className="text-white/60 text-sm mb-6">
+              {session?.status === 'lobby'
+                ? `You have ${players.length} player${players.length !== 1 ? 's' : ''} waiting in the lobby. Leaving will end the session for everyone.`
+                : `A live game is in progress with ${players.length} player${players.length !== 1 ? 's' : ''}. Leaving will end the session immediately.`}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => blocker.reset?.()}
+                className="flex-1 px-5 py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors"
+              >
+                Stay
+              </button>
+              <button
+                onClick={() => blocker.proceed?.()}
+                className="flex-1 px-5 py-3 bg-danger text-white font-semibold rounded-xl hover:brightness-110 transition-all"
+              >
+                Leave &amp; End
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

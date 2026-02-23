@@ -3,8 +3,10 @@ import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs, addDoc, 
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
-import { confirmDelete } from '../../lib/swal';
+import { confirmDelete, confirmAction } from '../../lib/swal';
 import { useNavigate } from 'react-router-dom';
+import { useActiveSession } from '../../hooks/useActiveSession';
+import ActiveSessionBanner from '../../components/ActiveSessionBanner';
 import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
 import AiGenerateModal from '../../components/AiGenerateModal';
 import WaveBackground from '../../components/ui/WaveBackground';
@@ -55,6 +57,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({ totalQuizzes: 0, totalQuestions: 0, totalSessions: 0 });
   const navigate = useNavigate();
+  const { activeSession, endActiveSession } = useActiveSession();
 
   // Collection modal state
   const [showCollModal, setShowCollModal] = useState(false);
@@ -238,6 +241,36 @@ export default function Dashboard() {
     }
   };
 
+  const handleHostLive = async (quizId: string) => {
+    if (!activeSession) {
+      navigate(`/quiz/${quizId}/host`);
+      return;
+    }
+
+    if (activeSession.quizId === quizId) {
+      // Same quiz — offer to resume
+      const { isConfirmed } = await confirmAction(
+        'Resume active session?',
+        `You already have an active session for this quiz (PIN: ${activeSession.pinCode}). Resume it or start fresh?`,
+        'Resume session',
+      );
+      if (isConfirmed) {
+        navigate(`/quiz/${quizId}/host?sessionId=${activeSession.id}`);
+      }
+    } else {
+      // Different quiz — must end the active session first
+      const { isConfirmed } = await confirmAction(
+        'End current session?',
+        `You have an active session for "${activeSession.quizTitle}". It must be ended before starting a new one.`,
+        'End & start new',
+      );
+      if (isConfirmed) {
+        await endActiveSession();
+        navigate(`/quiz/${quizId}/host`);
+      }
+    }
+  };
+
   const handleAiQuizGenerated = async (data: {
     questions: { type: string; text: string; options: string[]; matchOptions?: string[]; correctAnswers: string[]; timeLimitSec: number }[];
     title?: string;
@@ -369,6 +402,11 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* ── Active Session Banner ── */}
+      {activeSession && (
+        <ActiveSessionBanner session={activeSession} onEnd={endActiveSession} />
+      )}
+
       {/* ── Search Bar ── */}
       <div className="relative mb-6 group">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-brand transition-colors" />
@@ -483,7 +521,7 @@ export default function Dashboard() {
                   {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                     <button
-                      onClick={() => navigate(`/quiz/${quiz.id}/host`)}
+                      onClick={() => handleHostLive(quiz.id)}
                       className="p-3 bg-white text-brand rounded-full hover:scale-110 transition-transform shadow-lg"
                       title="Host Live"
                     >
@@ -582,7 +620,7 @@ export default function Dashboard() {
 
                   {/* Host button */}
                   <button
-                    onClick={() => navigate(`/quiz/${quiz.id}/host`)}
+                    onClick={() => handleHostLive(quiz.id)}
                     className="w-full py-2.5 bg-brand text-white rounded-xl font-bold text-sm hover:bg-brand-dark transition-colors duration-200 mt-auto"
                   >
                     Host Live
