@@ -81,14 +81,26 @@ export default function HostSession() {
     loadQuestions();
   }, [quizId]);
 
+  const cancelledRef = useRef(false);
+
   const createSession = async () => {
     if (!quizId) return;
     try {
       const fn = httpsCallable<{ quizId: string }, { sessionId: string }>(functions, 'createSession');
       const result = await fn({ quizId });
+      if (cancelledRef.current) {
+        // Effect was cleaned up while Cloud Function was in-flight — end the orphan session
+        updateDoc(doc(db, 'sessions', result.data.sessionId), {
+          status: 'ended',
+          endedAt: Date.now(),
+        }).catch(() => {});
+        return;
+      }
       subscribeToSession(result.data.sessionId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create session');
+      if (!cancelledRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to create session');
+      }
     }
   };
 
@@ -321,6 +333,8 @@ export default function HostSession() {
 
   // Init: resume existing session or create new one
   useEffect(() => {
+    cancelledRef.current = false;
+
     const existingSessionId = searchParams.get('sessionId');
     if (existingSessionId) {
       subscribeToSession(existingSessionId);
@@ -329,6 +343,9 @@ export default function HostSession() {
     }
 
     return () => {
+      // Signal any in-flight createSession to discard its result
+      cancelledRef.current = true;
+
       // Unsubscribe all listeners
       unsubscribesRef.current.forEach((unsub) => unsub());
       unsubscribesRef.current = [];
