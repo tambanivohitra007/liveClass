@@ -65,6 +65,7 @@ export default function HostSession() {
   const [endingSession, setEndingSession] = useState(false);
   const [qrZoomed, setQrZoomed] = useState(false);
   const prevPlayerCountRef = useRef(0);
+  const lobbyGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const addToast = useToastStore((s) => s.addToast);
 
@@ -533,6 +534,10 @@ export default function HostSession() {
   useEffect(() => {
     if (players.length > prevPlayerCountRef.current && prevPlayerCountRef.current > 0) playJoin();
     prevPlayerCountRef.current = players.length;
+    // Auto-scroll lobby grid to show newest players
+    if (lobbyGridRef.current) {
+      lobbyGridRef.current.scrollTop = lobbyGridRef.current.scrollHeight;
+    }
   }, [players.length]);
 
   const toggleMute = () => {
@@ -690,40 +695,34 @@ export default function HostSession() {
 
               {/* Players Grid */}
               <div className="flex-grow flex flex-col animate-fade-in">
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold">Waiting Lobby</h3>
-                  <span className="text-sm text-white/40">
-                    {players.length > 0 ? 'Newest players appear first' : 'Waiting for players...'}
+                  <span className="text-lg font-black tabular-nums">
+                    {players.length} <span className="text-sm font-medium text-white/40">player{players.length !== 1 && 's'}</span>
                   </span>
                 </div>
 
                 {session.teamMode && session.teams ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div ref={lobbyGridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-1">
                     {session.teams.map((team, ti) => {
                       const teamPlayers = players.filter((p) => p.teamIndex === ti);
                       return (
-                        <div key={ti} className="bg-white/5 rounded-2xl p-5 border border-white/5">
-                          <div className="flex items-center gap-2 mb-4">
+                        <div key={ti} className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                          <div className="flex items-center gap-2 mb-3">
                             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: team.color }} />
                             <span className="text-sm font-bold">{team.name}</span>
                             <span className="text-xs text-white/30 ml-auto">{teamPlayers.length}</span>
                           </div>
-                          <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
                             {teamPlayers.map((p, i) => {
                               const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                              const v = violations.get(p.id);
                               return (
-                                <div key={p.id} className="flex items-center gap-3 bg-white/5 p-2.5 rounded-full border border-white/5 animate-fade-in">
-                                  <div className={`w-8 h-8 rounded-full ${color.bg} border ${color.border} flex items-center justify-center shrink-0`}>
-                                    {p.avatar ? <span className="text-lg leading-none">{p.avatar}</span> : <span className={`text-xs font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
-                                  </div>
-                                  <span className="font-medium truncate text-sm">{p.nickname}</span>
-                                  {v && v.totalViolations > 0 && (
-                                    <span className="ml-auto inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-danger/20 text-danger rounded-full text-[10px] font-bold shrink-0">
-                                      <ShieldAlert className="w-2.5 h-2.5" />
-                                      {v.totalViolations}
-                                    </span>
-                                  )}
+                                <div
+                                  key={p.id}
+                                  title={p.nickname}
+                                  className={`w-11 h-11 rounded-full ${color.bg} border ${color.border} flex items-center justify-center shrink-0 animate-fade-in cursor-default`}
+                                >
+                                  {p.avatar ? <span className="text-xl leading-none">{p.avatar}</span> : <span className={`text-xs font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
                                 </div>
                               );
                             })}
@@ -733,34 +732,28 @@ export default function HostSession() {
                     })}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {players.map((p, i) => {
-                      const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                      const v = violations.get(p.id);
-                      return (
-                        <div
-                          key={p.id}
-                          className="flex items-center gap-3 bg-white/5 p-3 rounded-full border border-white/5 hover:bg-white/10 transition-all animate-fade-in"
-                        >
-                          <div className={`w-10 h-10 rounded-full ${color.bg} border ${color.border} flex items-center justify-center shrink-0`}>
-                            {p.avatar ? <span className="text-2xl leading-none">{p.avatar}</span> : <span className={`text-sm font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
-                          </div>
-                          <span className="font-medium truncate">{p.nickname}</span>
-                          {v && v.totalViolations > 0 && (
-                            <span className="ml-auto inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-danger/20 text-danger rounded-full text-xs font-bold shrink-0" title={`${v.totalViolations} violation(s)`}>
-                              <ShieldAlert className="w-3 h-3" />
-                              {v.totalViolations}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {players.length === 0 && (
-                      <div className="col-span-full flex items-center gap-3 bg-white/5 p-3 rounded-full border border-dashed border-white/10 opacity-50">
+                  <div ref={lobbyGridRef} className="max-h-[50vh] overflow-y-auto pr-1">
+                    {players.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                        {players.map((p, i) => {
+                          const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                          return (
+                            <div
+                              key={p.id}
+                              title={p.nickname}
+                              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full ${color.bg} border ${color.border} flex items-center justify-center shrink-0 animate-fade-in cursor-default hover:scale-110 transition-transform`}
+                            >
+                              {p.avatar ? <span className="text-2xl sm:text-3xl leading-none">{p.avatar}</span> : <span className={`text-sm sm:text-base font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-3 py-8 opacity-50">
                         <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
                           <span className="text-white/30 text-lg">+</span>
                         </div>
-                        <span className="text-white/30 italic text-sm">Joining...</span>
+                        <span className="text-white/30 italic text-sm">Waiting for players...</span>
                       </div>
                     )}
                   </div>
