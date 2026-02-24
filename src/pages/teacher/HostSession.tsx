@@ -78,6 +78,7 @@ export default function HostSession() {
     endQuestion: () => void;
     nextQuestion: () => void;
     endStudentPacedSessionFn: () => void;
+    endSessionEarly: () => void;
     navigate: ReturnType<typeof useNavigate>;
   } | null>(null);
 
@@ -433,11 +434,30 @@ export default function HostSession() {
 
   const isLastQuestion = session ? session.currentQuestionIndex >= totalQuestions - 1 : false;
 
+  const endSessionEarly = async () => {
+    if (!session || endingSession) return;
+    const { isConfirmed } = await confirmAction(
+      'End session early?',
+      'This will end the session for all students. Scores and answers up to this point are preserved.',
+      'Yes, end session',
+    );
+    if (!isConfirmed) return;
+    setEndingSession(true);
+    try {
+      await updateDoc(doc(db, 'sessions', session.id), { status: 'ended', endedAt: Date.now() });
+      navigate(`/session/${session.id}/results`);
+    } catch {
+      addToast('error', 'Failed to end session');
+    } finally {
+      setEndingSession(false);
+    }
+  };
+
   // Sync refs for the keyboard handler (runs every render, but does NOT register listeners)
   useEffect(() => { playersLengthRef.current = players.length; });
   useEffect(() => { totalQuestionsRef.current = totalQuestions; });
   useEffect(() => {
-    keyboardActionsRef.current = { startQuestion, endQuestion, nextQuestion, endStudentPacedSessionFn, navigate };
+    keyboardActionsRef.current = { startQuestion, endQuestion, nextQuestion, endStudentPacedSessionFn, endSessionEarly, navigate };
   });
 
   // Keyboard handler — registers ONCE via [] deps, reads live state from refs
@@ -982,6 +1002,13 @@ export default function HostSession() {
             >
               End Question
             </button>
+            <button
+              onClick={endSessionEarly}
+              disabled={endingSession}
+              className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all w-full sm:w-auto text-sm border border-white/10"
+            >
+              {endingSession ? 'Ending...' : 'End Session'}
+            </button>
           </div>
 
           <p className="hidden sm:block text-white/15 text-xs mt-10">
@@ -1120,16 +1147,25 @@ export default function HostSession() {
             </div>
           )}
 
-          <div className="flex justify-center gap-4 mt-4 sm:mt-6">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
             {!isLastQuestion && (
-              <button
-                onClick={nextQuestion}
-                className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all flex items-center gap-2 group w-full sm:w-auto justify-center"
-                style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
-              >
-                Next Question
-                <Play className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-              </button>
+              <>
+                <button
+                  onClick={nextQuestion}
+                  className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all flex items-center gap-2 group w-full sm:w-auto justify-center"
+                  style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
+                >
+                  Next Question
+                  <Play className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+                <button
+                  onClick={endSessionEarly}
+                  disabled={endingSession}
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all w-full sm:w-auto text-sm border border-white/10"
+                >
+                  {endingSession ? 'Ending...' : 'End Session'}
+                </button>
+              </>
             )}
             {isLastQuestion && (
               <button
