@@ -235,6 +235,19 @@ export default function PlayGame() {
     return () => clearInterval(timer);
   }, [timeLeft, submitted, session?.timerPaused, isStudentPaced]);
 
+  // Sync timer when host extends time (+30s) — questionStartedAt shifts back
+  useEffect(() => {
+    if (!session || session.questionState !== 'live' || !currentQuestion?.timeLimitSec) return;
+    if (session.paceMode === 'student') return;
+    const startedAt = session.questionStartedAt as any;
+    const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+    if (startMs <= 0) return;
+    const now = session.timerPaused && session.timerPausedAt
+      ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
+      : Date.now();
+    const elapsed = Math.floor((now - startMs) / 1000);
+    setTimeLeft(Math.max(0, currentQuestion.timeLimitSec - elapsed));
+  }, [session?.questionStartedAt]);
 
   // Keyboard shortcuts: 1-4 for MCQ, Enter to submit
   useEffect(() => {
