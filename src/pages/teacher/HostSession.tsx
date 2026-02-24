@@ -8,7 +8,7 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
 import Leaderboard from '../../components/Leaderboard';
-import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices, AlertTriangle, X, Maximize2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import CodeBlock from '../../components/CodeBlock';
@@ -63,6 +63,7 @@ export default function HostSession() {
   const [answeredPlayerIds, setAnsweredPlayerIds] = useState<Set<string>>(new Set());
   const [studentProgress, setStudentProgress] = useState<Record<string, { answered: number; finished: boolean }>>({});
   const [endingSession, setEndingSession] = useState(false);
+  const [qrZoomed, setQrZoomed] = useState(false);
   const prevPlayerCountRef = useRef(0);
   const navigate = useNavigate();
   const addToast = useToastStore((s) => s.addToast);
@@ -558,6 +559,32 @@ export default function HostSession() {
   return (
     <div className="min-h-screen text-white flex flex-col" style={MESH_BG}>
 
+      {/* QR Code Zoom Modal */}
+      {qrZoomed && session?.pinCode && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in"
+          onClick={() => setQrZoomed(false)}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 sm:p-10 flex flex-col items-center gap-4 animate-bounce-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <QRCodeSVG
+              value={`${window.location.origin}/join?pin=${session.pinCode}`}
+              size={Math.min(window.innerWidth - 80, window.innerHeight - 200, 400)}
+              level="M"
+            />
+            <p className="text-gray-800 font-bold text-lg">PIN: <span className="text-brand tracking-widest text-2xl">{session.pinCode}</span></p>
+          </div>
+          <button
+            onClick={() => setQrZoomed(false)}
+            className="mt-6 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+        </div>
+      )}
+
       {/* ══════════ Top Navigation Bar ══════════ */}
       <header className="flex items-center justify-between px-4 sm:px-8 py-3 sm:py-5 w-full max-w-7xl mx-auto">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -634,9 +661,12 @@ export default function HostSession() {
                   {/* QR Code */}
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm font-medium text-brand">Scan to Join</p>
-                    <div
-                      className="bg-white p-2 sm:p-3 rounded-2xl"
+                    <button
+                      type="button"
+                      onClick={() => setQrZoomed(true)}
+                      className="relative group bg-white p-2 sm:p-3 rounded-2xl cursor-pointer transition-transform hover:scale-105"
                       style={{ boxShadow: '0 0 40px rgba(212, 86, 107, 0.2)' }}
+                      title="Click to enlarge"
                     >
                       <QRCodeSVG
                         value={`${window.location.origin}/join?pin=${session.pinCode}`}
@@ -644,7 +674,10 @@ export default function HostSession() {
                         level="M"
                         className="sm:w-[128px] sm:h-[128px]"
                       />
-                    </div>
+                      <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
