@@ -675,8 +675,8 @@ export default function HostSession() {
                               const v = violations.get(p.id);
                               return (
                                 <div key={p.id} className="flex items-center gap-3 bg-white/5 p-2.5 rounded-full border border-white/5 animate-fade-in">
-                                  <div className={`w-8 h-8 rounded-full ${color.bg} border ${color.border} flex items-center justify-center text-xs font-bold ${color.text} shrink-0`}>
-                                    {p.nickname.charAt(0).toUpperCase()}
+                                  <div className={`w-8 h-8 rounded-full ${color.bg} border ${color.border} flex items-center justify-center shrink-0`}>
+                                    {p.avatar ? <span className="text-lg leading-none">{p.avatar}</span> : <span className={`text-xs font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
                                   </div>
                                   <span className="font-medium truncate text-sm">{p.nickname}</span>
                                   {v && v.totalViolations > 0 && (
@@ -703,8 +703,8 @@ export default function HostSession() {
                           key={p.id}
                           className="flex items-center gap-3 bg-white/5 p-3 rounded-full border border-white/5 hover:bg-white/10 transition-all animate-fade-in"
                         >
-                          <div className={`w-10 h-10 rounded-full ${color.bg} border ${color.border} flex items-center justify-center text-sm font-bold ${color.text} shrink-0`}>
-                            {p.nickname.charAt(0).toUpperCase()}
+                          <div className={`w-10 h-10 rounded-full ${color.bg} border ${color.border} flex items-center justify-center shrink-0`}>
+                            {p.avatar ? <span className="text-2xl leading-none">{p.avatar}</span> : <span className={`text-sm font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
                           </div>
                           <span className="font-medium truncate">{p.nickname}</span>
                           {v && v.totalViolations > 0 && (
@@ -1077,7 +1077,11 @@ export default function HostSession() {
                         hasAnswered ? 'bg-success/10' : 'bg-white/5'
                       }`}
                     >
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${hasAnswered ? 'bg-success' : 'bg-white/20 animate-pulse'}`} />
+                      {p.avatar ? (
+                        <span className="text-base leading-none shrink-0">{p.avatar}</span>
+                      ) : (
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${hasAnswered ? 'bg-success' : 'bg-white/20 animate-pulse'}`} />
+                      )}
                       <span className={`text-sm font-medium truncate ${hasAnswered ? 'text-success' : 'text-white/50'}`}>
                         {p.nickname}
                       </span>

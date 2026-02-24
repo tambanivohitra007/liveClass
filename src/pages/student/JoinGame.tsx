@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
-import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, ShieldCheck, User, RefreshCw } from 'lucide-react';
+import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, ShieldCheck, User, RefreshCw, Dices } from 'lucide-react';
 import WaveBackground from '../../components/ui/WaveBackground';
+import { AVATARS } from '../../lib/avatars';
 
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
@@ -73,11 +74,12 @@ const STEPS = [
 export default function JoinGame() {
   const [pin, setPin] = useState('');
   const [nickname, setNickname] = useState('');
+  const [avatar, setAvatar] = useState(() => AVATARS[Math.floor(Math.random() * AVATARS.length)]);
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
   const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
-  const [rejoinData, setRejoinData] = useState<{ playerId: string; nickname: string } | null>(null);
+  const [rejoinData, setRejoinData] = useState<{ playerId: string; nickname: string; avatar?: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const pattern = useMemo(() => generatePattern(), [step === 'verify' ? sessionId : null]); // eslint-disable-line
@@ -103,7 +105,7 @@ export default function JoinGame() {
         try {
           const stored = localStorage.getItem(`liveclass_session_${resolvedSessionId}`);
           if (stored) {
-            const parsed = JSON.parse(stored) as { playerId: string; nickname: string };
+            const parsed = JSON.parse(stored) as { playerId: string; nickname: string; avatar?: string };
             if (parsed.playerId && parsed.nickname) {
               setSessionId(resolvedSessionId);
               setRejoinData(parsed);
@@ -152,7 +154,7 @@ export default function JoinGame() {
     try {
       const stored = localStorage.getItem(`liveclass_session_${resolvedSessionId}`);
       if (stored) {
-        const parsed = JSON.parse(stored) as { playerId: string; nickname: string };
+        const parsed = JSON.parse(stored) as { playerId: string; nickname: string; avatar?: string };
         if (parsed.playerId && parsed.nickname) {
           setSessionId(resolvedSessionId);
           setRejoinData(parsed);
@@ -177,21 +179,25 @@ export default function JoinGame() {
 
     try {
       const joinFn = httpsCallable<
-        { sessionId: string; nickname: string; playerId?: string },
-        { playerId: string; activeToken: string; nickname?: string; rejoin?: boolean }
+        { sessionId: string; nickname: string; avatar?: string; playerId?: string },
+        { playerId: string; activeToken: string; nickname?: string; avatar?: string; rejoin?: boolean }
       >(functions, 'joinSession');
       const joinNickname = existingPlayerId ? rejoinData?.nickname || nickname : nickname;
+      const joinAvatar = existingPlayerId ? rejoinData?.avatar || avatar : avatar;
       const result = await joinFn({
         sessionId,
         nickname: joinNickname,
+        avatar: joinAvatar,
         ...(existingPlayerId ? { playerId: existingPlayerId } : {}),
       });
 
       // Store join data in localStorage for future rejoin recovery
       const finalNickname = result.data.nickname || joinNickname;
+      const finalAvatar = result.data.avatar || joinAvatar;
       localStorage.setItem(`liveclass_session_${sessionId}`, JSON.stringify({
         playerId: result.data.playerId,
         nickname: finalNickname,
+        avatar: finalAvatar,
       }));
 
       sessionStorage.setItem(`activeToken_${sessionId}`, result.data.activeToken);
@@ -383,6 +389,37 @@ export default function JoinGame() {
                     <Shuffle className="w-4 h-4" />
                   </button>
                 </div>
+
+                {/* Emoji Avatar Picker */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pick your avatar</span>
+                    <button
+                      type="button"
+                      onClick={() => setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)])}
+                      className="flex items-center gap-1 text-xs font-semibold text-purple-500 hover:text-purple-700 transition-colors"
+                    >
+                      <Dices className="w-3.5 h-3.5" /> Shuffle
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {AVATARS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setAvatar(emoji)}
+                        className={`text-2xl p-2 rounded-xl border-2 transition-all duration-200 ${
+                          avatar === emoji
+                            ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-300 scale-110'
+                            : 'border-gray-200 bg-white hover:border-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={joining || !nickname.trim()}

@@ -307,7 +307,7 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
 });
 // --- Join Session ---
 exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
-    const { sessionId, nickname, playerId: existingPlayerId } = request.data;
+    const { sessionId, nickname, avatar, playerId: existingPlayerId } = request.data;
     if (!sessionId || !nickname) {
         throw new https_1.HttpsError("invalid-argument", "sessionId and nickname are required");
     }
@@ -334,7 +334,7 @@ exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
             const doc = existingByUser.docs[0];
             const newToken = generateToken();
             await doc.ref.update({ activeToken: newToken });
-            return { playerId: doc.id, activeToken: newToken, nickname: doc.data().nickname, rejoin: true };
+            return { playerId: doc.id, activeToken: newToken, nickname: doc.data().nickname, avatar: doc.data().avatar, rejoin: true };
         }
     }
     // 2. Unauthenticated user: verify playerId + nickname match
@@ -345,7 +345,7 @@ exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
         if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
             const newToken = generateToken();
             await existingDoc.ref.update({ activeToken: newToken });
-            return { playerId: existingDoc.id, activeToken: newToken, nickname, rejoin: true };
+            return { playerId: existingDoc.id, activeToken: newToken, nickname, avatar: existingDoc.data()?.avatar, rejoin: true };
         }
     }
     // --- Join lock check (after rejoin so returning players aren't blocked) ---
@@ -376,6 +376,7 @@ exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
         userId: request.auth?.uid || null,
         nickname,
         activeToken,
+        ...(avatar ? { avatar } : {}),
         ...(teamIndex !== null ? { teamIndex } : {}),
         joinedAt: admin.firestore.FieldValue.serverTimestamp(),
     });

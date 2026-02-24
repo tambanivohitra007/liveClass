@@ -83,7 +83,7 @@ function AnimatedPoints({ value }: { value: number }) {
 
 export default function Leaderboard({ sessionId, top10Snapshot, compact, currentQuestion, totalQuestions }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardPlayer[]>([]);
-  const [nicknameMap, setNicknameMap] = useState<Record<string, string>>({});
+  const [nicknameMap, setNicknameMap] = useState<Record<string, { nickname: string; avatar?: string }>>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -99,9 +99,10 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
     const unsub = onSnapshot(
       collection(db, `sessions/${sessionId}/players`),
       (snapshot) => {
-        const map: Record<string, string> = {};
+        const map: Record<string, { nickname: string; avatar?: string }> = {};
         snapshot.docs.forEach((d) => {
-          map[d.id] = d.data().nickname || '';
+          const data = d.data();
+          map[d.id] = { nickname: data.nickname || '', avatar: data.avatar };
         });
         setNicknameMap(map);
       }
@@ -113,7 +114,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
     if (top10Snapshot && top10Snapshot.length > 0) {
       setEntries(top10Snapshot.map((p) => ({
         ...p,
-        nickname: p.nickname || nicknameMap[p.playerId] || undefined,
+        nickname: p.nickname || nicknameMap[p.playerId]?.nickname || undefined,
       })));
       return;
     }
@@ -127,7 +128,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
           const s = score as { totalPoints: number; streak: number; nickname?: string };
           return {
             playerId,
-            nickname: s.nickname || nicknameMap[playerId],
+            nickname: s.nickname || nicknameMap[playerId]?.nickname,
             totalPoints: s.totalPoints,
             streak: s.streak,
             rank: 0,
@@ -265,9 +266,13 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
               <div className="relative">
                 <Crown className="absolute -top-5 left-1/2 -translate-x-1/2 w-7 h-7 text-warning drop-shadow-md" />
                 <div className={`w-14 h-14 rounded-full border-2 border-brand bg-gradient-to-br ${AVATAR_COLORS[0]} flex items-center justify-center shadow-lg`}>
-                  <span className="text-base font-black text-white drop-shadow">
-                    {getInitials(leader.nickname || leader.playerId)}
-                  </span>
+                  {nicknameMap[leader.playerId]?.avatar ? (
+                    <span className="text-3xl leading-none">{nicknameMap[leader.playerId].avatar}</span>
+                  ) : (
+                    <span className="text-base font-black text-white drop-shadow">
+                      {getInitials(leader.nickname || leader.playerId)}
+                    </span>
+                  )}
                 </div>
                 <div className="absolute -bottom-1 -right-1 bg-brand text-white font-black text-[10px] px-1.5 py-0.5 rounded-md shadow-lg">
                   1ST
@@ -313,9 +318,13 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
                   {entry.rank}
                 </span>
                 <div className={`w-10 h-10 rounded-full border-2 ${entry.rank <= 3 ? 'border-white/25' : 'border-white/10'} bg-gradient-to-br ${AVATAR_COLORS[entry.rank - 1] || AVATAR_COLORS[3]} flex items-center justify-center shrink-0`}>
-                  <span className="text-xs font-bold text-white">
-                    {getInitials(entry.nickname || entry.playerId)}
-                  </span>
+                  {nicknameMap[entry.playerId]?.avatar ? (
+                    <span className="text-xl leading-none">{nicknameMap[entry.playerId].avatar}</span>
+                  ) : (
+                    <span className="text-xs font-bold text-white">
+                      {getInitials(entry.nickname || entry.playerId)}
+                    </span>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-white text-sm truncate">{entry.nickname || entry.playerId.slice(0, 8)}</p>

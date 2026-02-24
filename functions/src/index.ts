@@ -322,9 +322,10 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
 
 // --- Join Session ---
 export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
-  const { sessionId, nickname, playerId: existingPlayerId } = request.data as {
+  const { sessionId, nickname, avatar, playerId: existingPlayerId } = request.data as {
     sessionId: string;
     nickname: string;
+    avatar?: string;
     playerId?: string;
   };
 
@@ -361,7 +362,7 @@ export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
       const doc = existingByUser.docs[0];
       const newToken = generateToken();
       await doc.ref.update({ activeToken: newToken });
-      return { playerId: doc.id, activeToken: newToken, nickname: doc.data().nickname, rejoin: true };
+      return { playerId: doc.id, activeToken: newToken, nickname: doc.data().nickname, avatar: doc.data().avatar, rejoin: true };
     }
   }
 
@@ -373,7 +374,7 @@ export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
     if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
       const newToken = generateToken();
       await existingDoc.ref.update({ activeToken: newToken });
-      return { playerId: existingDoc.id, activeToken: newToken, nickname, rejoin: true };
+      return { playerId: existingDoc.id, activeToken: newToken, nickname, avatar: existingDoc.data()?.avatar, rejoin: true };
     }
   }
 
@@ -409,6 +410,7 @@ export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
     userId: request.auth?.uid || null,
     nickname,
     activeToken,
+    ...(avatar ? { avatar } : {}),
     ...(teamIndex !== null ? { teamIndex } : {}),
     joinedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
