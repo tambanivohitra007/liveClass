@@ -575,6 +575,7 @@ export default function HostSession() {
               level="M"
             />
             <p className="text-gray-800 font-bold text-lg">PIN: <span className="text-brand tracking-widest text-2xl">{session.pinCode}</span></p>
+            <p className="text-gray-400 text-sm font-medium break-all text-center max-w-xs">{window.location.origin}/join?pin={session.pinCode}</p>
           </div>
           <button
             onClick={() => setQrZoomed(false)}
@@ -681,6 +682,11 @@ export default function HostSession() {
                   </div>
                 </div>
               </div>
+
+              {/* Join URL */}
+              <p className="text-center text-white/40 text-sm font-medium -mt-2 sm:-mt-4">
+                Or go to <span className="text-white/70 font-semibold select-all">{window.location.origin}/join?pin={session.pinCode}</span>
+              </p>
 
               {/* Players Grid */}
               <div className="flex-grow flex flex-col animate-fade-in">
