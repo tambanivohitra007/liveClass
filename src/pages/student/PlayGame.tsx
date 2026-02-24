@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { ref, set, serverTimestamp, onValue, off } from 'firebase/database';
-import { db, rtdb } from '../../lib/firebase';
+import { db, rtdb, functions } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
-import { Trophy, PartyPopper, Frown, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check } from 'lucide-react';
+import { AVATARS } from '../../lib/avatars';
+import { Trophy, PartyPopper, Frown, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check, Pencil, Dices, Shuffle } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import CodeBlock from '../../components/CodeBlock';
@@ -70,6 +72,14 @@ export default function PlayGame() {
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
   const resultUnsubRef = useRef<(() => void) | null>(null);
 
+  // Player profile state
+  const [playerNickname, setPlayerNickname] = useState('');
+  const [playerAvatar, setPlayerAvatar] = useState('');
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editNickname, setEditNickname] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+
   // Student-paced mode state
   const [localQIndex, setLocalQIndex] = useState(0);
   const [spFinished, setSpFinished] = useState(false);
@@ -82,6 +92,56 @@ export default function PlayGame() {
     playerId,
     enabled: session?.questionState === 'live' && session?.antiCheatEnabled !== false,
   });
+
+  // Load player profile from localStorage
+  useEffect(() => {
+    if (!sessionId) return;
+    try {
+      const stored = localStorage.getItem(`liveclass_session_${sessionId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as { nickname?: string; avatar?: string };
+        if (parsed.nickname) setPlayerNickname(parsed.nickname);
+        if (parsed.avatar) setPlayerAvatar(parsed.avatar);
+      }
+    } catch { /* ignore */ }
+  }, [sessionId]);
+
+  // Save profile via Cloud Function
+  const saveProfile = async () => {
+    if (!sessionId || !playerId || !editNickname.trim()) return;
+    setSavingProfile(true);
+    try {
+      const updateFn = httpsCallable<
+        { sessionId: string; playerId: string; nickname: string; avatar?: string },
+        { nickname: string; avatar?: string }
+      >(functions, 'updatePlayerProfile');
+      const result = await updateFn({ sessionId, playerId, nickname: editNickname.trim(), avatar: editAvatar || undefined });
+
+      const finalNickname = result.data.nickname;
+      const finalAvatar = result.data.avatar || editAvatar;
+      setPlayerNickname(finalNickname);
+      setPlayerAvatar(finalAvatar);
+
+      // Update localStorage
+      try {
+        const stored = localStorage.getItem(`liveclass_session_${sessionId}`);
+        const parsed = stored ? JSON.parse(stored) : {};
+        localStorage.setItem(`liveclass_session_${sessionId}`, JSON.stringify({
+          ...parsed,
+          nickname: finalNickname,
+          avatar: finalAvatar,
+        }));
+      } catch { /* ignore */ }
+
+      setEditingProfile(false);
+      addToast('success', 'Profile updated!');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update profile';
+      addToast('error', msg);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   useEffect(() => {
     if (!sessionId) return;
@@ -444,15 +504,119 @@ export default function PlayGame() {
   if (session.status === 'lobby') {
     return (
       <div className="min-h-screen flex items-center justify-center text-white" style={GAME_BG}>
-        <div className="text-center animate-fade-in">
-          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
-          <h1 className="text-2xl font-bold mb-2">You're in!</h1>
-          {myTeam && (
-            <span className="inline-block px-4 py-1.5 rounded-full text-sm font-bold text-white mb-3" style={{ backgroundColor: myTeam.color }}>
-              {myTeam.name}
-            </span>
+        <div className="text-center animate-fade-in max-w-sm mx-auto px-4">
+          {!editingProfile ? (
+            <>
+              {/* Profile Display */}
+              <div className="mb-6">
+                <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center mx-auto mb-4">
+                  {playerAvatar ? (
+                    <span className="text-5xl leading-none">{playerAvatar}</span>
+                  ) : (
+                    <span className="text-3xl font-black">{playerNickname?.charAt(0)?.toUpperCase() || '?'}</span>
+                  )}
+                </div>
+                <h1 className="text-2xl font-bold mb-1">{playerNickname || 'Player'}</h1>
+                {myTeam && (
+                  <span className="inline-block px-4 py-1.5 rounded-full text-sm font-bold text-white mt-2" style={{ backgroundColor: myTeam.color }}>
+                    {myTeam.name}
+                  </span>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditNickname(playerNickname);
+                  setEditAvatar(playerAvatar);
+                  setEditingProfile(true);
+                }}
+                className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-sm font-medium transition-all mb-8 inline-flex items-center gap-1.5"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Edit Profile
+              </button>
+
+              <div>
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-white/50">Waiting for the host to start...</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold mb-5">Edit Your Profile</h2>
+
+              {/* Selected avatar preview */}
+              <div className="w-20 h-20 rounded-full bg-white/10 border-2 border-brand flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl leading-none">{editAvatar || '😀'}</span>
+              </div>
+
+              {/* Emoji grid */}
+              <div className="grid grid-cols-6 gap-1.5 mb-2">
+                {AVATARS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setEditAvatar(emoji)}
+                    className={`text-xl p-1.5 rounded-lg transition-all duration-200 ${
+                      editAvatar === emoji
+                        ? 'bg-brand/30 ring-2 ring-brand scale-110'
+                        : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)])}
+                className="text-xs text-white/40 hover:text-white/60 inline-flex items-center gap-1 mb-5"
+              >
+                <Dices className="w-3 h-3" /> Shuffle
+              </button>
+
+              {/* Nickname input */}
+              <div className="relative mb-5">
+                <input
+                  type="text"
+                  value={editNickname}
+                  onChange={(e) => setEditNickname(e.target.value)}
+                  maxLength={20}
+                  placeholder="Your nickname"
+                  className="w-full text-center text-xl font-bold px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:border-brand outline-none transition-all pr-12"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const adj = ['Swift','Brave','Clever','Mighty','Cosmic','Lucky','Epic','Jolly','Sneaky','Funky','Turbo','Mega'];
+                    const noun = ['Panda','Fox','Eagle','Tiger','Dolphin','Phoenix','Dragon','Wolf','Falcon','Ninja','Pirate','Wizard'];
+                    setEditNickname(adj[Math.floor(Math.random() * adj.length)] + noun[Math.floor(Math.random() * noun.length)]);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/50 hover:text-white/80 transition-all"
+                  title="Random nickname"
+                >
+                  <Shuffle className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setEditingProfile(false)}
+                  className="px-5 py-2.5 rounded-full text-sm font-medium text-white/50 hover:text-white/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveProfile}
+                  disabled={savingProfile || !editNickname.trim()}
+                  className="px-6 py-2.5 rounded-full bg-brand hover:bg-brand-dark text-white font-bold text-sm transition-all disabled:opacity-40"
+                >
+                  {savingProfile ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </>
           )}
-          <p className="text-white/50">Waiting for the host to start...</p>
         </div>
       </div>
     );
@@ -597,13 +761,12 @@ export default function PlayGame() {
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2 w-20">
-          <span className="text-white/50 text-sm font-medium">Q{isStudentPaced ? localQIndex + 1 : (session.currentQuestionIndex || 0) + 1}</span>
-          {myTeam && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: myTeam.color }}>
-              {myTeam.name.split(' ')[0]}
-            </span>
-          )}
+        <div className="flex items-center gap-2">
+          {playerAvatar && <span className="text-lg leading-none">{playerAvatar}</span>}
+          <div className="flex flex-col">
+            <span className="text-white/70 text-xs font-semibold truncate max-w-[80px]">{playerNickname}</span>
+            <span className="text-white/40 text-[10px] font-medium">Q{isStudentPaced ? localQIndex + 1 : (session.currentQuestionIndex || 0) + 1}{myTeam ? ` · ${myTeam.name.split(' ')[0]}` : ''}</span>
+          </div>
         </div>
         <div className="flex flex-col items-center">
           {submitted ? (

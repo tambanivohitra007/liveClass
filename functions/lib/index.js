@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const cheerio = __importStar(require("cheerio"));
@@ -402,6 +402,43 @@ exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
         await playerRef.update({ questionSubset: indices.slice(0, size) });
     }
     return { playerId: playerRef.id, activeToken };
+});
+// --- Update Player Profile (lobby only) ---
+exports.updatePlayerProfile = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    const { sessionId, playerId, nickname, avatar } = request.data;
+    if (!sessionId || !playerId || !nickname) {
+        throw new https_1.HttpsError("invalid-argument", "sessionId, playerId, and nickname are required");
+    }
+    if (nickname.length > 20) {
+        throw new https_1.HttpsError("invalid-argument", "Nickname too long");
+    }
+    const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Session not found");
+    }
+    if (sessionDoc.data().status !== "lobby") {
+        throw new https_1.HttpsError("failed-precondition", "Can only edit profile in lobby");
+    }
+    const playerDoc = await db.doc(`sessions/${sessionId}/players/${playerId}`).get();
+    if (!playerDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Player not found");
+    }
+    const currentNickname = playerDoc.data().nickname;
+    if (nickname !== currentNickname) {
+        const existing = await db
+            .collection(`sessions/${sessionId}/players`)
+            .where("nickname", "==", nickname)
+            .get();
+        if (!existing.empty) {
+            throw new https_1.HttpsError("already-exists", "Nickname already taken");
+        }
+    }
+    const updateData = { nickname };
+    if (avatar)
+        updateData.avatar = avatar;
+    await playerDoc.ref.update(updateData);
+    await rtdb.ref(`scores/${sessionId}/${playerId}/nickname`).set(nickname);
+    return { nickname, avatar };
 });
 // --- Assign Question Subsets (Rotating Sets) ---
 exports.assignQuestionSubsets = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {

@@ -441,6 +441,55 @@ export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
   return { playerId: playerRef.id, activeToken };
 });
 
+// --- Update Player Profile (lobby only) ---
+export const updatePlayerProfile = onCall(FUNCTION_CONFIG, async (request) => {
+  const { sessionId, playerId, nickname, avatar } = request.data as {
+    sessionId: string;
+    playerId: string;
+    nickname: string;
+    avatar?: string;
+  };
+
+  if (!sessionId || !playerId || !nickname) {
+    throw new HttpsError("invalid-argument", "sessionId, playerId, and nickname are required");
+  }
+  if (nickname.length > 20) {
+    throw new HttpsError("invalid-argument", "Nickname too long");
+  }
+
+  const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+  if (!sessionDoc.exists) {
+    throw new HttpsError("not-found", "Session not found");
+  }
+  if (sessionDoc.data()!.status !== "lobby") {
+    throw new HttpsError("failed-precondition", "Can only edit profile in lobby");
+  }
+
+  const playerDoc = await db.doc(`sessions/${sessionId}/players/${playerId}`).get();
+  if (!playerDoc.exists) {
+    throw new HttpsError("not-found", "Player not found");
+  }
+
+  const currentNickname = playerDoc.data()!.nickname;
+  if (nickname !== currentNickname) {
+    const existing = await db
+      .collection(`sessions/${sessionId}/players`)
+      .where("nickname", "==", nickname)
+      .get();
+    if (!existing.empty) {
+      throw new HttpsError("already-exists", "Nickname already taken");
+    }
+  }
+
+  const updateData: Record<string, unknown> = { nickname };
+  if (avatar) updateData.avatar = avatar;
+  await playerDoc.ref.update(updateData);
+
+  await rtdb.ref(`scores/${sessionId}/${playerId}/nickname`).set(nickname);
+
+  return { nickname, avatar };
+});
+
 // --- Assign Question Subsets (Rotating Sets) ---
 export const assignQuestionSubsets = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) {
