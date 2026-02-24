@@ -60,6 +60,7 @@ export default function HostSession() {
   const [lobbyTrack, setLobbyTrackState] = useState(getLobbyTrack());
 
   const [answeredCount, setAnsweredCount] = useState(0);
+  const [answeredPlayerIds, setAnsweredPlayerIds] = useState<Set<string>>(new Set());
   const [studentProgress, setStudentProgress] = useState<Record<string, { answered: number; finished: boolean }>>({});
   const [endingSession, setEndingSession] = useState(false);
   const prevPlayerCountRef = useRef(0);
@@ -230,6 +231,30 @@ export default function HostSession() {
     onValue(countRef, handler);
     return () => off(countRef, 'value', handler);
   }, [session?.id, session?.questionState, session?.currentQuestionIndex, session?.questionOrder, allQuestions, players.length]);
+
+  // Subscribe to RTDB liveAnswers to track which players have answered
+  useEffect(() => {
+    if (!session || session.questionState !== 'live' || allQuestions.length === 0) {
+      setAnsweredPlayerIds(new Set());
+      return;
+    }
+    const qIdx = session.questionOrder
+      ? session.questionOrder[session.currentQuestionIndex]
+      : session.currentQuestionIndex;
+    const qId = allQuestions[qIdx]?.id;
+    if (!qId) {
+      setAnsweredPlayerIds(new Set());
+      return;
+    }
+    setAnsweredPlayerIds(new Set());
+    const answersRef = ref(rtdb, `liveAnswers/${session.id}/${qId}`);
+    const handler = (snap: import('firebase/database').DataSnapshot) => {
+      const val = snap.val();
+      setAnsweredPlayerIds(val ? new Set(Object.keys(val)) : new Set());
+    };
+    onValue(answersRef, handler);
+    return () => off(answersRef, 'value', handler);
+  }, [session?.id, session?.questionState, session?.currentQuestionIndex, session?.questionOrder, allQuestions]);
 
   // Subscribe to student progress for student-paced mode
   useEffect(() => {
@@ -919,101 +944,142 @@ export default function HostSession() {
 
       {/* ══════════════════ LIVE QUESTION ══════════════════ */}
       {session.questionState === 'live' && (
-        <main className="flex-grow flex flex-col items-center justify-center px-4 sm:px-8 py-6 sm:py-8 max-w-4xl mx-auto w-full">
-          {/* Question counter */}
-          <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/5 mb-4 sm:mb-8 animate-fade-in">
-            <span className="text-xs text-white/50 uppercase tracking-wider font-medium">Question</span>
-            <span className="text-sm font-bold">
-              {session.currentQuestionIndex + 1}
-              <span className="text-white/30 mx-1">/</span>
-              {totalQuestions}
-            </span>
-          </div>
-
-          <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in break-words">
-            {currentQuestionText}
-          </h2>
-
-          {currentCodeSnippet && (
-            <CodeBlock code={currentCodeSnippet} language={currentCodeLanguage} className="w-full max-w-2xl mb-6 sm:mb-10 animate-fade-in" />
-          )}
-
-          {/* Timer + Answer Progress */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
-            {currentTimeLimitSec > 0 && (
-              <div className={`inline-flex items-baseline gap-2 px-5 sm:px-8 py-3 sm:py-4 rounded-2xl border transition-colors animate-bounce-in ${
-                session.timerPaused
-                  ? 'bg-warning/10 border-warning/20'
-                  : timeLeft <= 5
-                    ? 'bg-danger/10 border-danger/20'
-                    : 'bg-white/5 border-white/10'
-              }`}>
-                <span className={`text-4xl sm:text-6xl font-black tabular-nums ${
-                  session.timerPaused ? 'text-warning' :
-                  timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'
-                }`}>{timeLeft}</span>
-                <span className={`text-sm sm:text-base font-medium ${
-                  session.timerPaused ? 'text-warning' :
-                  timeLeft <= 5 ? 'text-danger/50' : 'text-white/30'
-                }`}>{session.timerPaused ? 'PAUSED' : 'sec'}</span>
-              </div>
-            )}
-            <div className="inline-flex flex-col items-center px-5 sm:px-6 py-2 sm:py-3 rounded-2xl bg-white/5 border border-white/10 animate-bounce-in">
-              <span className={`text-2xl sm:text-4xl font-black tabular-nums ${answeredCount >= players.length ? 'text-success' : 'text-white'}`}>
-                {answeredCount}<span className="text-white/30">/{players.length}</span>
+        <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto w-full">
+          {/* Left: Question + Timer + Controls */}
+          <div className="flex-grow flex flex-col items-center justify-center">
+            {/* Question counter */}
+            <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/5 mb-4 sm:mb-8 animate-fade-in">
+              <span className="text-xs text-white/50 uppercase tracking-wider font-medium">Question</span>
+              <span className="text-sm font-bold">
+                {session.currentQuestionIndex + 1}
+                <span className="text-white/30 mx-1">/</span>
+                {totalQuestions}
               </span>
-              <span className="text-xs font-medium text-white/30">answered</span>
             </div>
-          </div>
 
-          {/* Control Toolbar */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-10">
-            <div className="inline-flex items-center gap-1 bg-white/5 rounded-full p-1.5 border border-white/10 backdrop-blur-sm">
-              <button
-                onClick={togglePause}
-                className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
-                title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
-                aria-label={session.timerPaused ? 'Resume timer' : 'Pause timer'}
-              >
-                {session.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={extendTimer}
-                className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold"
-                title="Add 30 seconds"
-              >
-                +30s
-              </button>
-              {!isLastQuestion && (
-                <button
-                  onClick={skipQuestion}
-                  className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
-                  title="Skip to next question"
-                  aria-label="Skip to next question"
-                >
-                  <SkipForward className="w-4 h-4" />
-                </button>
+            <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in break-words">
+              {currentQuestionText}
+            </h2>
+
+            {currentCodeSnippet && (
+              <CodeBlock code={currentCodeSnippet} language={currentCodeLanguage} className="w-full max-w-2xl mb-6 sm:mb-10 animate-fade-in" />
+            )}
+
+            {/* Timer + Answer Progress */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
+              {currentTimeLimitSec > 0 && (
+                <div className={`inline-flex items-baseline gap-2 px-5 sm:px-8 py-3 sm:py-4 rounded-2xl border transition-colors animate-bounce-in ${
+                  session.timerPaused
+                    ? 'bg-warning/10 border-warning/20'
+                    : timeLeft <= 5
+                      ? 'bg-danger/10 border-danger/20'
+                      : 'bg-white/5 border-white/10'
+                }`}>
+                  <span className={`text-4xl sm:text-6xl font-black tabular-nums ${
+                    session.timerPaused ? 'text-warning' :
+                    timeLeft <= 5 ? 'text-danger animate-timer-pulse' : 'text-white'
+                  }`}>{timeLeft}</span>
+                  <span className={`text-sm sm:text-base font-medium ${
+                    session.timerPaused ? 'text-warning' :
+                    timeLeft <= 5 ? 'text-danger/50' : 'text-white/30'
+                  }`}>{session.timerPaused ? 'PAUSED' : 'sec'}</span>
+                </div>
               )}
+              <div className="inline-flex flex-col items-center px-5 sm:px-6 py-2 sm:py-3 rounded-2xl bg-white/5 border border-white/10 animate-bounce-in">
+                <span className={`text-2xl sm:text-4xl font-black tabular-nums ${answeredCount >= players.length ? 'text-success' : 'text-white'}`}>
+                  {answeredCount}<span className="text-white/30">/{players.length}</span>
+                </span>
+                <span className="text-xs font-medium text-white/30">answered</span>
+              </div>
             </div>
-            <button
-              onClick={endQuestion}
-              className="px-6 sm:px-8 py-3 sm:py-3.5 bg-danger text-white font-bold rounded-full hover:brightness-110 transition-all w-full sm:w-auto"
-              style={{ boxShadow: '0 4px 20px rgba(232, 99, 107, 0.35)' }}
-            >
-              End Question
-            </button>
-            <button
-              onClick={endSessionEarly}
-              disabled={endingSession}
-              className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all w-full sm:w-auto text-sm border border-white/10"
-            >
-              {endingSession ? 'Ending...' : 'End Session'}
-            </button>
+
+            {/* Control Toolbar */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-10">
+              <div className="inline-flex items-center gap-1 bg-white/5 rounded-full p-1.5 border border-white/10 backdrop-blur-sm">
+                <button
+                  onClick={togglePause}
+                  className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+                  title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
+                  aria-label={session.timerPaused ? 'Resume timer' : 'Pause timer'}
+                >
+                  {session.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={extendTimer}
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold"
+                  title="Add 30 seconds"
+                >
+                  +30s
+                </button>
+                {!isLastQuestion && (
+                  <button
+                    onClick={skipQuestion}
+                    className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+                    title="Skip to next question"
+                    aria-label="Skip to next question"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={endQuestion}
+                className="px-6 sm:px-8 py-3 sm:py-3.5 bg-danger text-white font-bold rounded-full hover:brightness-110 transition-all w-full sm:w-auto"
+                style={{ boxShadow: '0 4px 20px rgba(232, 99, 107, 0.35)' }}
+              >
+                End Question
+              </button>
+              <button
+                onClick={endSessionEarly}
+                disabled={endingSession}
+                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all w-full sm:w-auto text-sm border border-white/10"
+              >
+                {endingSession ? 'Ending...' : 'End Session'}
+              </button>
+            </div>
+
+            <p className="hidden sm:block text-white/15 text-xs mt-10">
+              Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to advance
+            </p>
           </div>
 
-          <p className="hidden sm:block text-white/15 text-xs mt-10">
-            Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to advance
-          </p>
+          {/* Right: Participants panel */}
+          <div className="w-full lg:w-72 shrink-0 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 animate-slide-up self-start lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Participants
+              </h3>
+              <span className="text-xs font-bold tabular-nums text-white/40">
+                {answeredCount}/{players.length}
+              </span>
+            </div>
+            <div className="overflow-y-auto flex-1 space-y-1 min-h-0">
+              {[...players]
+                .sort((a, b) => {
+                  const aAnswered = answeredPlayerIds.has(a.id) ? 1 : 0;
+                  const bAnswered = answeredPlayerIds.has(b.id) ? 1 : 0;
+                  return aAnswered - bAnswered;
+                })
+                .map((p) => {
+                  const hasAnswered = answeredPlayerIds.has(p.id);
+                  return (
+                    <div
+                      key={p.id}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 ${
+                        hasAnswered ? 'bg-success/10' : 'bg-white/5'
+                      }`}
+                    >
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${hasAnswered ? 'bg-success' : 'bg-white/20 animate-pulse'}`} />
+                      <span className={`text-sm font-medium truncate ${hasAnswered ? 'text-success' : 'text-white/50'}`}>
+                        {p.nickname}
+                      </span>
+                      {hasAnswered && <CheckCircle2 className="w-3.5 h-3.5 text-success ml-auto shrink-0" />}
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
         </main>
       )}
 
