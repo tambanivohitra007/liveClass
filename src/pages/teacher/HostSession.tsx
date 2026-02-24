@@ -339,7 +339,8 @@ export default function HostSession() {
 
   const skipQuestion = async () => {
     if (!session) return;
-    await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+    // Fire-and-forget: don't await endQuestion so the next question starts immediately
+    httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
     if (session.currentQuestionIndex < totalQuestions - 1) {
       await startQuestionDirect(session.currentQuestionIndex + 1);
     }
