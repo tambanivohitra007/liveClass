@@ -26,6 +26,15 @@ function getYouTubeId(url: string): string | null {
   return match?.[1] || null;
 }
 
+const GAME_BG: React.CSSProperties = {
+  background: `
+    radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(212, 86, 107, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(37, 99, 235, 0.14) 0%, transparent 50%),
+    linear-gradient(160deg, #0F172A 0%, #1E1B4B 40%, #172554 100%)
+  `,
+};
+
 const answerColors = [
   'bg-answer-red hover:brightness-110',
   'bg-answer-blue hover:brightness-110',
@@ -425,7 +434,7 @@ export default function PlayGame() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={GAME_BG}>
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -434,7 +443,7 @@ export default function PlayGame() {
   // Lobby
   if (session.status === 'lobby') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex items-center justify-center text-white">
+      <div className="min-h-screen flex items-center justify-center text-white" style={GAME_BG}>
         <div className="text-center animate-fade-in">
           <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6" />
           <h1 className="text-2xl font-bold mb-2">You're in!</h1>
@@ -452,7 +461,7 @@ export default function PlayGame() {
   // Student-paced: All done screen
   if (isStudentPaced && spFinished) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
+      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
         <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
           <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-success" />
           <h1 className="text-2xl sm:text-3xl font-black mb-2">All Done!</h1>
@@ -470,7 +479,7 @@ export default function PlayGame() {
   // Student-paced: Feedback + Next question
   if (isStudentPaced && feedback && submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
+      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
         <Confetti active={feedback.correct} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-8 sm:py-12">
@@ -511,7 +520,7 @@ export default function PlayGame() {
   // Ended
   if (session.status === 'ended') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
+      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
         <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
           <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-warning" />
           <h1 className="text-2xl sm:text-3xl font-black mb-2">Game Over!</h1>
@@ -538,7 +547,7 @@ export default function PlayGame() {
   // Reveal
   if (session.questionState === 'reveal') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] text-white p-4 sm:p-6">
+      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
         <Confetti active={feedback?.correct === true} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-8 sm:py-12">
@@ -576,7 +585,7 @@ export default function PlayGame() {
   // Loading question
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={GAME_BG}>
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -584,7 +593,7 @@ export default function PlayGame() {
 
   // Live question
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#070D1A] via-[#0E1F3F] to-[#1A3263] flex flex-col">
+    <div className="min-h-screen flex flex-col" style={GAME_BG}>
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">

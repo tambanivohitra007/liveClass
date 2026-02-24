@@ -27,11 +27,11 @@ const AVATAR_COLORS = [
 ];
 
 const MESH_BG: React.CSSProperties = {
-  backgroundImage: `
-    radial-gradient(at 0% 0%, rgba(212, 86, 107, 0.12) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(255, 127, 17, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(212, 86, 107, 0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(255, 127, 17, 0.08) 0px, transparent 50%)
+  background: `
+    radial-gradient(ellipse at 0% 0%, rgba(124, 58, 237, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 0%, rgba(212, 86, 107, 0.16) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(37, 99, 235, 0.12) 0%, transparent 50%),
+    linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)
   `,
 };
 
@@ -449,7 +449,7 @@ export default function HostSession() {
   }, [isSessionActive]);
 
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-dark">
+    <div className="min-h-screen flex items-center justify-center" style={MESH_BG}>
       <div className="text-center">
         <p className="text-danger mb-4">{error}</p>
         <button onClick={() => navigate('/dashboard')} className="text-brand underline">Back to Dashboard</button>
@@ -550,13 +550,13 @@ export default function HostSession() {
   };
 
   if (!session) return (
-    <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center" style={MESH_BG}>
       <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-surface-dark text-white flex flex-col" style={MESH_BG}>
+    <div className="min-h-screen text-white flex flex-col" style={MESH_BG}>
 
       {/* ══════════ Top Navigation Bar ══════════ */}
       <header className="flex items-center justify-between px-4 sm:px-8 py-3 sm:py-5 w-full max-w-7xl mx-auto">
