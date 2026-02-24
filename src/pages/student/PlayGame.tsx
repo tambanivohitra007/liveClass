@@ -467,7 +467,7 @@ export default function PlayGame() {
           <h1 className="text-2xl sm:text-3xl font-black mb-2">All Done!</h1>
           <p className="text-white/50 mb-6 sm:mb-8 text-sm sm:text-base">You've completed all {spTotalQuestions} questions. Wait for the host to end the session.</p>
           {sessionId && (
-            <div className="bg-white/5 backdrop-blur rounded-2xl p-4 sm:p-6">
+            <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6">
               <Leaderboard sessionId={sessionId} currentQuestion={spTotalQuestions} totalQuestions={spTotalQuestions} />
             </div>
           )}
@@ -526,7 +526,7 @@ export default function PlayGame() {
           <h1 className="text-2xl sm:text-3xl font-black mb-2">Game Over!</h1>
           <p className="text-white/50 mb-6 sm:mb-8">Thanks for playing!</p>
           {sessionId && (
-            <div className="bg-white/5 backdrop-blur rounded-2xl p-4 sm:p-6">
+            <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6">
               <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -572,7 +572,7 @@ export default function PlayGame() {
             </div>
           )}
           {sessionId && (
-            <div className="bg-white/5 backdrop-blur rounded-2xl p-4 sm:p-6 animate-slide-up">
+            <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-slide-up">
               <Leaderboard sessionId={sessionId} compact currentQuestion={(session.currentQuestionIndex || 0) + 1} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -870,7 +870,7 @@ export default function PlayGame() {
         {!submitted && canSubmit() && (
           <button
             onClick={submitAnswer}
-            className="mt-4 py-4 bg-white text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
+            className="mt-4 py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-black text-lg rounded-2xl hover:brightness-110 transition-all shadow-lg shadow-brand/25 animate-slide-up"
           >
             Submit Answer
           </button>

@@ -595,8 +595,8 @@ export default function HostSession() {
             <div className="flex-grow flex flex-col gap-4 sm:gap-8">
 
               {/* Hero PIN + QR Section */}
-              <div className="relative flex flex-col items-center py-6 sm:py-12 px-4 sm:px-8 bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm animate-bounce-in">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand/10 to-accent/10 opacity-50" />
+              <div className="relative flex flex-col items-center py-6 sm:py-12 px-4 sm:px-8 bg-white/[0.07] border border-white/[0.12] rounded-2xl overflow-hidden backdrop-blur-md animate-bounce-in shadow-xl shadow-black/20">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-brand/10" />
                 <h2 className="relative text-sm sm:text-base font-medium text-white/60 mb-4 sm:mb-6 uppercase tracking-[0.2em]">
                   Join the Game
                 </h2>
@@ -731,7 +731,7 @@ export default function HostSession() {
 
             {/* ── Right Column: Host Controls Sidebar ── */}
             <aside className="w-full lg:w-80 flex flex-col gap-4 sm:gap-6 shrink-0">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 h-full">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 h-full shadow-lg shadow-black/10">
 
                 {/* Settings Header */}
                 <h3 className="text-lg font-bold flex items-center gap-2">
@@ -909,8 +909,8 @@ export default function HostSession() {
                   <button
                     onClick={startQuestion}
                     disabled={players.length === 0}
-                    className="w-full bg-brand hover:bg-brand-dark text-white font-bold py-4 rounded-full transition-all disabled:opacity-30 flex items-center justify-center gap-2 group"
-                    style={{ boxShadow: players.length > 0 ? '0 4px 25px rgba(212, 86, 107, 0.4)' : 'none' }}
+                    className="w-full bg-gradient-to-r from-brand to-purple-500 hover:brightness-110 text-white font-bold py-4 rounded-full transition-all disabled:opacity-30 flex items-center justify-center gap-2 group"
+                    style={{ boxShadow: players.length > 0 ? '0 4px 25px rgba(139, 92, 246, 0.35)' : 'none' }}
                   >
                     <span>START GAME</span>
                     <Play className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -1044,7 +1044,7 @@ export default function HostSession() {
           </div>
 
           {/* Right: Participants panel */}
-          <div className="w-full lg:w-72 shrink-0 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 animate-slide-up self-start lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
+          <div className="w-full lg:w-72 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 animate-slide-up self-start lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -1093,7 +1093,7 @@ export default function HostSession() {
             {/* Left: Progress */}
             <div className="flex-grow flex flex-col gap-4 sm:gap-6">
               {/* Progress Card */}
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 animate-fade-in">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-fade-in">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-success" />
@@ -1114,7 +1114,7 @@ export default function HostSession() {
               </div>
 
               {/* Per-student progress list */}
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 animate-fade-in">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-fade-in">
                 <h4 className="text-sm font-bold text-white/60 mb-4 uppercase tracking-wider">Individual Progress</h4>
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                   {players.map((p) => {
@@ -1145,7 +1145,7 @@ export default function HostSession() {
 
             {/* Right: Leaderboard + End Button */}
             <div className="w-full lg:w-96 flex flex-col gap-4 sm:gap-6 shrink-0">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 animate-slide-up">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-slide-up">
                 <Leaderboard sessionId={session.id} currentQuestion={undefined} totalQuestions={totalQuestions} />
               </div>
 
@@ -1177,7 +1177,7 @@ export default function HostSession() {
       {session.questionState === 'reveal' && (
         <main className="flex-grow flex flex-col px-4 sm:px-8 py-4 sm:py-8 max-w-4xl mx-auto w-full">
           {session.teamMode && session.teamScoreSnapshot && (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 mb-4 animate-bounce-in">
+            <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 mb-4 animate-bounce-in">
               <h3 className="text-base sm:text-lg font-bold mb-4">Team Standings</h3>
               <div className="space-y-3">
                 {session.teamScoreSnapshot.map((team, i) => (
@@ -1193,7 +1193,7 @@ export default function HostSession() {
             </div>
           )}
 
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 mb-4 animate-slide-up">
+          <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 mb-4 animate-slide-up">
             <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} currentQuestion={session.currentQuestionIndex + 1} totalQuestions={totalQuestions} />
           </div>
 
@@ -1218,8 +1218,8 @@ export default function HostSession() {
               <>
                 <button
                   onClick={nextQuestion}
-                  className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all flex items-center gap-2 group w-full sm:w-auto justify-center"
-                  style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
+                  className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-base sm:text-lg rounded-full hover:brightness-110 transition-all flex items-center gap-2 group w-full sm:w-auto justify-center"
+                  style={{ boxShadow: '0 4px 25px rgba(139, 92, 246, 0.35)' }}
                 >
                   Next Question
                   <Play className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -1243,8 +1243,8 @@ export default function HostSession() {
                     addToast('error', 'Failed to end session');
                   }
                 }}
-                className="px-8 sm:px-10 py-3 sm:py-4 bg-brand text-white font-bold text-base sm:text-lg rounded-full hover:bg-brand-dark transition-all w-full sm:w-auto"
-                style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
+                className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-base sm:text-lg rounded-full hover:brightness-110 transition-all w-full sm:w-auto"
+                style={{ boxShadow: '0 4px 25px rgba(139, 92, 246, 0.35)' }}
               >
                 View Results
               </button>
