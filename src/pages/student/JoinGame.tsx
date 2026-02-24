@@ -217,7 +217,7 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark relative overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden" style={{ background: 'radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 0%, rgba(212, 86, 107, 0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(37, 99, 235, 0.14) 0%, transparent 50%), linear-gradient(160deg, #0F172A 0%, #1E1B4B 40%, #172554 100%)' }}>
       <WaveBackground variant="dark" position="both" />
       <div className="absolute inset-0 pattern-grid pointer-events-none" />
 
@@ -258,12 +258,12 @@ export default function JoinGame() {
 
         {/* Card */}
         <div className="relative group">
-          <div className="absolute inset-0 bg-white rounded-3xl border-2 border-gray-800 shadow-[5px_5px_0px_0px_#D4566B] transition-shadow duration-300 group-hover:shadow-[7px_7px_0px_0px_#D4566B]" />
+          <div className="absolute inset-0 bg-white rounded-3xl border-2 border-gray-800 shadow-[5px_5px_0px_0px_#7C3AED] transition-shadow duration-300 group-hover:shadow-[7px_7px_0px_0px_#7C3AED]" />
 
           <div className="relative p-8">
             {/* Error */}
             {error && (
-              <div className="mb-5 p-3 bg-white rounded-xl border-2 border-gray-800 shadow-[2px_2px_0px_0px_#EF4444] text-danger text-sm font-bold text-center animate-fade-in">
+              <div className="mb-5 p-3 bg-white rounded-xl border-2 border-gray-800 shadow-[2px_2px_0px_0px_#E5484D] text-danger text-sm font-bold text-center animate-fade-in">
                 {error}
               </div>
             )}
@@ -282,7 +282,7 @@ export default function JoinGame() {
                   type="button"
                   onClick={handleRejoin}
                   disabled={joining}
-                  className="w-full py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
+                  className="w-full py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#7C3AED] hover:shadow-[6px_6px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
                 >
                   {joining ? 'Rejoining...' : 'Rejoin Game'}
                 </button>
@@ -316,7 +316,7 @@ export default function JoinGame() {
                 <button
                   type="submit"
                   disabled={pin.length < 4}
-                  className="w-full mt-5 py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
+                  className="w-full mt-5 py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#7C3AED] hover:shadow-[6px_6px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#7C3AED] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
                 >
                   Next
                 </button>
@@ -339,7 +339,7 @@ export default function JoinGame() {
                     <button
                       key={ci}
                       onClick={() => handleVerify(ci)}
-                      className="flex justify-center gap-2 p-4 rounded-2xl border-2 border-gray-800 bg-white hover:bg-brand/5 shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[4px_4px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
+                      className="flex justify-center gap-2 p-4 rounded-2xl border-2 border-gray-800 bg-white hover:bg-purple-50 shadow-[2px_2px_0px_0px_#7C3AED] hover:shadow-[4px_4px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
                     >
                       {choice.map((s, i) => (
                         <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-7 h-7" />
@@ -377,7 +377,7 @@ export default function JoinGame() {
                   <button
                     type="button"
                     onClick={() => setNickname(randomNickname())}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-xl border-2 border-gray-800 bg-brand/10 hover:bg-brand/20 text-brand shadow-[2px_2px_0px_0px_#D4566B] hover:shadow-[3px_3px_0px_0px_#D4566B] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-xl border-2 border-gray-800 bg-purple-50 hover:bg-purple-100 text-purple-600 shadow-[2px_2px_0px_0px_#7C3AED] hover:shadow-[3px_3px_0px_0px_#7C3AED] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
                     title="Random nickname"
                   >
                     <Shuffle className="w-4 h-4" />
@@ -386,7 +386,7 @@ export default function JoinGame() {
                 <button
                   type="submit"
                   disabled={joining || !nickname.trim()}
-                  className="w-full mt-5 py-4 bg-success text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#22C55E] hover:shadow-[6px_6px_0px_0px_#22C55E] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#22C55E] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
+                  className="w-full mt-5 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#10B981] hover:shadow-[6px_6px_0px_0px_#10B981] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#10B981] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
                 >
                   {joining ? 'Joining...' : "Let's Go!"}
                 </button>

@@ -28,9 +28,9 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-surface-dark">
+      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden" style={{ background: 'radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 0%, rgba(212, 86, 107, 0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(37, 99, 235, 0.14) 0%, transparent 50%), linear-gradient(160deg, #0F172A 0%, #1E1B4B 40%, #172554 100%)' }}>
         {/* Neural network CPPN shader background */}
-        <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark" />}>
+        <Suspense fallback={<div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #0F172A 0%, #1E1B4B 40%, #172554 100%)' }} />}>
           <ShaderBackground />
         </Suspense>
 
@@ -55,7 +55,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={pin.length < 4}
-                className="w-full bg-brand hover:bg-brand-dark text-white py-5 rounded-2xl text-xl font-bold border-2 border-white/30 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.25)] hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.25)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-40"
+                className="w-full bg-gradient-to-r from-brand to-purple-500 hover:brightness-110 text-white py-5 rounded-2xl text-xl font-bold border-2 border-white/30 shadow-[4px_4px_0px_0px_rgba(139,92,246,0.4)] hover:shadow-[6px_6px_0px_0px_rgba(139,92,246,0.4)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-40"
               >
                 Enter Game
                 <Play className="w-6 h-6" fill="currentColor" />
@@ -108,7 +108,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button
                 onClick={() => navigate('/signup')}
-                className="group px-8 py-4 bg-white text-brand font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
+                className="group px-8 py-4 bg-white text-purple-600 font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#7C3AED] hover:shadow-[6px_6px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
               >
                 Get Started Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -141,7 +141,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 relative z-10">
           {/* Section header — playful rotation */}
           <div className="text-center space-y-4 mb-20">
-            <div className="text-lg text-brand font-bold rotate-[-1deg]">
+            <div className="text-lg text-purple-600 font-bold rotate-[-1deg]">
               Simple as 1-2-3
             </div>
             <div className="relative inline-block">
@@ -149,7 +149,7 @@ export default function Home() {
                 How it Works
                 <span className="absolute -right-10 top-0 rotate-12 text-2xl select-none">✨</span>
               </h2>
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-44 h-3 bg-brand/20 rotate-[-1deg] rounded-full blur-sm" />
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-44 h-3 bg-purple-500/20 rotate-[-1deg] rounded-full blur-sm" />
             </div>
             <p className="mt-6 text-gray-500 max-w-xl mx-auto font-medium">
               Get your game live in under 60 seconds. Simple, fast, and incredibly fun.
@@ -166,17 +166,17 @@ export default function Home() {
                 }`}
               >
                 {/* Background card with comic offset shadow */}
-                <div className="absolute inset-0 bg-white border-2 border-gray-800 rounded-2xl shadow-[4px_4px_0px_0px_#D4566B] transition-all duration-300 group-hover:shadow-[8px_8px_0px_0px_#D4566B] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
+                <div className="absolute inset-0 bg-white border-2 border-gray-800 rounded-2xl shadow-[4px_4px_0px_0px_#7C3AED] transition-all duration-300 group-hover:shadow-[8px_8px_0px_0px_#7C3AED] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
 
                 {/* Content */}
                 <div className="relative p-8 pt-10">
                   {/* Number badge — rotated comic pill */}
-                  <div className="absolute -top-4 -right-3 bg-brand text-white w-11 h-11 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-800 rotate-12">
+                  <div className="absolute -top-4 -right-3 bg-purple-600 text-white w-11 h-11 rounded-full flex items-center justify-center font-black text-lg border-2 border-gray-800 rotate-12">
                     {i + 1}
                   </div>
 
                   {/* Icon in bordered circle */}
-                  <div className="w-14 h-14 rounded-full border-2 border-gray-800 flex items-center justify-center text-brand mb-5 bg-brand/5 group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 rounded-full border-2 border-gray-800 flex items-center justify-center text-purple-600 mb-5 bg-purple-50 group-hover:scale-110 transition-transform">
                     {step.icon}
                   </div>
 
@@ -196,11 +196,11 @@ export default function Home() {
       
      
       {/* CTA Footer — comic style */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-surface-dark via-brand-dark to-surface-dark text-white py-20 md:py-28">
+      <section className="relative overflow-hidden text-white py-20 md:py-28" style={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(124, 58, 237, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(212, 86, 107, 0.15) 0%, transparent 50%), linear-gradient(160deg, #0F172A 0%, #1E1B4B 50%, #172554 100%)' }}>
         {/* Floating shapes */}
         <div className="absolute inset-0 pattern-grid pointer-events-none" />
-        <div className="absolute top-10 right-20 w-64 h-64 bg-brand-light/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-10 right-20 w-64 h-64 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-20 w-80 h-80 bg-brand/15 rounded-full blur-3xl pointer-events-none" />
 
         {/* Decorative pencil marks */}
         <div className="absolute top-12 left-[8%] text-4xl rotate-12 pointer-events-none opacity-[0.06] hidden lg:block select-none" aria-hidden>✎</div>
@@ -210,7 +210,7 @@ export default function Home() {
           {/* Comic card wrapper for the CTA content */}
           <div className="relative group inline-block w-full rotate-[-0.5deg]">
             {/* Background with offset shadow */}
-            <div className="absolute inset-0 bg-white/5 backdrop-blur-sm border-2 border-white/20 rounded-3xl shadow-[6px_6px_0px_0px_#D4566B] transition-all duration-300 group-hover:shadow-[10px_10px_0px_0px_#D4566B] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
+            <div className="absolute inset-0 bg-white/5 backdrop-blur-sm border-2 border-white/20 rounded-3xl shadow-[6px_6px_0px_0px_#7C3AED] transition-all duration-300 group-hover:shadow-[10px_10px_0px_0px_#7C3AED] group-hover:translate-x-[-4px] group-hover:translate-y-[-4px]" />
 
             {/* Content */}
             <div className="relative px-8 py-14 md:px-16 md:py-16">
@@ -218,7 +218,7 @@ export default function Home() {
                 <h2 className="text-3xl md:text-5xl font-extrabold rotate-[-0.5deg]">
                   Ready to transform your classroom?
                 </h2>
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-56 h-3 bg-brand/30 rotate-[-1deg] rounded-full blur-sm" />                
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-56 h-3 bg-purple-500/30 rotate-[-1deg] rounded-full blur-sm" />                
               </div>
               <p className="text-lg text-white/70 mb-10 max-w-xl mx-auto">
                 Join thousands of educators using LiveClass to make learning interactive, measurable, and fun.
@@ -226,7 +226,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => navigate('/signup')}
-                  className="group/btn px-8 py-4 bg-white text-brand font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
+                  className="group/btn px-8 py-4 bg-white text-purple-600 font-bold rounded-2xl text-lg border-2 border-gray-800 shadow-[4px_4px_0px_0px_#7C3AED] hover:shadow-[6px_6px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   Start for Free
                   <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-0.5 transition-transform" />
