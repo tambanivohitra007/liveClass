@@ -6,7 +6,7 @@ import { db, rtdb } from '../../lib/firebase';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
-import { Trophy, PartyPopper, Frown, Triangle, Diamond, Circle, Square, Hexagon, Star, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import CodeBlock from '../../components/CodeBlock';
@@ -35,14 +35,7 @@ const answerColors = [
   'bg-answer-orange hover:brightness-110',
 ];
 
-const answerIcons = [
-  <Triangle key="t" className="w-5 h-5 shrink-0" />,
-  <Diamond key="d" className="w-5 h-5 shrink-0" />,
-  <Circle key="c" className="w-5 h-5 shrink-0" />,
-  <Square key="s" className="w-5 h-5 shrink-0" />,
-  <Hexagon key="h" className="w-5 h-5 shrink-0" />,
-  <Star key="st" className="w-5 h-5 shrink-0" />,
-];
+const answerLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 export default function PlayGame() {
   const { sessionId, playerId } = useParams<{ sessionId: string; playerId: string }>();
@@ -687,7 +680,7 @@ export default function PlayGame() {
                     {isMultiAnswer && isSelected ? (
                       <Check className="w-5 h-5 shrink-0" />
                     ) : (
-                      answerIcons[i % answerIcons.length]
+                      <span className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-sm font-black shrink-0">{answerLabels[i % answerLabels.length]}</span>
                     )}
                     <span className="break-words text-center min-w-0">{opt}</span>
                   </button>
@@ -847,7 +840,7 @@ export default function PlayGame() {
                   submitted ? 'opacity-60' : 'active:scale-95'
                 }`}
               >
-                {answerIcons[i % answerIcons.length]}
+                <span className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-sm font-black shrink-0">{answerLabels[i % answerLabels.length]}</span>
                 <span className="break-words text-center min-w-0">{opt}</span>
               </button>
             ))}
