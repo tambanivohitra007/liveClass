@@ -254,7 +254,7 @@ export default function FloatingLobby({ players, avatarColors }: FloatingLobbyPr
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[50vh] overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.06]"
+      className="relative w-full flex-1 min-h-0 overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.06]"
     >
       {players.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-50">

@@ -563,7 +563,7 @@ export default function HostSession() {
   );
 
   return (
-    <div className="min-h-screen text-white flex flex-col" style={MESH_BG}>
+    <div className={`text-white flex flex-col ${session?.status === 'lobby' ? 'h-screen overflow-hidden' : 'min-h-screen'}`} style={MESH_BG}>
 
       {/* QR Code Zoom Modal */}
       {qrZoomed && session?.pinCode && (
@@ -593,7 +593,7 @@ export default function HostSession() {
       )}
 
       {/* ══════════ Top Navigation Bar ══════════ */}
-      <header className="flex items-center justify-between px-4 sm:px-8 py-3 sm:py-5 w-full max-w-7xl mx-auto">
+      <header className="flex items-center justify-between px-4 sm:px-8 py-2 sm:py-3 w-full max-w-7xl mx-auto shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="bg-brand p-1.5 sm:p-2 rounded-lg flex items-center justify-center">
             <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -623,15 +623,15 @@ export default function HostSession() {
       {/* ══════════════════ LOBBY ══════════════════ */}
       {session.status === 'lobby' && (
         <>
-          <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-8 px-4 sm:px-8 py-4 max-w-7xl mx-auto w-full">
+          <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-2 sm:py-4 max-w-7xl mx-auto w-full min-h-0">
 
             {/* ── Left Column: PIN Hero + Players ── */}
-            <div className="flex-grow flex flex-col gap-4 sm:gap-8">
+            <div className="flex-grow flex flex-col gap-3 sm:gap-4 min-h-0">
 
               {/* Hero PIN + QR Section */}
-              <div className="relative flex flex-col items-center py-6 sm:py-12 px-4 sm:px-8 bg-white/[0.07] border border-white/[0.12] rounded-2xl overflow-hidden backdrop-blur-md animate-bounce-in shadow-xl shadow-black/20">
+              <div className="relative flex flex-col items-center py-4 sm:py-6 px-4 sm:px-8 bg-white/[0.07] border border-white/[0.12] rounded-2xl overflow-hidden backdrop-blur-md animate-bounce-in shadow-xl shadow-black/20 shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-brand/10" />
-                <h2 className="relative text-sm sm:text-base font-medium text-white/60 mb-4 sm:mb-6 uppercase tracking-[0.2em]">
+                <h2 className="relative text-sm sm:text-base font-medium text-white/60 mb-2 sm:mb-4 uppercase tracking-[0.2em]">
                   Join the Game
                 </h2>
                 <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
@@ -639,14 +639,14 @@ export default function HostSession() {
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm font-medium text-brand">Enter Game PIN</p>
                     <div
-                      className="bg-white text-surface-dark px-6 sm:px-10 py-3 sm:py-5 rounded-2xl flex items-center gap-2 sm:gap-3"
+                      className="bg-white text-surface-dark px-6 sm:px-10 py-2 sm:py-3 rounded-2xl flex items-center gap-2 sm:gap-3"
                       style={{ boxShadow: '0 0 60px rgba(212, 86, 107, 0.3)' }}
                     >
-                      <span className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
                         {session.pinCode.slice(0, 3)}
                       </span>
-                      <div className="w-1 sm:w-1.5 h-8 sm:h-12 bg-gray-200 rounded-full" />
-                      <span className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight">
+                      <div className="w-1 sm:w-1.5 h-6 sm:h-10 bg-gray-200 rounded-full" />
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
                         {session.pinCode.slice(3)}
                       </span>
                     </div>
@@ -690,14 +690,14 @@ export default function HostSession() {
               </div>
 
               {/* Join URL */}
-              <p className="text-center text-white/40 text-sm font-medium -mt-2 sm:-mt-4">
+              <p className="text-center text-white/40 text-sm font-medium -mt-1 sm:-mt-2 shrink-0">
                 Or go to <span className="text-white/70 font-semibold select-all">{window.location.host}</span> and enter the PIN
               </p>
 
               {/* Players Grid */}
-              <div className="flex-grow flex flex-col animate-fade-in">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold">Waiting Lobby</h3>
+              <div className="flex-1 flex flex-col animate-fade-in min-h-0">
+                <div className="flex items-center justify-between mb-2 shrink-0">
+                  <h3 className="text-lg font-bold">Waiting Lobby</h3>
                   <span className="text-lg font-black tabular-nums">
                     {players.length} <span className="text-sm font-medium text-white/40">player{players.length !== 1 && 's'}</span>
                   </span>
@@ -739,8 +739,8 @@ export default function HostSession() {
             </div>
 
             {/* ── Right Column: Host Controls Sidebar ── */}
-            <aside className="w-full lg:w-80 flex flex-col gap-4 sm:gap-6 shrink-0">
-              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 h-full shadow-lg shadow-black/10">
+            <aside className="w-full lg:w-80 flex flex-col shrink-0 min-h-0">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 h-full shadow-lg shadow-black/10 overflow-y-auto">
 
                 {/* Settings Header */}
                 <h3 className="text-lg font-bold flex items-center gap-2">
@@ -749,9 +749,9 @@ export default function HostSession() {
                 </h3>
 
                 {/* Setting Rows */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {/* Anti-Cheat */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
                       <ShieldAlert className={`w-5 h-5 ${session.antiCheatEnabled !== false ? 'text-success' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
                       <span className="text-sm font-medium">Anti-Cheat</span>
@@ -765,7 +765,7 @@ export default function HostSession() {
                   </div>
 
                   {/* Pace Mode */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
                       <GraduationCap className={`w-5 h-5 ${session.paceMode === 'student' ? 'text-info' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
                       <span className="text-sm font-medium">Pace</span>
@@ -797,7 +797,7 @@ export default function HostSession() {
                   </div>
 
                   {/* Teams */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
                       <Users className={`w-5 h-5 ${session.teamMode ? 'text-info' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
                       <span className="text-sm font-medium">Teams</span>
@@ -830,7 +830,7 @@ export default function HostSession() {
                   </div>
 
                   {/* Shuffle */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
                       <Shuffle className={`w-5 h-5 ${session.shuffleQuestions ? 'text-warning' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
                       <span className="text-sm font-medium">Shuffle</span>
@@ -845,7 +845,7 @@ export default function HostSession() {
 
                   {/* Rotating Sets (student-paced only) */}
                   {session.paceMode === 'student' && allQuestions.length > 2 && (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                       <div className="flex items-center gap-3">
                         <Dices className={`w-5 h-5 ${session.rotatingSetSize ? 'text-purple-400' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
                         <span className="text-sm font-medium">Rotating Sets</span>
@@ -885,7 +885,7 @@ export default function HostSession() {
                   )}
 
                   {/* Music */}
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
                       <Music className="w-5 h-5 text-white/50 group-hover:text-brand transition-colors" />
                       <span className="text-sm font-medium">Music</span>
@@ -906,9 +906,9 @@ export default function HostSession() {
                 </div>
 
                 {/* Bottom: Game Info + Start */}
-                <div className="mt-auto flex flex-col gap-4">
-                  <div className="bg-brand/10 border border-brand/20 rounded-xl p-4 text-center">
-                    <p className="text-xs text-brand font-bold uppercase mb-1">
+                <div className="mt-auto flex flex-col gap-3">
+                  <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-center">
+                    <p className="text-xs text-brand font-bold uppercase mb-0.5">
                       {players.length > 0 ? 'Game Ready' : 'Waiting for Players'}
                     </p>
                     <p className="text-sm text-white/50">
@@ -918,7 +918,7 @@ export default function HostSession() {
                   <button
                     onClick={startQuestion}
                     disabled={players.length === 0}
-                    className="w-full bg-gradient-to-r from-brand to-purple-500 hover:brightness-110 text-white font-bold py-4 rounded-full transition-all disabled:opacity-30 flex items-center justify-center gap-2 group"
+                    className="w-full bg-gradient-to-r from-brand to-purple-500 hover:brightness-110 text-white font-bold py-3 rounded-full transition-all disabled:opacity-30 flex items-center justify-center gap-2 group"
                     style={{ boxShadow: players.length > 0 ? '0 4px 25px rgba(139, 92, 246, 0.35)' : 'none' }}
                   >
                     <span>START GAME</span>
@@ -927,7 +927,7 @@ export default function HostSession() {
                   <button
                     onClick={endSessionEarly}
                     disabled={endingSession}
-                    className="w-full py-3 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all text-sm border border-white/10"
+                    className="w-full py-2.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all text-sm border border-white/10"
                   >
                     {endingSession ? 'Ending...' : 'End Session'}
                   </button>
@@ -937,7 +937,7 @@ export default function HostSession() {
           </main>
 
           {/* Scrolling Marquee Footer */}
-          <footer className="w-full bg-white/5 border-t border-white/5 py-3.5 overflow-hidden mt-auto">
+          <footer className="w-full bg-white/5 border-t border-white/5 py-2.5 overflow-hidden shrink-0">
             <div className="animate-marquee whitespace-nowrap flex items-center gap-12 text-white/25 font-medium text-sm">
               <div className="flex items-center gap-12">
                 {MARQUEE_ITEMS.map((item, i) => (
