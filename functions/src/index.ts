@@ -322,9 +322,10 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
 
 // --- Join Session ---
 export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
-  const { sessionId, nickname } = request.data as {
+  const { sessionId, nickname, playerId: existingPlayerId } = request.data as {
     sessionId: string;
     nickname: string;
+    playerId?: string;
   };
 
   if (!sessionId || !nickname) {
@@ -347,6 +348,36 @@ export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
   if (session.status === "ended") {
     throw new HttpsError("failed-precondition", "Session has ended");
   }
+
+  // --- Rejoin logic (runs before joinLocked check so returning players aren't blocked) ---
+  // 1. Authenticated user: look up by userId
+  if (request.auth?.uid) {
+    const existingByUser = await db
+      .collection(`sessions/${sessionId}/players`)
+      .where("userId", "==", request.auth.uid)
+      .limit(1)
+      .get();
+    if (!existingByUser.empty) {
+      const doc = existingByUser.docs[0];
+      const newToken = generateToken();
+      await doc.ref.update({ activeToken: newToken });
+      return { playerId: doc.id, activeToken: newToken, nickname: doc.data().nickname, rejoin: true };
+    }
+  }
+
+  // 2. Unauthenticated user: verify playerId + nickname match
+  if (existingPlayerId) {
+    const existingDoc = await db
+      .doc(`sessions/${sessionId}/players/${existingPlayerId}`)
+      .get();
+    if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
+      const newToken = generateToken();
+      await existingDoc.ref.update({ activeToken: newToken });
+      return { playerId: existingDoc.id, activeToken: newToken, nickname, rejoin: true };
+    }
+  }
+
+  // --- Join lock check (after rejoin so returning players aren't blocked) ---
   if (session.joinLocked) {
     throw new HttpsError("failed-precondition", "Session is locked");
   }

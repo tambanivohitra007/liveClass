@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
-import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, ShieldCheck, User } from 'lucide-react';
+import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, ShieldCheck, User, RefreshCw } from 'lucide-react';
 import WaveBackground from '../../components/ui/WaveBackground';
 
 const ADJECTIVES = [
@@ -77,6 +77,7 @@ export default function JoinGame() {
   const [joining, setJoining] = useState(false);
   const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
+  const [rejoinData, setRejoinData] = useState<{ playerId: string; nickname: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const pattern = useMemo(() => generatePattern(), [step === 'verify' ? sessionId : null]); // eslint-disable-line
@@ -96,11 +97,26 @@ export default function JoinGame() {
           return;
         }
         const sessionDoc = snapshot.docs[0];
+        const resolvedSessionId = sessionDoc.id;
+
+        // Check localStorage for existing join data (rejoin recovery)
+        try {
+          const stored = localStorage.getItem(`liveclass_session_${resolvedSessionId}`);
+          if (stored) {
+            const parsed = JSON.parse(stored) as { playerId: string; nickname: string };
+            if (parsed.playerId && parsed.nickname) {
+              setSessionId(resolvedSessionId);
+              setRejoinData(parsed);
+              return;
+            }
+          }
+        } catch { /* ignore malformed localStorage */ }
+
         if (sessionDoc.data().joinLocked) {
           setError('This game is locked. No more players can join.');
           return;
         }
-        setSessionId(sessionDoc.id);
+        setSessionId(resolvedSessionId);
         setStep('verify');
       })();
     }
@@ -130,26 +146,54 @@ export default function JoinGame() {
     }
 
     const sessionDoc = snapshot.docs[0];
+    const resolvedSessionId = sessionDoc.id;
+
+    // Check localStorage for existing join data (rejoin recovery)
+    try {
+      const stored = localStorage.getItem(`liveclass_session_${resolvedSessionId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as { playerId: string; nickname: string };
+        if (parsed.playerId && parsed.nickname) {
+          setSessionId(resolvedSessionId);
+          setRejoinData(parsed);
+          return; // Show rejoin banner instead of continuing to verify step
+        }
+      }
+    } catch { /* ignore malformed localStorage */ }
+
     if (sessionDoc.data().joinLocked) {
       setError('This game is locked. No more players can join.');
       return;
     }
 
-    setSessionId(sessionDoc.id);
+    setSessionId(resolvedSessionId);
     setStep('verify');
   };
 
-  const handleJoin = async (e: React.FormEvent) => {
+  const handleJoin = async (e: React.FormEvent, existingPlayerId?: string) => {
     e.preventDefault();
     setError('');
     setJoining(true);
 
     try {
       const joinFn = httpsCallable<
-        { sessionId: string; nickname: string },
-        { playerId: string; activeToken: string }
+        { sessionId: string; nickname: string; playerId?: string },
+        { playerId: string; activeToken: string; nickname?: string; rejoin?: boolean }
       >(functions, 'joinSession');
-      const result = await joinFn({ sessionId, nickname });
+      const joinNickname = existingPlayerId ? rejoinData?.nickname || nickname : nickname;
+      const result = await joinFn({
+        sessionId,
+        nickname: joinNickname,
+        ...(existingPlayerId ? { playerId: existingPlayerId } : {}),
+      });
+
+      // Store join data in localStorage for future rejoin recovery
+      const finalNickname = result.data.nickname || joinNickname;
+      localStorage.setItem(`liveclass_session_${sessionId}`, JSON.stringify({
+        playerId: result.data.playerId,
+        nickname: finalNickname,
+      }));
+
       sessionStorage.setItem(`activeToken_${sessionId}`, result.data.activeToken);
       navigate(`/play/${sessionId}/${result.data.playerId}`);
     } catch (err) {
@@ -157,6 +201,19 @@ export default function JoinGame() {
     } finally {
       setJoining(false);
     }
+  };
+
+  const handleRejoin = async () => {
+    if (!rejoinData) return;
+    // Create a synthetic form event
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    await handleJoin(fakeEvent, rejoinData.playerId);
+  };
+
+  const handleDeclineRejoin = () => {
+    localStorage.removeItem(`liveclass_session_${sessionId}`);
+    setRejoinData(null);
+    setStep('verify');
   };
 
   return (
@@ -172,7 +229,7 @@ export default function JoinGame() {
         </div>
 
         {/* Step progress */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className={`flex items-center justify-center gap-2 mb-6 ${rejoinData ? 'hidden' : ''}`}>
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const isActive = i === stepIdx;
@@ -211,8 +268,36 @@ export default function JoinGame() {
               </div>
             )}
 
+            {/* Rejoin banner */}
+            {rejoinData && (
+              <div className="animate-fade-in">
+                <div className="text-center mb-4">
+                  <RefreshCw className="w-10 h-10 text-brand mx-auto mb-3" />
+                  <p className="text-lg font-bold text-gray-800">Welcome back!</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Rejoin as <span className="font-bold text-gray-800">{rejoinData.nickname}</span>?
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRejoin}
+                  disabled={joining}
+                  className="w-full py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
+                >
+                  {joining ? 'Rejoining...' : 'Rejoin Game'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeclineRejoin}
+                  className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-400 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  Join as someone else
+                </button>
+              </div>
+            )}
+
             {/* Step: PIN */}
-            {step === 'pin' && (
+            {step === 'pin' && !rejoinData && (
               <form onSubmit={handlePinSubmit} className="animate-fade-in">
                 <label className="block text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
                   Game PIN

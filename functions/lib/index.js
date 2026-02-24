@@ -307,7 +307,7 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
 });
 // --- Join Session ---
 exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
-    const { sessionId, nickname } = request.data;
+    const { sessionId, nickname, playerId: existingPlayerId } = request.data;
     if (!sessionId || !nickname) {
         throw new https_1.HttpsError("invalid-argument", "sessionId and nickname are required");
     }
@@ -322,6 +322,33 @@ exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
     if (session.status === "ended") {
         throw new https_1.HttpsError("failed-precondition", "Session has ended");
     }
+    // --- Rejoin logic (runs before joinLocked check so returning players aren't blocked) ---
+    // 1. Authenticated user: look up by userId
+    if (request.auth?.uid) {
+        const existingByUser = await db
+            .collection(`sessions/${sessionId}/players`)
+            .where("userId", "==", request.auth.uid)
+            .limit(1)
+            .get();
+        if (!existingByUser.empty) {
+            const doc = existingByUser.docs[0];
+            const newToken = generateToken();
+            await doc.ref.update({ activeToken: newToken });
+            return { playerId: doc.id, activeToken: newToken, nickname: doc.data().nickname, rejoin: true };
+        }
+    }
+    // 2. Unauthenticated user: verify playerId + nickname match
+    if (existingPlayerId) {
+        const existingDoc = await db
+            .doc(`sessions/${sessionId}/players/${existingPlayerId}`)
+            .get();
+        if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
+            const newToken = generateToken();
+            await existingDoc.ref.update({ activeToken: newToken });
+            return { playerId: existingDoc.id, activeToken: newToken, nickname, rejoin: true };
+        }
+    }
+    // --- Join lock check (after rejoin so returning players aren't blocked) ---
     if (session.joinLocked) {
         throw new https_1.HttpsError("failed-precondition", "Session is locked");
     }
