@@ -915,6 +915,13 @@ export default function HostSession() {
                     <span>START GAME</span>
                     <Play className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                   </button>
+                  <button
+                    onClick={endSessionEarly}
+                    disabled={endingSession}
+                    className="w-full py-3 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all text-sm border border-white/10"
+                  >
+                    {endingSession ? 'Ending...' : 'End Session'}
+                  </button>
                 </div>
               </div>
             </aside>
