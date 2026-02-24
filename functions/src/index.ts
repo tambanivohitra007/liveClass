@@ -24,6 +24,13 @@ const FUNCTION_CONFIG = {
   maxInstances: 20,
 };
 
+const HOT_PATH_CONFIG = {
+  region: REGION,
+  memory: "256MiB" as const,
+  minInstances: 1,
+  maxInstances: 20,
+};
+
 // --- In-memory caches (persist across warm invocations) ---
 const sessionDataCache = new Map<string, FirebaseFirestore.DocumentData>();
 const questionDataCache = new Map<string, FirebaseFirestore.DocumentData>();
@@ -314,7 +321,7 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
 });
 
 // --- Join Session ---
-export const joinSession = onCall(FUNCTION_CONFIG, async (request) => {
+export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
   const { sessionId, nickname } = request.data as {
     sessionId: string;
     nickname: string;
@@ -697,7 +704,7 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
 }
 
 // --- Score Answer (callable — used by PlayAssignment) ---
-export const scoreAnswer = onCall(FUNCTION_CONFIG, async (request) => {
+export const scoreAnswer = onCall(HOT_PATH_CONFIG, async (request) => {
   const { sessionId, questionId, playerId, selection, timeMs, activeToken } =
     request.data as {
       sessionId: string;
@@ -718,6 +725,7 @@ export const processAnswer = onValueCreated(
     ref: "/liveAnswers/{sessionId}/{questionId}/{playerId}",
     region: REGION,
     memory: "256MiB",
+    minInstances: 1,
     maxInstances: 20,
   },
   async (event) => {
@@ -840,7 +848,7 @@ export const processAnswer = onValueCreated(
 
 // --- End Question ---
 // Reads scores + pending answers from RTDB, batch-persists to Firestore
-export const endQuestion = onCall(FUNCTION_CONFIG, async (request) => {
+export const endQuestion = onCall(HOT_PATH_CONFIG, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
   }

@@ -56,6 +56,12 @@ const FUNCTION_CONFIG = {
     minInstances: 0,
     maxInstances: 20,
 };
+const HOT_PATH_CONFIG = {
+    region: REGION,
+    memory: "256MiB",
+    minInstances: 1,
+    maxInstances: 20,
+};
 // --- In-memory caches (persist across warm invocations) ---
 const sessionDataCache = new Map();
 const questionDataCache = new Map();
@@ -300,7 +306,7 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
     return { sessionId: sessionRef.id };
 });
 // --- Join Session ---
-exports.joinSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
     const { sessionId, nickname } = request.data;
     if (!sessionId || !nickname) {
         throw new https_1.HttpsError("invalid-argument", "sessionId and nickname are required");
@@ -604,7 +610,7 @@ async function computeAndWriteScore(input) {
     return { correct, pointsAwarded, rank, totalPoints: newTotalPoints, behindBy };
 }
 // --- Score Answer (callable — used by PlayAssignment) ---
-exports.scoreAnswer = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+exports.scoreAnswer = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
     const { sessionId, questionId, playerId, selection, timeMs, activeToken } = request.data;
     return computeAndWriteScore({ sessionId, questionId, playerId, selection, timeMs, activeToken });
 });
@@ -614,6 +620,7 @@ exports.processAnswer = (0, database_1.onValueCreated)({
     ref: "/liveAnswers/{sessionId}/{questionId}/{playerId}",
     region: REGION,
     memory: "256MiB",
+    minInstances: 1,
     maxInstances: 20,
 }, async (event) => {
     const { sessionId, questionId, playerId } = event.params;
@@ -723,7 +730,7 @@ exports.processAnswer = (0, database_1.onValueCreated)({
 });
 // --- End Question ---
 // Reads scores + pending answers from RTDB, batch-persists to Firestore
-exports.endQuestion = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+exports.endQuestion = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
     }
