@@ -179,3 +179,10 @@
 .dark .hover\:shadow-xl:hover {
   box-shadow: 0 24px 48px -10px rgba(0,158,226,0.22), 0 10px 20px -5px rgba(0,0,0,0.2);
 }
+
+/* SweetAlert2 — fix icon animation masks in dark mode */
+.dark .swal2-popup .swal2-success-circular-line-left,
+.dark .swal2-popup .swal2-success-circular-line-right,
+.dark .swal2-popup .swal2-success-fix {
+  background-color: var(--surface-card) !important;
+}

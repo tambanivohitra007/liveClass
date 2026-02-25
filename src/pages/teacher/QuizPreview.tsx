@@ -314,7 +314,7 @@ export default function QuizPreview() {
             {isMultiAnswer && state === 'answering' && (
               <p className="text-center text-gray-500 dark:text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
             )}
-            <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
+            <div className="grid grid-cols-2 gap-3 flex-1 max-h-100">
               {question.options.map((opt, i) => {
                 const correct = isCorrect(opt);
                 const selected = isMultiAnswer ? selectedAnswers.includes(opt) : selectedAnswer === opt;

@@ -771,7 +771,7 @@ export default function PlayGame() {
         <div className="flex items-center gap-2">
           {playerAvatar && <span className="text-lg leading-none">{playerAvatar}</span>}
           <div className="flex flex-col">
-            <span className="text-white/70 text-xs font-semibold truncate max-w-[80px]">{playerNickname}</span>
+            <span className="text-white/70 text-xs font-semibold truncate max-w-20">{playerNickname}</span>
             <span className="text-white/40 text-[10px] font-medium">Q{isStudentPaced ? localQIndex + 1 : (session.currentQuestionIndex || 0) + 1}{myTeam ? ` · ${myTeam.name.split(' ')[0]}` : ''}</span>
           </div>
         </div>
@@ -806,7 +806,7 @@ export default function PlayGame() {
       {/* Question */}
       <div className="flex-1 flex flex-col px-4 pb-4">
         <div className="text-center py-6 animate-fade-in">
-          <h2 className="text-xl md:text-2xl font-bold text-white break-words">{currentQuestion.text}</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">{currentQuestion.text}</h2>
           {currentQuestion.imageUrl && (
             <img src={currentQuestion.imageUrl} alt="" className="max-h-40 mx-auto mt-4 rounded-xl" />
           )}
@@ -828,7 +828,7 @@ export default function PlayGame() {
             {isMultiAnswer && (
               <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
             )}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[400px]">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-100">
               {currentQuestion.options.map((opt, i) => {
                 const isSelected = isMultiAnswer
                   ? selectedAnswers.includes(opt)
@@ -861,7 +861,7 @@ export default function PlayGame() {
                     ) : (
                       <span className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-sm font-black shrink-0">{answerLabels[i % answerLabels.length]}</span>
                     )}
-                    <span className="break-words text-center min-w-0">{opt}</span>
+                    <span className="wrap-break-word text-center min-w-0">{opt}</span>
                   </button>
                 );
               })}
@@ -911,7 +911,7 @@ export default function PlayGame() {
               <div key={i} className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl border-2 ${
                 matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
               }`}>
-                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 break-words ${answerColors[i % answerColors.length].split(' ')[0]}`}>
+                <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 wrap-break-word ${answerColors[i % answerColors.length].split(' ')[0]}`}>
                   {left}
                 </span>
                 <span className="hidden sm:inline text-white/30">&rarr;</span>
@@ -1005,7 +1005,7 @@ export default function PlayGame() {
 
         {/* Poll UI */}
         {currentQuestion.type === 'poll' && (
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[400px]">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-100">
             {currentQuestion.options.map((opt, i) => (
               <button
                 key={i}
@@ -1020,7 +1020,7 @@ export default function PlayGame() {
                 }`}
               >
                 <span className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-sm font-black shrink-0">{answerLabels[i % answerLabels.length]}</span>
-                <span className="break-words text-center min-w-0">{opt}</span>
+                <span className="wrap-break-word text-center min-w-0">{opt}</span>
               </button>
             ))}
           </div>

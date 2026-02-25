@@ -629,14 +629,14 @@ export default function HostSession() {
       {/* ══════════════════ LOBBY ══════════════════ */}
       {session.status === 'lobby' && (
         <>
-          <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-2 sm:py-4 max-w-7xl mx-auto w-full min-h-0">
+          <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-2 sm:py-4 max-w-7xl mx-auto w-full min-h-0">
 
             {/* ── Left Column: PIN Hero + Players ── */}
-            <div className="flex-grow flex flex-col gap-3 sm:gap-4 min-h-0">
+            <div className="grow flex flex-col gap-3 sm:gap-4 min-h-0">
 
               {/* Hero PIN + QR Section */}
-              <div className="relative flex flex-col items-center py-4 sm:py-6 px-4 sm:px-8 bg-white/[0.07] border border-white/[0.12] rounded-2xl overflow-hidden backdrop-blur-md animate-bounce-in shadow-xl shadow-black/20 shrink-0">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-brand/10" />
+              <div className="relative flex flex-col items-center py-4 sm:py-6 px-4 sm:px-8 bg-white/[0.07] border border-white/12 rounded-2xl overflow-hidden backdrop-blur-md animate-bounce-in shadow-xl shadow-black/20 shrink-0">
+                <div className="absolute inset-0 bg-linear-to-br from-purple-500/10 via-transparent to-brand/10" />
                 <h2 className="relative text-sm sm:text-base font-medium text-white/60 mb-2 sm:mb-4 uppercase tracking-[0.2em]">
                   Join the Game
                 </h2>
@@ -660,15 +660,15 @@ export default function HostSession() {
 
                   {/* Vertical divider (desktop) */}
                   <div className="hidden sm:flex flex-col items-center gap-2 self-stretch justify-center">
-                    <div className="flex-1 w-px bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+                    <div className="flex-1 w-px bg-linear-to-b from-transparent via-white/15 to-transparent" />
                     <span className="text-[10px] uppercase tracking-widest text-white/30 font-medium">or</span>
-                    <div className="flex-1 w-px bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+                    <div className="flex-1 w-px bg-linear-to-b from-transparent via-white/15 to-transparent" />
                   </div>
                   {/* Horizontal divider (mobile) */}
                   <div className="flex sm:hidden items-center gap-3 w-full">
-                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+                    <div className="flex-1 h-px bg-linear-to-r from-transparent via-white/15 to-transparent" />
                     <span className="text-[10px] uppercase tracking-widest text-white/30 font-medium">or</span>
-                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+                    <div className="flex-1 h-px bg-linear-to-r from-transparent via-white/15 to-transparent" />
                   </div>
 
                   {/* QR Code */}
@@ -685,7 +685,7 @@ export default function HostSession() {
                         value={`${window.location.origin}/join?pin=${session.pinCode}`}
                         size={100}
                         level="M"
-                        className="sm:w-[128px] sm:h-[128px]"
+                        className="sm:w-32 sm:h-32"
                       />
                       <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                         <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
@@ -770,7 +770,7 @@ export default function HostSession() {
 
             {/* ── Right Column: Host Controls Sidebar ── */}
             <aside className="w-full lg:w-80 flex flex-col shrink-0 min-h-0">
-              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 h-full shadow-lg shadow-black/10 overflow-y-auto">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 h-full shadow-lg shadow-black/10 overflow-y-auto">
 
                 {/* Settings Header */}
                 <h3 className="text-lg font-bold flex items-center gap-2">
@@ -926,7 +926,7 @@ export default function HostSession() {
                         setLobbyTrackState(e.target.value);
                         setLobbyTrack(e.target.value);
                       }}
-                      className="px-2 py-1 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none max-w-[120px]"
+                      className="px-2 py-1 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none max-w-30"
                     >
                       {Object.entries(MUSIC_TRACKS).map(([key, track]) => (
                         <option key={key} value={key} className="bg-gray-800 dark:bg-gray-800">{track.label}</option>
@@ -989,9 +989,9 @@ export default function HostSession() {
 
       {/* ══════════════════ LIVE QUESTION ══════════════════ */}
       {session.questionState === 'live' && (
-        <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto w-full">
+        <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto w-full">
           {/* Left: Question + Timer + Controls */}
-          <div className="flex-grow flex flex-col items-center justify-center">
+          <div className="grow flex flex-col items-center justify-center">
             {/* Question counter */}
             <div className="inline-flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/5 mb-4 sm:mb-8 animate-fade-in">
               <span className="text-xs text-white/50 uppercase tracking-wider font-medium">Question</span>
@@ -1002,7 +1002,7 @@ export default function HostSession() {
               </span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in break-words">
+            <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in wrap-break-word">
               {currentQuestionText}
             </h2>
 
@@ -1088,7 +1088,7 @@ export default function HostSession() {
           </div>
 
           {/* Right: Participants panel */}
-          <div className="w-full lg:w-72 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 animate-slide-up self-start lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
+          <div className="w-full lg:w-72 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 animate-slide-up self-start lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -1137,11 +1137,11 @@ export default function HostSession() {
         const totalPlayers = players.length;
         const progressPercent = totalPlayers > 0 ? Math.round((finishedCount / totalPlayers) * 100) : 0;
         return (
-          <main className="flex-grow flex flex-col lg:flex-row gap-4 sm:gap-8 px-4 sm:px-8 py-4 sm:py-8 max-w-7xl mx-auto w-full">
+          <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-8 px-4 sm:px-8 py-4 sm:py-8 max-w-7xl mx-auto w-full">
             {/* Left: Progress */}
-            <div className="flex-grow flex flex-col gap-4 sm:gap-6">
+            <div className="grow flex flex-col gap-4 sm:gap-6">
               {/* Progress Card */}
-              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-fade-in">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-fade-in">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-success" />
@@ -1154,7 +1154,7 @@ export default function HostSession() {
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-brand to-success rounded-full transition-all duration-500"
+                    className="h-full bg-linear-to-r from-brand to-success rounded-full transition-all duration-500"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -1162,7 +1162,7 @@ export default function HostSession() {
               </div>
 
               {/* Per-student progress list */}
-              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-fade-in">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-fade-in">
                 <h4 className="text-sm font-bold text-white/60 mb-4 uppercase tracking-wider">Individual Progress</h4>
                 <div className="space-y-2 max-h-80 overflow-y-auto">
                   {players.map((p) => {
@@ -1193,7 +1193,7 @@ export default function HostSession() {
 
             {/* Right: Leaderboard + End Button */}
             <div className="w-full lg:w-96 flex flex-col gap-4 sm:gap-6 shrink-0">
-              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-slide-up">
+              <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-slide-up">
                 <Leaderboard sessionId={session.id} currentQuestion={undefined} totalQuestions={totalQuestions} />
               </div>
 
@@ -1222,9 +1222,9 @@ export default function HostSession() {
 
       {/* ══════════════════ REVEAL ══════════════════ */}
       {session.questionState === 'reveal' && (
-        <main className="flex-grow flex flex-col px-4 sm:px-8 py-4 sm:py-8 max-w-4xl mx-auto w-full">
+        <main className="grow flex flex-col px-4 sm:px-8 py-4 sm:py-8 max-w-4xl mx-auto w-full">
           {session.teamMode && session.teamScoreSnapshot && (
-            <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 mb-4 animate-bounce-in">
+            <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 mb-4 animate-bounce-in">
               <h3 className="text-base sm:text-lg font-bold mb-4">Team Standings</h3>
               <div className="space-y-3">
                 {session.teamScoreSnapshot.map((team, i) => (
@@ -1240,7 +1240,7 @@ export default function HostSession() {
             </div>
           )}
 
-          <div className="bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 mb-4 animate-slide-up">
+          <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 mb-4 animate-slide-up">
             <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} currentQuestion={session.currentQuestionIndex + 1} totalQuestions={totalQuestions} />
           </div>
 
