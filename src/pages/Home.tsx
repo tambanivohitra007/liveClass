@@ -97,9 +97,9 @@ export default function Home() {
               Free for educators — no credit card required
             </div>
 
-            <h1 className="text-2xl md:text-4xl tracking-tight text-gray-900 dark:text-white leading-[1.1]">
+            <h1 className="text-3xl md:text-5xl tracking-tight text-gray-900 dark:text-white leading-[1.1]">
               Make Learning
-                <span className="block text-4xl md:text-8xl p-2 bg-gradient-to-r from-red-500 via-pink-500 to-red-500 bg-clip-text text-transparent drop-shadow-lg">
+                <span className="block text-5xl md:text-8xl p-2 bg-gradient-to-r from-red-500 via-pink-500 to-red-500 bg-clip-text text-transparent drop-shadow-lg">
                   Unforgettable
                 </span>
             </h1>
