@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import BottomTabBar from './components/BottomTabBar';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastContainer from './components/Toast';
+import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -191,9 +192,11 @@ function App() {
   }, [theme]);
 
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

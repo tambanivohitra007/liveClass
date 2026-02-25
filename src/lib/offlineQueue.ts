@@ -55,7 +55,7 @@ export async function syncPendingAnswers(
         await removePendingAnswer(answer.id);
       }
     } catch (err) {
-      console.error('Failed to sync answer, will retry later:', err);
+      // Sync failed — stop and retry on next attempt
       break;
     }
   }

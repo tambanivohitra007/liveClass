@@ -190,7 +190,7 @@ export default function AiGenerateModal({
     `flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
       sourceMode === mode
         ? 'bg-brand text-white shadow-sm'
-        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+        : 'text-gray-500 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10'
     }`;
 
   return (
@@ -207,13 +207,13 @@ export default function AiGenerateModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-0">
-          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-brand" />
             AI Question Generator
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors"
           >
             <XIcon className="w-5 h-5" />
           </button>
@@ -221,7 +221,7 @@ export default function AiGenerateModal({
 
         <div className="p-6 space-y-4">
           {/* Source Tabs */}
-          <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+          <div className="flex gap-1 p-1 bg-gray-100 dark:bg-white/10 rounded-xl">
             <button onClick={() => setSourceMode('topic')} className={tabClass('topic')}>
               <Type className="w-4 h-4" /> Topic
             </button>
@@ -237,23 +237,23 @@ export default function AiGenerateModal({
           {sourceMode === 'topic' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Topic</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Topic</label>
                 <input
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="e.g. Photosynthesis, World War II, Python basics"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description / Context</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Description / Context</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Optional: grade level, specific focus, learning objectives..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white resize-none"
                 />
               </div>
             </>
@@ -266,13 +266,13 @@ export default function AiGenerateModal({
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-brand hover:bg-brand/5 transition-all"
+                  className="border-2 border-dashed border-gray-300 dark:border-white/10 rounded-xl p-8 text-center cursor-pointer hover:border-brand hover:bg-brand/5 transition-all"
                 >
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-600">
+                  <Upload className="w-8 h-8 text-gray-400 dark:text-white/40 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-600 dark:text-white/60">
                     Drop a PDF here or click to browse
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
+                  <p className="text-xs text-gray-400 dark:text-white/40 mt-1">Max 10MB</p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -285,10 +285,10 @@ export default function AiGenerateModal({
                   />
                 </div>
               ) : (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10">
                   <FileText className="w-5 h-5 text-brand shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{pdfFile.name}</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-white truncate">{pdfFile.name}</p>
                     <p className="text-xs text-gray-400">
                       {(pdfFile.size / (1024 * 1024)).toFixed(1)} MB
                       {pdfUploading && ' — Uploading...'}
@@ -300,7 +300,7 @@ export default function AiGenerateModal({
                   ) : (
                     <button
                       onClick={removePdf}
-                      className="p-1 rounded-lg hover:bg-gray-200 text-gray-400 transition-colors shrink-0"
+                      className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors shrink-0"
                     >
                       <XIcon className="w-4 h-4" />
                     </button>
@@ -308,13 +308,13 @@ export default function AiGenerateModal({
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Additional Context</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Additional Context</label>
                 <textarea
                   value={additionalContext}
                   onChange={(e) => setAdditionalContext(e.target.value)}
                   placeholder="Optional: focus on chapter 3, target grade 10..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white resize-none"
                 />
               </div>
             </>
@@ -323,24 +323,24 @@ export default function AiGenerateModal({
           {sourceMode === 'url' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Web Page URL</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Web Page URL</label>
                 <input
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com/article"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Additional Context</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Additional Context</label>
                 <textarea
                   value={urlContext}
                   onChange={(e) => setUrlContext(e.target.value)}
                   placeholder="Optional: focus on specific section, target difficulty..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white resize-none"
                 />
               </div>
             </>
@@ -349,11 +349,11 @@ export default function AiGenerateModal({
           {/* Shared controls */}
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Count</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Count</label>
               <select
                 value={count}
                 onChange={(e) => setCount(parseInt(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
               >
                 {[3, 5, 7, 10].map((n) => (
                   <option key={n} value={n}>{n} questions</option>
@@ -361,11 +361,11 @@ export default function AiGenerateModal({
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Type</label>
               <select
                 value={questionType}
                 onChange={(e) => setQuestionType(e.target.value as QuestionType | 'mixed')}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
               >
                 <option value="mixed">Mixed (Variety)</option>
                 <option value="mcq">Multiple Choice</option>
@@ -379,11 +379,11 @@ export default function AiGenerateModal({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Difficulty</label>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
             >
               <option value="mixed">Mixed</option>
               <option value="easy">Easy</option>
@@ -410,7 +410,7 @@ export default function AiGenerateModal({
               </>
             )}
           </button>
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-gray-400 dark:text-white/40 text-center">
             {generateMeta
               ? 'A new quiz will be created and opened for review.'
               : 'Questions will be added to your quiz. Review and edit them before saving.'}

@@ -57,7 +57,7 @@ export default function BottomTabBar() {
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full no-underline transition-colors ${
                 active
                   ? 'text-brand'
-                  : 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-400 dark:text-white/40'
               }`}
             >
               <Icon

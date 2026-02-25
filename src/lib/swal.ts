@@ -21,7 +21,7 @@ export default swal;
 export function confirmDelete(itemName: string) {
   return swal.fire({
     title: 'Delete this?',
-    html: `<span class="text-gray-500 dark:text-white/60">"<strong>${itemName}</strong>" will be permanently deleted.</span>`,
+    text: `"${itemName}" will be permanently deleted.`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: 'Yes, delete',
