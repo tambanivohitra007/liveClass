@@ -54,6 +54,13 @@ export default function PlayGame() {
   const { session, setSession } = useSessionStore();
   const { addToast } = useToastStore();
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
+
+  // Force dark mode for immersive game experience
+  useEffect(() => {
+    const wasDark = document.documentElement.classList.contains('dark');
+    document.documentElement.classList.add('dark');
+    return () => { if (!wasDark) document.documentElement.classList.remove('dark'); };
+  }, []);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);

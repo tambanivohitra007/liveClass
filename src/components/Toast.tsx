@@ -54,17 +54,17 @@ function ToastItem({ toast }: { toast: ToastData }) {
 
       <div className="flex items-start gap-3 pl-5 pr-3 py-3.5">
         {iconMap[toast.type]}
-        <p className="text-sm font-bold text-white flex-1 pt-0.5">{toast.message}</p>
+        <p className="text-sm font-bold text-gray-900 dark:text-white flex-1 pt-0.5">{toast.message}</p>
         <button
           onClick={handleDismiss}
-          className="p-1 rounded-lg border border-white/10 hover:bg-white/10 transition-colors shrink-0"
+          className="p-1 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shrink-0"
         >
-          <X className="w-3.5 h-3.5 text-white/50" />
+          <X className="w-3.5 h-3.5 text-gray-400 dark:text-white/50" />
         </button>
       </div>
 
       {toast.duration && toast.duration > 0 && (
-        <div className="h-1 w-full bg-white/5">
+        <div className="h-1 w-full bg-gray-100 dark:bg-white/5">
           <div
             className={`h-full transition-all duration-100 ease-linear ${accentMap[toast.type]}`}
             style={{ width: `${progress}%` }}

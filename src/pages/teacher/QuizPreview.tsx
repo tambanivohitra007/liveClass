@@ -190,11 +190,11 @@ export default function QuizPreview() {
 
   if (!quiz || questions.length === 0) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
+      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-gray-900 dark:text-white text-center p-6">
         <div>
-          <Eye className="w-14 h-14 mx-auto mb-4 text-white/40" />
+          <Eye className="w-14 h-14 mx-auto mb-4 text-gray-400 dark:text-white/40" />
           <h1 className="text-2xl font-bold mb-2">No questions to preview</h1>
-          <p className="text-white/50 mb-6">Add some questions first, then come back to preview.</p>
+          <p className="text-gray-500 dark:text-white/50 mb-6">Add some questions first, then come back to preview.</p>
           <button onClick={() => navigate(`/quiz/${quizId}`)} className="px-6 py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors">
             Go to Editor
           </button>
@@ -234,10 +234,10 @@ export default function QuizPreview() {
   return (
     <div className="min-h-screen bg-surface-dark flex flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors"
+          className="flex items-center gap-1.5 text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white text-sm transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Exit Preview
@@ -246,17 +246,17 @@ export default function QuizPreview() {
           <Eye className="w-4 h-4 text-warning" />
           <span className="text-warning text-sm font-medium">Preview Mode</span>
         </div>
-        <span className="text-white/40 text-sm">
+        <span className="text-gray-400 dark:text-white/40 text-sm">
           {currentIndex + 1} / {questions.length}
         </span>
       </div>
 
       {/* Score bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/5">
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 text-sm text-white/50">
+          <span className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-white/50">
             <Trophy className="w-3.5 h-3.5 text-warning" />
-            <span className="font-bold text-white tabular-nums">{totalPoints.toLocaleString()}</span>
+            <span className="font-bold text-gray-900 dark:text-white tabular-nums">{totalPoints.toLocaleString()}</span>
             <span>pts</span>
           </span>
           {streak > 0 && (
@@ -266,7 +266,7 @@ export default function QuizPreview() {
             </span>
           )}
         </div>
-        <span className="flex items-center gap-1 text-xs text-white/30">
+        <span className="flex items-center gap-1 text-xs text-gray-300 dark:text-white/30">
           <Zap className="w-3 h-3" />
           Max 1000 + streak bonus
         </span>
@@ -274,24 +274,24 @@ export default function QuizPreview() {
 
       {/* Timer + Question type */}
       <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-white/50 text-sm flex items-center gap-1.5">
+        <span className="text-gray-500 dark:text-white/50 text-sm flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5" />
           {question.timeLimitSec}s limit
         </span>
         <div className={`text-3xl font-black tabular-nums ${
           state === 'answering' && timeLeft <= 5 ? 'text-danger animate-timer-pulse' :
-          state === 'revealed' ? 'text-white/30' : 'text-white'
+          state === 'revealed' ? 'text-gray-300 dark:text-white/30' : 'text-gray-900 dark:text-white'
         }`}>
           {timeLeft}
         </div>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50 capitalize">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50 capitalize">
           {question.type === 'mcq' ? (isMultiAnswer ? 'Multiple Answer' : 'Multiple Choice') : question.type === 'tf' ? 'True / False' : question.type === 'matching' ? 'Matching' : question.type === 'fill_blank' ? 'Fill Blank' : question.type === 'code_output' ? 'Code Output' : 'Short Answer'}
         </span>
       </div>
 
       {/* Progress bar */}
       <div className="px-4 mb-2">
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-1 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
           <div
             className="h-full bg-brand rounded-full transition-all duration-500"
             style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
@@ -302,7 +302,7 @@ export default function QuizPreview() {
       {/* Question content */}
       <div className="flex-1 flex flex-col px-4 pb-4">
         <div className="text-center py-6 animate-fade-in">
-          <h2 className="text-xl md:text-2xl font-bold text-white">{question.text}</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">{question.text}</h2>
           {question.imageUrl && (
             <img src={question.imageUrl} alt="" className="max-h-48 mx-auto mt-4 rounded-xl" />
           )}
@@ -312,7 +312,7 @@ export default function QuizPreview() {
         {(question.type === 'mcq' || question.type === 'tf') && (
           <>
             {isMultiAnswer && state === 'answering' && (
-              <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
+              <p className="text-center text-gray-500 dark:text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
             )}
             <div className="grid grid-cols-2 gap-3 flex-1 max-h-[400px]">
               {question.options.map((opt, i) => {
@@ -370,12 +370,12 @@ export default function QuizPreview() {
               onChange={(e) => state === 'answering' && setSelectedAnswer(e.target.value)}
               placeholder="Type your answer..."
               disabled={state === 'revealed'}
-              className="w-full max-w-md text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand outline-none backdrop-blur"
+              className="w-full max-w-md text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 focus:border-brand outline-none backdrop-blur"
               autoFocus
             />
             {state === 'revealed' && (
-              <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
-                <p className="text-white/50 text-sm mb-1">Accepted answers:</p>
+              <div className="bg-gray-100 dark:bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
+                <p className="text-gray-500 dark:text-white/50 text-sm mb-1">Accepted answers:</p>
                 <p className="text-success font-bold">{question.correctAnswers.join(', ')}</p>
               </div>
             )}
@@ -394,12 +394,12 @@ export default function QuizPreview() {
               onChange={(e) => state === 'answering' && setSelectedAnswer(e.target.value)}
               placeholder="What will this code output?"
               disabled={state === 'revealed'}
-              className="w-full max-w-md text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand outline-none backdrop-blur"
+              className="w-full max-w-md text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 focus:border-brand outline-none backdrop-blur"
               autoFocus
             />
             {state === 'revealed' && (
-              <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
-                <p className="text-white/50 text-sm mb-1">Accepted outputs:</p>
+              <div className="bg-gray-100 dark:bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
+                <p className="text-gray-500 dark:text-white/50 text-sm mb-1">Accepted outputs:</p>
                 <p className="text-success font-bold">{question.correctAnswers.join(', ')}</p>
               </div>
             )}
@@ -417,17 +417,17 @@ export default function QuizPreview() {
                 <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
                   pairCorrect ? 'border-success bg-success/10' :
                   pairWrong ? 'border-danger bg-danger/10' :
-                  matchingPairs[left] ? 'border-brand/50 bg-white/5' : 'border-white/10'
+                  matchingPairs[left] ? 'border-brand/50 bg-gray-50 dark:bg-white/5' : 'border-gray-200 dark:border-white/10'
                 }`}>
                   <span className={`font-bold text-white px-3 py-1.5 rounded-lg text-sm shrink-0 ${answerColors[i % answerColors.length]}`}>
                     {left}
                   </span>
-                  <span className="text-white/30">&rarr;</span>
+                  <span className="text-gray-300 dark:text-white/30">&rarr;</span>
                   <select
                     value={matchingPairs[left] || ''}
                     onChange={(e) => state === 'answering' && setMatchingPairs({ ...matchingPairs, [left]: e.target.value })}
                     disabled={revealed}
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 outline-none focus:border-brand"
+                    className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white border border-gray-300 dark:border-white/20 outline-none focus:border-brand"
                   >
                     <option value="" className="bg-gray-800">Select...</option>
                     {shuffledMatchOptions.map((right) => (
@@ -440,8 +440,8 @@ export default function QuizPreview() {
               );
             })}
             {state === 'revealed' && (
-              <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in mt-4">
-                <p className="text-white/50 text-sm mb-2">Correct pairs:</p>
+              <div className="bg-gray-100 dark:bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in mt-4">
+                <p className="text-gray-500 dark:text-white/50 text-sm mb-2">Correct pairs:</p>
                 {question.options.map((left, i) => (
                   <p key={i} className="text-success font-medium text-sm">{left} &rarr; {question.matchOptions?.[i]}</p>
                 ))}
@@ -453,7 +453,7 @@ export default function QuizPreview() {
         {/* Fill in the Blank Preview */}
         {question.type === 'fill_blank' && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="text-lg text-white leading-relaxed text-center max-w-lg">
+            <div className="text-lg text-gray-900 dark:text-white leading-relaxed text-center max-w-lg">
               {question.text.split('___').map((part, i, arr) => (
                 <span key={i}>
                   {part}
@@ -470,7 +470,7 @@ export default function QuizPreview() {
                         }}
                         disabled={state === 'revealed'}
                         placeholder={`Blank ${i + 1}`}
-                        className={`inline-block w-32 px-2 py-1 text-center font-bold rounded-lg border-2 bg-white/10 text-white placeholder:text-white/30 outline-none ${
+                        className={`inline-block w-32 px-2 py-1 text-center font-bold rounded-lg border-2 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 outline-none ${
                           state === 'revealed'
                             ? fillAnswers[i]?.trim().toLowerCase() === question.correctAnswers[i]?.trim().toLowerCase()
                               ? 'border-success'
@@ -484,8 +484,8 @@ export default function QuizPreview() {
               ))}
             </div>
             {state === 'revealed' && (
-              <div className="bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
-                <p className="text-white/50 text-sm mb-1">Correct answers:</p>
+              <div className="bg-gray-100 dark:bg-white/10 backdrop-blur rounded-xl px-5 py-3 animate-fade-in">
+                <p className="text-gray-500 dark:text-white/50 text-sm mb-1">Correct answers:</p>
                 <p className="text-success font-bold">{question.correctAnswers.join(', ')}</p>
               </div>
             )}
@@ -514,31 +514,31 @@ export default function QuizPreview() {
                   Wrong{question.type !== 'matching' ? ` — correct: ${question.correctAnswers.join(', ')}` : ''}
                 </p>
               ) : (
-                <p className="text-white/50 font-medium">
+                <p className="text-gray-500 dark:text-white/50 font-medium">
                   Time's up!{question.type !== 'matching' ? ` Correct: ${question.correctAnswers.join(', ')}` : ''}
                 </p>
               )}
             </div>
 
             {/* Points breakdown */}
-            <div className="bg-white/5 backdrop-blur rounded-xl p-4 max-w-sm mx-auto">
+            <div className="bg-gray-50 dark:bg-white/5 backdrop-blur rounded-xl p-4 max-w-sm mx-auto">
               <div className="text-center mb-3">
-                <span className="text-3xl font-black text-white animate-bounce-in inline-block">
+                <span className="text-3xl font-black text-gray-900 dark:text-white animate-bounce-in inline-block">
                   +{pointsEarned}
                 </span>
-                <span className="text-white/40 text-sm ml-1">pts</span>
+                <span className="text-gray-400 dark:text-white/40 text-sm ml-1">pts</span>
               </div>
               {pointsEarned > 0 && (
                 <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between text-white/50">
+                  <div className="flex justify-between text-gray-500 dark:text-white/50">
                     <span className="flex items-center gap-1.5">
                       <Zap className="w-3 h-3 text-brand-light" />
                       Base (speed)
                     </span>
-                    <span className="text-white font-medium tabular-nums">{pointsEarned - streakBonus}</span>
+                    <span className="text-gray-900 dark:text-white font-medium tabular-nums">{pointsEarned - streakBonus}</span>
                   </div>
                   {streakBonus > 0 && (
-                    <div className="flex justify-between text-white/50">
+                    <div className="flex justify-between text-gray-500 dark:text-white/50">
                       <span className="flex items-center gap-1.5">
                         <Flame className="w-3 h-3 text-warning" />
                         Streak x{streak}
@@ -546,28 +546,28 @@ export default function QuizPreview() {
                       <span className="text-warning font-medium tabular-nums">+{streakBonus}</span>
                     </div>
                   )}
-                  <div className="border-t border-white/10 pt-1.5 flex justify-between text-white/70 font-medium">
+                  <div className="border-t border-gray-200 dark:border-white/10 pt-1.5 flex justify-between text-gray-600 dark:text-white/70 font-medium">
                     <span>Time remaining</span>
                     <span className="tabular-nums">{timeLeft}s / {question.timeLimitSec}s</span>
                   </div>
                 </div>
               )}
               {pointsEarned === 0 && hasAnswer() && (
-                <p className="text-center text-white/30 text-xs">Wrong answer = 0 points, streak reset</p>
+                <p className="text-center text-gray-300 dark:text-white/30 text-xs">Wrong answer = 0 points, streak reset</p>
               )}
               {pointsEarned === 0 && !hasAnswer() && (
-                <p className="text-center text-white/30 text-xs">No answer = 0 points, streak reset</p>
+                <p className="text-center text-gray-300 dark:text-white/30 text-xs">No answer = 0 points, streak reset</p>
               )}
             </div>
           </div>
         )}
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
           <button
             onClick={goPrev}
             disabled={currentIndex === 0}
-            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-4 h-4" />
             Previous
@@ -578,7 +578,7 @@ export default function QuizPreview() {
                 key={i}
                 onClick={() => setCurrentIndex(i)}
                 className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  i === currentIndex ? 'bg-brand scale-125' : 'bg-white/20 hover:bg-white/40'
+                  i === currentIndex ? 'bg-brand scale-125' : 'bg-gray-200 dark:bg-white/20 hover:bg-gray-400 dark:hover:bg-white/40'
                 }`}
               />
             ))}
@@ -586,7 +586,7 @@ export default function QuizPreview() {
           <button
             onClick={goNext}
             disabled={currentIndex === questions.length - 1}
-            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Next
             <ChevronRight className="w-4 h-4" />

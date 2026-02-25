@@ -48,6 +48,13 @@ export default function HostSession() {
   const { quizId } = useParams<{ quizId: string }>();
   const [searchParams] = useSearchParams();
   const { session, setSession, players, setPlayers } = useSessionStore();
+
+  // Force dark mode for immersive game experience
+  useEffect(() => {
+    const wasDark = document.documentElement.classList.contains('dark');
+    document.documentElement.classList.add('dark');
+    return () => { if (!wasDark) document.documentElement.classList.remove('dark'); };
+  }, []);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
   const [currentCodeSnippet, setCurrentCodeSnippet] = useState('');

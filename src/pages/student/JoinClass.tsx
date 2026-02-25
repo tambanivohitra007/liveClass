@@ -55,8 +55,8 @@ export default function JoinClass() {
           <BackButton to="/student/classes" label="Back to My Classes" />
         </div>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-white">Join Class</h1>
-          <p className="text-white/60 mt-2 text-sm">Enter the code from your teacher</p>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white">Join Class</h1>
+          <p className="text-gray-500 dark:text-white/60 mt-2 text-sm">Enter the code from your teacher</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 p-8">

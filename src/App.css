@@ -145,11 +145,15 @@
   animation: toast-exit 0.3s ease-in forwards;
 }
 
-/* Shimmer skeleton — dark navy */
+/* Shimmer skeleton — theme-aware */
 .animate-shimmer {
-  background: linear-gradient(90deg, #0F1729 25%, #1E2D42 50%, #0F1729 75%);
+  background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+.dark .animate-shimmer {
+  background: linear-gradient(90deg, #0F1729 25%, #1E2D42 50%, #0F1729 75%);
+  background-size: 200% 100%;
 }
 
 /* 3D Card Flip */
@@ -284,27 +288,47 @@
 
 .btn-3d-ghost {
   border-radius: 1000px;
-  background: rgba(255,255,255,0.08);
-  color: white;
+  background: #F1F5F9;
+  color: #0F172A;
   font-weight: 700;
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 2px solid #E2E8F0;
   padding: 12px 28px;
   cursor: pointer;
   box-shadow:
-    0 2px 0 0 rgba(0,0,0,0.2),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    0 2px 0 0 rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.8);
   transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
 }
 .btn-3d-ghost:hover {
-  background: rgba(255,255,255,0.12);
+  background: #E2E8F0;
   transform: translateY(-2px);
+  box-shadow:
+    0 4px 0 0 rgba(0,0,0,0.06),
+    0 4px 12px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.btn-3d-ghost:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 0 0 0 rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.dark .btn-3d-ghost {
+  background: rgba(255,255,255,0.08);
+  color: white;
+  border-color: rgba(255,255,255,0.2);
+  box-shadow:
+    0 2px 0 0 rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.dark .btn-3d-ghost:hover {
+  background: rgba(255,255,255,0.12);
   box-shadow:
     0 4px 0 0 rgba(0,0,0,0.2),
     0 4px 12px rgba(0,0,0,0.2),
     inset 0 1px 0 rgba(255,255,255,0.15);
 }
-.btn-3d-ghost:active {
-  transform: translateY(1px);
+.dark .btn-3d-ghost:active {
   box-shadow:
     0 0 0 0 rgba(0,0,0,0.2),
     inset 0 1px 0 rgba(255,255,255,0.05);
@@ -382,12 +406,15 @@
   font-size: 1.125rem;
 }
 
-/* ─── Night Card ─── */
+/* ─── Night Card — theme-aware ─── */
 
 .card-night {
-  background: #162033;
+  background: var(--surface-card);
   border-radius: 1.25rem;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-base);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+}
+.dark .card-night {
   box-shadow:
     inset 0 0 40px rgba(0,0,0,0.3),
     0 8px 24px rgba(0,0,0,0.4);
@@ -398,19 +425,25 @@
 }
 .card-night-hover:hover {
   transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
+}
+.dark .card-night-hover:hover {
   box-shadow:
     inset 0 0 40px rgba(0,0,0,0.3),
     0 12px 32px rgba(0,158,226,0.15),
     0 0 0 1px rgba(0,158,226,0.2);
 }
 
-/* Night surface — vignette depth */
+/* Night surface — theme-aware */
 .night-surface {
-  background: #162033;
+  background: var(--surface-card);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border: 1px solid var(--border-base);
+}
+.dark .night-surface {
   box-shadow:
     inset 0 0 60px rgba(0,0,0,0.4),
     0 4px 12px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* ─── Bouncy Animations ─── */
@@ -451,38 +484,71 @@
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 }
 
-/* ─── Background Patterns ─── */
+/* ─── Background Patterns — theme-aware ─── */
 
-/* Star pattern — tiny white dots for night backgrounds */
+/* Star pattern — subtle dots */
 .pattern-stars {
   background-image:
-    radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+    radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px),
+    radial-gradient(circle, rgba(0,0,0,0.03) 1px, transparent 1px);
   background-size: 40px 40px, 80px 80px;
   background-position: 0 0, 20px 20px;
 }
+.dark .pattern-stars {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+}
 
-/* Grid lines for dark backgrounds */
+/* Grid lines */
 .pattern-grid {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.dark .pattern-grid {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 44px 44px;
 }
 
 /* Dot grid — subtle dots */
 .pattern-dots {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+.dark .pattern-dots {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 }
 
 /* Cross dot pattern */
 .pattern-cross {
   background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
   background-size: 28px 28px;
   background-position: 0 0, 14px 14px;
+}
+.dark .pattern-cross {
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* ─── Hero gradient — theme-aware ─── */
+.gradient-hero {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.04) 0%, transparent 50%),
+    linear-gradient(160deg, #F8F9FB 0%, #F1F5F9 40%, #F8F9FB 100%);
+}
+.dark .gradient-hero {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%),
+    linear-gradient(160deg, #080F1E 0%, #0F1729 40%, #080F1E 100%);
 }
 
 /* Bottom tab bar enter */

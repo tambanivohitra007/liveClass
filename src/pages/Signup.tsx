@@ -69,8 +69,8 @@ export default function Signup() {
         {/* Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="LiveClass" className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg animate-glow-pulse" />
-          <h1 className="text-3xl text-white">Create your account</h1>
-          <p className="text-white/50 mt-1 font-medium">Start creating quizzes in minutes</p>
+          <h1 className="text-3xl text-gray-900 dark:text-white">Create your account</h1>
+          <p className="text-gray-500 dark:text-white/50 mt-1 font-medium">Start creating quizzes in minutes</p>
         </div>
 
         {/* Card */}
@@ -100,10 +100,10 @@ export default function Signup() {
           {/* Divider */}
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
+              <div className="w-full border-t border-gray-200 dark:border-white/10" />
             </div>
             <div className="relative flex justify-center">
-              <span className="px-4 bg-surface-card text-xs font-bold text-white/40 uppercase tracking-widest">or</span>
+              <span className="px-4 bg-surface-card text-xs font-bold text-gray-400 dark:text-white/40 uppercase tracking-widest">or</span>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export default function Signup() {
 
             {/* Role selector */}
             <div>
-              <label className="block text-sm font-bold text-white/60 mb-2">I am a</label>
+              <label className="block text-sm font-bold text-gray-500 dark:text-white/60 mb-2">I am a</label>
               <div className="grid grid-cols-2 gap-3">
                 {([
                   { key: 'teacher' as const, label: 'Teacher', icon: GraduationCap },
@@ -152,7 +152,7 @@ export default function Signup() {
                       className={`flex items-center justify-center gap-2 py-3.5 rounded-2xl border font-bold transition-all duration-300 ${
                         active
                           ? 'border-brand bg-brand/15 text-brand'
-                          : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+                          : 'border-gray-200 dark:border-white/10 text-gray-400 dark:text-white/40 hover:border-gray-300 dark:hover:border-white/20 hover:text-gray-500 dark:hover:text-white/60'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -174,7 +174,7 @@ export default function Signup() {
         </div>
 
         {/* Footer link */}
-        <p className="text-center mt-8 text-sm text-white/40 font-medium">
+        <p className="text-center mt-8 text-sm text-gray-400 dark:text-white/40 font-medium">
           Already have an account?{' '}
           <Link to="/login" className="text-brand font-bold hover:underline">Sign in</Link>
         </p>

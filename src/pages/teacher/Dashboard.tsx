@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+﻿import { useEffect, useMemo, useState, useRef } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
@@ -306,7 +306,7 @@ export default function Dashboard() {
     }
 
     if (activeSession.quizId === quizId) {
-      // Same quiz — offer to resume
+      // Same quiz â€” offer to resume
       const { isConfirmed } = await confirmAction(
         'Resume active session?',
         `You already have an active session for this quiz (PIN: ${activeSession.pinCode}). Resume it or start fresh?`,
@@ -316,7 +316,7 @@ export default function Dashboard() {
         navigate(`/quiz/${quizId}/host?sessionId=${activeSession.id}`);
       }
     } else {
-      // Different quiz — must end the active session first
+      // Different quiz â€” must end the active session first
       const { isConfirmed } = await confirmAction(
         'End current session?',
         `You have an active session for "${activeSession.quizTitle}". It must be ended before starting a new one.`,
@@ -397,7 +397,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        <div className="h-8 w-48 bg-white/10 rounded-lg animate-pulse" />
+        <div className="h-8 w-48 bg-gray-100 dark:bg-white/10 rounded-lg animate-pulse" />
         <SkeletonStats />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -411,13 +411,13 @@ export default function Dashboard() {
     <WaveBackground variant="dark" position="bottom" />
     <div className="absolute inset-0 pattern-stars pointer-events-none" />
     <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl text-white">
+          <h1 className="text-2xl text-gray-900 dark:text-white">
             Welcome back, {user?.displayName?.split(' ')[0] || 'Teacher'}
           </h1>
-          <p className="text-white/40 mt-1 text-sm">Create, manage, and host your quizzes</p>
+          <p className="text-gray-400 dark:text-white/40 mt-1 text-sm">Create, manage, and host your quizzes</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -451,7 +451,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Stats Row ── */}
+      {/* â”€â”€ Stats Row â”€â”€ */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           {
@@ -475,23 +475,23 @@ export default function Dashboard() {
           >
             <div className={`w-9 h-9 rounded-xl ${s.color} flex items-center justify-center shrink-0`}>{s.icon}</div>
             <div>
-              <p className="text-xl font-bold text-white">{s.value}</p>
-              <p className="text-[11px] font-medium text-white/40 uppercase tracking-wider">{s.label}</p>
-              {s.sub && <p className="text-[11px] text-white/30 mt-0.5">{s.sub}</p>}
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{s.value}</p>
+              <p className="text-[11px] font-medium text-gray-400 dark:text-white/40 uppercase tracking-wider">{s.label}</p>
+              {s.sub && <p className="text-[11px] text-gray-300 dark:text-white/30 mt-0.5">{s.sub}</p>}
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── Active Session Banner ── */}
+      {/* â”€â”€ Active Session Banner â”€â”€ */}
       {activeSession && (
         <ActiveSessionBanner session={activeSession} onEnd={handleEndActiveSession} />
       )}
 
-      {/* ── Quick Start ── */}
+      {/* â”€â”€ Quick Start â”€â”€ */}
       {showQuickStart && (
         <div className="mb-8 animate-fade-in">
-          <h2 className="text-sm font-bold text-white/40 uppercase tracking-wider mb-3">Quick Start</h2>
+          <h2 className="text-sm font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-3">Quick Start</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {quickStartQuizzes.map((quiz) => (
               <button
@@ -503,10 +503,10 @@ export default function Dashboard() {
                   <Play className="w-4 h-4 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-white truncate group-hover:text-brand transition-colors">
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-brand transition-colors">
                     {quiz.title || 'Untitled Quiz'}
                   </p>
-                  <p className="text-[11px] text-white/40">
+                  <p className="text-[11px] text-gray-400 dark:text-white/40">
                     {quiz.questionCount ?? 0} Qs &middot; {formatDate(quiz.updatedAt)}
                   </p>
                 </div>
@@ -516,11 +516,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Recent Sessions ── */}
+      {/* â”€â”€ Recent Sessions â”€â”€ */}
       {recentSessions.length > 0 && (
         <div className="mb-8 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-white/40 uppercase tracking-wider">Recent Sessions</h2>
+            <h2 className="text-sm font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider">Recent Sessions</h2>
             <button
               onClick={() => navigate('/history')}
               className="text-xs font-medium text-brand hover:text-brand-dark flex items-center gap-1 transition-colors"
@@ -535,10 +535,10 @@ export default function Dashboard() {
                 onClick={() => navigate(`/session/${session.id}/results`)}
                 className="card-night card-night-hover p-3 text-left group"
               >
-                <p className="font-semibold text-sm text-white truncate group-hover:text-brand transition-colors">
+                <p className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-brand transition-colors">
                   {session.quizTitle}
                 </p>
-                <div className="flex items-center gap-2 mt-1.5 text-[11px] text-white/40">
+                <div className="flex items-center gap-2 mt-1.5 text-[11px] text-gray-400 dark:text-white/40">
                   <span className="flex items-center gap-0.5">
                     <Users className="w-3 h-3" />
                     {session.playerCount}{session.playerCount >= 10 ? '+' : ''} players
@@ -555,26 +555,26 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Search Bar ── */}
+      {/* â”€â”€ Search Bar â”€â”€ */}
       <div className="relative mb-6 group">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-brand transition-colors" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-white/30 group-focus-within:text-brand transition-colors" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search your library for quizzes, topics, or folders..."
-          className="w-full pl-12 pr-4 py-3.5 bg-white/5 rounded-xl border border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-white"
+          className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-900 dark:text-white"
         />
       </div>
 
-      {/* ── Filter Pills ── */}
+      {/* â”€â”€ Filter Pills â”€â”€ */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 no-scrollbar">
         <button
           onClick={() => setSelectedFilter('all')}
           className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap spring-transition ${
             selectedFilter === 'all'
               ? 'bg-brand text-white shadow-sm'
-              : 'bg-white/5 border border-white/10 text-white/60 hover:border-brand/40'
+              : 'bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-white/60 hover:border-brand/40'
           }`}
         >
           All Quizzes
@@ -589,12 +589,12 @@ export default function Dashboard() {
                 className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap spring-transition flex items-center gap-1.5 ${
                   isActive
                     ? 'bg-brand text-white shadow-sm'
-                    : 'bg-white/5 border border-white/10 text-white/60 hover:border-brand/40'
+                    : 'bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-white/60 hover:border-brand/40'
                 }`}
               >
                 <span className={`w-2 h-2 rounded-full ${colorMeta?.bg || 'bg-gray-300'} ${isActive ? 'opacity-80' : ''}`} />
                 {coll.name}
-                <span className={`text-xs ${isActive ? 'text-white/70' : 'text-white/30'}`}>
+                <span className={`text-xs ${isActive ? 'text-white/70' : 'text-gray-300 dark:text-white/30'}`}>
                   {getQuizCountForCollection(coll.id)}
                 </span>
               </button>
@@ -609,22 +609,22 @@ export default function Dashboard() {
           );
         })}
         {collections.length > 0 && (
-          <div className="h-6 w-px bg-white/10 mx-1 shrink-0" />
+          <div className="h-6 w-px bg-gray-100 dark:bg-white/10 mx-1 shrink-0" />
         )}
         <button
           onClick={openNewCollModal}
-          className="px-4 py-2 rounded-full border-2 border-dashed border-white/20 text-white/40 text-sm font-medium hover:border-brand hover:text-brand transition-colors whitespace-nowrap flex items-center gap-1"
+          className="px-4 py-2 rounded-full border-2 border-dashed border-gray-300 dark:border-white/20 text-gray-400 dark:text-white/40 text-sm font-medium hover:border-brand hover:text-brand transition-colors whitespace-nowrap flex items-center gap-1"
         >
           <Plus className="w-3.5 h-3.5" /> Collection
         </button>
       </div>
 
-      {/* ── Quiz Grid ── */}
+      {/* â”€â”€ Quiz Grid â”€â”€ */}
       {quizzes.length === 0 ? (
         <div className="text-center py-20">
           <EmptyQuizzes />
-          <h3 className="text-lg font-semibold text-white mb-2 mt-4">No quizzes yet</h3>
-          <p className="text-white/50 mb-6 text-sm">Create your first quiz to get started</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 mt-4">No quizzes yet</h3>
+          <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Create your first quiz to get started</p>
           <button
             onClick={() => navigate('/quiz/new')}
             className="btn-3d-cyan"
@@ -635,7 +635,7 @@ export default function Dashboard() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <EmptySearch />
-          <p className="text-white/50 mt-4 text-sm">No quizzes match "{searchQuery || collections.find(c => c.id === selectedFilter)?.name}"</p>
+          <p className="text-gray-500 dark:text-white/50 mt-4 text-sm">No quizzes match "{searchQuery || collections.find(c => c.id === selectedFilter)?.name}"</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 stagger-children">
@@ -688,52 +688,52 @@ export default function Dashboard() {
                 {/* Card Body */}
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-base leading-tight text-white group-hover:text-brand transition-colors line-clamp-1">
+                    <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1">
                       {quiz.title || 'Untitled Quiz'}
                     </h3>
                     {/* More menu */}
                     <div className="relative" ref={menuOpenId === quiz.id ? menuRef : undefined}>
                       <button
                         onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === quiz.id ? null : quiz.id); }}
-                        className="p-1 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/10 transition-colors"
+                        className="p-1 rounded-lg text-gray-300 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
                       {menuOpenId === quiz.id && (
-                          <div className="absolute right-0 top-full mt-1 w-52 bg-surface-card rounded-xl shadow-lg border border-white/10 z-20 py-1.5 animate-fade-in">
+                          <div className="absolute right-0 top-full mt-1 w-52 bg-surface-card rounded-xl shadow-lg border border-gray-200 dark:border-white/10 z-20 py-1.5 animate-fade-in">
                             <button
                               onClick={() => { navigate(`/quiz/${quiz.id}/preview`); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 transition-colors"
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                             >
-                              <Eye className="w-4 h-4 text-white/40" /> Preview
+                              <Eye className="w-4 h-4 text-gray-400 dark:text-white/40" /> Preview
                             </button>
                             <button
                               onClick={() => { handleDuplicate(quiz); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 transition-colors"
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                             >
-                              <Copy className="w-4 h-4 text-white/40" /> Duplicate
+                              <Copy className="w-4 h-4 text-gray-400 dark:text-white/40" /> Duplicate
                             </button>
                             <button
                               onClick={() => { navigate(`/quiz/${quiz.id}/flashcards`); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 transition-colors"
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                             >
-                              <BookOpen className="w-4 h-4 text-white/40" /> Flashcards
+                              <BookOpen className="w-4 h-4 text-gray-400 dark:text-white/40" /> Flashcards
                             </button>
                             <button
                               onClick={() => { navigate(`/quiz/${quiz.id}/worksheet`); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white/70 hover:bg-white/10 transition-colors"
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                             >
-                              <Printer className="w-4 h-4 text-white/40" /> Worksheet
+                              <Printer className="w-4 h-4 text-gray-400 dark:text-white/40" /> Worksheet
                             </button>
                             {collections.length > 0 && (
                               <>
-                                <hr className="my-1.5 border-white/10" />
+                                <hr className="my-1.5 border-gray-200 dark:border-white/10" />
                                 <div className="px-4 py-2">
-                                  <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">Move to</p>
+                                  <p className="text-[10px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1.5">Move to</p>
                                   <select
                                     value={quiz.collectionId || ''}
                                     onChange={(e) => { handleQuizCollectionChange(quiz.id, e.target.value); setMenuOpenId(null); }}
-                                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-white/10 text-white/70 bg-white/5 outline-none"
+                                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white/70 bg-gray-50 dark:bg-white/5 outline-none"
                                   >
                                     <option value="">Uncategorized</option>
                                     {collections.map((c) => (
@@ -743,7 +743,7 @@ export default function Dashboard() {
                                 </div>
                               </>
                             )}
-                            <hr className="my-1.5 border-white/10" />
+                            <hr className="my-1.5 border-gray-200 dark:border-white/10" />
                             <button
                               onClick={() => { handleDelete(quiz.id, quiz.title); setMenuOpenId(null); }}
                               disabled={deleting === quiz.id}
@@ -757,7 +757,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Metadata */}
-                  <div className="flex items-center gap-3 text-sm text-white/40 mb-5">
+                  <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-white/40 mb-5">
                     <span className="flex items-center gap-1">
                       <HelpCircle className="w-3.5 h-3.5" />
                       {quiz.questionCount ?? '?'} Qs
@@ -781,26 +781,26 @@ export default function Dashboard() {
           {/* Create Placeholder Card */}
           <button
             onClick={() => navigate('/quiz/new')}
-            className="min-h-[280px] flex flex-col items-center justify-center border-2 border-dashed border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
+            className="min-h-[280px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
           >
-            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center text-white/30 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
+            <div className="w-14 h-14 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 dark:text-white/30 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
               <Plus className="w-7 h-7" />
             </div>
-            <span className="font-bold text-white/40 group-hover/create:text-brand transition-colors">New Quiz</span>
+            <span className="font-bold text-gray-400 dark:text-white/40 group-hover/create:text-brand transition-colors">New Quiz</span>
           </button>
         </div>
       )}
 
-      {/* ── Footer ── */}
+      {/* â”€â”€ Footer â”€â”€ */}
       {filtered.length > 0 && (
-        <div className="mt-10 flex items-center justify-between py-5 border-t border-white/10">
-          <p className="text-sm text-white/40">
+        <div className="mt-10 flex items-center justify-between py-5 border-t border-gray-200 dark:border-white/10">
+          <p className="text-sm text-gray-400 dark:text-white/40">
             Showing {filtered.length} of {quizzes.length} quiz{quizzes.length !== 1 ? 'zes' : ''}
           </p>
         </div>
       )}
 
-      {/* ── AI Quiz Modal ── */}
+      {/* â”€â”€ AI Quiz Modal â”€â”€ */}
       <AiGenerateModal
         open={showAiQuizModal}
         onClose={() => setShowAiQuizModal(false)}
@@ -808,45 +808,45 @@ export default function Dashboard() {
         onGenerated={handleAiQuizGenerated}
       />
 
-      {/* ── Collection Modal ── */}
+      {/* â”€â”€ Collection Modal â”€â”€ */}
       {showCollModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowCollModal(false)} onKeyDown={(e) => { if (e.key === 'Escape') setShowCollModal(false); }}>
           <div role="dialog" aria-modal="true" aria-label={editingColl ? 'Edit Collection' : 'New Collection'} className="card-night w-full max-w-md animate-bounce-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-0">
-              <h3 className="text-lg text-white">{editingColl ? 'Edit Collection' : 'New Collection'}</h3>
-              <button onClick={() => setShowCollModal(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 transition-colors">
+              <h3 className="text-lg text-gray-900 dark:text-white">{editingColl ? 'Edit Collection' : 'New Collection'}</h3>
+              <button onClick={() => setShowCollModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-1.5">Name</label>
+                <label className="block text-sm font-medium text-gray-500 dark:text-white/60 mb-1.5">Name</label>
                 <input
                   value={collName}
                   onChange={(e) => setCollName(e.target.value)}
                   placeholder="e.g. Biology"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-white"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-1.5">Description</label>
+                <label className="block text-sm font-medium text-gray-500 dark:text-white/60 mb-1.5">Description</label>
                 <textarea
                   value={collDesc}
                   onChange={(e) => setCollDesc(e.target.value)}
                   placeholder="Optional description"
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-white resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-1.5">Color</label>
+                <label className="block text-sm font-medium text-gray-500 dark:text-white/60 mb-1.5">Color</label>
                 <div className="flex gap-2">
                   {COLLECTION_COLORS.map((c) => (
                     <button
                       key={c.key}
                       onClick={() => setCollColor(c.key)}
-                      className={`w-8 h-8 rounded-full ${c.bg} border border-white/20 transition-all ${collColor === c.key ? 'ring-2 ring-offset-2 ring-offset-surface-card ring-brand scale-110' : 'hover:scale-105'}`}
+                      className={`w-8 h-8 rounded-full ${c.bg} border border-gray-300 dark:border-white/20 transition-all ${collColor === c.key ? 'ring-2 ring-offset-2 ring-offset-surface-card ring-brand scale-110' : 'hover:scale-105'}`}
                       title={c.label}
                     />
                   ))}

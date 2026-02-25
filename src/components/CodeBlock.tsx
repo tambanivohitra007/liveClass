@@ -18,7 +18,7 @@ export default function CodeBlock({ code, language, className = '' }: CodeBlockP
   };
 
   return (
-    <div className={`rounded-xl overflow-hidden border border-white/10 shadow-lg ${className}`}>
+    <div className={`rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-lg ${className}`}>
       {/* Title bar — editor-style with traffic lights */}
       <div className="flex items-center justify-between bg-[#1e1e2e] px-4 py-2.5 border-b border-white/5">
         <div className="flex items-center gap-2">
@@ -28,12 +28,12 @@ export default function CodeBlock({ code, language, className = '' }: CodeBlockP
             <span className="w-3 h-3 rounded-full bg-[#28c840]" />
           </div>
           {language && (
-            <span className="ml-3 text-xs font-medium text-white/40 tracking-wide">{language}</span>
+            <span className="ml-3 text-xs font-medium text-gray-400 dark:text-white/40 tracking-wide">{language}</span>
           )}
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 text-xs text-white/30 hover:text-white/60 transition-colors"
+          className="flex items-center gap-1 text-xs text-gray-300 dark:text-white/30 hover:text-white/60 transition-colors"
           title="Copy code"
         >
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

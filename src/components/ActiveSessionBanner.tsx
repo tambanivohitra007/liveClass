@@ -20,7 +20,7 @@ export default function ActiveSessionBanner({ session, onEnd }: Props) {
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-white text-sm">Active Session</span>
+            <span className="font-bold text-gray-900 dark:text-white text-sm">Active Session</span>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
               session.status === 'lobby'
                 ? 'bg-warning/20 text-warning'
@@ -29,11 +29,11 @@ export default function ActiveSessionBanner({ session, onEnd }: Props) {
               {session.status}
             </span>
           </div>
-          <p className="text-sm text-white/50 truncate">
+          <p className="text-sm text-gray-500 dark:text-white/50 truncate">
             {session.quizTitle}
-            <span className="mx-1.5 text-white/20">|</span>
-            PIN: <span className="font-mono font-bold text-white/70">{session.pinCode}</span>
-            <span className="mx-1.5 text-white/20">|</span>
+            <span className="mx-1.5 text-gray-300 dark:text-white/20">|</span>
+            PIN: <span className="font-mono font-bold text-gray-700 dark:text-white/70">{session.pinCode}</span>
+            <span className="mx-1.5 text-gray-300 dark:text-white/20">|</span>
             <Users className="w-3 h-3 inline -mt-0.5" /> {session.playerCount}
           </p>
         </div>

@@ -82,9 +82,9 @@ export default function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-xl hover:bg-white/10 transition-colors"
+        className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
       >
-        <Bell className="w-5 h-5 text-white/70" />
+        <Bell className="w-5 h-5 text-gray-600 dark:text-white/70" />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-danger rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -93,8 +93,8 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-gradient-to-b from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] rounded-sm shadow-lg border border-white/10 overflow-hidden animate-slide-down">
-          <div className="px-4 py-3 bg-white/5 border-b border-white/10 flex items-center justify-between">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-gradient-to-b from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] rounded-sm shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down">
+          <div className="px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
             <p className="font-semibold text-white text-sm">Notifications</p>
             {unreadCount > 0 && (
               <button
@@ -110,7 +110,7 @@ export default function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                <p className="text-sm text-white/40">No notifications yet</p>
+                <p className="text-sm text-gray-400 dark:text-white/40">No notifications yet</p>
               </div>
             ) : (
               notifications.map((n) => {
@@ -123,13 +123,13 @@ export default function NotificationBell() {
                       !n.read ? 'bg-white/[0.03]' : ''
                     }`}
                   >
-                    <div className="mt-0.5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 text-white/60" />
+                    <div className="mt-0.5 w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 text-gray-500 dark:text-white/60" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white/90 truncate">{n.title}</p>
-                      <p className="text-xs text-white/50 line-clamp-2">{n.message}</p>
-                      <p className="text-[10px] text-white/30 mt-1">{getRelativeTime(n.createdAt)}</p>
+                      <p className="text-xs text-gray-500 dark:text-white/50 line-clamp-2">{n.message}</p>
+                      <p className="text-[10px] text-gray-300 dark:text-white/30 mt-1">{getRelativeTime(n.createdAt)}</p>
                     </div>
                     {!n.read && (
                       <div className="mt-2 w-2 h-2 rounded-full bg-brand shrink-0" />

@@ -21,6 +21,13 @@ export default function PlayAssignment() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+
+  // Force dark mode for immersive game experience
+  useEffect(() => {
+    const wasDark = document.documentElement.classList.contains('dark');
+    document.documentElement.classList.add('dark');
+    return () => { if (!wasDark) document.documentElement.classList.remove('dark'); };
+  }, []);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);

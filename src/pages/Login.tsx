@@ -69,8 +69,8 @@ export default function Login() {
         {/* Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="LiveClass" className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg animate-glow-pulse" />
-          <h1 className="text-3xl text-white">Welcome back</h1>
-          <p className="text-white/50 mt-1 font-medium">Sign in to your account</p>
+          <h1 className="text-3xl text-gray-900 dark:text-white">Welcome back</h1>
+          <p className="text-gray-500 dark:text-white/50 mt-1 font-medium">Sign in to your account</p>
         </div>
 
         {/* Card */}
@@ -100,10 +100,10 @@ export default function Login() {
           {/* Divider */}
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
+              <div className="w-full border-t border-gray-200 dark:border-white/10" />
             </div>
             <div className="relative flex justify-center">
-              <span className="px-4 bg-surface-card text-xs font-bold text-white/40 uppercase tracking-widest">or</span>
+              <span className="px-4 bg-surface-card text-xs font-bold text-gray-400 dark:text-white/40 uppercase tracking-widest">or</span>
             </div>
           </div>
 
@@ -138,7 +138,7 @@ export default function Login() {
         </div>
 
         {/* Footer link */}
-        <p className="text-center mt-8 text-sm text-white/40 font-medium">
+        <p className="text-center mt-8 text-sm text-gray-400 dark:text-white/40 font-medium">
           Don't have an account?{' '}
           <Link to="/signup" className="text-brand font-bold hover:underline">Sign up</Link>
         </p>

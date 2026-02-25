@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { useThemeStore } from '../../stores/themeStore';
 
 interface WaveBackgroundProps {
   className?: string;
@@ -26,22 +27,34 @@ interface GradientDef {
   x1: string; y1: string; x2: string; y2: string;
 }
 
-const lightDefs: GradientDef[] = [
-  // 1 — subtle navy sweep
+// Dark theme gradient defs (navy)
+const darkLightDefs: GradientDef[] = [
   { c1: '#1E2D42', o1: 0.30, c2: '#0F1729', o2: 0.15, x1: '0', y1: '0', x2: '1', y2: '1' },
-  // 2 — counter navy arc
   { c1: '#0F1729', o1: 0.25, c2: '#1E2D42', o2: 0.30, x1: '1', y1: '0', x2: '0', y2: '1' },
-  // 3 — thin accent ribbon
   { c1: '#1E2D42', o1: 0.20, c2: '#0F1729', o2: 0.12, x1: '0', y1: '1', x2: '1', y2: '0' },
-  // 4 — subtle top fill
   { c1: '#0F1729', o1: 0.15, c2: '#080F1E', o2: 0.08, x1: '0', y1: '1', x2: '1', y2: '0' },
 ];
 
-const darkDefs: GradientDef[] = [
+const darkDarkDefs: GradientDef[] = [
   { c1: '#0F1729', o1: 0.50, c2: '#1E2D42', o2: 0.30, x1: '0', y1: '0', x2: '1', y2: '1' },
   { c1: '#1E2D42', o1: 0.40, c2: '#0F1729', o2: 0.45, x1: '1', y1: '0', x2: '0', y2: '1' },
   { c1: '#0F1729', o1: 0.35, c2: '#1E2D42', o2: 0.25, x1: '0', y1: '1', x2: '1', y2: '0' },
   { c1: '#1E2D42', o1: 0.25, c2: '#0F1729', o2: 0.15, x1: '0', y1: '1', x2: '1', y2: '0' },
+];
+
+// Light theme gradient defs (gray/slate)
+const lightLightDefs: GradientDef[] = [
+  { c1: '#CBD5E1', o1: 0.20, c2: '#E2E8F0', o2: 0.10, x1: '0', y1: '0', x2: '1', y2: '1' },
+  { c1: '#E2E8F0', o1: 0.15, c2: '#CBD5E1', o2: 0.20, x1: '1', y1: '0', x2: '0', y2: '1' },
+  { c1: '#CBD5E1', o1: 0.12, c2: '#E2E8F0', o2: 0.08, x1: '0', y1: '1', x2: '1', y2: '0' },
+  { c1: '#E2E8F0', o1: 0.10, c2: '#F1F5F9', o2: 0.06, x1: '0', y1: '1', x2: '1', y2: '0' },
+];
+
+const lightDarkDefs: GradientDef[] = [
+  { c1: '#94A3B8', o1: 0.25, c2: '#CBD5E1', o2: 0.15, x1: '0', y1: '0', x2: '1', y2: '1' },
+  { c1: '#CBD5E1', o1: 0.20, c2: '#94A3B8', o2: 0.25, x1: '1', y1: '0', x2: '0', y2: '1' },
+  { c1: '#94A3B8', o1: 0.18, c2: '#CBD5E1', o2: 0.12, x1: '0', y1: '1', x2: '1', y2: '0' },
+  { c1: '#CBD5E1', o1: 0.15, c2: '#E2E8F0', o2: 0.08, x1: '0', y1: '1', x2: '1', y2: '0' },
 ];
 
 function RibbonWaves({
@@ -90,7 +103,10 @@ export default function WaveBackground({
   flip = false,
 }: WaveBackgroundProps) {
   const id = useId();
-  const defs = variant === 'dark' ? darkDefs : lightDefs;
+  const { theme } = useThemeStore();
+  const defs = theme === 'dark'
+    ? (variant === 'dark' ? darkDarkDefs : darkLightDefs)
+    : (variant === 'dark' ? lightDarkDefs : lightLightDefs);
 
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>

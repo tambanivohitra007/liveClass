@@ -8,7 +8,6 @@ import WaveBackground from '../components/ui/WaveBackground';
 
 const ShaderBackground = lazy(() => import('../components/ui/ShaderBackground'));
 
-const NIGHT_SKY = 'radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.08) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%), linear-gradient(160deg, #080F1E 0%, #0F1729 40%, #080F1E 100%)';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -30,9 +29,9 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden" style={{ background: NIGHT_SKY }}>
+      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden gradient-hero">
         {/* Neural network CPPN shader background */}
-        <Suspense fallback={<div className="absolute inset-0" style={{ background: NIGHT_SKY }} />}>
+        <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
           <ShaderBackground />
         </Suspense>
 
@@ -40,8 +39,8 @@ export default function Home() {
           {/* Left - Join Game Card */}
           <div className="card-night p-8 md:p-12 animate-fade-in">
             <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl text-white mb-2">Join a Game</h2>
-              <p className="text-white/60">Enter the Game PIN provided by your host to start competing!</p>
+              <h2 className="text-3xl md:text-4xl text-gray-900 dark:text-white mb-2">Join a Game</h2>
+              <p className="text-gray-500 dark:text-white/60">Enter the Game PIN provided by your host to start competing!</p>
             </div>
 
             <form onSubmit={handlePinSubmit} className="space-y-6">
@@ -52,7 +51,7 @@ export default function Home() {
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000 000"
                 maxLength={6}
-                className="w-full bg-white/5 border border-white/10 rounded-full py-5 px-6 text-3xl font-bold tracking-[0.5em] text-center text-white placeholder:text-white/20 focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/20 transition-all"
+                className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-full py-5 px-6 text-3xl font-bold tracking-[0.5em] text-center text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/20 focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/20 transition-all"
               />
               <button
                 type="submit"
@@ -64,9 +63,9 @@ export default function Home() {
               </button>
 
               <div className="flex items-center gap-4 py-2">
-                <hr className="flex-grow border-white/10" />
-                <span className="text-white/40 text-xs font-bold uppercase tracking-widest whitespace-nowrap">Or access more</span>
-                <hr className="flex-grow border-white/10" />
+                <hr className="flex-grow border-gray-200 dark:border-white/10" />
+                <span className="text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest whitespace-nowrap">Or access more</span>
+                <hr className="flex-grow border-gray-200 dark:border-white/10" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -90,18 +89,18 @@ export default function Home() {
 
           {/* Right - Hero Text */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 animate-slide-up">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium text-white">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur-sm border border-gray-300 dark:border-white/20 text-sm font-medium text-gray-900 dark:text-white">
               Free for educators — no credit card required
             </div>
 
-            <h1 className="text-4xl md:text-6xl tracking-tight text-white leading-[1.1]">
+            <h1 className="text-4xl md:text-6xl tracking-tight text-gray-900 dark:text-white leading-[1.1]">
               Make Learning
               <span className="block text-4xl md:text-8xl tracking-tighter hero-highlight p-2">
                 Unforgettable
               </span>
             </h1>
 
-            <p className="text-lg text-white/60 max-w-md leading-relaxed">
+            <p className="text-lg text-gray-500 dark:text-white/60 max-w-md leading-relaxed">
               Host live quizzes that spark engagement. Track understanding in real-time.
               Works on any device.
             </p>
@@ -124,8 +123,8 @@ export default function Home() {
                 { value: '99%', label: 'Uptime' },
               ].map((s) => (
                 <div key={s.label} className="text-center lg:text-left">
-                  <p className="text-2xl font-bold text-white">{s.value}</p>
-                  <p className="text-white/40 text-xs mt-0.5">{s.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.value}</p>
+                  <p className="text-gray-400 dark:text-white/40 text-xs mt-0.5">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -147,12 +146,12 @@ export default function Home() {
               Simple as 1-2-3
             </div>
             <div className="relative inline-block">
-              <h2 className="text-3xl md:text-5xl text-white">
+              <h2 className="text-3xl md:text-5xl text-gray-900 dark:text-white">
                 How it Works
                 <span className="absolute -right-10 top-0 rotate-12 text-2xl select-none animate-star-twinkle">✨</span>
               </h2>
             </div>
-            <p className="mt-6 text-white/50 max-w-xl mx-auto font-medium">
+            <p className="mt-6 text-gray-500 dark:text-white/50 max-w-xl mx-auto font-medium">
               Get your game live in under 60 seconds. Simple, fast, and incredibly fun.
             </p>
           </div>
@@ -174,8 +173,8 @@ export default function Home() {
                   {step.icon}
                 </div>
 
-                <h3 className="text-xl text-white mb-3">{step.title}</h3>
-                <p className="text-white/50 leading-relaxed">{step.desc}</p>
+                <h3 className="text-xl text-gray-900 dark:text-white mb-3">{step.title}</h3>
+                <p className="text-gray-500 dark:text-white/50 leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -184,7 +183,7 @@ export default function Home() {
 
 
       {/* CTA Footer */}
-      <section className="relative overflow-hidden text-white py-20 md:py-28" style={{ background: NIGHT_SKY }}>
+      <section className="relative overflow-hidden text-gray-900 dark:text-white py-20 md:py-28 gradient-hero">
         <div className="absolute inset-0 pattern-stars pointer-events-none" />
         <div className="absolute top-10 right-20 w-64 h-64 bg-accent/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-10 left-20 w-80 h-80 bg-brand/15 rounded-full blur-3xl pointer-events-none" />
@@ -192,11 +191,11 @@ export default function Home() {
         <div className="relative max-w-3xl mx-auto px-4 text-center">
           <div className="card-night px-8 py-14 md:px-16 md:py-16">
             <div className="relative inline-block mb-6">
-              <h2 className="text-3xl md:text-5xl text-white">
+              <h2 className="text-3xl md:text-5xl text-gray-900 dark:text-white">
                 Ready to transform your classroom?
               </h2>
             </div>
-            <p className="text-lg text-white/70 mb-10 max-w-xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-white/70 mb-10 max-w-xl mx-auto">
               Join thousands of educators using LiveClass to make learning interactive, measurable, and fun.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

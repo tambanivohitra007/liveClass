@@ -7,8 +7,6 @@ import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, Shield
 import WaveBackground from '../../components/ui/WaveBackground';
 import { AVATARS } from '../../lib/avatars';
 
-const NIGHT_SKY = 'radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.08) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%), linear-gradient(160deg, #080F1E 0%, #0F1729 40%, #080F1E 100%)';
-
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
   'Sneaky', 'Funky', 'Turbo', 'Mega', 'Super', 'Hyper', 'Ultra', 'Blazing',
@@ -225,15 +223,15 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden" style={{ background: NIGHT_SKY }}>
+    <div className="gradient-hero min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden">
       <WaveBackground variant="dark" position="both" />
       <div className="absolute inset-0 pattern-stars pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md animate-bounce-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl text-white tracking-tight">Join Game</h1>
-          <p className="text-white/50 mt-2 text-sm font-medium">Enter the PIN your host shared</p>
+          <h1 className="text-5xl text-gray-900 dark:text-white tracking-tight">Join Game</h1>
+          <p className="text-gray-500 dark:text-white/50 mt-2 text-sm font-medium">Enter the PIN your host shared</p>
         </div>
 
         {/* Step progress */}
@@ -245,7 +243,7 @@ export default function JoinGame() {
             return (
               <div key={s.key} className="flex items-center gap-2">
                 {i > 0 && (
-                  <div className={`w-8 h-0.5 rounded-full transition-colors duration-300 ${isDone ? 'bg-brand' : 'bg-white/15'}`} />
+                  <div className={`w-8 h-0.5 rounded-full transition-colors duration-300 ${isDone ? 'bg-brand' : 'bg-gray-200 dark:bg-white/15'}`} />
                 )}
                 <div
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
@@ -253,7 +251,7 @@ export default function JoinGame() {
                       ? 'bg-brand text-white shadow-lg scale-105'
                       : isDone
                         ? 'bg-brand/30 text-white'
-                        : 'bg-white/5 text-white/40'
+                        : 'bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-white/40'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -278,9 +276,9 @@ export default function JoinGame() {
             <div className="animate-fade-in">
               <div className="text-center mb-4">
                 <RefreshCw className="w-10 h-10 text-brand mx-auto mb-3" />
-                <p className="text-lg font-bold text-white">Welcome back!</p>
-                <p className="text-sm text-white/50 mt-1">
-                  Rejoin as <span className="font-bold text-white">{rejoinData.nickname}</span>?
+                <p className="text-lg font-bold text-gray-900 dark:text-white">Welcome back!</p>
+                <p className="text-sm text-gray-500 dark:text-white/50 mt-1">
+                  Rejoin as <span className="font-bold text-gray-900 dark:text-white">{rejoinData.nickname}</span>?
                 </p>
               </div>
               <button
@@ -294,7 +292,7 @@ export default function JoinGame() {
               <button
                 type="button"
                 onClick={handleDeclineRejoin}
-                className="w-full mt-3 py-2.5 text-sm font-semibold text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-400 dark:text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
               >
                 Join as someone else
               </button>
@@ -304,7 +302,7 @@ export default function JoinGame() {
           {/* Step: PIN */}
           {step === 'pin' && !rejoinData && (
             <form onSubmit={handlePinSubmit} className="animate-fade-in">
-              <label className="block text-center text-sm font-bold text-white/40 uppercase tracking-wider mb-4">
+              <label className="block text-center text-sm font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-4">
                 Game PIN
               </label>
               <input
@@ -315,7 +313,7 @@ export default function JoinGame() {
                 placeholder="000 000"
                 required
                 maxLength={6}
-                className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-full border border-white/10 bg-white/5 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-white placeholder:text-white/20"
+                className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-full border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/20"
                 autoFocus
               />
               <button
@@ -331,10 +329,10 @@ export default function JoinGame() {
           {/* Step: Verify */}
           {step === 'verify' && (
             <div className="animate-fade-in">
-              <label className="block text-center text-sm font-bold text-white/40 uppercase tracking-wider mb-4">
+              <label className="block text-center text-sm font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-4">
                 Pick the matching pattern
               </label>
-              <div className="flex justify-center gap-3 mb-6 p-5 bg-white/5 rounded-2xl border border-white/10">
+              <div className="flex justify-center gap-3 mb-6 p-5 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
                 {pattern.target.map((s, i) => (
                   <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-10 h-10" />
                 ))}
@@ -344,7 +342,7 @@ export default function JoinGame() {
                   <button
                     key={ci}
                     onClick={() => handleVerify(ci)}
-                    className="flex justify-center gap-2 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-300"
+                    className="flex justify-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-300"
                   >
                     {choice.map((s, i) => (
                       <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-7 h-7" />
@@ -355,7 +353,7 @@ export default function JoinGame() {
               <button
                 type="button"
                 onClick={() => { setStep('pin'); setError(''); }}
-                className="w-full mt-5 py-2.5 text-sm font-semibold text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full mt-5 py-2.5 text-sm font-semibold text-gray-400 dark:text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
               </button>
@@ -365,7 +363,7 @@ export default function JoinGame() {
           {/* Step: Nickname */}
           {step === 'nickname' && (
             <form onSubmit={handleJoin} className="animate-fade-in">
-              <label className="block text-center text-sm font-bold text-white/40 uppercase tracking-wider mb-4">
+              <label className="block text-center text-sm font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-4">
                 Choose your name
               </label>
               <div className="relative">
@@ -376,7 +374,7 @@ export default function JoinGame() {
                   placeholder="Your nickname"
                   required
                   maxLength={20}
-                  className="w-full text-center text-2xl font-bold px-4 py-5 rounded-full border border-white/10 bg-white/5 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-white placeholder:text-white/20 pr-14"
+                  className="w-full text-center text-2xl font-bold px-4 py-5 rounded-full border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/20 pr-14"
                   autoFocus
                 />
                 <button
@@ -392,7 +390,7 @@ export default function JoinGame() {
               {/* Emoji Avatar Picker */}
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Pick your avatar</span>
+                  <span className="text-xs font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider">Pick your avatar</span>
                   <button
                     type="button"
                     onClick={() => setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)])}
@@ -410,7 +408,7 @@ export default function JoinGame() {
                       className={`text-2xl p-2 rounded-xl border transition-all duration-200 ${
                         avatar === emoji
                           ? 'border-brand bg-brand/20 ring-2 ring-brand/40 scale-110'
-                          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                          : 'border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-100 dark:hover:bg-white/10'
                       }`}
                     >
                       {emoji}
@@ -429,7 +427,7 @@ export default function JoinGame() {
               <button
                 type="button"
                 onClick={() => { setStep('pin'); setError(''); }}
-                className="w-full mt-3 py-2.5 text-sm font-semibold text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-400 dark:text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
               </button>

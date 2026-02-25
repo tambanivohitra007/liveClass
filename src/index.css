@@ -1,5 +1,41 @@
 @import "tailwindcss";
 
+/* ─── Semantic Theme Variables ─── */
+
+:root {
+  /* Light mode (default) */
+  --surface-bg: #F8F9FB;
+  --surface-card: #FFFFFF;
+  --surface-elevated: #F1F5F9;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-tertiary: #94A3B8;
+  --border-base: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --input-bg: #FFFFFF;
+  --input-border: #CBD5E1;
+  --scrollbar-track: #F1F5F9;
+  --scrollbar-thumb: #CBD5E1;
+  --scrollbar-thumb-hover: #94A3B8;
+}
+
+.dark {
+  /* Dark mode overrides */
+  --surface-bg: #0F1729;
+  --surface-card: #162033;
+  --surface-elevated: #1A2537;
+  --text-primary: #E2E8F0;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-tertiary: rgba(255, 255, 255, 0.4);
+  --border-base: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --scrollbar-track: #080F1E;
+  --scrollbar-thumb: #2A3548;
+  --scrollbar-thumb-hover: #384658;
+}
+
 @theme {
   /* Brand — NZK-inspired cyan */
   --color-brand: #009EE2;
@@ -27,10 +63,10 @@
   --color-answer-purple: #8B5CF6;
   --color-answer-orange: #F97316;
 
-  /* Surfaces — dark navy night theme */
-  --color-surface: #0F1729;
-  --color-surface-dark: #080F1E;
-  --color-surface-card: #162033;
+  /* Surfaces — driven by CSS variables */
+  --color-surface: var(--surface-bg);
+  --color-surface-dark: var(--surface-bg);
+  --color-surface-card: var(--surface-card);
 
   /* Radius */
   --radius-pill: 1000px;
@@ -39,20 +75,20 @@
   --radius-2xl: 1.25rem;
   --radius-3xl: 1.75rem;
 
-  /* Cyan/purple glow shadows */
-  --shadow-sm: 0 2px 8px -2px rgba(0,158,226,0.12), 0 1px 2px -1px rgba(0,0,0,0.2);
-  --shadow: 0 4px 12px -2px rgba(0,158,226,0.15), 0 2px 4px -2px rgba(0,0,0,0.2);
-  --shadow-md: 0 4px 12px -2px rgba(0,158,226,0.15), 0 2px 4px -2px rgba(0,0,0,0.2);
-  --shadow-lg: 0 10px 24px -4px rgba(0,158,226,0.18), 0 4px 8px -2px rgba(0,0,0,0.2);
-  --shadow-xl: 0 20px 40px -8px rgba(0,158,226,0.20), 0 8px 16px -4px rgba(0,0,0,0.2);
-  --shadow-2xl: 0 25px 50px -12px rgba(112,30,168,0.25), 0 12px 24px -6px rgba(0,0,0,0.2);
+  /* Shadows — neutral for light mode */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 
 @layer base {
   body {
     @apply bg-surface antialiased;
     font-family: 'McLaren', Arial, sans-serif;
-    color: #E2E8F0;
+    color: var(--text-primary);
     margin: 0;
   }
 
@@ -61,18 +97,18 @@
     font-weight: 400;
   }
 
-  /* Form elements — dark-first */
+  /* Form elements — theme-aware */
   input,
   textarea,
   select {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #f1f5f9;
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-tertiary);
   }
 
   input:focus,
@@ -83,7 +119,7 @@
 
   /* Dividers */
   hr {
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--border-base);
   }
 
   /* Scrollbar (Webkit) */
@@ -92,16 +128,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #080F1E;
+    background: var(--scrollbar-track);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2A3548;
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #384658;
+    background: var(--scrollbar-thumb-hover);
   }
 }
 
@@ -111,10 +147,17 @@
   }
 }
 
-/* Cyan/purple glow hover shadows (outside @layer to beat utility specificity) */
+/* Shadow hover overrides — light uses standard, dark uses cyan glow */
 .hover\:shadow-md:hover {
-  box-shadow: 0 6px 16px -3px rgba(0,158,226,0.18), 0 3px 6px -2px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
 }
 .hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+}
+
+.dark .hover\:shadow-md:hover {
+  box-shadow: 0 6px 16px -3px rgba(0,158,226,0.18), 0 3px 6px -2px rgba(0,0,0,0.2);
+}
+.dark .hover\:shadow-xl:hover {
   box-shadow: 0 24px 48px -10px rgba(0,158,226,0.22), 0 10px 20px -5px rgba(0,0,0,0.2);
 }

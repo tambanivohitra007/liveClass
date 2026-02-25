@@ -33,7 +33,7 @@ export default function ValidatedInput({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-white/60 mb-1.5">{label}</label>
+      <label className="block text-sm font-medium text-gray-600 dark:text-white/60 mb-1.5">{label}</label>
       <div className="relative">
         <input
           type={type}
@@ -42,12 +42,12 @@ export default function ValidatedInput({
           onBlur={() => setTouched(true)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full px-4 py-3 pr-10 rounded-xl border outline-none transition-all bg-white/5 text-white ${
+          className={`w-full px-4 py-3 pr-10 rounded-xl border outline-none transition-all bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white ${
             error
               ? 'border-danger focus:ring-2 focus:ring-danger/30 focus:border-danger'
               : isValid
                 ? 'border-success focus:ring-2 focus:ring-success/30 focus:border-success'
-                : 'border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand'
+                : 'border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand'
           }`}
         />
         {isValid && (
