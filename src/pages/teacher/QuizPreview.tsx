@@ -435,9 +435,9 @@ export default function QuizPreview() {
                     disabled={revealed}
                     className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white border border-gray-300 dark:border-white/20 outline-none focus:border-brand"
                   >
-                    <option value="" className="bg-gray-800 dark:bg-gray-800">Select...</option>
+                    <option value="" className="bg-gray-800 dark:bg-gray-800 text-white">Select...</option>
                     {shuffledMatchOptions.map((right) => (
-                      <option key={right} value={right} className="bg-gray-800 dark:bg-gray-800">{right}</option>
+                      <option key={right} value={right} className="bg-gray-800 dark:bg-gray-800 text-white">{right}</option>
                     ))}
                   </select>
                   {pairCorrect && <Check className="w-5 h-5 text-success shrink-0" />}
