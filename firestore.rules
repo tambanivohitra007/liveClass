@@ -52,11 +52,13 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
-    // Sessions: host can write, players can read
+    // Sessions: host or admin can write, players can read
     match /sessions/{sessionId} {
       allow read: if true;
-      allow write: if request.auth != null
-        && resource.data.hostId == request.auth.uid;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && (resource.data.hostId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
 
       // Players subcollection
       match /players/{playerId} {
@@ -95,13 +97,14 @@ service cloud.firestore {
       }
     }
 
-    // Assignments: any authed user can read, only owner can create/update/delete
+    // Assignments: any authed user can read, owner or admin can update/delete
     match /assignments/{assignmentId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
         && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null
-        && resource.data.ownerId == request.auth.uid;
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
     }
 
     // Collection group: members (required for collectionGroup queries across classrooms)

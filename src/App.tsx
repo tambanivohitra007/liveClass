@@ -20,6 +20,9 @@ import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminQuizzes from './pages/admin/AdminQuizzes';
 import AdminClasses from './pages/admin/AdminClasses';
+import AdminOverview from './pages/admin/AdminOverview';
+import AdminSessions from './pages/admin/AdminSessions';
+import AdminAssignments from './pages/admin/AdminAssignments';
 import Dashboard from './pages/teacher/Dashboard';
 import QuizEditor from './pages/teacher/QuizEditor';
 import HostSession from './pages/teacher/HostSession';
@@ -143,9 +146,12 @@ function AppContent() {
         <Route path="/pending-approval" element={<PendingApproval />} />
 
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-          <Route index element={<AdminDashboard />} />
+          <Route index element={<AdminOverview />} />
+          <Route path="users" element={<AdminDashboard />} />
           <Route path="quizzes" element={<AdminQuizzes />} />
           <Route path="classes" element={<AdminClasses />} />
+          <Route path="sessions" element={<AdminSessions />} />
+          <Route path="assignments" element={<AdminAssignments />} />
         </Route>
 
         <Route path="/dashboard" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
