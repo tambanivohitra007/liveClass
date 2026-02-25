@@ -1010,7 +1010,7 @@ export default function QuizEditor() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief description"
                   rows={2}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white resize-y"
                 />
               </div>
               <div>
