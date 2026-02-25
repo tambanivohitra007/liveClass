@@ -346,7 +346,7 @@ export default function StudentDashboard() {
         {/* Empty state */}
         {assignments.length === 0 && recentGames.length === 0 && (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl border-2 border-gray-800 bg-brand/10 shadow-[4px_4px_0px_0px_var(--retro-brand)] mb-5">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl border-2 border-gray-800 dark:border-white/20 bg-brand/10 shadow-[4px_4px_0px_0px_var(--retro-brand)] mb-5">
               <Gamepad2 className="w-10 h-10 text-brand" />
             </div>
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No games yet</h3>

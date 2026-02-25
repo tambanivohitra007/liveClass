@@ -506,7 +506,7 @@ export default function SessionResults() {
                 <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-success"></span> Correct</div>
                 <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-warning"></span> Partially correct</div>
                 <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-danger"></span> Incorrect</div>
-                <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-gray-300"></span> Unattempted</div>
+                <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-gray-300 dark:bg-white/30"></span> Unattempted</div>
               </div>
 
               {sortedPlayerStats.map((player) => (
