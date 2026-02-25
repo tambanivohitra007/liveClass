@@ -644,7 +644,7 @@ export default function Dashboard() {
             return (
               <div
                 key={quiz.id}
-                className="group card-night card-night-hover flex flex-col animate-fade-in"
+                className={`group relative card-night card-night-hover flex flex-col animate-fade-in ${menuOpenId === quiz.id ? 'z-50' : 'z-0'}`}
               >
                 {/* Banner */}
                 <div className={`h-32 ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} relative overflow-hidden rounded-t-2xl`}>
@@ -699,8 +699,8 @@ export default function Dashboard() {
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
-                      {menuOpenId === quiz.id && (
-                          <div className="absolute right-0 top-full mt-1 w-52 bg-surface-card rounded-xl shadow-lg border border-gray-200 dark:border-white/10 z-20 py-1.5 animate-fade-in">
+                        {menuOpenId === quiz.id && (
+                          <div className="absolute right-0 top-full mt-1 w-52 bg-surface-card rounded-xl shadow-lg border border-gray-200 dark:border-white/10 z-50 py-1.5 animate-fade-in">
                             <button
                               onClick={() => { navigate(`/quiz/${quiz.id}/preview`); setMenuOpenId(null); }}
                               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -781,7 +781,7 @@ export default function Dashboard() {
           {/* Create Placeholder Card */}
           <button
             onClick={() => navigate('/quiz/new')}
-            className="min-h-[280px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
+            className="min-h-70 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
           >
             <div className="w-14 h-14 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 dark:text-white/30 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
               <Plus className="w-7 h-7" />
