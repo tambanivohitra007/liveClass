@@ -48,7 +48,7 @@ export default function JoinClass() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-gradient-to-br from-brand-dark via-surface-dark to-surface-dark relative">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-linear-to-br from-brand-dark via-surface-dark to-surface-dark relative">
       <div className="absolute inset-0 pattern-grid pointer-events-none" />
       <div className="w-full max-w-sm animate-bounce-in">
         <div className="mb-4">

@@ -138,29 +138,29 @@ export default function SessionHistory() {
     });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 text-gray-900 dark:text-white">
       {/* Header */}
       <div className="mb-8">
         <BackButton to="/dashboard" label="Back to Dashboard" />
-        <h1 className="text-2xl font-bold text-gray-900">Session History</h1>
-        <p className="text-gray-500 mt-1">Review past game sessions and results</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Session History</h1>
+        <p className="text-gray-500 dark:text-white/50 mt-1">Review past game sessions and results</p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+        <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-white/50">
           <Filter className="w-4 h-4" />
           <span className="font-medium">Filters:</span>
         </div>
 
         {/* Date filter */}
-        <div className="flex bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="flex bg-white dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden">
           {(['7d', '30d', 'all'] as DateFilter[]).map((f) => (
             <button
               key={f}
               onClick={() => setDateFilter(f)}
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                dateFilter === f ? 'bg-brand text-white' : 'text-gray-600 hover:bg-gray-50'
+                dateFilter === f ? 'bg-brand text-white' : 'text-gray-600 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/10'
               }`}
             >
               {f === '7d' ? '7 Days' : f === '30d' ? '30 Days' : 'All Time'}
@@ -173,7 +173,7 @@ export default function SessionHistory() {
           <select
             value={quizFilter}
             onChange={(e) => setQuizFilter(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-brand/20 focus:border-brand"
+            className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-gray-700 dark:text-white/70 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="all">All Quizzes</option>
             {quizOptions.map((q) => (
@@ -184,11 +184,11 @@ export default function SessionHistory() {
 
         {/* Sort */}
         <div className="flex items-center gap-1.5 ml-auto">
-          <SortAsc className="w-4 h-4 text-gray-400" />
+          <SortAsc className="w-4 h-4 text-gray-400 dark:text-white/40" />
           <select
             value={sortField}
             onChange={(e) => setSortField(e.target.value as SortField)}
-            className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-brand/20 focus:border-brand"
+            className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-gray-700 dark:text-white/70 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="date">Sort by Date</option>
             <option value="players">Sort by Players</option>
@@ -204,11 +204,11 @@ export default function SessionHistory() {
         </div>
       ) : filteredSessions.length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-            <Calendar className="w-10 h-10 text-gray-300" />
+          <div className="w-20 h-20 bg-gray-100 dark:bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
+            <Calendar className="w-10 h-10 text-gray-300 dark:text-white/30" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No sessions found</h3>
-          <p className="text-gray-500">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No sessions found</h3>
+          <p className="text-gray-500 dark:text-white/50">
             {sessions.length === 0 ? 'Host a game to see results here' : 'Try adjusting your filters'}
           </p>
         </div>
@@ -221,37 +221,37 @@ export default function SessionHistory() {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/session/${s.id}/results`); }}
-                className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group cursor-pointer"
+                className="w-full bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-gray-900 group-hover:text-brand transition-colors mb-1 truncate">
+                  <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-brand transition-colors mb-1 truncate">
                     {s.quizTitle}
                   </h3>
                   <button
                     onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(s.id); }}
-                    className="p-1.5 rounded-lg text-gray-300 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
+                    className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
                     title="Delete session"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
+                <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40 mb-4">
                   <Calendar className="w-3 h-3" />
                   {new Date(s.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                  <span className="text-gray-300">|</span>
+                  <span className="text-gray-300 dark:text-white/30">|</span>
                   <Hash className="w-3 h-3" />
                   {s.pinCode}
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <div className="flex items-center gap-1 text-gray-400 mb-1">
+                    <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
                       <Users className="w-3 h-3" />
                       <span className="text-[10px] uppercase tracking-wider font-medium">Players</span>
                     </div>
-                    <p className="text-lg font-bold text-gray-900">{s.playerCount}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{s.playerCount}</p>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1 text-gray-400 mb-1">
+                    <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
                       <Target className="w-3 h-3" />
                       <span className="text-[10px] uppercase tracking-wider font-medium">Accuracy</span>
                     </div>
@@ -264,24 +264,24 @@ export default function SessionHistory() {
                     </p>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1 text-gray-400 mb-1">
+                    <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
                       <span className="text-[10px] uppercase tracking-wider font-medium">Avg Score</span>
                     </div>
-                    <p className="text-lg font-bold text-gray-900">{s.avgScore.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{s.avgScore.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
 
               {/* Delete confirmation overlay */}
               {confirmDeleteId === s.id && (
-                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
-                  <p className="text-sm font-medium text-gray-900">Delete this session?</p>
-                  <p className="text-xs text-gray-500">This action cannot be undone.</p>
+                <div className="absolute inset-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this session?</p>
+                  <p className="text-xs text-gray-500 dark:text-white/50">This action cannot be undone.</p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setConfirmDeleteId(null)}
                       disabled={deleting}
-                      className="px-4 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                      className="px-4 py-1.5 text-xs font-medium text-gray-600 dark:text-white/70 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
                     >
                       Cancel
                     </button>
