@@ -62,7 +62,7 @@ export default function AssignmentCreate() {
       </div>
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Create Assignment</h1>
 
-      <form onSubmit={handleCreate} className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 space-y-5">
+      <form onSubmit={handleCreate} className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] p-6 space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Select Quiz</label>
           <select
@@ -125,7 +125,7 @@ export default function AssignmentCreate() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50"
+          className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_var(--retro-brand-mid)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand-mid)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50"
         >
           {saving ? 'Creating...' : 'Create Assignment'}
         </button>

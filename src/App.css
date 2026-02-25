@@ -187,7 +187,7 @@
   color: white;
   font-weight: 800;
   font-family: 'Acme', sans-serif;
-  border: none;
+  border: 2px solid #00C4FF;
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
@@ -222,7 +222,7 @@
   color: white;
   font-weight: 800;
   font-family: 'Acme', sans-serif;
-  border: none;
+  border: 2px solid #9B3DD4;
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
@@ -257,7 +257,7 @@
   color: #080F1E;
   font-weight: 800;
   font-family: 'Acme', sans-serif;
-  border: none;
+  border: 2px solid #F8DF8A;
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
@@ -291,7 +291,7 @@
   background: #F1F5F9;
   color: #0F172A;
   font-weight: 700;
-  border: 2px solid #E2E8F0;
+  border: 2px solid #FFFFFF;
   padding: 12px 28px;
   cursor: pointer;
   box-shadow:
@@ -316,7 +316,7 @@
 .dark .btn-3d-ghost {
   background: rgba(255,255,255,0.08);
   color: white;
-  border-color: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.15);
   box-shadow:
     0 2px 0 0 rgba(0,0,0,0.2),
     inset 0 1px 0 rgba(255,255,255,0.1);
@@ -340,7 +340,7 @@
   color: white;
   font-weight: 800;
   font-family: 'Acme', sans-serif;
-  border: none;
+  border: 2px solid #F87171;
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
@@ -370,7 +370,7 @@
   color: white;
   font-weight: 800;
   font-family: 'Acme', sans-serif;
-  border: none;
+  border: 2px solid #4ADE80;
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:

@@ -14,7 +14,7 @@ export default function PendingApproval() {
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark relative">
       <div className="absolute inset-0 pattern-dots pointer-events-none" />
       <div className="w-full max-w-md animate-fade-in">
-        <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-8 text-center">
+        <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] p-8 text-center">
           <img src={logo} alt="LiveClass" className="w-14 h-14 rounded-2xl mx-auto mb-6" />
 
           {isRejected ? (

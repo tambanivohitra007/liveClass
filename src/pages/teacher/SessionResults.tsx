@@ -290,7 +290,7 @@ export default function SessionResults() {
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <Target className="w-6 h-6" />
           </div>
@@ -302,7 +302,7 @@ export default function SessionResults() {
           </div>
         </div>
         
-        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <CheckCircle2 className="w-6 h-6" />
           </div>
@@ -314,7 +314,7 @@ export default function SessionResults() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <Users className="w-6 h-6" />
           </div>
@@ -326,7 +326,7 @@ export default function SessionResults() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] flex items-center gap-4">
           <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <HelpCircle className="w-6 h-6" />
           </div>

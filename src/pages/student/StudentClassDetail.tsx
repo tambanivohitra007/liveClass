@@ -131,7 +131,7 @@ export default function StudentClassDetail() {
         </div>
 
         {/* Header card */}
-        <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] overflow-hidden mb-8">
+        <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] overflow-hidden mb-8">
           <div className={`h-28 ${CARD_GRADIENTS[classroom.color] || DEFAULT_GRADIENT} relative overflow-hidden`}>
             <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
             <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />

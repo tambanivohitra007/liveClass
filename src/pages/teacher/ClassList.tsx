@@ -127,7 +127,7 @@ export default function ClassList() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200 flex items-center gap-2 text-sm"
+          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_var(--retro-brand-mid)] hover:shadow-[3px_3px_0px_0px_var(--retro-brand-mid)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200 flex items-center gap-2 text-sm"
         >
           <Plus className="w-4 h-4" />
           Create Class
@@ -144,7 +144,7 @@ export default function ClassList() {
           <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Create your first class to start managing students</p>
           <button
             onClick={() => setShowModal(true)}
-            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200"
+            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_var(--retro-brand-mid)] hover:shadow-[3px_3px_0px_0px_var(--retro-brand-mid)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200"
           >
             Create your first class
           </button>
@@ -157,7 +157,7 @@ export default function ClassList() {
               <div
                 key={cls.id}
                 onClick={() => navigate(`/classroom/${cls.id}`)}
-                className="group bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
+                className="group bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand-light)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
               >
                 {/* Color banner */}
                 <div className={`h-24 ${CARD_GRADIENTS[cls.color] || DEFAULT_GRADIENT} relative overflow-hidden rounded-t-2xl`}>

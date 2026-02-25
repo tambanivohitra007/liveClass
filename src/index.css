@@ -21,12 +21,14 @@
   --scrollbar-thumb-hover: #94A3B8;
 
   /* Retro shadow colors */
-  --retro-brand: #D4566B;
+  --retro-brand: #7f42b1;
   --retro-gray: #6b7280;
   --retro-danger: #EF4444;
   --retro-success: #22C55E;
   --retro-blue: #2E5290;
   --retro-muted: rgba(107, 114, 128, 0.2);
+  --retro-brand-light: rgba(212, 86, 107, 0.15);
+  --retro-brand-mid: rgba(212, 86, 107, 0.3);
 }
 
 .dark {
@@ -46,12 +48,14 @@
   --scrollbar-thumb-hover: #384658;
 
   /* Retro shadow colors — cyan brand glow in dark mode */
-  --retro-brand: rgba(0, 158, 226, 0.5);
+  --retro-brand: rgba(230, 69, 130, 0.5);
   --retro-gray: rgba(255, 255, 255, 0.1);
   --retro-danger: rgba(239, 68, 68, 0.4);
   --retro-success: rgba(34, 197, 94, 0.4);
   --retro-blue: rgba(46, 82, 144, 0.4);
   --retro-muted: rgba(255, 255, 255, 0.05);
+  --retro-brand-light: rgba(0, 158, 226, 0.1);
+  --retro-brand-mid: rgba(0, 158, 226, 0.2);
 }
 
 @theme {
