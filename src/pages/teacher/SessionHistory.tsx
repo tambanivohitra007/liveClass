@@ -35,6 +35,20 @@ export default function SessionHistory() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const toMillis = (value: unknown): number => {
+    if (typeof value === 'number') return value;
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === 'object' && value !== null) {
+      const maybeTimestamp = value as { toMillis?: () => number; seconds?: number; nanoseconds?: number };
+      if (typeof maybeTimestamp.toMillis === 'function') return maybeTimestamp.toMillis();
+      if (typeof maybeTimestamp.seconds === 'number') {
+        const nanos = typeof maybeTimestamp.nanoseconds === 'number' ? maybeTimestamp.nanoseconds : 0;
+        return maybeTimestamp.seconds * 1000 + Math.floor(nanos / 1_000_000);
+      }
+    }
+    return 0;
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -91,7 +105,7 @@ export default function SessionHistory() {
           quizId,
           quizTitle: quizTitleCache.get(quizId) || 'Untitled Quiz',
           pinCode: sData.pinCode || '',
-          endedAt: sData.endedAt || 0,
+          endedAt: toMillis(sData.endedAt),
           playerCount: playersSnap.size,
           avgAccuracy,
           avgScore,
@@ -237,7 +251,9 @@ export default function SessionHistory() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40 mb-4">
                   <Calendar className="w-3 h-3" />
-                  {new Date(s.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {s.endedAt > 0
+                    ? new Date(s.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'Unknown date'}
                   <span className="text-gray-300 dark:text-white/30">|</span>
                   <Hash className="w-3 h-3" />
                   {s.pinCode}
