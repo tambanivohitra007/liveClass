@@ -173,7 +173,18 @@ function AppContent() {
 function App() {
   useAuthListener();
   useNotificationListener();
-  const { theme } = useThemeStore();
+  const { theme, setTheme } = useThemeStore();
+  const { firebaseUser, loading } = useAuthStore();
+
+  useEffect(() => {
+    if (loading || firebaseUser) return;
+    if (typeof window === 'undefined') return;
+
+    const storedTheme = localStorage.getItem('theme');
+    if (!storedTheme && theme !== 'dark') {
+      setTheme('dark');
+    }
+  }, [loading, firebaseUser, theme, setTheme]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');

@@ -5,6 +5,7 @@ type Theme = 'light' | 'dark';
 interface ThemeState {
   theme: Theme;
   toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
 }
 
 const getInitialTheme = (): Theme => {
@@ -16,6 +17,10 @@ const getInitialTheme = (): Theme => {
 
 export const useThemeStore = create<ThemeState>((set) => ({
   theme: getInitialTheme(),
+  setTheme: (theme) => {
+    localStorage.setItem('theme', theme);
+    set({ theme });
+  },
   toggleTheme: () =>
     set((state) => {
       const next = state.theme === 'light' ? 'dark' : 'light';
