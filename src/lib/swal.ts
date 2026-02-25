@@ -3,11 +3,11 @@ import Swal from 'sweetalert2';
 /** Pre-configured SweetAlert instance matching the app's design system (light + dark) */
 const swal = Swal.mixin({
   customClass: {
-    popup: 'rounded-2xl !border-2 !border-gray-800 dark:!border-white/20 !shadow-[4px_4px_0px_0px_var(--retro-brand)] !bg-surface-card',
+    popup: 'rounded-2xl !border-2 !border-gray-800 dark:!border-white/20 !shadow-sm !bg-surface-card',
     title: '!text-gray-900 dark:!text-white',
     htmlContainer: '!text-gray-500 dark:!text-white/60',
-    confirmButton: 'px-5 py-2.5 rounded-xl font-semibold text-sm !border-2 !border-gray-800 dark:!border-white/20 !shadow-[3px_3px_0px_0px_var(--retro-brand)] hover:!shadow-[5px_5px_0px_0px_var(--retro-brand)] hover:!translate-x-[-2px] hover:!translate-y-[-2px] transition-all duration-300',
-    cancelButton: 'px-5 py-2.5 rounded-xl font-semibold text-sm !border-2 !border-gray-800 dark:!border-white/20 !shadow-[2px_2px_0px_0px_var(--retro-gray)] hover:!shadow-[4px_4px_0px_0px_var(--retro-gray)] hover:!translate-x-[-1px] hover:!translate-y-[-1px] transition-all duration-300',
+    confirmButton: 'px-5 py-2.5 rounded-xl font-semibold text-sm !border-2 !border-gray-800 dark:!border-white/20 !shadow-sm hover:!shadow-md transition-all duration-200',
+    cancelButton: 'px-5 py-2.5 rounded-xl font-semibold text-sm !border-2 !border-gray-800 dark:!border-white/20 !shadow-sm hover:!shadow-md transition-all duration-200',
   },
   buttonsStyling: true,
   confirmButtonColor: '#D4566B',   // brand

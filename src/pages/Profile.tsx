@@ -198,7 +198,7 @@ export default function Profile() {
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Profile Settings</h1>
 
       {/* Avatar Section */}
-      <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] p-6 mb-6 animate-fade-in">
+      <div className="card-night p-6 mb-6 animate-fade-in">
         <div className="flex items-center gap-6">
           <div className="relative group">
             {photoUrl ? (
@@ -238,7 +238,7 @@ export default function Profile() {
       </div>
 
       {/* Profile Info Form */}
-      <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] p-6 mb-6 animate-fade-in">
+      <div className="card-night p-6 mb-6 animate-fade-in">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
         <div className="space-y-4">
           <div>
@@ -329,7 +329,7 @@ export default function Profile() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_var(--retro-brand-mid)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand-mid)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="btn-3d-cyan w-full disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Changes'}
@@ -338,7 +338,7 @@ export default function Profile() {
       </div>
 
       {/* Security Section */}
-      <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] p-6 animate-fade-in">
+      <div className="card-night p-6 animate-fade-in">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Shield className="w-4 h-4 text-gray-400 dark:text-white/40" />
           Security

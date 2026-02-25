@@ -131,7 +131,7 @@ export default function StudentClassDetail() {
         </div>
 
         {/* Header card */}
-        <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] overflow-hidden mb-8">
+        <div className="card-night overflow-hidden mb-8">
           <div className={`h-28 ${CARD_GRADIENTS[classroom.color] || DEFAULT_GRADIENT} relative overflow-hidden`}>
             <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
             <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
@@ -162,7 +162,7 @@ export default function StudentClassDetail() {
               {activeAssignments.map((a) => (
                 <div
                   key={a.id}
-                  className="group bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_var(--retro-success)] hover:shadow-[6px_6px_0px_0px_var(--retro-success)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
+                  className="group card-night card-night-hover flex flex-col"
                 >
                   <div className="p-6 flex-1">
                     <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1 bg-success/10 text-success rounded-full font-bold border border-success/20 mb-3">
@@ -178,7 +178,7 @@ export default function StudentClassDetail() {
                   <div className="px-6 py-4 border-t-2 border-gray-100 dark:border-white/10">
                     <button
                       onClick={() => navigate(`/assignment/${a.id}`)}
-                      className="w-full py-2.5 text-sm font-bold text-white bg-success rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[2px_2px_0px_0px_var(--retro-success)] hover:shadow-[4px_4px_0px_0px_var(--retro-success)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-1.5"
+                      className="btn-3d-success btn-3d-sm w-full flex items-center justify-center gap-1.5"
                     >
                       Start <ArrowRight className="w-3.5 h-3.5" />
                     </button>
@@ -195,7 +195,7 @@ export default function StudentClassDetail() {
             <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4">Upcoming</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {upcomingAssignments.map((a) => (
-                <div key={a.id} className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-300 dark:border-white/15 shadow-[3px_3px_0px_0px_var(--retro-blue)] p-6 opacity-80">
+                <div key={a.id} className="card-night p-6 opacity-80">
                   <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1 bg-info/10 text-info rounded-full font-bold border border-info/20 mb-3">
                     Upcoming
                   </span>
@@ -234,7 +234,7 @@ export default function StudentClassDetail() {
         {/* Empty state */}
         {assignments.length === 0 && (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl border-2 border-gray-800 dark:border-white/20 bg-brand/10 shadow-[4px_4px_0px_0px_var(--retro-brand)] mb-5">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl border border-gray-200 dark:border-white/10 bg-brand/10 shadow-sm mb-5">
               <Clock className="w-10 h-10 text-brand" />
             </div>
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No assignments yet</h3>

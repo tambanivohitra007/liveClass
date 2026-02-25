@@ -21,14 +21,14 @@
   --scrollbar-thumb-hover: #94A3B8;
 
   /* Comic-pop shadow colors */
-  --retro-brand: #FF4FA3;
-  --retro-gray: #475569;
-  --retro-danger: #FF5A5F;
-  --retro-success: #2FD37A;
-  --retro-blue: #3B82F6;
-  --retro-muted: rgba(71, 85, 105, 0.24);
-  --retro-brand-light: rgba(255, 79, 163, 0.2);
-  --retro-brand-mid: rgba(255, 79, 163, 0.38);
+  --tone-accent: #FF4FA3;
+  --tone-neutral: #475569;
+  --tone-danger: #FF5A5F;
+  --tone-success: #2FD37A;
+  --tone-info: #3B82F6;
+  --tone-muted: rgba(71, 85, 105, 0.24);
+  --tone-accent-light: rgba(255, 79, 163, 0.2);
+  --tone-accent-mid: rgba(255, 79, 163, 0.38);
 }
 
 .dark {
@@ -48,14 +48,14 @@
   --scrollbar-thumb-hover: #384658;
 
   /* Comic-pop shadow colors in dark mode */
-  --retro-brand: rgba(255, 97, 176, 0.55);
-  --retro-gray: rgba(255, 255, 255, 0.16);
-  --retro-danger: rgba(255, 90, 95, 0.45);
-  --retro-success: rgba(47, 211, 122, 0.45);
-  --retro-blue: rgba(59, 130, 246, 0.45);
-  --retro-muted: rgba(255, 255, 255, 0.09);
-  --retro-brand-light: rgba(255, 97, 176, 0.22);
-  --retro-brand-mid: rgba(255, 97, 176, 0.34);
+  --tone-accent: rgba(255, 97, 176, 0.55);
+  --tone-neutral: rgba(255, 255, 255, 0.16);
+  --tone-danger: rgba(255, 90, 95, 0.45);
+  --tone-success: rgba(47, 211, 122, 0.45);
+  --tone-info: rgba(59, 130, 246, 0.45);
+  --tone-muted: rgba(255, 255, 255, 0.09);
+  --tone-accent-light: rgba(255, 97, 176, 0.22);
+  --tone-accent-mid: rgba(255, 97, 176, 0.34);
 }
 
 @theme {

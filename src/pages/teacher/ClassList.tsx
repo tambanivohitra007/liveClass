@@ -127,7 +127,7 @@ export default function ClassList() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_var(--retro-brand-mid)] hover:shadow-[3px_3px_0px_0px_var(--retro-brand-mid)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200 flex items-center gap-2 text-sm"
+          className="btn-3d-cyan btn-3d-sm flex items-center gap-2 text-sm"
         >
           <Plus className="w-4 h-4" />
           Create Class
@@ -144,7 +144,7 @@ export default function ClassList() {
           <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Create your first class to start managing students</p>
           <button
             onClick={() => setShowModal(true)}
-            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_var(--retro-brand-mid)] hover:shadow-[3px_3px_0px_0px_var(--retro-brand-mid)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200"
+            className="btn-3d-cyan"
           >
             Create your first class
           </button>
@@ -157,7 +157,7 @@ export default function ClassList() {
               <div
                 key={cls.id}
                 onClick={() => navigate(`/classroom/${cls.id}`)}
-                className="group bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_var(--retro-brand-light)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand-light)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
+                className="group card-night card-night-hover flex flex-col animate-fade-in cursor-pointer"
               >
                 {/* Color banner */}
                 <div className={`h-24 ${CARD_GRADIENTS[cls.color] || DEFAULT_GRADIENT} relative overflow-hidden rounded-t-2xl`}>
@@ -238,7 +238,7 @@ export default function ClassList() {
             role="dialog"
             aria-modal="true"
             aria-label="Create Class"
-            className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_var(--retro-brand)] w-full max-w-md animate-bounce-in"
+            className="card-night w-full max-w-md animate-bounce-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 pb-0">
@@ -254,7 +254,7 @@ export default function ClassList() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Biology 101"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
                   autoFocus
                 />
               </div>
@@ -265,7 +265,7 @@ export default function ClassList() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Optional description"
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white resize-none"
                 />
               </div>
               <div>
@@ -275,7 +275,7 @@ export default function ClassList() {
                     <button
                       key={c.key}
                       onClick={() => setColor(c.key)}
-                      className={`w-8 h-8 rounded-full ${c.bg} border-2 border-gray-800 dark:border-white/20 transition-all ${color === c.key ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-white/50 dark:ring-offset-surface-dark scale-110' : 'hover:scale-105'}`}
+                      className={`w-8 h-8 rounded-full ${c.bg} border border-gray-300 dark:border-white/20 transition-all ${color === c.key ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-white/50 dark:ring-offset-surface-dark scale-110' : 'hover:scale-105'}`}
                       title={c.label}
                     />
                   ))}
@@ -285,7 +285,7 @@ export default function ClassList() {
                 <button
                   onClick={handleCreate}
                   disabled={creating || !name.trim()}
-                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[3px_3px_0px_0px_var(--retro-brand)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_var(--retro-brand)] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                  className="btn-3d-cyan btn-3d-sm flex-1 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {creating ? (
                     <>
@@ -296,7 +296,7 @@ export default function ClassList() {
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 border-2 border-gray-800 dark:border-white/20 text-gray-600 dark:text-white/70 font-medium rounded-xl shadow-[2px_2px_0px_0px_var(--retro-gray)] hover:shadow-[4px_4px_0px_0px_var(--retro-gray)] hover:-translate-x-px hover:-translate-y-px transition-all duration-300"
+                  className="btn-3d-ghost px-5"
                 >
                   Cancel
                 </button>

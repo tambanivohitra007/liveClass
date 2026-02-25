@@ -115,7 +115,7 @@ export default function StudentDashboard() {
           </div>
           <button
             onClick={() => navigate('/join')}
-            className="px-5 py-3 bg-brand text-white font-bold rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_var(--retro-brand)] hover:shadow-[6px_6px_0px_0px_var(--retro-brand)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
+            className="btn-3d-cyan flex items-center gap-2"
           >
             <Gamepad2 className="w-4 h-4" />
             Join a Game
@@ -154,7 +154,7 @@ export default function StudentDashboard() {
               {recentGames.map((game) => (
                 <div
                   key={game.sessionId}
-                  className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[3px_3px_0px_0px_var(--retro-brand)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden animate-fade-in"
+                  className="card-night card-night-hover overflow-hidden animate-fade-in"
                 >
                   <button
                     onClick={() => setExpandedGame(expandedGame === game.sessionId ? null : game.sessionId)}
@@ -265,7 +265,7 @@ export default function StudentDashboard() {
               {activeAssignments.map((a) => (
                 <div
                   key={a.id}
-                  className="group bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_var(--retro-success)] hover:shadow-[6px_6px_0px_0px_var(--retro-success)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
+                  className="group card-night card-night-hover flex flex-col"
                 >
                   <div className="p-6 flex-1">
                     <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1 bg-success/10 text-success rounded-full font-bold border border-success/20 mb-3">
@@ -284,7 +284,7 @@ export default function StudentDashboard() {
                   <div className="px-6 py-4 border-t-2 border-gray-100 dark:border-white/10">
                     <button
                       onClick={() => navigate(`/assignment/${a.id}`)}
-                      className="w-full py-2.5 text-sm font-bold text-white bg-success rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[2px_2px_0px_0px_var(--retro-success)] hover:shadow-[4px_4px_0px_0px_var(--retro-success)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-1.5"
+                      className="btn-3d-success btn-3d-sm w-full flex items-center justify-center gap-1.5"
                     >
                       Start <ArrowRight className="w-3.5 h-3.5" />
                     </button>
@@ -301,7 +301,7 @@ export default function StudentDashboard() {
             <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4">Upcoming</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {upcomingAssignments.map((a) => (
-                <div key={a.id} className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-300 dark:border-white/15 shadow-[3px_3px_0px_0px_var(--retro-blue)] p-6 opacity-80">
+                <div key={a.id} className="card-night p-6 opacity-80">
                   <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1 bg-info/10 text-info rounded-full font-bold border border-info/20 mb-3">
                     Upcoming
                   </span>
@@ -346,14 +346,14 @@ export default function StudentDashboard() {
         {/* Empty state */}
         {assignments.length === 0 && recentGames.length === 0 && (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl border-2 border-gray-800 dark:border-white/20 bg-brand/10 shadow-[4px_4px_0px_0px_var(--retro-brand)] mb-5">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl border border-gray-200 dark:border-white/10 bg-brand/10 shadow-sm mb-5">
               <Gamepad2 className="w-10 h-10 text-brand" />
             </div>
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">No games yet</h3>
             <p className="text-gray-500 dark:text-white/50 mb-6 font-medium">Join a live game using a PIN from your teacher</p>
             <button
               onClick={() => navigate('/join')}
-              className="px-6 py-3 bg-brand text-white font-bold rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_var(--retro-brand)] hover:shadow-[6px_6px_0px_0px_var(--retro-brand)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300"
+              className="btn-3d-cyan"
             >
               Join a Game
             </button>
