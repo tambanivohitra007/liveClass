@@ -413,11 +413,11 @@ export default function SessionResults() {
                  <select
                    value={sortBy}
                    onChange={(e) => setSortBy(e.target.value as 'accuracy' | 'name' | 'score')}
-                   className="appearance-none bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/70 py-1.5 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
+                   className="appearance-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/20 text-gray-700 dark:text-white/80 py-1.5 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
                  >
-                   <option value="accuracy">Accuracy</option>
-                   <option value="name">Name</option>
-                   <option value="score">Score</option>
+                   <option value="accuracy" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Accuracy</option>
+                   <option value="name" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Name</option>
+                   <option value="score" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Score</option>
                  </select>
                  <ArrowUpDown className="w-3 h-3 text-gray-400 dark:text-white/40 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                </div>

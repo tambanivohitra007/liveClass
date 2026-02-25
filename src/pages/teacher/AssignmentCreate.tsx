@@ -69,11 +69,11 @@ export default function AssignmentCreate() {
             value={selectedQuizId}
             onChange={(e) => setSelectedQuizId(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white/80"
           >
-            <option value="">-- Choose a quiz --</option>
+            <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">-- Choose a quiz --</option>
             {quizzes.map((q) => (
-              <option key={q.id} value={q.id}>{q.title}</option>
+              <option key={q.id} value={q.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{q.title}</option>
             ))}
           </select>
         </div>
@@ -82,11 +82,11 @@ export default function AssignmentCreate() {
           <select
             value={selectedClassroomId}
             onChange={(e) => setSelectedClassroomId(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white/80"
           >
-            <option value="">All students (no class)</option>
+            <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">All students (no class)</option>
             {classrooms.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
             ))}
           </select>
         </div>

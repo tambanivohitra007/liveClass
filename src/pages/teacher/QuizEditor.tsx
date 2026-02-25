@@ -521,10 +521,10 @@ export default function QuizEditor() {
           <select
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as 'private' | 'org' | 'public')}
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white"
+            className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white/80"
           >
-            <option value="private">Private</option>
-            <option value="public">Public</option>
+            <option value="private" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Private</option>
+            <option value="public" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Public</option>
           </select>
         </div>
         {collections.length > 0 && (
@@ -533,11 +533,11 @@ export default function QuizEditor() {
             <select
               value={selectedCollectionId}
               onChange={(e) => setSelectedCollectionId(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white/80"
             >
-              <option value="">None</option>
+              <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">None</option>
               {collections.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
               ))}
             </select>
           </div>
@@ -649,19 +649,19 @@ export default function QuizEditor() {
                 <select
                   value={activeQ.type}
                   onChange={(e) => updateQuestionType(activeIndex, e.target.value as QuestionType)}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-xs font-medium text-gray-700 dark:text-white/70 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white dark:bg-white/5"
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-xs font-medium text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white dark:bg-slate-800"
                 >
                   {(['mcq', 'tf', 'short', 'matching', 'fill_blank', 'ordering', 'poll', 'slide', 'code_output'] as QuestionType[]).map((t) => (
-                    <option key={t} value={t}>{typeLabels[t]}</option>
+                    <option key={t} value={t} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{typeLabels[t]}</option>
                   ))}
                 </select>
                 <select
                   value={activeQ.timeLimitSec}
                   onChange={(e) => updateQuestion(activeIndex, { timeLimitSec: parseInt(e.target.value) })}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-xs font-medium text-gray-700 dark:text-white/70 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white dark:bg-white/5"
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-xs font-medium text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white dark:bg-slate-800"
                 >
                   {[5, 10, 15, 20, 30, 45, 60, 90, 120].map((s) => (
-                    <option key={s} value={s}>{s}s</option>
+                    <option key={s} value={s} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{s}s</option>
                   ))}
                 </select>
                 <div className="flex items-center border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-white/5 ml-auto">
@@ -950,10 +950,10 @@ export default function QuizEditor() {
                     <select
                       value={activeQ.codeLanguage || 'javascript'}
                       onChange={(e) => updateQuestion(activeIndex, { codeLanguage: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white/80"
                     >
                       {['JavaScript', 'Python', 'Java', 'C', 'C++', 'C#', 'PHP', 'TypeScript', 'Dart', 'Go', 'Ruby', 'Kotlin', 'Swift', 'Rust', 'SQL', 'HTML', 'CSS'].map((lang) => (
-                        <option key={lang} value={lang.toLowerCase()}>{lang}</option>
+                        <option key={lang} value={lang.toLowerCase()} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{lang}</option>
                       ))}
                     </select>
                   </div>

@@ -353,10 +353,10 @@ export default function AiGenerateModal({
               <select
                 value={count}
                 onChange={(e) => setCount(parseInt(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white/80"
               >
                 {[3, 5, 7, 10].map((n) => (
-                  <option key={n} value={n}>{n} questions</option>
+                  <option key={n} value={n} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{n} questions</option>
                 ))}
               </select>
             </div>
@@ -365,16 +365,16 @@ export default function AiGenerateModal({
               <select
                 value={questionType}
                 onChange={(e) => setQuestionType(e.target.value as QuestionType | 'mixed')}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white/80"
               >
-                <option value="mixed">Mixed (Variety)</option>
-                <option value="mcq">Multiple Choice</option>
-                <option value="tf">True / False</option>
-                <option value="short">Short Answer</option>
-                <option value="matching">Matching</option>
-                <option value="ordering">Ordering</option>
-                <option value="fill_blank">Fill in the Blank</option>
-                <option value="code_output">Code Output</option>
+                <option value="mixed" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Mixed (Variety)</option>
+                <option value="mcq" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Multiple Choice</option>
+                <option value="tf" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">True / False</option>
+                <option value="short" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Short Answer</option>
+                <option value="matching" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Matching</option>
+                <option value="ordering" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Ordering</option>
+                <option value="fill_blank" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Fill in the Blank</option>
+                <option value="code_output" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Code Output</option>
               </select>
             </div>
           </div>
@@ -383,12 +383,12 @@ export default function AiGenerateModal({
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white/80"
             >
-              <option value="mixed">Mixed</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
+              <option value="mixed" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Mixed</option>
+              <option value="easy" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Easy</option>
+              <option value="medium" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Medium</option>
+              <option value="hard" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Hard</option>
             </select>
           </div>
 
