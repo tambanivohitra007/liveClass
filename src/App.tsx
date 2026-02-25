@@ -177,12 +177,10 @@ function App() {
   const { theme, setTheme } = useThemeStore();
   const { firebaseUser, loading } = useAuthStore();
 
+  // Force dark mode when not logged in (and reset on logout)
   useEffect(() => {
-    if (loading || firebaseUser) return;
-    if (typeof window === 'undefined') return;
-
-    const storedTheme = localStorage.getItem('theme');
-    if (!storedTheme && theme !== 'dark') {
+    if (loading) return;
+    if (!firebaseUser && theme !== 'dark') {
       setTheme('dark');
     }
   }, [loading, firebaseUser, theme, setTheme]);
