@@ -55,21 +55,21 @@ export default function AssignmentCreate() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
+    <div className="min-h-screen bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark">
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-4">
         <BackButton to="/dashboard" />
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Assignment</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Create Assignment</h1>
 
-      <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 space-y-5">
+      <form onSubmit={handleCreate} className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Quiz</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Select Quiz</label>
           <select
             value={selectedQuizId}
             onChange={(e) => setSelectedQuizId(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
           >
             <option value="">-- Choose a quiz --</option>
             {quizzes.map((q) => (
@@ -78,11 +78,11 @@ export default function AssignmentCreate() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Assign to Class (optional)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Assign to Class (optional)</label>
           <select
             value={selectedClassroomId}
             onChange={(e) => setSelectedClassroomId(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
           >
             <option value="">All students (no class)</option>
             {classrooms.map((c) => (
@@ -92,40 +92,40 @@ export default function AssignmentCreate() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Start</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Start</label>
             <input
               type="datetime-local"
               value={startAt}
               onChange={(e) => setStartAt(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">End</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">End</label>
             <input
               type="datetime-local"
               value={endAt}
               onChange={(e) => setEndAt(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Attempts Allowed</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Attempts Allowed</label>
           <input
             type="number"
             min={1}
             value={attemptsAllowed}
             onChange={(e) => setAttemptsAllowed(parseInt(e.target.value) || 1)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
           />
         </div>
         <button
           type="submit"
           disabled={saving}
-          className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 disabled:opacity-50"
+          className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50"
         >
           {saving ? 'Creating...' : 'Create Assignment'}
         </button>

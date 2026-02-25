@@ -59,7 +59,7 @@ export default function JoinClass() {
           <p className="text-gray-500 dark:text-white/60 mt-2 text-sm">Enter the code from your teacher</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 p-8">
+        <div className="bg-white dark:bg-white/5 rounded-3xl shadow-[4px_4px_0px_0px_#D4566B] border-2 border-gray-800 dark:border-white/20 p-8">
           {error && (
             <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-xl text-danger text-sm text-center">
               {error}
@@ -67,7 +67,7 @@ export default function JoinClass() {
           )}
 
           <form onSubmit={handleSubmit}>
-            <label className="block text-center text-sm font-medium text-gray-500 mb-3">Class Join Code</label>
+            <label className="block text-center text-sm font-medium text-gray-500 dark:text-white/60 mb-3">Class Join Code</label>
             <input
               type="text"
               value={code}
@@ -75,13 +75,13 @@ export default function JoinClass() {
               placeholder="ABC123"
               required
               maxLength={6}
-              className="w-full text-center text-4xl font-black tracking-[0.3em] px-4 py-5 rounded-2xl border border-gray-200 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-200 uppercase"
+              className="w-full text-center text-4xl font-black tracking-[0.3em] px-4 py-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-200 dark:placeholder:text-white/30 uppercase"
               autoFocus
             />
             <button
               type="submit"
               disabled={joining || code.trim().length !== 6}
-              className="w-full mt-4 py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+              className="w-full mt-4 py-4 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
             >
               {joining ? (
                 <>
