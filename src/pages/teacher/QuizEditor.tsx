@@ -578,7 +578,7 @@ export default function QuizEditor() {
                   </button>
                   <button
                     onClick={() => removeQuestion(activeIndex)}
-                    className="p-1.5 hover:bg-danger/10 transition-colors text-gray-400 hover:text-danger"
+                    className="p-1.5 hover:bg-danger/10 transition-colors text-gray-400 dark:text-white/40 hover:text-danger"
                     title="Delete question"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -686,7 +686,7 @@ export default function QuizEditor() {
                       {activeQ.options.length < 6 && (
                         <button
                           onClick={() => updateQuestion(activeIndex, { options: [...activeQ.options, ''] })}
-                          className="flex items-center gap-1.5 text-sm text-gray-400 font-medium hover:text-brand transition-colors"
+                          className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-white/40 font-medium hover:text-brand transition-colors"
                         >
                           <Plus className="w-4 h-4" /> Add option
                         </button>
@@ -699,7 +699,7 @@ export default function QuizEditor() {
                             const newCorrect = activeQ.correctAnswers.filter((a) => a !== removed);
                             updateQuestion(activeIndex, { options: newOpts, correctAnswers: newCorrect });
                           }}
-                          className="flex items-center gap-1.5 text-sm text-gray-400 font-medium hover:text-danger transition-colors"
+                          className="flex items-center gap-1.5 text-sm text-gray-400 dark:text-white/40 font-medium hover:text-danger transition-colors"
                         >
                           <Minus className="w-4 h-4" /> Remove last
                         </button>
@@ -708,7 +708,7 @@ export default function QuizEditor() {
                   )}
 
                   {activeQ.type === 'poll' && (
-                    <p className="col-span-2 text-xs text-gray-400 text-center">Polls gather opinions — all answers are accepted, no scoring.</p>
+                    <p className="col-span-2 text-xs text-gray-400 dark:text-white/40 text-center">Polls gather opinions — all answers are accepted, no scoring.</p>
                   )}
                 </div>
               )}
@@ -848,17 +848,17 @@ export default function QuizEditor() {
                   <div>
                     <label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 block">Code Snippet</label>
                     <div className="relative rounded-xl overflow-hidden border border-gray-300 dark:border-white/10 focus-within:ring-2 focus-within:ring-brand/30 focus-within:border-brand">
-                      <div className="flex items-center justify-between bg-gray-800 px-4 py-2 border-b border-gray-700">
+                      <div className="flex items-center justify-between bg-gray-800 dark:bg-gray-800 px-4 py-2 border-b border-gray-700 dark:border-gray-700">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                           <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                           <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                          <span className="ml-3 text-xs text-gray-400">{activeQ.codeLanguage || 'code'}</span>
+                          <span className="ml-3 text-xs text-gray-400 dark:text-gray-400">{activeQ.codeLanguage || 'code'}</span>
                         </div>
                       </div>
-                      <div className="flex bg-gray-900">
+                      <div className="flex bg-gray-900 dark:bg-gray-900">
                         {/* Line numbers */}
-                        <div className="select-none text-right pr-3 pl-3 py-3 text-xs font-mono text-gray-600 leading-relaxed border-r border-gray-800" aria-hidden="true">
+                        <div className="select-none text-right pr-3 pl-3 py-3 text-xs font-mono text-gray-600 dark:text-gray-600 leading-relaxed border-r border-gray-800 dark:border-gray-800" aria-hidden="true">
                           {(activeQ.codeSnippet || '\n').split('\n').map((_, i) => (
                             <div key={i}>{i + 1}</div>
                           ))}
@@ -881,7 +881,7 @@ export default function QuizEditor() {
                           placeholder="Write or paste your code here..."
                           rows={8}
                           spellCheck={false}
-                          className="flex-1 px-4 py-3 bg-gray-900 text-gray-100 font-mono text-sm leading-relaxed outline-none resize-y placeholder:text-gray-600 min-h-50"
+                          className="flex-1 px-4 py-3 bg-gray-900 dark:bg-gray-900 text-gray-100 dark:text-gray-100 font-mono text-sm leading-relaxed outline-none resize-y placeholder:text-gray-600 dark:placeholder:text-gray-600 min-h-50"
                         />
                       </div>
                     </div>

@@ -578,7 +578,7 @@ export default function HostSession() {
           onClick={() => setQrZoomed(false)}
         >
           <div
-            className="bg-white rounded-3xl p-6 sm:p-10 flex flex-col items-center gap-4 animate-bounce-in"
+            className="bg-white dark:bg-white rounded-3xl p-6 sm:p-10 flex flex-col items-center gap-4 animate-bounce-in"
             onClick={(e) => e.stopPropagation()}
           >
             <QRCodeSVG
@@ -586,8 +586,8 @@ export default function HostSession() {
               size={Math.min(window.innerWidth - 80, window.innerHeight - 200, 400)}
               level="M"
             />
-            <p className="text-gray-800 font-bold text-lg">PIN: <span className="text-brand tracking-widest text-2xl">{session.pinCode}</span></p>
-            <p className="text-gray-400 text-sm font-medium text-center">Or go to <span className="text-gray-600 font-semibold">{window.location.host}</span> and enter the PIN</p>
+            <p className="text-gray-800 dark:text-gray-800 font-bold text-lg">PIN: <span className="text-brand tracking-widest text-2xl">{session.pinCode}</span></p>
+            <p className="text-gray-400 dark:text-gray-400 text-sm font-medium text-center">Or go to <span className="text-gray-600 dark:text-gray-600 font-semibold">{window.location.host}</span> and enter the PIN</p>
           </div>
           <button
             onClick={() => setQrZoomed(false)}
@@ -645,13 +645,13 @@ export default function HostSession() {
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm font-medium text-brand">Enter Game PIN</p>
                     <div
-                      className="bg-white text-surface-dark px-6 sm:px-10 py-2 sm:py-3 rounded-2xl flex items-center gap-2 sm:gap-3 animate-glow-pulse"
+                      className="bg-white dark:bg-white text-surface-dark dark:text-surface-dark px-6 sm:px-10 py-2 sm:py-3 rounded-2xl flex items-center gap-2 sm:gap-3 animate-glow-pulse"
                       style={{ boxShadow: '0 0 60px rgba(0, 158, 226, 0.3)' }}
                     >
                       <span className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                         {session.pinCode.slice(0, 3)}
                       </span>
-                      <div className="w-1 sm:w-1.5 h-6 sm:h-10 bg-gray-200 rounded-full" />
+                      <div className="w-1 sm:w-1.5 h-6 sm:h-10 bg-gray-200 dark:bg-gray-200 rounded-full" />
                       <span className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                         {session.pinCode.slice(3)}
                       </span>
@@ -677,7 +677,7 @@ export default function HostSession() {
                     <button
                       type="button"
                       onClick={() => setQrZoomed(true)}
-                      className="relative group bg-white p-2 sm:p-3 rounded-2xl cursor-pointer transition-transform hover:scale-105"
+                      className="relative group bg-white dark:bg-white p-2 sm:p-3 rounded-2xl cursor-pointer transition-transform hover:scale-105"
                       style={{ boxShadow: '0 0 40px rgba(0, 158, 226, 0.2)' }}
                       title="Click to enlarge"
                     >
@@ -843,7 +843,7 @@ export default function HostSession() {
                           className="px-2 py-0.5 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none"
                         >
                           {[2, 3, 4, 5, 6].map((n) => (
-                            <option key={n} value={n} className="bg-gray-800">{n}</option>
+                            <option key={n} value={n} className="bg-gray-800 dark:bg-gray-800">{n}</option>
                           ))}
                         </select>
                       )}
@@ -891,7 +891,7 @@ export default function HostSession() {
                               { length: allQuestions.length - 1 },
                               (_, i) => i + 1
                             ).map((n) => (
-                              <option key={n} value={n} className="bg-gray-800">
+                              <option key={n} value={n} className="bg-gray-800 dark:bg-gray-800">
                                 {n} of {allQuestions.length}
                               </option>
                             ))}
@@ -929,7 +929,7 @@ export default function HostSession() {
                       className="px-2 py-1 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none max-w-[120px]"
                     >
                       {Object.entries(MUSIC_TRACKS).map(([key, track]) => (
-                        <option key={key} value={key} className="bg-gray-800">{track.label}</option>
+                        <option key={key} value={key} className="bg-gray-800 dark:bg-gray-800">{track.label}</option>
                       ))}
                     </select>
                   </div>

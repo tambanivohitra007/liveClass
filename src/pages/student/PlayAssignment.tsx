@@ -316,9 +316,9 @@ export default function PlayAssignment() {
                   onChange={(e) => setMatchingPairs({ ...matchingPairs, [left]: e.target.value })}
                   className="flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 outline-none focus:border-brand"
                 >
-                  <option value="" className="bg-gray-800">Select...</option>
+                  <option value="" className="bg-gray-800 dark:bg-gray-800">Select...</option>
                   {shuffledMatchOptions.map((right) => (
-                    <option key={right} value={right} className="bg-gray-800">{right}</option>
+                    <option key={right} value={right} className="bg-gray-800 dark:bg-gray-800">{right}</option>
                   ))}
                 </select>
               </div>
@@ -357,7 +357,7 @@ export default function PlayAssignment() {
         {canSubmit() && (
           <button
             onClick={submitCurrentAnswer}
-            className="mt-4 py-4 bg-white text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
+            className="mt-4 py-4 bg-white dark:bg-white text-surface-dark dark:text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
           >
             {currentIndex < questions.length - 1 ? 'Next' : 'Finish'}
           </button>

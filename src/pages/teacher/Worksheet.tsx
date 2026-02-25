@@ -71,7 +71,7 @@ function QuestionBody({ question, showAnswer }: { question: DisplayQuestion; sho
   if (type === 'short') {
     return (
       <div className="mt-3">
-        <div className="border-b border-gray-400 h-8" />
+        <div className="border-b border-gray-400 dark:border-gray-400 h-8" />
         {showAnswer && (
           <p className="text-green-700 text-xs mt-1">Answer: {correctAnswers.join(', ')}</p>
         )}
@@ -88,7 +88,7 @@ function QuestionBody({ question, showAnswer }: { question: DisplayQuestion; sho
             <span key={i}>
               {part}
               {i < parts.length - 1 && (
-                <span className="inline-block w-28 border-b-2 border-gray-400 mx-1 align-bottom">
+                <span className="inline-block w-28 border-b-2 border-gray-400 dark:border-gray-400 mx-1 align-bottom">
                   {showAnswer && (
                     <span className="text-green-700 text-xs">{correctAnswers[i]}</span>
                   )}
@@ -136,7 +136,7 @@ function QuestionBody({ question, showAnswer }: { question: DisplayQuestion; sho
       <div className="mt-2 space-y-1">
         {displayOptions.map((item, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="w-6 h-6 border border-gray-400 rounded flex items-center justify-center text-xs text-gray-300 shrink-0">
+            <span className="w-6 h-6 border border-gray-400 dark:border-gray-400 rounded flex items-center justify-center text-xs text-gray-300 dark:text-gray-300 shrink-0">
               {showAnswer ? (
                 <span className="text-green-700 font-bold">{question.options.indexOf(item) + 1}</span>
               ) : null}

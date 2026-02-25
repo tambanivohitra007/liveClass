@@ -429,9 +429,9 @@ export default function QuizPreview() {
                     disabled={revealed}
                     className="flex-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white border border-gray-300 dark:border-white/20 outline-none focus:border-brand"
                   >
-                    <option value="" className="bg-gray-800">Select...</option>
+                    <option value="" className="bg-gray-800 dark:bg-gray-800">Select...</option>
                     {shuffledMatchOptions.map((right) => (
-                      <option key={right} value={right} className="bg-gray-800">{right}</option>
+                      <option key={right} value={right} className="bg-gray-800 dark:bg-gray-800">{right}</option>
                     ))}
                   </select>
                   {pairCorrect && <Check className="w-5 h-5 text-success shrink-0" />}
@@ -496,7 +496,7 @@ export default function QuizPreview() {
         {state === 'answering' && canSubmitPreview() && (
           <button
             onClick={handleSubmit}
-            className="mt-4 py-4 bg-white text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
+            className="mt-4 py-4 bg-white dark:bg-white text-surface-dark dark:text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
           >
             Submit Answer
           </button>
