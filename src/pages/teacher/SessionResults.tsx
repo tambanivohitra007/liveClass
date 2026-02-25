@@ -283,7 +283,7 @@ export default function SessionResults() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark min-h-screen text-gray-900 dark:text-white">
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark min-h-screen  dark:text-white">
       <div className="mb-6">
         <BackButton to="/history" label="Back to History" />
       </div>
