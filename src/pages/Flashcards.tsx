@@ -76,10 +76,10 @@ export default function Flashcards() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-surface-dark">
         <div className="text-center">
-          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No flashcards available for this quiz.</p>
+          <BookOpen className="w-12 h-12 text-gray-300 dark:text-white/30 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-white/50">No flashcards available for this quiz.</p>
           <button onClick={() => navigate(-1)} className="mt-4 text-brand underline">Go back</button>
         </div>
       </div>
@@ -90,25 +90,25 @@ export default function Flashcards() {
   const progress = known.size / questions.length;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col px-4 py-8 max-w-2xl mx-auto">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col px-4 py-8 max-w-2xl mx-auto text-gray-900 dark:text-white">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 dark:text-white/60 hover:text-gray-700 dark:hover:text-white text-sm">
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
         <div className="text-center">
-          <h1 className="font-bold text-gray-900">{quiz?.title}</h1>
-          <p className="text-xs text-gray-400 mt-0.5">{current + 1} of {questions.length}</p>
+          <h1 className="font-bold text-gray-900 dark:text-white">{quiz?.title}</h1>
+          <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">{current + 1} of {questions.length}</p>
         </div>
-        <button onClick={resetProgress} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600">
+        <button onClick={resetProgress} className="flex items-center gap-1 text-sm text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70">
           <RotateCcw className="w-3.5 h-3.5" />
           Reset
         </button>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full h-2 bg-gray-200 rounded-full mb-8 overflow-hidden">
+      <div className="w-full h-2 bg-gray-200 dark:bg-white/15 rounded-full mb-8 overflow-hidden">
         <div
           className="h-full bg-success rounded-full transition-all duration-500"
           style={{ width: `${progress * 100}%` }}
@@ -123,17 +123,17 @@ export default function Flashcards() {
         >
           <div className={`relative w-full h-full transition-transform duration-500 transform-style-preserve-3d ${flipped ? '[transform:rotateY(180deg)]' : ''}`}>
             {/* Front (Question) */}
-            <div className="absolute inset-0 bg-white rounded-3xl shadow-lg border border-gray-100 p-8 flex flex-col items-center justify-center backface-hidden">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">
+            <div className="absolute inset-0 bg-white dark:bg-white/5 rounded-3xl shadow-lg border border-gray-100 dark:border-white/10 p-8 flex flex-col items-center justify-center backface-hidden">
+              <span className="text-xs font-medium text-gray-400 dark:text-white/40 uppercase tracking-wider mb-4">
                 {q.type === 'ordering' ? 'Put in order' : q.type === 'matching' ? 'Match pairs' : 'Question'}
               </span>
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900 text-center leading-relaxed">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white text-center leading-relaxed">
                 {q.text}
               </h2>
               {q.imageUrl && (
                 <img src={q.imageUrl} alt="" className="max-h-32 rounded-xl mt-4" />
               )}
-              <p className="text-gray-300 text-sm mt-6">Tap to reveal answer</p>
+              <p className="text-gray-300 dark:text-white/30 text-sm mt-6">Tap to reveal answer</p>
             </div>
             {/* Back (Answer) */}
             <div className="absolute inset-0 bg-brand text-white rounded-3xl shadow-lg p-8 flex flex-col items-center justify-center backface-hidden [transform:rotateY(180deg)]">
@@ -151,7 +151,7 @@ export default function Flashcards() {
         <button
           onClick={handlePrev}
           disabled={current === 0}
-          className="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30 transition-colors"
+          className="p-3 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -174,14 +174,14 @@ export default function Flashcards() {
         <button
           onClick={handleNext}
           disabled={current === questions.length - 1}
-          className="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30 transition-colors"
+          className="p-3 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 transition-colors"
         >
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>
 
       {/* Known count */}
-      <p className="text-center text-sm text-gray-400 mt-4">
+      <p className="text-center text-sm text-gray-400 dark:text-white/40 mt-4">
         {known.size} of {questions.length} marked as known
       </p>
     </div>

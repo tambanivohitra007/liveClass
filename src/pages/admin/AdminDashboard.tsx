@@ -50,14 +50,14 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 text-gray-900 dark:text-white">
       <div className="flex items-center gap-3 mb-8">
         <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center">
           <Shield className="w-5 h-5 text-brand" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-500">Manage teacher approvals</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-white/50">Manage teacher approvals</p>
         </div>
       </div>
 
@@ -70,13 +70,13 @@ export default function AdminDashboard() {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               activeTab === tab.key
                 ? 'bg-brand text-white shadow-[3px_3px_0px_0px_#D4566B] border-2 border-gray-800'
-                : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-gray-300'
+                : 'bg-white dark:bg-white/5 text-gray-600 dark:text-white/70 border-2 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
             }`}
           >
             {tab.icon}
             {tab.label}
             <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-              activeTab === tab.key ? 'bg-white/20' : 'bg-gray-100'
+              activeTab === tab.key ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'
             }`}>
               {counts[tab.key]}
             </span>
@@ -90,28 +90,28 @@ export default function AdminDashboard() {
           <div className="w-8 h-8 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-          <UserX className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-400">No {activeTab} teachers</p>
+        <div className="text-center py-16 bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
+          <UserX className="w-10 h-10 text-gray-300 dark:text-white/30 mx-auto mb-3" />
+          <p className="text-gray-400 dark:text-white/40">No {activeTab} teachers</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Teacher</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">Signed Up</th>
-                <th className="text-right px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-gray-100 dark:border-white/10">
+                <th className="text-left px-5 py-3 text-xs font-medium text-gray-400 dark:text-white/40 uppercase tracking-wider">Teacher</th>
+                <th className="text-left px-5 py-3 text-xs font-medium text-gray-400 dark:text-white/40 uppercase tracking-wider hidden sm:table-cell">Signed Up</th>
+                <th className="text-right px-5 py-3 text-xs font-medium text-gray-400 dark:text-white/40 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-white/10">
               {filtered.map((teacher) => (
-                <tr key={teacher.id} className="hover:bg-gray-50/50 transition-colors">
+                <tr key={teacher.id} className="hover:bg-gray-50/50 dark:hover:bg-white/10 transition-colors">
                   <td className="px-5 py-4">
-                    <p className="font-medium text-gray-900 text-sm">{teacher.displayName}</p>
-                    <p className="text-xs text-gray-400">{teacher.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{teacher.displayName}</p>
+                    <p className="text-xs text-gray-400 dark:text-white/40">{teacher.email}</p>
                   </td>
-                  <td className="px-5 py-4 text-sm text-gray-500 hidden sm:table-cell">
+                  <td className="px-5 py-4 text-sm text-gray-500 dark:text-white/50 hidden sm:table-cell">
                     {teacher.createdAt ? new Date(teacher.createdAt).toLocaleDateString() : '—'}
                   </td>
                   <td className="px-5 py-4">

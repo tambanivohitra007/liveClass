@@ -159,7 +159,7 @@ export default function Discover() {
                 className="group bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 animate-fade-in overflow-hidden flex flex-col"
               >
                 {/* Color accent bar */}
-                <div className="h-1.5 bg-brand" />
+                <div className="h-1.5" />
 
                 {/* Body */}
                 <div className="p-6 flex-1">

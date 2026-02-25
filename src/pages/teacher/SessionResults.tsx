@@ -402,7 +402,7 @@ export default function SessionResults() {
       </div>
 
       {/* Content Area */}
-      <div className="bg-white dark:bg-white/5 rounded-b-xl border border-t-0 border-gray-200 dark:border-white/10 min-h-[500px] p-6">
+      <div className="bg-white dark:bg-white/5 rounded-b-xl border border-t-0 border-gray-200 dark:border-white/10 min-h-125 p-6">
         
         {/* Controls Row (Sort/Search) */}
         {(activeTab === 'overview' || activeTab === 'participants') && (
@@ -435,7 +435,7 @@ export default function SessionResults() {
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
+            <table className="w-full min-w-200">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left py-3 px-4 font-semibold text-gray-900 w-64">
@@ -512,12 +512,12 @@ export default function SessionResults() {
               {sortedPlayerStats.map((player) => (
                 <div key={player.playerId} className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                   {/* Avatar */}
-                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg flex-shrink-0">
+                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">
                      {player.nickname.substring(0, 2).toUpperCase()}
                    </div>
 
                    {/* Name */}
-                   <div className="w-48 font-bold text-gray-900 flex-shrink-0 truncate">
+                   <div className="w-48 font-bold text-gray-900 dark:text-white shrink-0 truncate">
                      {player.nickname}
                    </div>
 
@@ -528,7 +528,7 @@ export default function SessionResults() {
                    </div>
                    
                    {/* Stats */}
-                   <div className="flex items-center gap-2 text-sm font-medium w-32 flex-shrink-0">
+                   <div className="flex items-center gap-2 text-sm font-medium w-32 shrink-0">
                       <span className="px-1.5 py-0.5 bg-success/10 text-success rounded text-xs flex items-center gap-0.5">
                         <Check className="w-3 h-3" /> {player.correctAnswers}
                       </span>
@@ -541,7 +541,7 @@ export default function SessionResults() {
                    </div>
 
                    {/* Accuracy Circle */}
-                   <div className="w-16 h-16 relative flex items-center justify-center flex-shrink-0">
+                   <div className="w-16 h-16 relative flex items-center justify-center shrink-0">
                       <svg className="w-full h-full transform -rotate-90">
                         <circle cx="32" cy="32" r="28" stroke="#E2E8F0" strokeWidth="4" fill="none" />
                         <circle 
@@ -557,11 +557,11 @@ export default function SessionResults() {
                    </div>
 
                    {/* Points/Score */}
-                   <div className="w-24 text-right flex-shrink-0">
+                   <div className="w-24 text-right shrink-0">
                       <div className="font-bold text-gray-900">{player.correctAnswers}/{analytics.length}</div>
                       <div className="text-xs text-gray-400">Correct</div>
                    </div>
-                   <div className="w-24 text-right flex-shrink-0">
+                   <div className="w-24 text-right shrink-0">
                       <div className="font-bold text-gray-900">{player.totalPoints}</div>
                       <div className="text-xs text-gray-400">Score</div>
                    </div>
@@ -669,7 +669,7 @@ export default function SessionResults() {
                       </div>
 
                       {/* Right Stats (Correct / Incorrect / Unanswered) */}
-                      <div className="w-64 flex-shrink-0">
+                      <div className="w-64 shrink-0">
                          <div className="space-y-6">
                             <div>
                                <div className="flex justify-between text-sm mb-1">
@@ -829,7 +829,7 @@ export default function SessionResults() {
               return (
                 <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
                   {/* Accuracy Circle */}
-                  <div className="w-16 h-16 relative flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-16 relative flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="32" cy="32" r="28" stroke="#E2E8F0" strokeWidth="4" fill="none" />
                       <circle
@@ -867,11 +867,11 @@ export default function SessionResults() {
                   }`}>
                     <div className="flex items-start gap-2">
                       {q.status === 'correct' ? (
-                        <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" />
                       ) : q.status === 'incorrect' ? (
-                        <XCircle className="w-5 h-5 text-danger mt-0.5 flex-shrink-0" />
+                        <XCircle className="w-5 h-5 text-danger mt-0.5 shrink-0" />
                       ) : (
-                        <MinusCircle className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <MinusCircle className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -960,7 +960,7 @@ export default function SessionResults() {
                 <ul className="space-y-2">
                   {questionEval.commonMistakes.map((m, i) => (
                     <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <XCircle className="w-4 h-4 text-danger mt-0.5 flex-shrink-0" />
+                      <XCircle className="w-4 h-4 text-danger mt-0.5 shrink-0" />
                       {m}
                     </li>
                   ))}
@@ -977,7 +977,7 @@ export default function SessionResults() {
                 <ul className="space-y-2">
                   {questionEval.suggestions.map((s, i) => (
                     <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                         {i + 1}
                       </span>
                       {s}

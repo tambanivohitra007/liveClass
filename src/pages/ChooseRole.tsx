@@ -43,7 +43,7 @@ export default function ChooseRole() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-[#E8EAF0] to-surface relative overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark relative overflow-hidden">
       <WaveBackground variant="light" position="bottom" />
       <div className="absolute inset-0 pattern-dots pointer-events-none" />
 
@@ -51,17 +51,17 @@ export default function ChooseRole() {
         {/* Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="LiveClass" className="w-16 h-16 rounded-2xl mx-auto mb-4 border-2 border-gray-800 shadow-[3px_3px_0px_0px_#D4566B]" />
-          <h1 className="text-3xl font-black text-gray-900">Choose your role</h1>
-          <p className="text-gray-500 mt-1 font-medium">How will you use LiveClass?</p>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-white">Choose your role</h1>
+          <p className="text-gray-500 dark:text-white/50 mt-1 font-medium">How will you use LiveClass?</p>
         </div>
 
         {/* Card */}
         <div className="relative group">
-          <div className="absolute inset-0 bg-white rounded-3xl border-2 border-gray-800 shadow-[5px_5px_0px_0px_#D4566B] transition-shadow duration-300 group-hover:shadow-[7px_7px_0px_0px_#D4566B]" />
+          <div className="absolute inset-0 bg-white dark:bg-white/5 rounded-3xl border-2 border-gray-800 dark:border-white/20 shadow-[5px_5px_0px_0px_#D4566B] transition-shadow duration-300 group-hover:shadow-[7px_7px_0px_0px_#D4566B]" />
 
           <div className="relative p-8">
             {error && (
-              <div className="mb-5 p-3 bg-white rounded-xl border-2 border-gray-800 shadow-[2px_2px_0px_0px_#EF4444] text-danger text-sm font-bold text-center animate-fade-in">
+              <div className="mb-5 p-3 bg-white dark:bg-white/5 rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[2px_2px_0px_0px_#EF4444] text-danger text-sm font-bold text-center animate-fade-in">
                 {error}
               </div>
             )}
@@ -77,18 +77,18 @@ export default function ChooseRole() {
                     onClick={() => setRole(r.key)}
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 font-bold transition-all duration-300 text-left ${
                       active
-                        ? 'border-gray-800 bg-brand/10 text-gray-900 shadow-[3px_3px_0px_0px_#D4566B]'
-                        : 'border-gray-300 text-gray-400 hover:border-gray-800 hover:text-gray-600 shadow-[2px_2px_0px_0px_rgba(107,114,128,0.2)]'
+                        ? 'border-gray-800 dark:border-white/20 bg-brand/10 text-gray-900 dark:text-white shadow-[3px_3px_0px_0px_#D4566B]'
+                        : 'border-gray-300 dark:border-white/20 text-gray-400 dark:text-white/50 hover:border-gray-800 dark:hover:border-white/30 hover:text-gray-600 dark:hover:text-white/70 shadow-[2px_2px_0px_0px_rgba(107,114,128,0.2)]'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 ${
-                      active ? 'border-gray-800 bg-brand/20 text-brand' : 'border-gray-300 bg-gray-100 text-gray-400'
+                      active ? 'border-gray-800 dark:border-white/20 bg-brand/20 text-brand' : 'border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-white/40'
                     }`}>
                       <Icon className="w-6 h-6" />
                     </div>
                     <div>
                       <div className="text-base">{r.label}</div>
-                      <div className={`text-xs font-medium ${active ? 'text-gray-500' : 'text-gray-400'}`}>{r.description}</div>
+                      <div className={`text-xs font-medium ${active ? 'text-gray-500 dark:text-white/60' : 'text-gray-400 dark:text-white/40'}`}>{r.description}</div>
                     </div>
                   </button>
                 );
@@ -98,7 +98,7 @@ export default function ChooseRole() {
             <button
               onClick={handleContinue}
               disabled={loading}
-              className="w-full py-3.5 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[4px_4px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
+              className="w-full py-3.5 bg-brand text-white font-bold text-lg rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_#D4566B] hover:shadow-[6px_6px_0px_0px_#D4566B] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[4px_4px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
             >
               {loading ? 'Setting up...' : 'Continue'}
             </button>

@@ -3,18 +3,18 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 mb-8 no-underline">
+    <div className="max-w-4xl mx-auto px-4 py-12 text-gray-600 dark:text-white/80">
+      <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70 mb-8 no-underline">
         <ArrowLeft className="w-4 h-4" /> Back to Home
       </Link>
 
-      <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">Privacy Notice</h1>
-      <p className="text-gray-400 text-sm mb-10">Last updated: February 2026</p>
+      <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-2">Privacy Notice</h1>
+      <p className="text-gray-400 dark:text-white/40 text-sm mb-10">Last updated: February 2026</p>
 
-      <div className="prose max-w-none space-y-8 text-gray-600 leading-relaxed text-[15px]">
+      <div className="prose max-w-none space-y-8 text-gray-600 dark:text-white/80 leading-relaxed text-[15px]">
         {/* 1 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">1. Introduction</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">1. Introduction</h2>
           <p>
             LiveClass (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is committed to protecting your privacy. This Privacy Notice explains how we collect,
             use, disclose, and safeguard your personal information when you use the LiveClass platform, including our website,
@@ -28,9 +28,9 @@ export default function PrivacyPolicy() {
 
         {/* 2 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">2. Information We Collect</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">2. Information We Collect</h2>
 
-          <h3 className="text-base font-semibold text-gray-800 mt-4 mb-2">2.1 Information You Provide</h3>
+          <h3 className="text-base font-semibold text-gray-800 dark:text-white/90 mt-4 mb-2">2.1 Information You Provide</h3>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Account information:</strong> Name, email address, and password when you register for an account.</li>
             <li><strong>Profile information:</strong> Display name and role (teacher or student).</li>
@@ -38,7 +38,7 @@ export default function PrivacyPolicy() {
             <li><strong>Game participation:</strong> Nicknames chosen when joining a live session and answers submitted during gameplay.</li>
           </ul>
 
-          <h3 className="text-base font-semibold text-gray-800 mt-4 mb-2">2.2 Information Collected Automatically</h3>
+          <h3 className="text-base font-semibold text-gray-800 dark:text-white/90 mt-4 mb-2">2.2 Information Collected Automatically</h3>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Usage data:</strong> Pages visited, features used, session duration, and interaction patterns.</li>
             <li><strong>Device information:</strong> Browser type, operating system, screen resolution, and language preferences.</li>
@@ -46,7 +46,7 @@ export default function PrivacyPolicy() {
             <li><strong>Local storage:</strong> We use browser localStorage and sessionStorage to maintain session state, preferences (e.g., sound mute, theme), and anti-cheat session tokens.</li>
           </ul>
 
-          <h3 className="text-base font-semibold text-gray-800 mt-4 mb-2">2.3 Student Information</h3>
+          <h3 className="text-base font-semibold text-gray-800 dark:text-white/90 mt-4 mb-2">2.3 Student Information</h3>
           <p>
             Students may join live game sessions without creating an account. In this case, we collect only the
             nickname provided and answers submitted during the session. No email, real name, or persistent identifier
@@ -56,7 +56,7 @@ export default function PrivacyPolicy() {
 
         {/* 3 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">3. How We Use Your Information</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">3. How We Use Your Information</h2>
           <p>We use the information we collect to:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Provide, maintain, and improve the Service.</li>
@@ -68,14 +68,14 @@ export default function PrivacyPolicy() {
             <li>Respond to support requests and inquiries.</li>
             <li>Comply with legal obligations.</li>
           </ul>
-          <p className="mt-3 font-medium text-gray-800">
+          <p className="mt-3 font-medium text-gray-800 dark:text-white/90">
             We do not sell your personal information to third parties.
           </p>
         </section>
 
         {/* 4 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">4. Data Storage and Security</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">4. Data Storage and Security</h2>
           <p>
             Your data is stored using Google Firebase infrastructure, with servers located in the Asia-Southeast 1
             (Singapore) region. We implement industry-standard security measures including:
@@ -95,7 +95,7 @@ export default function PrivacyPolicy() {
 
         {/* 5 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">5. Sharing Your Information</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">5. Sharing Your Information</h2>
           <p>We may share your information in the following circumstances:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>With other session participants:</strong> Nicknames and scores are visible to other players and the session host during live games.</li>
@@ -111,7 +111,7 @@ export default function PrivacyPolicy() {
 
         {/* 6 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">6. Cookies and Local Storage</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">6. Cookies and Local Storage</h2>
           <p>
             LiveClass does not use traditional tracking cookies. Instead, we use browser localStorage and
             sessionStorage for essential functionality:
@@ -126,7 +126,7 @@ export default function PrivacyPolicy() {
 
         {/* 7 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">7. Data Retention</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">7. Data Retention</h2>
           <p>We retain your personal information as follows:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Account data:</strong> Retained for as long as your account is active. You may request deletion at any time.</li>
@@ -138,7 +138,7 @@ export default function PrivacyPolicy() {
 
         {/* 8 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">8. Your Rights</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">8. Your Rights</h2>
           <p>Depending on your location, you may have the following rights regarding your personal information:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Access:</strong> Request a copy of the personal information we hold about you.</li>
@@ -155,7 +155,7 @@ export default function PrivacyPolicy() {
 
         {/* 9 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">9. Children&apos;s Privacy</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">9. Children&apos;s Privacy</h2>
           <p>
             LiveClass is designed for educational use and may be used by children under the direction of a teacher or
             school. Children can participate in live quiz sessions by entering a game PIN and a nickname — no account
@@ -174,7 +174,7 @@ export default function PrivacyPolicy() {
 
         {/* 10 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">10. Third-Party Services</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">10. Third-Party Services</h2>
           <p>
             The Service integrates with or relies on the following third-party services:
           </p>
@@ -190,7 +190,7 @@ export default function PrivacyPolicy() {
 
         {/* 11 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">11. International Data Transfers</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">11. International Data Transfers</h2>
           <p>
             Your information may be transferred to and processed in countries other than your country of residence,
             including Singapore (where our Firebase infrastructure is hosted). These countries may have different data
@@ -200,7 +200,7 @@ export default function PrivacyPolicy() {
 
         {/* 12 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">12. Changes to This Notice</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">12. Changes to This Notice</h2>
           <p>
             We may update this Privacy Notice from time to time. We will notify you of material changes by posting the
             updated notice on the Service and updating the &quot;Last updated&quot; date. Your continued use of the Service
@@ -210,12 +210,12 @@ export default function PrivacyPolicy() {
 
         {/* 13 */}
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">13. Contact Us</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">13. Contact Us</h2>
           <p>
             If you have any questions, concerns, or requests regarding this Privacy Notice or our data practices,
             please contact us at:
           </p>
-          <p className="mt-2 font-medium text-gray-800">
+          <p className="mt-2 font-medium text-gray-800 dark:text-white/90">
             Email: rindra.it@gmail.com
           </p>
         </section>
