@@ -4,6 +4,7 @@ import {
   Play, ArrowRight,
   ClipboardList, Trophy, Share2
 } from 'lucide-react';
+import { useAuthStore } from '../stores/authStore';
 import WaveBackground from '../components/ui/WaveBackground';
 
 const ShaderBackground = lazy(() => import('../components/ui/ShaderBackground'));
@@ -11,7 +12,10 @@ const ShaderBackground = lazy(() => import('../components/ui/ShaderBackground'))
 
 export default function Home() {
   const navigate = useNavigate();
+  const { firebaseUser, user } = useAuthStore();
   const [pin, setPin] = useState('');
+
+  const dashboardPath = user?.role === 'student' ? '/student/dashboard' : '/dashboard';
 
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +75,7 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate(firebaseUser ? dashboardPath : '/login')}
                   className="btn-3d-ghost py-3 text-sm"
                 >
                   Sign In
@@ -93,11 +97,11 @@ export default function Home() {
               Free for educators — no credit card required
             </div>
 
-            <h1 className="text-4xl md:text-6xl tracking-tight text-gray-900 dark:text-white leading-[1.1]">
+            <h1 className="text-2xl md:text-4xl tracking-tight text-gray-900 dark:text-white leading-[1.1]">
               Make Learning
-              <span className="block text-4xl md:text-8xl tracking-tighter hero-highlight p-2">
-                Unforgettable
-              </span>
+                <span className="block text-4xl md:text-8xl p-2 bg-gradient-to-r from-red-500 via-pink-500 to-red-500 bg-clip-text text-transparent drop-shadow-lg">
+                  Unforgettable
+                </span>
             </h1>
 
             <p className="text-lg text-gray-500 dark:text-white/60 max-w-md leading-relaxed">
@@ -107,7 +111,7 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate(firebaseUser ? dashboardPath : '/signup')}
                 className="btn-3d-gold btn-3d-lg group flex items-center justify-center gap-2"
               >
                 Get Started Free
@@ -200,7 +204,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate(firebaseUser ? dashboardPath : '/signup')}
                 className="btn-3d-gold btn-3d-lg group flex items-center justify-center gap-2"
               >
                 Start for Free
