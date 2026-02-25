@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { db } from '../../lib/firebase';
 import {
   ArrowLeft, Eye, ChevronLeft, ChevronRight, Clock, Flame, Trophy,
-  Triangle, Diamond, Circle, Square, Hexagon, Star, Check, X as XIcon, Zap
+  Check, X as XIcon, Zap
 } from 'lucide-react';
 import CodeBlock from '../../components/CodeBlock';
 import type { Quiz, Question } from '../../types/models';
@@ -16,15 +16,6 @@ const answerColors = [
   'bg-answer-green',
   'bg-answer-purple',
   'bg-answer-orange',
-];
-
-const answerIcons = [
-  <Triangle key="t" className="w-5 h-5 shrink-0" />,
-  <Diamond key="d" className="w-5 h-5 shrink-0" />,
-  <Circle key="c" className="w-5 h-5 shrink-0" />,
-  <Square key="s" className="w-5 h-5 shrink-0" />,
-  <Hexagon key="h" className="w-5 h-5 shrink-0" />,
-  <Star key="st" className="w-5 h-5 shrink-0" />,
 ];
 
 type PreviewState = 'answering' | 'revealed';
@@ -50,6 +41,18 @@ export default function QuizPreview() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [streak, setStreak] = useState(0);
   const [streakBonus, setStreakBonus] = useState(0);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    root.classList.add('dark');
+
+    return () => {
+      if (!hadDark) {
+        root.classList.remove('dark');
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!quizId) return;
@@ -182,22 +185,26 @@ export default function QuizPreview() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+      <div className="dark">
+        <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+        </div>
       </div>
     );
   }
 
   if (!quiz || questions.length === 0) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-gray-900 dark:text-white text-center p-6">
-        <div>
-          <Eye className="w-14 h-14 mx-auto mb-4 text-gray-400 dark:text-white/40" />
-          <h1 className="text-2xl font-bold mb-2">No questions to preview</h1>
-          <p className="text-gray-500 dark:text-white/50 mb-6">Add some questions first, then come back to preview.</p>
-          <button onClick={() => navigate(`/quiz/${quizId}`)} className="px-6 py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors">
-            Go to Editor
-          </button>
+      <div className="dark">
+        <div className="min-h-screen bg-surface-dark flex items-center justify-center text-gray-900 dark:text-white text-center p-6">
+          <div>
+            <Eye className="w-14 h-14 mx-auto mb-4 text-gray-400 dark:text-white/40" />
+            <h1 className="text-2xl font-bold mb-2">No questions to preview</h1>
+            <p className="text-gray-500 dark:text-white/50 mb-6">Add some questions first, then come back to preview.</p>
+            <button onClick={() => navigate(`/quiz/${quizId}`)} className="px-6 py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors">
+              Go to Editor
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -232,9 +239,10 @@ export default function QuizPreview() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-dark flex flex-col">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10">
+    <div className="dark">
+      <div className="min-h-screen bg-surface-dark flex flex-col">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white text-sm transition-colors"
@@ -251,8 +259,8 @@ export default function QuizPreview() {
         </span>
       </div>
 
-      {/* Score bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/5">
+        {/* Score bar */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/5">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-white/50">
             <Trophy className="w-3.5 h-3.5 text-warning" />
@@ -272,8 +280,8 @@ export default function QuizPreview() {
         </span>
       </div>
 
-      {/* Timer + Question type */}
-      <div className="flex items-center justify-between px-4 py-3">
+        {/* Timer + Question type */}
+        <div className="flex items-center justify-between px-4 py-3">
         <span className="text-gray-500 dark:text-white/50 text-sm flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5" />
           {question.timeLimitSec}s limit
@@ -289,8 +297,8 @@ export default function QuizPreview() {
         </span>
       </div>
 
-      {/* Progress bar */}
-      <div className="px-4 mb-2">
+        {/* Progress bar */}
+        <div className="px-4 mb-2">
         <div className="h-1 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
           <div
             className="h-full bg-brand rounded-full transition-all duration-500"
@@ -299,8 +307,8 @@ export default function QuizPreview() {
         </div>
       </div>
 
-      {/* Question content */}
-      <div className="flex-1 flex flex-col px-4 pb-4">
+        {/* Question content */}
+        <div className="flex-1 flex flex-col px-4 pb-4">
         <div className="text-center py-6 animate-fade-in">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">{question.text}</h2>
           {question.imageUrl && (
@@ -341,10 +349,8 @@ export default function QuizPreview() {
                   >
                     {isMultiAnswer && selected && !revealed ? (
                       <Check className="w-5 h-5 shrink-0" />
-                    ) : (
-                      answerIcons[i % answerIcons.length]
-                    )}
-                    <span className="truncate px-2">{opt}</span>
+                    ) : null}
+                    <span className="px-2 text-center whitespace-normal break-words leading-tight">{opt}</span>
                     {revealed && correct && (
                       <div className="absolute top-2 right-2 w-6 h-6 bg-success rounded-full flex items-center justify-center">
                         <Check className="w-3.5 h-3.5" />
@@ -591,6 +597,7 @@ export default function QuizPreview() {
             Next
             <ChevronRight className="w-4 h-4" />
           </button>
+        </div>
         </div>
       </div>
     </div>
