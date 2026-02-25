@@ -167,6 +167,10 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  :root:not(.dark) .text-gray-900 {
+    color: rgb(17 24 39 / 0.82);
+  }
 }
 
 /* Shadow hover overrides — light uses standard, dark uses cyan glow */
