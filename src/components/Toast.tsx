@@ -9,11 +9,11 @@ const iconMap = {
   info: <Info className="w-5 h-5 text-info shrink-0" />,
 };
 
-const shadowMap = {
-  success: 'shadow-[3px_3px_0px_0px_#4A6331]',
-  error: 'shadow-[3px_3px_0px_0px_#D4566B]',
-  warning: 'shadow-[3px_3px_0px_0px_#D97706]',
-  info: 'shadow-[3px_3px_0px_0px_#2E5290]',
+const borderMap = {
+  success: 'border-success/30',
+  error: 'border-danger/30',
+  warning: 'border-warning/30',
+  info: 'border-info/30',
 };
 
 const accentMap = {
@@ -47,24 +47,24 @@ function ToastItem({ toast }: { toast: ToastData }) {
 
   return (
     <div
-      className={`relative overflow-hidden bg-white rounded-2xl border-2 border-gray-800 ${shadowMap[toast.type]} ${exiting ? 'animate-toast-exit' : 'animate-toast-enter'}`}
+      className={`relative overflow-hidden bg-surface-card rounded-xl border ${borderMap[toast.type]} shadow-lg ${exiting ? 'animate-toast-exit' : 'animate-toast-enter'}`}
     >
       {/* Color accent stripe */}
       <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${accentMap[toast.type]}`} />
 
       <div className="flex items-start gap-3 pl-5 pr-3 py-3.5">
         {iconMap[toast.type]}
-        <p className="text-sm font-bold text-gray-800 flex-1 pt-0.5">{toast.message}</p>
+        <p className="text-sm font-bold text-white flex-1 pt-0.5">{toast.message}</p>
         <button
           onClick={handleDismiss}
-          className="p-1 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors shrink-0"
+          className="p-1 rounded-lg border border-white/10 hover:bg-white/10 transition-colors shrink-0"
         >
-          <X className="w-3.5 h-3.5 text-gray-500" />
+          <X className="w-3.5 h-3.5 text-white/50" />
         </button>
       </div>
 
       {toast.duration && toast.duration > 0 && (
-        <div className="h-1 w-full bg-gray-100">
+        <div className="h-1 w-full bg-white/5">
           <div
             className={`h-full transition-all duration-100 ease-linear ${accentMap[toast.type]}`}
             style={{ width: `${progress}%` }}

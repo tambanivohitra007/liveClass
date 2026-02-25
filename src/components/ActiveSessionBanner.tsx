@@ -11,7 +11,7 @@ export default function ActiveSessionBanner({ session, onEnd }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="mb-8 bg-white rounded-2xl border border-brand/30 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.2)] p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in">
+    <div className="mb-8 card-night border-brand/30 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-fade-in">
       {/* Left: Status indicator */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="relative shrink-0">
@@ -20,20 +20,20 @@ export default function ActiveSessionBanner({ session, onEnd }: Props) {
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900 text-sm">Active Session</span>
+            <span className="font-bold text-white text-sm">Active Session</span>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
               session.status === 'lobby'
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-emerald-100 text-emerald-700'
+                ? 'bg-warning/20 text-warning'
+                : 'bg-success/20 text-success'
             }`}>
               {session.status}
             </span>
           </div>
-          <p className="text-sm text-gray-500 truncate">
+          <p className="text-sm text-white/50 truncate">
             {session.quizTitle}
-            <span className="mx-1.5 text-gray-300">|</span>
-            PIN: <span className="font-mono font-bold text-gray-700">{session.pinCode}</span>
-            <span className="mx-1.5 text-gray-300">|</span>
+            <span className="mx-1.5 text-white/20">|</span>
+            PIN: <span className="font-mono font-bold text-white/70">{session.pinCode}</span>
+            <span className="mx-1.5 text-white/20">|</span>
             <Users className="w-3 h-3 inline -mt-0.5" /> {session.playerCount}
           </p>
         </div>
@@ -43,14 +43,14 @@ export default function ActiveSessionBanner({ session, onEnd }: Props) {
       <div className="flex items-center gap-2 sm:ml-auto shrink-0">
         <button
           onClick={() => navigate(`/quiz/${session.quizId}/host?sessionId=${session.id}`)}
-          className="px-4 py-2 bg-brand text-white font-semibold rounded-xl text-sm hover:bg-brand-dark transition-colors flex items-center gap-1.5"
+          className="btn-3d-cyan btn-3d-sm text-sm flex items-center gap-1.5"
         >
           <Play className="w-3.5 h-3.5" />
           Resume
         </button>
         <button
           onClick={onEnd}
-          className="px-4 py-2 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 hover:border-danger/30 hover:text-danger transition-colors flex items-center gap-1.5"
+          className="btn-3d-ghost btn-3d-sm text-sm flex items-center gap-1.5 hover:border-danger/30! hover:text-danger!"
         >
           <X className="w-3.5 h-3.5" />
           End Session

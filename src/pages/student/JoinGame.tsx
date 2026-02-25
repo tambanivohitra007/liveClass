@@ -7,6 +7,8 @@ import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, Shield
 import WaveBackground from '../../components/ui/WaveBackground';
 import { AVATARS } from '../../lib/avatars';
 
+const NIGHT_SKY = 'radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.15) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%), linear-gradient(160deg, #0F0825 0%, #1A0E3E 40%, #0F0825 100%)';
+
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
   'Sneaky', 'Funky', 'Turbo', 'Mega', 'Super', 'Hyper', 'Ultra', 'Blazing',
@@ -223,14 +225,14 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden" style={{ background: 'radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 0%, rgba(212, 86, 107, 0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(37, 99, 235, 0.14) 0%, transparent 50%), linear-gradient(160deg, #0F172A 0%, #1E1B4B 40%, #172554 100%)' }}>
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden" style={{ background: NIGHT_SKY }}>
       <WaveBackground variant="dark" position="both" />
-      <div className="absolute inset-0 pattern-grid pointer-events-none" />
+      <div className="absolute inset-0 pattern-stars pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md animate-bounce-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black text-white tracking-tight">Join Game</h1>
+          <h1 className="text-5xl text-white tracking-tight">Join Game</h1>
           <p className="text-white/50 mt-2 text-sm font-medium">Enter the PIN your host shared</p>
         </div>
 
@@ -248,10 +250,10 @@ export default function JoinGame() {
                 <div
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
                     isActive
-                      ? 'bg-white text-brand shadow-lg scale-105'
+                      ? 'bg-brand text-white shadow-lg scale-105'
                       : isDone
                         ? 'bg-brand/30 text-white'
-                        : 'bg-white/10 text-white/40'
+                        : 'bg-white/5 text-white/40'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -263,180 +265,176 @@ export default function JoinGame() {
         </div>
 
         {/* Card */}
-        <div className="relative group">
-          <div className="absolute inset-0 bg-white rounded-3xl border-2 border-gray-800 shadow-[5px_5px_0px_0px_#7C3AED] transition-shadow duration-300 group-hover:shadow-[7px_7px_0px_0px_#7C3AED]" />
+        <div className="card-night p-8">
+          {/* Error */}
+          {error && (
+            <div className="mb-5 p-3 bg-danger/10 rounded-xl border border-danger/30 text-danger text-sm font-bold text-center animate-fade-in">
+              {error}
+            </div>
+          )}
 
-          <div className="relative p-8">
-            {/* Error */}
-            {error && (
-              <div className="mb-5 p-3 bg-white rounded-xl border-2 border-gray-800 shadow-[2px_2px_0px_0px_#E5484D] text-danger text-sm font-bold text-center animate-fade-in">
-                {error}
+          {/* Rejoin banner */}
+          {rejoinData && (
+            <div className="animate-fade-in">
+              <div className="text-center mb-4">
+                <RefreshCw className="w-10 h-10 text-brand mx-auto mb-3" />
+                <p className="text-lg font-bold text-white">Welcome back!</p>
+                <p className="text-sm text-white/50 mt-1">
+                  Rejoin as <span className="font-bold text-white">{rejoinData.nickname}</span>?
+                </p>
               </div>
-            )}
+              <button
+                type="button"
+                onClick={handleRejoin}
+                disabled={joining}
+                className="btn-3d-cyan w-full text-lg disabled:opacity-40"
+              >
+                {joining ? 'Rejoining...' : 'Rejoin Game'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDeclineRejoin}
+                className="w-full mt-3 py-2.5 text-sm font-semibold text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+              >
+                Join as someone else
+              </button>
+            </div>
+          )}
 
-            {/* Rejoin banner */}
-            {rejoinData && (
-              <div className="animate-fade-in">
-                <div className="text-center mb-4">
-                  <RefreshCw className="w-10 h-10 text-brand mx-auto mb-3" />
-                  <p className="text-lg font-bold text-gray-800">Welcome back!</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Rejoin as <span className="font-bold text-gray-800">{rejoinData.nickname}</span>?
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRejoin}
-                  disabled={joining}
-                  className="w-full py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#7C3AED] hover:shadow-[6px_6px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40"
-                >
-                  {joining ? 'Rejoining...' : 'Rejoin Game'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeclineRejoin}
-                  className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-400 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  Join as someone else
-                </button>
+          {/* Step: PIN */}
+          {step === 'pin' && !rejoinData && (
+            <form onSubmit={handlePinSubmit} className="animate-fade-in">
+              <label className="block text-center text-sm font-bold text-white/40 uppercase tracking-wider mb-4">
+                Game PIN
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000 000"
+                required
+                maxLength={6}
+                className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-full border border-white/10 bg-white/5 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-white placeholder:text-white/20"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={pin.length < 4}
+                className="btn-3d-cyan w-full mt-5 text-lg disabled:opacity-40"
+              >
+                Next
+              </button>
+            </form>
+          )}
+
+          {/* Step: Verify */}
+          {step === 'verify' && (
+            <div className="animate-fade-in">
+              <label className="block text-center text-sm font-bold text-white/40 uppercase tracking-wider mb-4">
+                Pick the matching pattern
+              </label>
+              <div className="flex justify-center gap-3 mb-6 p-5 bg-white/5 rounded-2xl border border-white/10">
+                {pattern.target.map((s, i) => (
+                  <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-10 h-10" />
+                ))}
               </div>
-            )}
+              <div className="grid grid-cols-2 gap-3">
+                {pattern.choices.map((choice, ci) => (
+                  <button
+                    key={ci}
+                    onClick={() => handleVerify(ci)}
+                    className="flex justify-center gap-2 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-300"
+                  >
+                    {choice.map((s, i) => (
+                      <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-7 h-7" />
+                    ))}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setStep('pin'); setError(''); }}
+                className="w-full mt-5 py-2.5 text-sm font-semibold text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
+              </button>
+            </div>
+          )}
 
-            {/* Step: PIN */}
-            {step === 'pin' && !rejoinData && (
-              <form onSubmit={handlePinSubmit} className="animate-fade-in">
-                <label className="block text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
-                  Game PIN
-                </label>
+          {/* Step: Nickname */}
+          {step === 'nickname' && (
+            <form onSubmit={handleJoin} className="animate-fade-in">
+              <label className="block text-center text-sm font-bold text-white/40 uppercase tracking-wider mb-4">
+                Choose your name
+              </label>
+              <div className="relative">
                 <input
                   type="text"
-                  inputMode="numeric"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="000 000"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="Your nickname"
                   required
-                  maxLength={6}
-                  className="w-full text-center text-4xl font-black tracking-[0.4em] px-4 py-5 rounded-2xl border-2 border-gray-800 bg-gray-700 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-white placeholder:text-gray-500"
+                  maxLength={20}
+                  className="w-full text-center text-2xl font-bold px-4 py-5 rounded-full border border-white/10 bg-white/5 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-white placeholder:text-white/20 pr-14"
                   autoFocus
                 />
                 <button
-                  type="submit"
-                  disabled={pin.length < 4}
-                  className="w-full mt-5 py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#7C3AED] hover:shadow-[6px_6px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#7C3AED] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
-                >
-                  Next
-                </button>
-              </form>
-            )}
-
-            {/* Step: Verify */}
-            {step === 'verify' && (
-              <div className="animate-fade-in">
-                <label className="block text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
-                  Pick the matching pattern
-                </label>
-                <div className="flex justify-center gap-3 mb-6 p-5 bg-gray-50 rounded-2xl border-2 border-gray-200">
-                  {pattern.target.map((s, i) => (
-                    <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-10 h-10" />
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {pattern.choices.map((choice, ci) => (
-                    <button
-                      key={ci}
-                      onClick={() => handleVerify(ci)}
-                      className="flex justify-center gap-2 p-4 rounded-2xl border-2 border-gray-800 bg-white hover:bg-purple-50 shadow-[2px_2px_0px_0px_#7C3AED] hover:shadow-[4px_4px_0px_0px_#7C3AED] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300"
-                    >
-                      {choice.map((s, i) => (
-                        <ShapeIcon key={i} shape={s.shape} color={s.color} size="w-7 h-7" />
-                      ))}
-                    </button>
-                  ))}
-                </div>
-                <button
                   type="button"
-                  onClick={() => { setStep('pin'); setError(''); }}
-                  className="w-full mt-5 py-2.5 text-sm font-semibold text-gray-400 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+                  onClick={() => setNickname(randomNickname())}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-brand/20 hover:bg-brand/30 text-brand transition-all duration-300"
+                  title="Random nickname"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
+                  <Shuffle className="w-4 h-4" />
                 </button>
               </div>
-            )}
 
-            {/* Step: Nickname */}
-            {step === 'nickname' && (
-              <form onSubmit={handleJoin} className="animate-fade-in">
-                <label className="block text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
-                  Choose your name
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    placeholder="Your nickname"
-                    required
-                    maxLength={20}
-                    className="w-full text-center text-2xl font-bold px-4 py-5 rounded-2xl border-2 border-gray-800 bg-white focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-900 placeholder:text-gray-300 pr-14"
-                    autoFocus
-                  />
+              {/* Emoji Avatar Picker */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-white/40 uppercase tracking-wider">Pick your avatar</span>
                   <button
                     type="button"
-                    onClick={() => setNickname(randomNickname())}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-xl border-2 border-gray-800 bg-purple-50 hover:bg-purple-100 text-purple-600 shadow-[2px_2px_0px_0px_#7C3AED] hover:shadow-[3px_3px_0px_0px_#7C3AED] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
-                    title="Random nickname"
+                    onClick={() => setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)])}
+                    className="flex items-center gap-1 text-xs font-semibold text-brand hover:text-brand-light transition-colors"
                   >
-                    <Shuffle className="w-4 h-4" />
+                    <Dices className="w-3.5 h-3.5" /> Shuffle
                   </button>
                 </div>
-
-                {/* Emoji Avatar Picker */}
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pick your avatar</span>
+                <div className="grid grid-cols-6 gap-2">
+                  {AVATARS.map((emoji) => (
                     <button
+                      key={emoji}
                       type="button"
-                      onClick={() => setAvatar(AVATARS[Math.floor(Math.random() * AVATARS.length)])}
-                      className="flex items-center gap-1 text-xs font-semibold text-purple-500 hover:text-purple-700 transition-colors"
+                      onClick={() => setAvatar(emoji)}
+                      className={`text-2xl p-2 rounded-xl border transition-all duration-200 ${
+                        avatar === emoji
+                          ? 'border-brand bg-brand/20 ring-2 ring-brand/40 scale-110'
+                          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                      }`}
                     >
-                      <Dices className="w-3.5 h-3.5" /> Shuffle
+                      {emoji}
                     </button>
-                  </div>
-                  <div className="grid grid-cols-6 gap-2">
-                    {AVATARS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setAvatar(emoji)}
-                        className={`text-2xl p-2 rounded-xl border-2 transition-all duration-200 ${
-                          avatar === emoji
-                            ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-300 scale-110'
-                            : 'border-gray-200 bg-white hover:border-gray-400 hover:bg-gray-50'
-                        }`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+                  ))}
                 </div>
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={joining || !nickname.trim()}
-                  className="w-full mt-5 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-lg rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#10B981] hover:shadow-[6px_6px_0px_0px_#10B981] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-40 disabled:hover:shadow-[4px_4px_0px_0px_#10B981] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
-                >
-                  {joining ? 'Joining...' : "Let's Go!"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setStep('pin'); setError(''); }}
-                  className="w-full mt-3 py-2.5 text-sm font-semibold text-gray-400 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
-                </button>
-              </form>
-            )}
-          </div>
+              <button
+                type="submit"
+                disabled={joining || !nickname.trim()}
+                className="btn-3d-success w-full mt-5 text-lg disabled:opacity-40"
+              >
+                {joining ? 'Joining...' : "Let's Go!"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStep('pin'); setError(''); }}
+                className="w-full mt-3 py-2.5 text-sm font-semibold text-white/40 hover:text-brand flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Change PIN
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

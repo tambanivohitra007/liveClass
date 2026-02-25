@@ -14,8 +14,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 86, 107, 0.35); }
-  50% { box-shadow: 0 0 0 12px rgba(212, 86, 107, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 158, 226, 0.35); }
+  50% { box-shadow: 0 0 0 12px rgba(0, 158, 226, 0); }
 }
 
 @keyframes bounce-in {
@@ -45,22 +45,22 @@
   100% { background-position: 200% 0; }
 }
 
+/* NZK-inspired gradient text for hero highlights */
 .hero-highlight {
   background: linear-gradient(
     90deg,
-    #FFB347 0%,
-    #FF6B6B 20%,
-    #FFD700 40%,
-    #FF6B6B 60%,
-    #FFB347 80%,
-    #FF6B6B 100%
+    #009EE2 0%,
+    #F4CF5D 25%,
+    #701EA8 50%,
+    #F4CF5D 75%,
+    #009EE2 100%
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: shimmer 4s linear infinite;
-  text-shadow: 0 0 40px rgba(255,107,107,0.3), 0 0 80px rgba(255,179,71,0.15);
+  text-shadow: none;
 }
 
 .animate-fade-in {
@@ -145,9 +145,9 @@
   animation: toast-exit 0.3s ease-in forwards;
 }
 
-/* Shimmer skeleton */
+/* Shimmer skeleton — dark purple */
 .animate-shimmer {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background: linear-gradient(90deg, #1A0E3E 25%, #2D1B69 50%, #1A0E3E 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -175,17 +175,245 @@
   animation: marquee-scroll 25s linear infinite;
 }
 
-/* ─── Cartoon Bouncy Animations ─── */
+/* ─── NZK-Inspired 3D Pill Buttons ─── */
 
-/* Button press — bouncy scale-down on click */
-@keyframes btn-press {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.93); }
-  100% { transform: scale(1); }
+.btn-3d-cyan {
+  border-radius: 1000px;
+  background: #009EE2;
+  color: white;
+  font-weight: 800;
+  font-family: 'Rammetto One', sans-serif;
+  border: none;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 0 #0080B8,
+    0 6px 12px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.btn-press:active {
-  animation: btn-press 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+.btn-3d-cyan:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 0 #0080B8,
+    0 8px 16px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.3);
 }
+.btn-3d-cyan:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 0 #0080B8,
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-3d-cyan:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-3d-purple {
+  border-radius: 1000px;
+  background: #701EA8;
+  color: white;
+  font-weight: 800;
+  font-family: 'Rammetto One', sans-serif;
+  border: none;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 0 #5A1886,
+    0 6px 12px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-purple:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 0 #5A1886,
+    0 8px 16px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.btn-3d-purple:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 0 #5A1886,
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.btn-3d-purple:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-3d-gold {
+  border-radius: 1000px;
+  background: #F4CF5D;
+  color: #1A0E3E;
+  font-weight: 800;
+  font-family: 'Rammetto One', sans-serif;
+  border: none;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 0 #D4A530,
+    0 6px 12px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-gold:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 0 #D4A530,
+    0 8px 16px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.btn-3d-gold:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 0 #D4A530,
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.btn-3d-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-3d-ghost {
+  border-radius: 1000px;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  font-weight: 700;
+  border: 2px solid rgba(255,255,255,0.2);
+  padding: 12px 28px;
+  cursor: pointer;
+  box-shadow:
+    0 2px 0 0 rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.btn-3d-ghost:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 0 0 rgba(0,0,0,0.2),
+    0 4px 12px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-3d-ghost:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 0 0 0 rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.btn-3d-danger {
+  border-radius: 1000px;
+  background: #EF4444;
+  color: white;
+  font-weight: 800;
+  font-family: 'Rammetto One', sans-serif;
+  border: none;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 0 #B91C1C,
+    0 6px 12px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-danger:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 0 #B91C1C,
+    0 8px 16px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.btn-3d-danger:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 0 #B91C1C,
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.btn-3d-success {
+  border-radius: 1000px;
+  background: #22C55E;
+  color: white;
+  font-weight: 800;
+  font-family: 'Rammetto One', sans-serif;
+  border: none;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 0 #15803D,
+    0 6px 12px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-success:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 0 0 #15803D,
+    0 8px 16px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.btn-3d-success:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 0 #15803D,
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* Small button size variant */
+.btn-3d-sm {
+  padding: 8px 20px;
+  font-size: 0.875rem;
+}
+
+/* Large button size variant */
+.btn-3d-lg {
+  padding: 18px 40px;
+  font-size: 1.125rem;
+}
+
+/* ─── Night Card ─── */
+
+.card-night {
+  background: #241650;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    inset 0 0 40px rgba(0,0,0,0.3),
+    0 8px 24px rgba(0,0,0,0.4);
+}
+
+.card-night-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-night-hover:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 0 40px rgba(0,0,0,0.3),
+    0 12px 32px rgba(0,158,226,0.15),
+    0 0 0 1px rgba(0,158,226,0.2);
+}
+
+/* Night surface — vignette depth */
+.night-surface {
+  background: #241650;
+  box-shadow:
+    inset 0 0 60px rgba(0,0,0,0.4),
+    0 4px 12px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ─── Bouncy Animations ─── */
 
 /* Card lift — bouncy translateY on hover */
 @keyframes card-lift {
@@ -223,15 +451,18 @@
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 }
 
-/* ─── Geometric Background Patterns ─── */
+/* ─── Background Patterns ─── */
 
-/* Dot grid – subtle dots for light backgrounds (Linear/Vercel-style) */
-.pattern-dots {
-  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
-  background-size: 22px 22px;
+/* Star pattern — tiny white dots for night backgrounds */
+.pattern-stars {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 40px 40px, 80px 80px;
+  background-position: 0 0, 20px 20px;
 }
 
-/* Grid lines – thin crossing lines for dark backgrounds */
+/* Grid lines for dark backgrounds */
 .pattern-grid {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
@@ -239,23 +470,19 @@
   background-size: 44px 44px;
 }
 
-/* Cross dot pattern – staggered dots for variety */
-.pattern-cross {
-  background-image:
-    radial-gradient(circle, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    radial-gradient(circle, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-position: 0 0, 14px 14px;
+/* Dot grid — subtle dots */
+.pattern-dots {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
-/* Dark mode pattern overrides */
-:root.dark .pattern-dots {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-}
-:root.dark .pattern-cross {
+/* Cross dot pattern */
+.pattern-cross {
   background-image:
     radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
 }
 
 /* Bottom tab bar enter */
@@ -283,8 +510,53 @@
   animation: slide-out-right 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-/* Accessibility: reduced motion */
-/* ── Print styles for Worksheet ── */
+/* ─── NZK-Inspired New Animations ─── */
+
+/* Character float — slow gentle scale breathing (NZK signature) */
+@keyframes character-float {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(0.97) translateY(-8px); }
+}
+.animate-character-float {
+  animation: character-float 7s ease-in-out infinite;
+}
+
+/* Glow pulse — for active/live elements like session PIN */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(0,158,226,0.3); }
+  50% { box-shadow: 0 0 20px rgba(0,158,226,0.6), 0 0 40px rgba(0,158,226,0.2); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Star twinkle — for decorative stars */
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+.animate-star-twinkle {
+  animation: star-twinkle 3s ease-in-out infinite;
+}
+
+/* ─── Leaderboard Animations ─── */
+
+@keyframes overtake-glow {
+  0% { box-shadow: 0 0 0 0 rgba(0, 158, 226, 0.6); }
+  50% { box-shadow: 0 0 20px 4px rgba(0, 158, 226, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 158, 226, 0); }
+}
+.leaderboard-overtake { animation: overtake-glow 1s ease-out; }
+
+@keyframes leader-celebrate {
+  0% { box-shadow: 0 0 0 0 rgba(244, 207, 93, 0.7); }
+  40% { box-shadow: 0 0 30px 8px rgba(244, 207, 93, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 207, 93, 0); }
+}
+.new-leader-celebrate { animation: leader-celebrate 1.2s ease-out; }
+
+/* ─── Print Styles ─── */
+
 @media print {
   .print\:hidden,
   nav,
@@ -293,7 +565,8 @@
   }
 
   body,
-  .pattern-dots {
+  .pattern-dots,
+  .pattern-stars {
     background: white !important;
     background-image: none !important;
   }
@@ -329,20 +602,7 @@
   }
 }
 
-@keyframes overtake-glow {
-  0% { box-shadow: 0 0 0 0 rgba(212, 86, 107, 0.6); }
-  50% { box-shadow: 0 0 20px 4px rgba(212, 86, 107, 0.3); }
-  100% { box-shadow: 0 0 0 0 rgba(212, 86, 107, 0); }
-}
-.leaderboard-overtake { animation: overtake-glow 1s ease-out; }
-
-@keyframes leader-celebrate {
-  0% { box-shadow: 0 0 0 0 rgba(232, 163, 8, 0.7); }
-  40% { box-shadow: 0 0 30px 8px rgba(232, 163, 8, 0.4); }
-  100% { box-shadow: 0 0 0 0 rgba(232, 163, 8, 0); }
-}
-.new-leader-celebrate { animation: leader-celebrate 1.2s ease-out; }
-
+/* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

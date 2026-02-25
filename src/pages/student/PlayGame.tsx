@@ -30,10 +30,10 @@ function getYouTubeId(url: string): string | null {
 
 const GAME_BG: React.CSSProperties = {
   background: `
-    radial-gradient(ellipse at 20% 0%, rgba(124, 58, 237, 0.2) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 0%, rgba(212, 86, 107, 0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(37, 99, 235, 0.14) 0%, transparent 50%),
-    linear-gradient(160deg, #0F172A 0%, #1E1B4B 40%, #172554 100%)
+    radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%),
+    linear-gradient(160deg, #0F0825 0%, #1A0E3E 40%, #0F0825 100%)
   `,
 };
 
@@ -513,7 +513,7 @@ export default function PlayGame() {
                   {playerAvatar ? (
                     <span className="text-5xl leading-none">{playerAvatar}</span>
                   ) : (
-                    <span className="text-3xl font-black">{playerNickname?.charAt(0)?.toUpperCase() || '?'}</span>
+                    <span className="text-3xl font-bold">{playerNickname?.charAt(0)?.toUpperCase() || '?'}</span>
                   )}
                 </div>
                 <h1 className="text-2xl font-bold mb-1">{playerNickname || 'Player'}</h1>
@@ -628,10 +628,10 @@ export default function PlayGame() {
       <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
         <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
           <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-success" />
-          <h1 className="text-2xl sm:text-3xl font-black mb-2">All Done!</h1>
+          <h1 className="text-2xl sm:text-3xl mb-2">All Done!</h1>
           <p className="text-white/50 mb-6 sm:mb-8 text-sm sm:text-base">You've completed all {spTotalQuestions} questions. Wait for the host to end the session.</p>
           {sessionId && (
-            <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6">
+            <div className="card-night p-4 sm:p-6">
               <Leaderboard sessionId={sessionId} currentQuestion={spTotalQuestions} totalQuestions={spTotalQuestions} />
             </div>
           )}
@@ -653,10 +653,10 @@ export default function PlayGame() {
                 ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
                 : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
             </div>
-            <h2 className={`text-2xl sm:text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+            <h2 className={`text-2xl sm:text-3xl mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
               {feedback.correct ? 'Correct!' : 'Wrong!'}
             </h2>
-            <p className="text-3xl sm:text-4xl font-black text-white mb-2">+{feedback.points}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-white mb-2">+{feedback.points}</p>
             {feedback.rank > 0 && (
               <p className="text-white/50 text-sm mb-6">
                 You're in <span className="text-white font-bold">{ordinal(feedback.rank)} place</span>
@@ -668,7 +668,7 @@ export default function PlayGame() {
           <button
             onClick={spNextQuestion}
             className="mt-6 px-10 py-4 bg-brand hover:bg-brand-dark text-white font-bold text-lg rounded-full transition-all flex items-center justify-center gap-2 mx-auto"
-            style={{ boxShadow: '0 4px 25px rgba(212, 86, 107, 0.35)' }}
+            style={{ boxShadow: '0 4px 25px rgba(0, 158, 226, 0.35)' }}
           >
             {localQIndex + 1 >= spTotalQuestions ? 'See Results' : 'Next Question'}
             <Play className="w-5 h-5" />
@@ -687,10 +687,10 @@ export default function PlayGame() {
       <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
         <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
           <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-warning" />
-          <h1 className="text-2xl sm:text-3xl font-black mb-2">Game Over!</h1>
+          <h1 className="text-2xl sm:text-3xl mb-2">Game Over!</h1>
           <p className="text-white/50 mb-6 sm:mb-8">Thanks for playing!</p>
           {sessionId && (
-            <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6">
+            <div className="card-night p-4 sm:p-6">
               <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -722,10 +722,10 @@ export default function PlayGame() {
                   ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
                   : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
               </div>
-              <h2 className={`text-2xl sm:text-3xl font-black mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+              <h2 className={`text-2xl sm:text-3xl mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
                 {feedback.correct ? 'Correct!' : 'Wrong!'}
               </h2>
-              <p className="text-3xl sm:text-4xl font-black text-white mb-2">+{feedback.points}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white mb-2">+{feedback.points}</p>
               {feedback.rank > 0 && (
                 <p className="text-white/50 text-sm mb-6">
                   You're in <span className="text-white font-bold">{ordinal(feedback.rank)} place</span>
@@ -736,7 +736,7 @@ export default function PlayGame() {
             </div>
           )}
           {sessionId && (
-            <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-slide-up">
+            <div className="card-night p-4 sm:p-6 animate-slide-up">
               <Leaderboard sessionId={sessionId} compact currentQuestion={(session.currentQuestionIndex || 0) + 1} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -779,7 +779,7 @@ export default function PlayGame() {
             </div>
           ) : isStudentPaced ? (
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-black text-white tabular-nums">
+              <span className="text-2xl font-bold text-white tabular-nums">
                 {localQIndex + 1}<span className="text-white/30">/{spTotalQuestions}</span>
               </span>
               <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Your Pace</span>
@@ -1033,7 +1033,7 @@ export default function PlayGame() {
         {!submitted && canSubmit() && (
           <button
             onClick={submitAnswer}
-            className="mt-4 py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-black text-lg rounded-2xl hover:brightness-110 transition-all shadow-lg shadow-brand/25 animate-slide-up"
+            className="mt-4 py-4 btn-3d-cyan text-white font-bold text-lg animate-slide-up w-full"
           >
             Submit Answer
           </button>
@@ -1051,7 +1051,7 @@ export default function PlayGame() {
             <p className="text-danger font-bold mb-2">Failed to submit answer</p>
             <button
               onClick={submitAnswer}
-              className="py-3 px-8 bg-white text-surface-dark font-black text-base rounded-2xl hover:bg-gray-100 transition-all shadow-lg"
+              className="py-3 px-8 bg-white text-surface-dark font-bold text-base rounded-2xl hover:bg-gray-100 transition-all shadow-lg"
             >
               Retry
             </button>

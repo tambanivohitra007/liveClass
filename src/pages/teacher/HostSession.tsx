@@ -17,22 +17,22 @@ import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types
 import { TEAM_PRESETS } from '../../types/models';
 
 const AVATAR_COLORS = [
-  { bg: 'bg-blue-500/20', border: 'border-blue-500/40', text: 'text-blue-400' },
+  { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-400' },
   { bg: 'bg-purple-500/20', border: 'border-purple-500/40', text: 'text-purple-400' },
-  { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-400' },
-  { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-400' },
-  { bg: 'bg-rose-500/20', border: 'border-rose-500/40', text: 'text-rose-400' },
+  { bg: 'bg-sky-500/20', border: 'border-sky-500/40', text: 'text-sky-400' },
+  { bg: 'bg-violet-500/20', border: 'border-violet-500/40', text: 'text-violet-400' },
   { bg: 'bg-indigo-500/20', border: 'border-indigo-500/40', text: 'text-indigo-400' },
+  { bg: 'bg-blue-500/20', border: 'border-blue-500/40', text: 'text-blue-400' },
   { bg: 'bg-teal-500/20', border: 'border-teal-500/40', text: 'text-teal-400' },
-  { bg: 'bg-pink-500/20', border: 'border-pink-500/40', text: 'text-pink-400' },
+  { bg: 'bg-fuchsia-500/20', border: 'border-fuchsia-500/40', text: 'text-fuchsia-400' },
 ];
 
 const MESH_BG: React.CSSProperties = {
   background: `
-    radial-gradient(ellipse at 0% 0%, rgba(124, 58, 237, 0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 0%, rgba(212, 86, 107, 0.16) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(37, 99, 235, 0.12) 0%, transparent 50%),
-    linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%)
+    radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%),
+    linear-gradient(160deg, #0F0825 0%, #1A0E3E 40%, #0F0825 100%)
   `,
 };
 
@@ -639,14 +639,14 @@ export default function HostSession() {
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-sm font-medium text-brand">Enter Game PIN</p>
                     <div
-                      className="bg-white text-surface-dark px-6 sm:px-10 py-2 sm:py-3 rounded-2xl flex items-center gap-2 sm:gap-3"
-                      style={{ boxShadow: '0 0 60px rgba(212, 86, 107, 0.3)' }}
+                      className="bg-white text-surface-dark px-6 sm:px-10 py-2 sm:py-3 rounded-2xl flex items-center gap-2 sm:gap-3 animate-glow-pulse"
+                      style={{ boxShadow: '0 0 60px rgba(0, 158, 226, 0.3)' }}
                     >
-                      <span className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                         {session.pinCode.slice(0, 3)}
                       </span>
                       <div className="w-1 sm:w-1.5 h-6 sm:h-10 bg-gray-200 rounded-full" />
-                      <span className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
                         {session.pinCode.slice(3)}
                       </span>
                     </div>
@@ -672,7 +672,7 @@ export default function HostSession() {
                       type="button"
                       onClick={() => setQrZoomed(true)}
                       className="relative group bg-white p-2 sm:p-3 rounded-2xl cursor-pointer transition-transform hover:scale-105"
-                      style={{ boxShadow: '0 0 40px rgba(212, 86, 107, 0.2)' }}
+                      style={{ boxShadow: '0 0 40px rgba(0, 158, 226, 0.2)' }}
                       title="Click to enlarge"
                     >
                       <QRCodeSVG
@@ -698,7 +698,7 @@ export default function HostSession() {
               <div className="flex-1 flex flex-col animate-fade-in min-h-0">
                 <div className="flex items-center justify-between mb-2 shrink-0">
                   <h3 className="text-lg font-bold">Waiting Lobby</h3>
-                  <span className="text-lg font-black tabular-nums">
+                  <span className="text-lg font-bold tabular-nums">
                     {players.length} <span className="text-sm font-medium text-white/40">player{players.length !== 1 && 's'}</span>
                   </span>
                 </div>
@@ -918,8 +918,7 @@ export default function HostSession() {
                   <button
                     onClick={startQuestion}
                     disabled={players.length === 0}
-                    className="w-full bg-gradient-to-r from-brand to-purple-500 hover:brightness-110 text-white font-bold py-3 rounded-full transition-all disabled:opacity-30 flex items-center justify-center gap-2 group"
-                    style={{ boxShadow: players.length > 0 ? '0 4px 25px rgba(139, 92, 246, 0.35)' : 'none' }}
+                    className="w-full btn-3d-cyan text-white font-bold py-3 rounded-full transition-all disabled:opacity-30 flex items-center justify-center gap-2 group"
                   >
                     <span>START GAME</span>
                     <Play className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -927,7 +926,7 @@ export default function HostSession() {
                   <button
                     onClick={endSessionEarly}
                     disabled={endingSession}
-                    className="w-full py-2.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all text-sm border border-white/10"
+                    className="w-full py-2.5 btn-3d-ghost text-white/60 font-semibold rounded-full transition-all text-sm"
                   >
                     {endingSession ? 'Ending...' : 'End Session'}
                   </button>
@@ -1040,15 +1039,14 @@ export default function HostSession() {
               </div>
               <button
                 onClick={endQuestion}
-                className="px-6 sm:px-8 py-3 sm:py-3.5 bg-danger text-white font-bold rounded-full hover:brightness-110 transition-all w-full sm:w-auto"
-                style={{ boxShadow: '0 4px 20px rgba(232, 99, 107, 0.35)' }}
+                className="px-6 sm:px-8 py-3 sm:py-3.5 btn-3d-danger text-white font-bold rounded-full transition-all w-full sm:w-auto"
               >
                 End Question
               </button>
               <button
                 onClick={endSessionEarly}
                 disabled={endingSession}
-                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all w-full sm:w-auto text-sm border border-white/10"
+                className="px-5 sm:px-6 py-3 sm:py-3.5 btn-3d-ghost text-white/60 font-semibold rounded-full transition-all w-full sm:w-auto text-sm"
               >
                 {endingSession ? 'Ending...' : 'End Session'}
               </button>
@@ -1119,7 +1117,7 @@ export default function HostSession() {
                     <CheckCircle2 className="w-5 h-5 text-success" />
                     Student Progress
                   </h3>
-                  <span className="text-xl sm:text-2xl font-black tabular-nums">
+                  <span className="text-xl sm:text-2xl font-bold tabular-nums">
                     {finishedCount}<span className="text-white/30">/{totalPlayers}</span>
                     <span className="text-sm font-medium text-white/40 ml-2">finished</span>
                   </span>
@@ -1172,8 +1170,7 @@ export default function HostSession() {
               <button
                 onClick={endStudentPacedSessionFn}
                 disabled={endingSession}
-                className="w-full py-4 bg-danger text-white font-bold rounded-full hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ boxShadow: '0 4px 20px rgba(232, 99, 107, 0.35)' }}
+                className="w-full py-4 btn-3d-danger text-white font-bold rounded-full transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {endingSession ? (
                   <>
@@ -1202,10 +1199,10 @@ export default function HostSession() {
               <div className="space-y-3">
                 {session.teamScoreSnapshot.map((team, i) => (
                   <div key={team.teamIndex} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
-                    <span className="text-2xl font-black text-white/30 w-8">{i + 1}</span>
+                    <span className="text-2xl font-bold text-white/30 w-8">{i + 1}</span>
                     <span className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
                     <span className="flex-1 font-bold">{team.name}</span>
-                    <span className="font-black text-lg tabular-nums">{team.avgPoints.toLocaleString()}</span>
+                    <span className="font-bold text-lg tabular-nums">{team.avgPoints.toLocaleString()}</span>
                     <span className="text-xs text-white/40">avg pts</span>
                   </div>
                 ))}
@@ -1238,8 +1235,7 @@ export default function HostSession() {
               <>
                 <button
                   onClick={nextQuestion}
-                  className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-base sm:text-lg rounded-full hover:brightness-110 transition-all flex items-center gap-2 group w-full sm:w-auto justify-center"
-                  style={{ boxShadow: '0 4px 25px rgba(139, 92, 246, 0.35)' }}
+                  className="px-8 sm:px-10 py-3 sm:py-4 btn-3d-cyan text-white font-bold text-base sm:text-lg rounded-full transition-all flex items-center gap-2 group w-full sm:w-auto justify-center"
                 >
                   Next Question
                   <Play className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -1247,7 +1243,7 @@ export default function HostSession() {
                 <button
                   onClick={endSessionEarly}
                   disabled={endingSession}
-                  className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 text-white/60 font-semibold rounded-full hover:bg-danger/20 hover:text-danger transition-all w-full sm:w-auto text-sm border border-white/10"
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 btn-3d-ghost text-white/60 font-semibold rounded-full transition-all w-full sm:w-auto text-sm"
                 >
                   {endingSession ? 'Ending...' : 'End Session'}
                 </button>
@@ -1263,8 +1259,7 @@ export default function HostSession() {
                     addToast('error', 'Failed to end session');
                   }
                 }}
-                className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-brand to-purple-500 text-white font-bold text-base sm:text-lg rounded-full hover:brightness-110 transition-all w-full sm:w-auto"
-                style={{ boxShadow: '0 4px 25px rgba(139, 92, 246, 0.35)' }}
+                className="px-8 sm:px-10 py-3 sm:py-4 btn-3d-success text-white font-bold text-base sm:text-lg rounded-full transition-all w-full sm:w-auto"
               >
                 View Results
               </button>

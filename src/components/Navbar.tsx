@@ -49,12 +49,12 @@ export default function Navbar() {
   const navLinkClass = (path: string) =>
     `px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
       isActive(path)
-        ? 'bg-white/15 text-white'
+        ? 'bg-brand/20 text-white'
         : 'text-white/60 hover:text-white hover:bg-white/10'
     }`;
 
   return (
-    <nav className="bg-gradient-to-r from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] border-b border-white/10 sticky top-0 z-50 shadow-lg">
+    <nav className="bg-surface-dark/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 no-underline group">
@@ -111,7 +111,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/login"
-                className="ml-2 px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors no-underline shadow-sm"
+                className="ml-2 btn-3d-cyan btn-3d-sm no-underline text-sm"
               >
                 Sign In
               </Link>
@@ -128,14 +128,14 @@ export default function Navbar() {
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl hover:bg-white/10 transition-colors"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-brand to-accent rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+              <div className="w-8 h-8 bg-gradient-to-br from-brand to-gold rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
                 {initials}
               </div>
               <ChevronDown className={`w-3.5 h-3.5 text-white/40 transition-transform hidden md:block ${profileOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-gradient-to-b from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] rounded-sm shadow-lg border border-white/10 overflow-hidden animate-slide-down">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-surface-card rounded-xl shadow-lg border border-white/10 overflow-hidden animate-slide-down">
                 <div className="px-4 py-3 bg-white/5 border-b border-white/10">
                   <p className="font-semibold text-white text-sm truncate">{user?.displayName || 'User'}</p>
                   <p className="text-xs text-white/40 truncate">{firebaseUser.email}</p>
@@ -176,7 +176,7 @@ export default function Navbar() {
         ) : (
           <Link
             to="/login"
-            className="md:hidden px-3 py-1.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors no-underline"
+            className="md:hidden btn-3d-cyan btn-3d-sm no-underline text-sm"
           >
             Sign In
           </Link>
