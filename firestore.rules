@@ -31,7 +31,8 @@ service cloud.firestore {
       allow create: if request.auth != null
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending';
       allow update, delete: if request.auth != null
-        && resource.data.ownerId == request.auth.uid;
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
     }
 
     // Quizzes: owner can CRUD, anyone can read public quizzes, authed users can read all (pending teachers cannot create, admin always can)
@@ -41,7 +42,8 @@ service cloud.firestore {
         && (request.auth.token.email == 'rindra.it@gmail.com'
           || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending');
       allow update, delete: if request.auth != null
-        && resource.data.ownerId == request.auth.uid;
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
     }
 
     // Questions: readable by anyone (students play without auth), writable by authed users
@@ -120,15 +122,24 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if false; // Cloud Functions only
       allow update: if request.auth != null && (
-        resource.data.ownerId == request.auth.uid ||
-        exists(/databases/$(database)/documents/classrooms/$(classroomId)/members/$(request.auth.uid))
-      ) && !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['ownerId', 'joinCode', 'joinCodeExpiresAt', 'studentCount', 'coTeacherCount']);
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+        (
+          (resource.data.ownerId == request.auth.uid ||
+          exists(/databases/$(database)/documents/classrooms/$(classroomId)/members/$(request.auth.uid)))
+          && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['ownerId', 'joinCode', 'joinCodeExpiresAt', 'studentCount', 'coTeacherCount'])
+        )
+        || request.auth.token.email == 'rindra.it@gmail.com'
+      );
+      allow delete: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid
+        || request.auth.token.email == 'rindra.it@gmail.com'
+      );
 
       match /members/{memberId} {
         allow read: if request.auth != null;
-        allow write: if false; // Cloud Functions only
+        allow delete: if request.auth != null
+          && request.auth.token.email == 'rindra.it@gmail.com';
+        allow create, update: if false; // Cloud Functions only
       }
     }
   }

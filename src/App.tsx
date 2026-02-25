@@ -16,7 +16,10 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ChooseRole from './pages/ChooseRole';
 import PendingApproval from './pages/PendingApproval';
+import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminQuizzes from './pages/admin/AdminQuizzes';
+import AdminClasses from './pages/admin/AdminClasses';
 import Dashboard from './pages/teacher/Dashboard';
 import QuizEditor from './pages/teacher/QuizEditor';
 import HostSession from './pages/teacher/HostSession';
@@ -139,7 +142,11 @@ function AppContent() {
         <Route path="/choose-role" element={<ChooseRole />} />
         <Route path="/pending-approval" element={<PendingApproval />} />
 
-        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="quizzes" element={<AdminQuizzes />} />
+          <Route path="classes" element={<AdminClasses />} />
+        </Route>
 
         <Route path="/dashboard" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
         <Route path="/quiz/:quizId" element={<TeacherRoute><QuizEditor /></TeacherRoute>} />

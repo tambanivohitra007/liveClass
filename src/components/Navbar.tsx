@@ -84,7 +84,14 @@ export default function Navbar() {
                 </Link>
               )}
               {isAdmin && (
-                <Link to="/admin" className={navLinkClass('/admin')}>
+                <Link
+                  to="/admin"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                    location.pathname.startsWith('/admin')
+                      ? 'bg-brand/20 text-white'
+                      : 'text-white/60 hover:text-white hover:bg-white/10'
+                  }`}
+                >
                   <span className="flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5" />
                     Admin

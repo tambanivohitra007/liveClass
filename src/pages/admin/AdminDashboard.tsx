@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
-import { Shield, CheckCircle, XCircle, Clock, UserX } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, UserX } from 'lucide-react';
 import type { User } from '../../types/models';
 
 type Tab = 'pending' | 'approved' | 'rejected';
@@ -50,17 +50,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 text-gray-900 dark:text-white">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center">
-          <Shield className="w-5 h-5 text-brand" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-white/50">Manage teacher approvals</p>
-        </div>
-      </div>
-
+    <div>
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         {tabs.map((tab) => (
