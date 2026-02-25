@@ -343,7 +343,7 @@ export default function SessionResults() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <button 
             onClick={() => navigate(`/quiz/${quizId || ''}`)}
-            className="px-4 py-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-white/70 font-medium rounded-lg transition-colors text-sm"
+            className="btn-3d-ghost text-sm px-4 py-2"
         >
           View quiz
         </button>
@@ -364,12 +364,12 @@ export default function SessionResults() {
              </button>
           </div>
           
-          <button className="px-4 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/70 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-2 text-sm shadow-sm">
+          <button className="btn-3d-ghost text-sm px-4 py-2 flex items-center gap-2">
             <Mail className="w-4 h-4" />
             Email all parents
           </button>
           
-          <button className="px-4 py-2 bg-brand/10 text-brand font-medium rounded-lg hover:bg-brand/20 flex items-center gap-2 text-sm shadow-sm transition-colors">
+          <button className="btn-3d-cyan text-sm px-4 py-2 flex items-center gap-2">
             <Share2 className="w-4 h-4" />
             Share report <Zap className="w-3 h-3 fill-current" />
           </button>
@@ -569,7 +569,7 @@ export default function SessionResults() {
                    {/* Actions */}
                    <button
                       onClick={() => handleViewDetails(player.playerId, player.nickname)}
-                      className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
+                     className="btn-3d-purple text-sm px-3 py-1.5 flex items-center gap-1"
                    >
                       Evaluate <Target className="w-3 h-3" />
                    </button>
@@ -620,7 +620,7 @@ export default function SessionResults() {
                         </div>
                         <button
                            onClick={() => handleEvaluateQuestion(idx)}
-                           className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
+                          className="btn-3d-purple text-sm px-3 py-1.5 flex items-center gap-1"
                         >
                            Evaluate <Sparkles className="w-3 h-3" />
                         </button>
@@ -738,7 +738,7 @@ export default function SessionResults() {
 
                      <button
                         onClick={() => handleEvaluateQuestion(group.questions[0]?.questionIndex ?? 0)}
-                        className="px-3 py-1.5 border border-pink-200 text-brand bg-pink-50 rounded-lg text-sm font-medium hover:bg-pink-100 flex items-center gap-1 transition-colors"
+                      className="btn-3d-purple text-sm px-3 py-1.5 flex items-center gap-1"
                      >
                         Evaluate <Sparkles className="w-3 h-3" />
                      </button>

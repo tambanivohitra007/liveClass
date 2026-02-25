@@ -350,7 +350,7 @@ export default function QuizPreview() {
                     {isMultiAnswer && selected && !revealed ? (
                       <Check className="w-5 h-5 shrink-0" />
                     ) : null}
-                    <span className="px-2 text-center whitespace-normal break-words leading-tight">{opt}</span>
+                    <span className="px-2 text-center whitespace-normal wrap-break-word leading-tight">{opt}</span>
                     {revealed && correct && (
                       <div className="absolute top-2 right-2 w-6 h-6 bg-success rounded-full flex items-center justify-center">
                         <Check className="w-3.5 h-3.5" />
