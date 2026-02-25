@@ -786,11 +786,11 @@ export default function QuizEditor() {
 
               {/* Ordering Editor */}
               {activeQ.type === 'ordering' && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
-                  <label className="text-sm font-medium text-gray-600">Items in correct order (top = first)</label>
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-6 space-y-3">
+                  <label className="text-sm font-medium text-gray-600 dark:text-white/70">Items in correct order (top = first)</label>
                   {activeQ.options.map((item, oi) => (
                     <div key={oi} className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400 w-5 text-center shrink-0">{oi + 1}</span>
+                      <span className="text-xs text-gray-400 dark:text-white/40 w-5 text-center shrink-0">{oi + 1}</span>
                       <input
                         value={item}
                         onChange={(e) => {
@@ -799,10 +799,10 @@ export default function QuizEditor() {
                           updateQuestion(activeIndex, { options: newOpts });
                         }}
                         placeholder={`Item ${oi + 1}`}
-                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white"
                       />
-                      <button onClick={() => moveOption(activeIndex, oi, -1)} disabled={oi === 0} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
-                      <button onClick={() => moveOption(activeIndex, oi, 1)} disabled={oi === activeQ.options.length - 1} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                      <button onClick={() => moveOption(activeIndex, oi, -1)} disabled={oi === 0} className="p-1 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                      <button onClick={() => moveOption(activeIndex, oi, 1)} disabled={oi === activeQ.options.length - 1} className="p-1 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
                       {activeQ.options.length > 2 && (
                         <button
                           onClick={() => updateQuestion(activeIndex, { options: activeQ.options.filter((_, idx) => idx !== oi) })}
@@ -819,7 +819,7 @@ export default function QuizEditor() {
                   >
                     <Plus className="w-4 h-4" /> Add Item
                   </button>
-                  <p className="text-xs text-gray-400">Players will see these items shuffled and must drag them into the correct order.</p>
+                  <p className="text-xs text-gray-400 dark:text-white/40">Players will see these items shuffled and must drag them into the correct order.</p>
                 </div>
               )}
 
@@ -832,13 +832,13 @@ export default function QuizEditor() {
 
               {/* Code Output */}
               {activeQ.type === 'code_output' && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-6 space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-600 mb-2 block">Language</label>
+                    <label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 block">Language</label>
                     <select
                       value={activeQ.codeLanguage || 'javascript'}
                       onChange={(e) => updateQuestion(activeIndex, { codeLanguage: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white"
                     >
                       {['JavaScript', 'Python', 'Java', 'C', 'C++', 'C#', 'PHP', 'TypeScript', 'Dart', 'Go', 'Ruby', 'Kotlin', 'Swift', 'Rust', 'SQL', 'HTML', 'CSS'].map((lang) => (
                         <option key={lang} value={lang.toLowerCase()}>{lang}</option>
@@ -846,8 +846,8 @@ export default function QuizEditor() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600 mb-2 block">Code Snippet</label>
-                    <div className="relative rounded-xl overflow-hidden border border-gray-300 focus-within:ring-2 focus-within:ring-brand/30 focus-within:border-brand">
+                    <label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 block">Code Snippet</label>
+                    <div className="relative rounded-xl overflow-hidden border border-gray-300 dark:border-white/10 focus-within:ring-2 focus-within:ring-brand/30 focus-within:border-brand">
                       <div className="flex items-center justify-between bg-gray-800 px-4 py-2 border-b border-gray-700">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
@@ -887,7 +887,7 @@ export default function QuizEditor() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-600 mb-2 block">Expected Output (one accepted answer per line)</label>
+                    <label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 block">Expected Output (one accepted answer per line)</label>
                     <textarea
                       value={activeQ.correctAnswers.join('\n')}
                       onChange={(e) => updateQuestion(activeIndex, {
@@ -895,14 +895,14 @@ export default function QuizEditor() {
                       })}
                       placeholder={'e.g.\nGuest\nRindra'}
                       rows={3}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none font-mono text-sm"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 dark:text-white resize-none font-mono text-sm"
                     />
                   </div>
 
                   {/* Live Preview */}
                   {activeQ.codeSnippet?.trim() && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 mb-2 flex items-center gap-1.5">
+                      <label className="text-sm font-medium text-gray-600 dark:text-white/70 mb-2 flex items-center gap-1.5">
                         <Eye className="w-3.5 h-3.5" />
                         Student Preview
                       </label>
@@ -920,20 +920,20 @@ export default function QuizEditor() {
 
               {/* Fill in the Blank */}
               {activeQ.type === 'fill_blank' && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
-                  <p className="text-xs text-gray-500">Use <code className="bg-gray-100 px-1.5 py-0.5 rounded text-brand font-mono">___</code> (three underscores) in the question text to mark each blank.</p>
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm p-6 space-y-3">
+                  <p className="text-xs text-gray-500 dark:text-white/50">Use <code className="bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-brand font-mono">___</code> (three underscores) in the question text to mark each blank.</p>
                   {(() => {
                     const blankCount = (activeQ.text.match(/___/g) || []).length;
                     const answers = activeQ.correctAnswers.length >= blankCount
                       ? activeQ.correctAnswers.slice(0, blankCount)
                       : [...activeQ.correctAnswers, ...Array(blankCount - activeQ.correctAnswers.length).fill('')];
-                    if (blankCount === 0) return <p className="text-sm text-gray-400">No blanks detected — add ___ to your question text above.</p>;
+                    if (blankCount === 0) return <p className="text-sm text-gray-400 dark:text-white/40">No blanks detected — add ___ to your question text above.</p>;
                     return (
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-600">Answers for each blank</label>
+                        <label className="text-sm font-medium text-gray-600 dark:text-white/70">Answers for each blank</label>
                         {answers.map((ans: string, ai: number) => (
                           <div key={ai} className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400 shrink-0 w-16">Blank {ai + 1}</span>
+                            <span className="text-xs text-gray-400 dark:text-white/40 shrink-0 w-16">Blank {ai + 1}</span>
                             <input
                               value={ans}
                               onChange={(e) => {
@@ -942,11 +942,11 @@ export default function QuizEditor() {
                                 updateQuestion(activeIndex, { correctAnswers: newAnswers });
                               }}
                               placeholder={`Answer for blank ${ai + 1}`}
-                              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white"
                             />
                           </div>
                         ))}
-                        <p className="text-xs text-gray-400">Matching is case-insensitive.</p>
+                        <p className="text-xs text-gray-400 dark:text-white/40">Matching is case-insensitive.</p>
                       </div>
                     );
                   })()}
@@ -957,9 +957,9 @@ export default function QuizEditor() {
             /* Empty State */
             <div className="flex-1 flex items-center justify-center h-full">
               <div className="text-center">
-                <FileText className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-400 mb-1">No questions yet</h3>
-                <p className="text-sm text-gray-400 mb-4">Add your first question to get started</p>
+                <FileText className="w-16 h-16 text-gray-200 dark:text-white/20 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-400 dark:text-white/40 mb-1">No questions yet</h3>
+                <p className="text-sm text-gray-400 dark:text-white/40 mb-4">Add your first question to get started</p>
                 <button
                   onClick={addQuestion}
                   className="px-5 py-2.5 bg-brand text-white font-medium rounded-xl hover:bg-brand-dark transition-colors text-sm"
@@ -973,15 +973,15 @@ export default function QuizEditor() {
         </main>
 
         {/* ── Right Sidebar – Quiz Settings ── */}
-        <aside className="w-64 bg-white border-l border-gray-200 flex flex-col shrink-0 overflow-y-auto">
+        <aside className="w-64 bg-white dark:bg-white/5 border-l border-gray-200 dark:border-white/10 flex flex-col shrink-0 overflow-y-auto">
           <div className="p-4 space-y-4">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-gray-500 dark:text-white/50 uppercase tracking-wide flex items-center gap-1.5">
               <Type className="w-3.5 h-3.5" />
               Quiz settings
             </label>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Cover Image</label>
+                <label className="text-xs text-gray-500 dark:text-white/50 mb-1 block">Cover Image</label>
                 <ImageUpload
                   currentUrl={coverImageUrl}
                   onUpload={(url) => setCoverImageUrl(url)}
@@ -989,7 +989,7 @@ export default function QuizEditor() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Card Color</label>
+                <label className="text-xs text-gray-500 dark:text-white/50 mb-1 block">Card Color</label>
                 <div className="flex gap-2 flex-wrap">
                   {COLLECTION_COLORS.map((c) => (
                     <button
@@ -1004,21 +1004,21 @@ export default function QuizEditor() {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Description</label>
+                <label className="text-xs text-gray-500 dark:text-white/50 mb-1 block">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief description"
                   rows={2}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white resize-none"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Visibility</label>
+                <label className="text-xs text-gray-500 dark:text-white/50 mb-1 block">Visibility</label>
                 <select
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value as 'private' | 'org' | 'public')}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white"
                 >
                   <option value="private">Private</option>
                   <option value="public">Public</option>
@@ -1026,11 +1026,11 @@ export default function QuizEditor() {
               </div>
               {collections.length > 0 && (
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Collection</label>
+                  <label className="text-xs text-gray-500 dark:text-white/50 mb-1 block">Collection</label>
                   <select
                     value={selectedCollectionId}
                     onChange={(e) => setSelectedCollectionId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-800 dark:text-white"
                   >
                     <option value="">None</option>
                     {collections.map((c) => (

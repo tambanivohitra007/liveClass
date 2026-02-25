@@ -202,7 +202,7 @@ export default function AiGenerateModal({
         role="dialog"
         aria-modal="true"
         aria-label="AI Question Generator"
-        className="bg-white rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_var(--retro-brand)] w-full max-w-md animate-bounce-in max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -396,7 +396,7 @@ export default function AiGenerateModal({
           <button
             onClick={handleGenerate}
             disabled={!canGenerate()}
-            className="w-full py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[3px_3px_0px_0px_var(--retro-brand)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_var(--retro-brand)] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
           >
             {generating ? (
               <>

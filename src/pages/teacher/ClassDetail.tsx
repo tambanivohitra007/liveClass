@@ -338,7 +338,7 @@ export default function ClassDetail() {
         {/* Add co-teacher form */}
         <form onSubmit={handleAddCoTeacher} className="flex gap-2 mb-4">
           <div className="flex-1 relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-white/40" />
             <input
               type="email"
               value={coTeacherEmail}

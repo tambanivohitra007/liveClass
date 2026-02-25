@@ -137,7 +137,7 @@ export default function ClassList() {
       {/* Grid */}
       {classrooms.length === 0 ? (
         <div className="text-center py-20">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users className="w-10 h-10 text-gray-300 dark:text-white/30" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No classes yet</h3>
@@ -238,7 +238,7 @@ export default function ClassList() {
             role="dialog"
             aria-modal="true"
             aria-label="Create Class"
-            className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in"
+            className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_var(--retro-brand)] w-full max-w-md animate-bounce-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 pb-0">
@@ -285,7 +285,7 @@ export default function ClassList() {
                 <button
                   onClick={handleCreate}
                   disabled={creating || !name.trim()}
-                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[3px_3px_0px_0px_var(--retro-brand)] hover:shadow-[5px_5px_0px_0px_var(--retro-brand)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_var(--retro-brand)] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
                 >
                   {creating ? (
                     <>
@@ -296,7 +296,7 @@ export default function ClassList() {
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 border-2 border-gray-800 dark:border-white/20 text-gray-600 dark:text-white/70 font-medium rounded-xl shadow-[2px_2px_0px_0px_#6b7280] hover:shadow-[4px_4px_0px_0px_#6b7280] hover:-translate-x-px hover:-translate-y-px transition-all duration-300"
+                  className="px-5 py-2.5 border-2 border-gray-800 dark:border-white/20 text-gray-600 dark:text-white/70 font-medium rounded-xl shadow-[2px_2px_0px_0px_var(--retro-gray)] hover:shadow-[4px_4px_0px_0px_var(--retro-gray)] hover:-translate-x-px hover:-translate-y-px transition-all duration-300"
                 >
                   Cancel
                 </button>
