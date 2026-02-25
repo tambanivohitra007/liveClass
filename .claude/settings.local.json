@@ -43,7 +43,8 @@
       "Bash(del /f \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\node_modules\\\\.tmp\\\\tsconfig.app.tsbuildinfo\")",
       "Bash(npx vite build:*)",
       "Bash(head:*)",
-      "WebFetch(domain:www.nightzookeeper.com)"
+      "WebFetch(domain:www.nightzookeeper.com)",
+      "WebFetch(domain:fonts.google.com)"
     ]
   }
 }

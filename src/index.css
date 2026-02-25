@@ -51,13 +51,13 @@
 @layer base {
   body {
     @apply bg-surface antialiased;
-    font-family: 'Libre Baskerville', Georgia, serif;
+    font-family: 'McLaren', Arial, sans-serif;
     color: #E2E8F0;
     margin: 0;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Rammetto One', 'Libre Baskerville', Georgia, serif;
+    font-family: 'Acme', 'McLaren', Arial, sans-serif;
     font-weight: 400;
   }
 
