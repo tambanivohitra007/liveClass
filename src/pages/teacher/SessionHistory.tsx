@@ -173,11 +173,11 @@ export default function SessionHistory() {
           <select
             value={quizFilter}
             onChange={(e) => setQuizFilter(e.target.value)}
-            className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-gray-700 dark:text-white/70 focus:ring-2 focus:ring-brand/20 focus:border-brand"
+            className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
-            <option value="all">All Quizzes</option>
+            <option value="all" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">All Quizzes</option>
             {quizOptions.map((q) => (
-              <option key={q.id} value={q.id}>{q.title}</option>
+              <option key={q.id} value={q.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{q.title}</option>
             ))}
           </select>
         )}
