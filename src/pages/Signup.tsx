@@ -68,7 +68,7 @@ export default function Signup() {
       <div className="relative z-10 w-full max-w-md animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src={logo} alt="LiveClass" className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg animate-glow-pulse" />
+          <img src={logo} alt="LiveClass" className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg" />
           <h1 className="text-3xl text-gray-900 dark:text-white">Create your account</h1>
           <p className="text-gray-500 dark:text-white/50 mt-1 font-medium">Start creating quizzes in minutes</p>
         </div>
