@@ -189,26 +189,26 @@ export default function Profile() {
   const photoUrl = user.photoUrl || firebaseUser.photoURL;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
+    <div className="min-h-screen bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark">
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-6">
         <BackButton onClick={() => navigate(-1)} />
       </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Profile Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Profile Settings</h1>
 
       {/* Avatar Section */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 mb-6 animate-fade-in">
+      <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 mb-6 animate-fade-in">
         <div className="flex items-center gap-6">
           <div className="relative group">
             {photoUrl ? (
               <img
                 src={photoUrl}
                 alt={user.displayName}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-100"
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-gray-100 dark:border-white/20"
               />
             ) : (
-              <div className="w-20 h-20 bg-gradient-to-br from-brand to-accent rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+              <div className="w-20 h-20 bg-linear-to-br from-brand to-accent rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
                 {initials}
               </div>
             )}
@@ -228,8 +228,8 @@ export default function Profile() {
             </label>
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{user.displayName}</h2>
-            <p className="text-sm text-gray-400">{user.email}</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{user.displayName}</h2>
+            <p className="text-sm text-gray-400 dark:text-white/40">{user.email}</p>
             <span className="inline-block mt-1.5 text-xs px-2 py-0.5 bg-brand/10 text-brand rounded-full font-medium capitalize">
               {user.role}
             </span>
@@ -238,28 +238,28 @@ export default function Profile() {
       </div>
 
       {/* Profile Info Form */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 mb-6 animate-fade-in">
-        <h3 className="font-semibold text-gray-900 mb-4">Personal Information</h3>
+      <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 mb-6 animate-fade-in">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Display Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Display Name</label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500">
-              <Mail className="w-4 h-4 text-gray-400" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Email</label>
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/10 text-gray-500 dark:text-white/60">
+              <Mail className="w-4 h-4 text-gray-400 dark:text-white/40" />
               {user.email}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+            <p className="text-xs text-gray-400 dark:text-white/40 mt-1">Email cannot be changed</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-2">Gender</label>
             <div className="grid grid-cols-3 gap-3">
               {(['male', 'female', 'other'] as const).map((g) => (
                 <button
@@ -269,7 +269,7 @@ export default function Profile() {
                   className={`py-3 rounded-xl border-2 font-medium capitalize transition-all ${
                     gender === g
                       ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      : 'border-gray-200 dark:border-white/10 text-gray-500 dark:text-white/60 hover:border-gray-300 dark:hover:border-white/25'
                   }`}
                 >
                   {g}
@@ -278,33 +278,33 @@ export default function Profile() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Phone</label>
             <div className="relative">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-white/40" />
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+261 34 00 000 00"
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+                className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 dark:text-white"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Address</label>
             <div className="relative">
-              <MapPin className="absolute left-4 top-3.5 w-4 h-4 text-gray-400" />
+              <MapPin className="absolute left-4 top-3.5 w-4 h-4 text-gray-400 dark:text-white/40" />
               <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="City, Country"
                 rows={2}
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 resize-none"
+                className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 dark:text-white resize-none"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-2">Role</label>
             <div className="grid grid-cols-2 gap-3">
               {(['teacher', 'student'] as const).map((r) => (
                 <button
@@ -315,7 +315,7 @@ export default function Profile() {
                   className={`py-3 rounded-xl border-2 font-medium capitalize transition-all ${
                     role === r
                       ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      : 'border-gray-200 dark:border-white/10 text-gray-500 dark:text-white/60 hover:border-gray-300 dark:hover:border-white/25'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {r}
@@ -329,7 +329,7 @@ export default function Profile() {
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-brand text-white font-semibold rounded-xl shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.35)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Changes'}
@@ -338,9 +338,9 @@ export default function Profile() {
       </div>
 
       {/* Security Section */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 animate-fade-in">
-        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Shield className="w-4 h-4 text-gray-400" />
+      <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] p-6 animate-fade-in">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Shield className="w-4 h-4 text-gray-400 dark:text-white/40" />
           Security
         </h3>
 
@@ -349,9 +349,9 @@ export default function Profile() {
             {!showPasswordForm ? (
               <button
                 onClick={() => setShowPasswordForm(true)}
-                className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors w-full"
+                className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/70 font-medium hover:bg-gray-50 dark:hover:bg-white/10 transition-colors w-full"
               >
-                <KeyRound className="w-4 h-4 text-gray-400" />
+                <KeyRound className="w-4 h-4 text-gray-400 dark:text-white/40" />
                 Change Password
               </button>
             ) : (
@@ -362,7 +362,7 @@ export default function Profile() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Current Password</label>
                   <div className="relative">
                     <input
                       ref={currentPwRef}
@@ -370,19 +370,19 @@ export default function Profile() {
                       value={currentPassword}
                       onChange={(e) => { setCurrentPassword(e.target.value); setPasswordError(''); }}
                       required
-                      className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+                      className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 dark:text-white"
                     />
                     <button
                       type="button"
                       onClick={() => setShowCurrentPw(!showCurrentPw)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70 transition-colors"
                     >
                       {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">New Password</label>
                   <div className="relative">
                     <input
                       ref={newPwRef}
@@ -391,20 +391,20 @@ export default function Profile() {
                       onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
                       required
                       minLength={6}
-                      className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+                      className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 dark:text-white"
                       placeholder="Min 6 characters"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPw(!showNewPw)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70 transition-colors"
                     >
                       {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Confirm New Password</label>
                   <div className="relative">
                     <input
                       ref={confirmPwRef}
@@ -413,12 +413,12 @@ export default function Profile() {
                       onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
                       required
                       minLength={6}
-                      className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900"
+                      className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all text-gray-900 dark:text-white"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPw(!showConfirmPw)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70 transition-colors"
                     >
                       {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -428,7 +428,7 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={() => { setShowPasswordForm(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setPasswordError(''); }}
-                    className="flex-1 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                    className="flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white/70 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                   >
                     Cancel
                   </button>
@@ -444,7 +444,7 @@ export default function Profile() {
             )}
           </>
         ) : (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 text-gray-500 text-sm">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/10 text-gray-500 dark:text-white/60 text-sm">
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -455,8 +455,8 @@ export default function Profile() {
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <p className="text-xs text-gray-400">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10">
+          <p className="text-xs text-gray-400 dark:text-white/40">
             Account created {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'recently'}
           </p>
         </div>

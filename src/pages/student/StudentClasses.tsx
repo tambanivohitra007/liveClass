@@ -56,7 +56,7 @@ export default function StudentClasses() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse" />
+        <div className="h-8 w-48 bg-gray-200 dark:bg-white/10 rounded-lg animate-pulse" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
@@ -65,19 +65,19 @@ export default function StudentClasses() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface overflow-hidden">
+    <div className="relative min-h-screen bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark overflow-hidden">
       <WaveBackground variant="light" position="bottom" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Classes</h1>
-            <p className="text-gray-500 mt-1 text-sm">View your enrolled classrooms</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Classes</h1>
+            <p className="text-gray-500 dark:text-white/50 mt-1 text-sm">View your enrolled classrooms</p>
           </div>
           <button
             onClick={() => navigate('/join-class')}
-            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 flex items-center gap-2 text-sm"
+            className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200 flex items-center gap-2 text-sm"
           >
             <UserPlus className="w-4 h-4" />
             Join a Class
@@ -87,14 +87,14 @@ export default function StudentClasses() {
         {/* Grid */}
         {classrooms.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-10 h-10 text-gray-300" />
+            <div className="w-20 h-20 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-10 h-10 text-gray-300 dark:text-white/30" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">You haven't joined any classes yet</h3>
-            <p className="text-gray-500 mb-6 text-sm">Join a class using a code from your teacher</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">You haven't joined any classes yet</h3>
+            <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Join a class using a code from your teacher</p>
             <button
               onClick={() => navigate('/join-class')}
-              className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200"
+              className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200"
             >
               Join a Class
             </button>
@@ -105,7 +105,7 @@ export default function StudentClasses() {
               <div
                 key={cls.id}
                 onClick={() => navigate(`/student/classroom/${cls.id}`)}
-                className="group bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
+                className="group bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
               >
                 {/* Color banner */}
                 <div className={`h-24 ${CARD_GRADIENTS[cls.color] || DEFAULT_GRADIENT} relative overflow-hidden rounded-t-2xl`}>
@@ -116,15 +116,15 @@ export default function StudentClasses() {
 
                 {/* Card body */}
                 <div className="p-5 flex-1 flex flex-col">
-                  <h3 className="font-bold text-base leading-tight group-hover:text-brand transition-colors line-clamp-1 mb-1">
+                  <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1 mb-1">
                     {cls.name}
                   </h3>
                   {cls.description && (
-                    <p className="text-sm text-gray-500 line-clamp-1 mb-3">{cls.description}</p>
+                    <p className="text-sm text-gray-500 dark:text-white/50 line-clamp-1 mb-3">{cls.description}</p>
                   )}
 
                   {/* Stats */}
-                  <div className="flex items-center gap-3 text-sm text-gray-500 mt-auto">
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-white/50 mt-auto">
                     <span className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
                       {cls.studentCount} student{cls.studentCount !== 1 ? 's' : ''}

@@ -108,7 +108,7 @@ export default function ClassList() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse" />
+        <div className="h-8 w-48 bg-gray-200 dark:bg-white/10 rounded-lg animate-pulse" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
@@ -117,17 +117,17 @@ export default function ClassList() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#E8EAF0] to-surface">
+    <div className="min-h-screen bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark">
     <div className="max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Classes</h1>
-          <p className="text-gray-500 mt-1 text-sm">Create and manage your classrooms</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Classes</h1>
+          <p className="text-gray-500 dark:text-white/50 mt-1 text-sm">Create and manage your classrooms</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200 flex items-center gap-2 text-sm"
+          className="px-5 py-2.5 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200 flex items-center gap-2 text-sm"
         >
           <Plus className="w-4 h-4" />
           Create Class
@@ -138,13 +138,13 @@ export default function ClassList() {
       {classrooms.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="w-10 h-10 text-gray-300" />
+            <Users className="w-10 h-10 text-gray-300 dark:text-white/30" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No classes yet</h3>
-          <p className="text-gray-500 mb-6 text-sm">Create your first class to start managing students</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No classes yet</h3>
+          <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Create your first class to start managing students</p>
           <button
             onClick={() => setShowModal(true)}
-            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-200"
+            className="px-6 py-3 bg-brand text-white font-semibold rounded-xl shadow-[2px_2px_0px_0px_rgba(212,86,107,0.25)] hover:shadow-[3px_3px_0px_0px_rgba(212,86,107,0.3)] hover:-translate-x-px hover:-translate-y-px transition-all duration-200"
           >
             Create your first class
           </button>
@@ -157,7 +157,7 @@ export default function ClassList() {
               <div
                 key={cls.id}
                 onClick={() => navigate(`/classroom/${cls.id}`)}
-                className="group bg-white rounded-2xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
+                className="group bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] hover:shadow-[5px_5px_0px_0px_rgba(212,86,107,0.2)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 flex flex-col animate-fade-in cursor-pointer"
               >
                 {/* Color banner */}
                 <div className={`h-24 ${CARD_GRADIENTS[cls.color] || DEFAULT_GRADIENT} relative overflow-hidden rounded-t-2xl`}>
@@ -173,20 +173,20 @@ export default function ClassList() {
 
                 {/* Card body */}
                 <div className="p-5 flex-1 flex flex-col">
-                  <h3 className="font-bold text-base leading-tight group-hover:text-brand transition-colors line-clamp-1 mb-1">
+                  <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1 mb-1">
                     {cls.name}
                   </h3>
                   {cls.description && (
-                    <p className="text-sm text-gray-500 line-clamp-1 mb-3">{cls.description}</p>
+                    <p className="text-sm text-gray-500 dark:text-white/50 line-clamp-1 mb-3">{cls.description}</p>
                   )}
 
                   {/* Stats */}
-                  <div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-white/50 mb-4">
                     <span className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
                       {cls.studentCount} student{cls.studentCount !== 1 ? 's' : ''}
                     </span>
-                    <span className="w-1 h-1 rounded-full bg-gray-300" />
+                    <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/30" />
                     <span className="flex items-center gap-1">
                       <UserPlus className="w-3.5 h-3.5" />
                       {cls.coTeacherCount}
@@ -194,20 +194,20 @@ export default function ClassList() {
                   </div>
 
                   {/* Join code */}
-                  <div className="mt-auto flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                  <div className="mt-auto flex items-center justify-between bg-gray-50 dark:bg-white/10 rounded-xl px-3 py-2">
                     <div>
-                      <span className="font-mono font-bold text-gray-900 tracking-wider">{cls.joinCode}</span>
+                      <span className="font-mono font-bold text-gray-900 dark:text-white tracking-wider">{cls.joinCode}</span>
                       {isExpired ? (
                         <span className="ml-2 text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5">
                           <AlertTriangle className="w-2.5 h-2.5" /> Expired
                         </span>
                       ) : (
-                        <span className="ml-2 text-[10px] text-gray-400">{daysUntil(cls.joinCodeExpiresAt)}</span>
+                        <span className="ml-2 text-[10px] text-gray-400 dark:text-white/40">{daysUntil(cls.joinCodeExpiresAt)}</span>
                       )}
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); copyCode(cls.joinCode); }}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-white transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 dark:text-white/40 hover:text-brand hover:bg-white dark:hover:bg-white/10 transition-colors"
                       title="Copy code"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -221,12 +221,12 @@ export default function ClassList() {
           {/* Create placeholder */}
           <button
             onClick={() => setShowModal(true)}
-            className="min-h-[240px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
+            className="min-h-60 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
           >
-            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
+            <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-400 dark:text-white/40 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
               <Plus className="w-7 h-7" />
             </div>
-            <span className="font-bold text-gray-500 group-hover/create:text-brand transition-colors">New Class</span>
+            <span className="font-bold text-gray-500 dark:text-white/50 group-hover/create:text-brand transition-colors">New Class</span>
           </button>
         </div>
       )}
@@ -238,44 +238,44 @@ export default function ClassList() {
             role="dialog"
             aria-modal="true"
             aria-label="Create Class"
-            className="bg-white rounded-2xl border-2 border-gray-800 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in"
+            className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_#D4566B] w-full max-w-md animate-bounce-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 pb-0">
-              <h3 className="text-lg font-bold text-gray-900">New Class</h3>
-              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">New Class</h3>
+              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors">
                 <XIcon className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Name</label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Biology 101"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Optional description"
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 dark:border-white/20 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Color</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Color</label>
                 <div className="flex gap-2">
                   {COLLECTION_COLORS.map((c) => (
                     <button
                       key={c.key}
                       onClick={() => setColor(c.key)}
-                      className={`w-8 h-8 rounded-full ${c.bg} border-2 border-gray-800 transition-all ${color === c.key ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
+                      className={`w-8 h-8 rounded-full ${c.bg} border-2 border-gray-800 dark:border-white/20 transition-all ${color === c.key ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-white/50 dark:ring-offset-surface-dark scale-110' : 'hover:scale-105'}`}
                       title={c.label}
                     />
                   ))}
@@ -285,7 +285,7 @@ export default function ClassList() {
                 <button
                   onClick={handleCreate}
                   disabled={creating || !name.trim()}
-                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 bg-brand text-white font-semibold rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[3px_3px_0px_0px_#D4566B] hover:shadow-[5px_5px_0px_0px_#D4566B] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-[3px_3px_0px_0px_#D4566B] disabled:hover:translate-x-0 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
                 >
                   {creating ? (
                     <>
@@ -296,7 +296,7 @@ export default function ClassList() {
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 border-2 border-gray-800 text-gray-600 font-medium rounded-xl shadow-[2px_2px_0px_0px_#6b7280] hover:shadow-[4px_4px_0px_0px_#6b7280] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all duration-300"
+                  className="px-5 py-2.5 border-2 border-gray-800 dark:border-white/20 text-gray-600 dark:text-white/70 font-medium rounded-xl shadow-[2px_2px_0px_0px_#6b7280] hover:shadow-[4px_4px_0px_0px_#6b7280] hover:-translate-x-px hover:-translate-y-px transition-all duration-300"
                 >
                   Cancel
                 </button>

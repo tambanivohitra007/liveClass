@@ -543,7 +543,7 @@ export default function Dashboard() {
                     <Users className="w-3 h-3" />
                     {session.playerCount}{session.playerCount >= 10 ? '+' : ''} players
                   </span>
-                  <span className="w-0.5 h-0.5 rounded-full bg-white/20" />
+                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-white/20" />
                   <span className="flex items-center gap-0.5">
                     <Clock className="w-3 h-3" />
                     {formatDate(session.endedAt)}
@@ -600,7 +600,7 @@ export default function Dashboard() {
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); openEditCollModal(coll); }}
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center opacity-0 group-hover/pill:opacity-100 transition-opacity shadow-sm"
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gray-500 dark:bg-gray-700 text-white flex items-center justify-center opacity-0 group-hover/pill:opacity-100 transition-opacity shadow-sm"
                 title="Edit collection"
               >
                 <Pencil className="w-2.5 h-2.5" />
@@ -762,7 +762,7 @@ export default function Dashboard() {
                       <HelpCircle className="w-3.5 h-3.5" />
                       {quiz.questionCount ?? '?'} Qs
                     </span>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                     <span>{formatDate(quiz.updatedAt)}</span>
                   </div>
 
