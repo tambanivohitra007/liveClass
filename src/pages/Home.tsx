@@ -63,9 +63,9 @@ export default function Home() {
               </button>
 
               <div className="flex items-center gap-4 py-2">
-                <hr className="flex-grow border-gray-200 dark:border-white/10" />
+                <hr className="grow border-gray-200 dark:border-white/10" />
                 <span className="text-gray-400 dark:text-white/40 text-xs font-bold uppercase tracking-widest whitespace-nowrap">Or access more</span>
-                <hr className="flex-grow border-gray-200 dark:border-white/10" />
+                <hr className="grow border-gray-200 dark:border-white/10" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
