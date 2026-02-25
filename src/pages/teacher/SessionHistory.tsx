@@ -185,14 +185,14 @@ export default function SessionHistory() {
         {/* Sort */}
         <div className="flex items-center gap-1.5 ml-auto">
           <SortAsc className="w-4 h-4 text-gray-400 dark:text-white/40" />
-          <select
+            <select
             value={sortField}
             onChange={(e) => setSortField(e.target.value as SortField)}
-            className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-gray-700 dark:text-white/70 focus:ring-2 focus:ring-brand/20 focus:border-brand"
-          >
-            <option value="date">Sort by Date</option>
-            <option value="players">Sort by Players</option>
-            <option value="accuracy">Sort by Accuracy</option>
+              className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
+            >
+              <option value="date" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Sort by Date</option>
+              <option value="players" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Sort by Players</option>
+              <option value="accuracy" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Sort by Accuracy</option>
           </select>
         </div>
       </div>

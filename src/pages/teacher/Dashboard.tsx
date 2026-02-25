@@ -13,7 +13,7 @@ import WaveBackground from '../../components/ui/WaveBackground';
 import {
   Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList,
   Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, BarChart3, Printer,
-  Clock, ArrowRight,
+  Clock, ArrowRight, LayoutGrid, List, Table2,
 } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
@@ -112,6 +112,14 @@ export default function Dashboard() {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<'card' | 'list' | 'table'>(
+    () => (localStorage.getItem('dashboard_viewMode') as 'card' | 'list' | 'table') || 'card'
+  );
+
+  const changeViewMode = (mode: 'card' | 'list' | 'table') => {
+    setViewMode(mode);
+    localStorage.setItem('dashboard_viewMode', mode);
+  };
 
   // Close menu on outside click
   useEffect(() => {
@@ -394,6 +402,71 @@ export default function Dashboard() {
       q.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+  const renderMoreMenu = (quiz: QuizWithMeta) => (
+    <div className="relative" ref={menuOpenId === quiz.id ? menuRef : undefined}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === quiz.id ? null : quiz.id); }}
+        className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </button>
+      {menuOpenId === quiz.id && (
+        <div className="absolute right-0 top-full mt-1 w-52 bg-surface-card rounded-xl shadow-lg border border-gray-200 dark:border-white/10 z-50 py-1.5 animate-fade-in">
+          <button
+            onClick={() => { navigate(`/quiz/${quiz.id}/preview`); setMenuOpenId(null); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+          >
+            <Eye className="w-4 h-4 text-gray-400 dark:text-white/40" /> Preview
+          </button>
+          <button
+            onClick={() => { handleDuplicate(quiz); setMenuOpenId(null); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+          >
+            <Copy className="w-4 h-4 text-gray-400 dark:text-white/40" /> Duplicate
+          </button>
+          <button
+            onClick={() => { navigate(`/quiz/${quiz.id}/flashcards`); setMenuOpenId(null); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+          >
+            <BookOpen className="w-4 h-4 text-gray-400 dark:text-white/40" /> Flashcards
+          </button>
+          <button
+            onClick={() => { navigate(`/quiz/${quiz.id}/worksheet`); setMenuOpenId(null); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+          >
+            <Printer className="w-4 h-4 text-gray-400 dark:text-white/40" /> Worksheet
+          </button>
+          {collections.length > 0 && (
+            <>
+              <hr className="my-1.5 border-gray-200 dark:border-white/10" />
+              <div className="px-4 py-2">
+                <p className="text-[10px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1.5">Move to</p>
+                <select
+                  value={quiz.collectionId || ''}
+                  onChange={(e) => { handleQuizCollectionChange(quiz.id, e.target.value); setMenuOpenId(null); }}
+                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-white/80 bg-gray-50 dark:bg-slate-800 outline-none"
+                >
+                  <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Uncategorized</option>
+                  {collections.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+          <hr className="my-1.5 border-gray-200 dark:border-white/10" />
+          <button
+            onClick={() => { handleDelete(quiz.id, quiz.title); setMenuOpenId(null); }}
+            disabled={deleting === quiz.id}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-danger/10 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
@@ -555,16 +628,39 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* â”€â”€ Search Bar â”€â”€ */}
-      <div className="relative mb-6 group">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-white/30 group-focus-within:text-brand transition-colors" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search your library for quizzes, topics, or folders..."
-          className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-900 dark:text-white"
-        />
+      {/* â"€â"€ Search Bar + View Toggle â"€â"€ */}
+      <div className="flex gap-3 mb-6">
+        <div className="relative group flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-white/30 group-focus-within:text-brand transition-colors" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search your library for quizzes, topics, or folders..."
+            className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-900 dark:text-white"
+          />
+        </div>
+        {/* View toggle */}
+        <div className="flex items-center bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-1 shrink-0">
+          {([
+            { mode: 'card' as const, icon: LayoutGrid, label: 'Card view' },
+            { mode: 'list' as const, icon: List, label: 'List view' },
+            { mode: 'table' as const, icon: Table2, label: 'Table view' },
+          ]).map(({ mode, icon: Icon, label }) => (
+            <button
+              key={mode}
+              onClick={() => changeViewMode(mode)}
+              className={`p-2 rounded-lg transition-colors ${
+                viewMode === mode
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60'
+              }`}
+              title={label}
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* â”€â”€ Filter Pills â”€â”€ */}
@@ -619,7 +715,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* â”€â”€ Quiz Grid â”€â”€ */}
+      {/* â"€â"€ Quiz Grid â"€â"€ */}
       {quizzes.length === 0 ? (
         <div className="text-center py-20">
           <EmptyQuizzes />
@@ -637,10 +733,11 @@ export default function Dashboard() {
           <EmptySearch />
           <p className="text-gray-500 dark:text-white/50 mt-4 text-sm">No quizzes match "{searchQuery || collections.find(c => c.id === selectedFilter)?.name}"</p>
         </div>
-      ) : (
+      ) : viewMode === 'card' ? (
+        /* â"€â"€ Card View â"€â"€ */
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 stagger-children">
           {filtered.map((quiz) => {
-            const collName = getCollectionName(quiz);
+            const collNameVal = getCollectionName(quiz);
             return (
               <div
                 key={quiz.id}
@@ -652,21 +749,16 @@ export default function Dashboard() {
                     <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <>
-                      {/* Decorative shapes */}
                       <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
                       <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
                       <div className="absolute left-1/2 -top-8 w-32 h-32 rounded-full bg-white/5" />
                     </>
                   )}
-
-                  {/* Collection badge */}
-                  {collName && (
+                  {collNameVal && (
                     <div className="absolute top-3 left-3 px-2.5 py-1 bg-black/40 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white uppercase tracking-wider">
-                      {collName}
+                      {collNameVal}
                     </div>
                   )}
-
-                  {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                     <button
                       onClick={() => handleHostLive(quiz.id)}
@@ -685,78 +777,13 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Card Body */}
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1">
                       {quiz.title || 'Untitled Quiz'}
                     </h3>
-                    {/* More menu */}
-                    <div className="relative" ref={menuOpenId === quiz.id ? menuRef : undefined}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === quiz.id ? null : quiz.id); }}
-                        className="p-1 rounded-lg text-gray-300 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                      >
-                        <MoreHorizontal className="w-5 h-5" />
-                      </button>
-                        {menuOpenId === quiz.id && (
-                          <div className="absolute right-0 top-full mt-1 w-52 bg-surface-card rounded-xl shadow-lg border border-gray-200 dark:border-white/10 z-50 py-1.5 animate-fade-in">
-                            <button
-                              onClick={() => { navigate(`/quiz/${quiz.id}/preview`); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                            >
-                              <Eye className="w-4 h-4 text-gray-400 dark:text-white/40" /> Preview
-                            </button>
-                            <button
-                              onClick={() => { handleDuplicate(quiz); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                            >
-                              <Copy className="w-4 h-4 text-gray-400 dark:text-white/40" /> Duplicate
-                            </button>
-                            <button
-                              onClick={() => { navigate(`/quiz/${quiz.id}/flashcards`); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                            >
-                              <BookOpen className="w-4 h-4 text-gray-400 dark:text-white/40" /> Flashcards
-                            </button>
-                            <button
-                              onClick={() => { navigate(`/quiz/${quiz.id}/worksheet`); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                            >
-                              <Printer className="w-4 h-4 text-gray-400 dark:text-white/40" /> Worksheet
-                            </button>
-                            {collections.length > 0 && (
-                              <>
-                                <hr className="my-1.5 border-gray-200 dark:border-white/10" />
-                                <div className="px-4 py-2">
-                                  <p className="text-[10px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1.5">Move to</p>
-                                  <select
-                                    value={quiz.collectionId || ''}
-                                    onChange={(e) => { handleQuizCollectionChange(quiz.id, e.target.value); setMenuOpenId(null); }}
-                                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-white/80 bg-gray-50 dark:bg-slate-800 outline-none"
-                                  >
-                                    <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Uncategorized</option>
-                                    {collections.map((c) => (
-                                      <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
-                                    ))}
-                                  </select>
-                                </div>
-                              </>
-                            )}
-                            <hr className="my-1.5 border-gray-200 dark:border-white/10" />
-                            <button
-                              onClick={() => { handleDelete(quiz.id, quiz.title); setMenuOpenId(null); }}
-                              disabled={deleting === quiz.id}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-danger/10 transition-colors disabled:opacity-50"
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete
-                            </button>
-                          </div>
-                      )}
-                    </div>
+                    {renderMoreMenu(quiz)}
                   </div>
-
-                  {/* Metadata */}
                   <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-white/40 mb-5">
                     <span className="flex items-center gap-1">
                       <HelpCircle className="w-3.5 h-3.5" />
@@ -765,8 +792,6 @@ export default function Dashboard() {
                     <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                     <span>{formatDate(quiz.updatedAt)}</span>
                   </div>
-
-                  {/* Host button */}
                   <button
                     onClick={() => handleHostLive(quiz.id)}
                     className="btn-3d-cyan btn-3d-sm w-full text-sm mt-auto"
@@ -788,6 +813,94 @@ export default function Dashboard() {
             </div>
             <span className="font-bold text-gray-400 dark:text-white/40 group-hover/create:text-brand transition-colors">New Quiz</span>
           </button>
+        </div>
+      ) : viewMode === 'list' ? (
+        /* â"€â"€ List View â"€â"€ */
+        <div className="space-y-2 stagger-children">
+          {filtered.map((quiz) => {
+            const collNameVal = getCollectionName(quiz);
+            return (
+              <div
+                key={quiz.id}
+                className={`card-night card-night-hover flex items-center gap-4 p-4 animate-fade-in group ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
+              >
+                {/* Color indicator */}
+                <div className={`w-2 h-10 rounded-full ${getCardGradient(quiz)} shrink-0`} />
+                {/* Title + collection */}
+                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/quiz/${quiz.id}`)}>
+                  <h3 className="font-bold text-sm text-gray-900 dark:text-white truncate group-hover:text-brand transition-colors">
+                    {quiz.title || 'Untitled Quiz'}
+                  </h3>
+                  {collNameVal && <span className="text-[10px] text-gray-400 dark:text-white/40">{collNameVal}</span>}
+                </div>
+                {/* Question count */}
+                <div className="hidden sm:flex items-center gap-1 text-sm text-gray-400 dark:text-white/40 shrink-0">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  {quiz.questionCount ?? '?'} Qs
+                </div>
+                {/* Date */}
+                <span className="hidden md:block text-sm text-gray-400 dark:text-white/40 shrink-0 w-28 text-right">
+                  {formatDate(quiz.updatedAt)}
+                </span>
+                {/* Actions */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button onClick={() => handleHostLive(quiz.id)} className="btn-3d-cyan btn-3d-sm text-xs">
+                    Host
+                  </button>
+                  {renderMoreMenu(quiz)}
+                </div>
+              </div>
+            );
+          })}
+          {/* New Quiz row */}
+          <button
+            onClick={() => navigate('/quiz/new')}
+            className="w-full p-4 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all text-gray-400 dark:text-white/40 hover:text-brand font-bold text-sm"
+          >
+            <Plus className="w-4 h-4" /> New Quiz
+          </button>
+        </div>
+      ) : (
+        /* â"€â"€ Table View â"€â"€ */
+        <div className="card-night overflow-hidden">
+          {/* Header */}
+          <div className="grid grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-200 dark:border-white/10 text-[11px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider">
+            <span>Title</span>
+            <span className="text-center">Questions</span>
+            <span className="hidden md:block">Collection</span>
+            <span className="hidden sm:block">Updated</span>
+            <span className="text-right">Actions</span>
+          </div>
+          {/* Rows */}
+          {filtered.map((quiz) => {
+            const collNameVal = getCollectionName(quiz);
+            return (
+              <div
+                key={quiz.id}
+                className={`grid grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors items-center group cursor-pointer ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
+                onClick={() => navigate(`/quiz/${quiz.id}`)}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-2 h-2 rounded-full ${getCardGradient(quiz)} shrink-0`} />
+                  <span className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-brand transition-colors">
+                    {quiz.title || 'Untitled Quiz'}
+                  </span>
+                </div>
+                <span className="text-sm text-gray-400 dark:text-white/50 text-center">{quiz.questionCount ?? '?'}</span>
+                <span className="hidden md:block text-xs text-gray-400 dark:text-white/40 truncate">{collNameVal || '—'}</span>
+                <span className="hidden sm:block text-xs text-gray-400 dark:text-white/40">{formatDate(quiz.updatedAt)}</span>
+                <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={() => handleHostLive(quiz.id)} className="p-1.5 rounded-lg text-brand hover:bg-brand/10 transition-colors" title="Host Live">
+                    <Play className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => navigate(`/quiz/${quiz.id}`)} className="p-1.5 rounded-lg text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors" title="Edit">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  {renderMoreMenu(quiz)}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
