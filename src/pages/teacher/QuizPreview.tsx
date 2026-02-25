@@ -201,7 +201,7 @@ export default function QuizPreview() {
             <Eye className="w-14 h-14 mx-auto mb-4 text-gray-400 dark:text-white/40" />
             <h1 className="text-2xl font-bold mb-2">No questions to preview</h1>
             <p className="text-gray-500 dark:text-white/50 mb-6">Add some questions first, then come back to preview.</p>
-            <button onClick={() => navigate(`/quiz/${quizId}`)} className="px-6 py-3 bg-brand text-white font-semibold rounded-xl hover:bg-brand-dark transition-colors">
+            <button onClick={() => navigate(`/quiz/${quizId}`)} className="btn-3d-cyan">
               Go to Editor
             </button>
           </div>
@@ -245,7 +245,7 @@ export default function QuizPreview() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white text-sm transition-colors"
+          className="btn-3d-ghost btn-3d-sm flex items-center gap-1.5"
         >
           <ArrowLeft className="w-4 h-4" />
           Exit Preview
@@ -502,7 +502,7 @@ export default function QuizPreview() {
         {state === 'answering' && canSubmitPreview() && (
           <button
             onClick={handleSubmit}
-            className="mt-4 py-4 bg-white dark:bg-white text-surface-dark dark:text-surface-dark font-black text-lg rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-100 transition-all shadow-lg animate-slide-up"
+            className="btn-3d-cyan w-full mt-4 animate-slide-up"
           >
             Submit Answer
           </button>
@@ -573,7 +573,7 @@ export default function QuizPreview() {
           <button
             onClick={goPrev}
             disabled={currentIndex === 0}
-            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="btn-3d-ghost btn-3d-sm flex items-center gap-1 disabled:opacity-30 disabled:pointer-events-none"
           >
             <ChevronLeft className="w-4 h-4" />
             Previous
@@ -592,7 +592,7 @@ export default function QuizPreview() {
           <button
             onClick={goNext}
             disabled={currentIndex === questions.length - 1}
-            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="btn-3d-ghost btn-3d-sm flex items-center gap-1 disabled:opacity-30 disabled:pointer-events-none"
           >
             Next
             <ChevronRight className="w-4 h-4" />
