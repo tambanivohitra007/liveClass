@@ -228,10 +228,10 @@ export default function Worksheet() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-surface-dark">
         <div className="text-center">
-          <Printer className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No questions available for this quiz.</p>
+          <Printer className="w-12 h-12 text-gray-300 dark:text-white/30 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-white/50">No questions available for this quiz.</p>
           <button onClick={() => navigate(-1)} className="mt-4 text-brand underline">Go back</button>
         </div>
       </div>
@@ -239,13 +239,13 @@ export default function Worksheet() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 print:bg-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-surface-dark print:bg-white">
       {/* ── Toolbar (screen only) ── */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm print:hidden">
+      <div className="sticky top-0 z-10 bg-white dark:bg-white/5 border-b border-gray-200 dark:border-white/10 shadow-sm print:hidden">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm font-medium"
+            className="flex items-center gap-1.5 text-gray-500 dark:text-white/60 hover:text-gray-700 dark:hover:text-white text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
@@ -253,7 +253,7 @@ export default function Worksheet() {
 
           <div className="flex items-center gap-4 flex-wrap">
             {/* Shuffle answers toggle */}
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-white/70 cursor-pointer select-none">
               <span>Shuffle answers</span>
               <button
                 role="switch"
@@ -266,7 +266,7 @@ export default function Worksheet() {
             </label>
 
             {/* Shuffle questions toggle */}
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-white/70 cursor-pointer select-none">
               <span>Shuffle questions</span>
               <button
                 role="switch"
@@ -279,7 +279,7 @@ export default function Worksheet() {
             </label>
 
             {/* Answer key toggle */}
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-white/70 cursor-pointer select-none">
               <span>Answer keys</span>
               <button
                 role="switch"
@@ -292,10 +292,10 @@ export default function Worksheet() {
             </label>
 
             {/* Separator */}
-            <div className="h-6 w-px bg-gray-200" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-white/10" />
 
             {/* Font size */}
-            <div className="flex items-center gap-1 text-sm text-gray-500">
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/60">
               <span className="mr-1">Font size</span>
               {['S', 'M', 'L', 'XL'].map((size) => (
                 <button
@@ -303,8 +303,8 @@ export default function Worksheet() {
                   onClick={() => setFontSize(size)}
                   className={`w-8 h-8 rounded-full font-semibold text-xs transition-colors ${
                     fontSize === size
-                      ? 'bg-gray-800 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gray-800 dark:bg-white/20 text-white'
+                      : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/20'
                   }`}
                 >
                   {size}
@@ -313,7 +313,7 @@ export default function Worksheet() {
             </div>
 
             {/* Separator */}
-            <div className="h-6 w-px bg-gray-200" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-white/10" />
 
             {/* Print button */}
             <button
@@ -328,30 +328,30 @@ export default function Worksheet() {
       </div>
 
       {/* ── Worksheet Body ── */}
-      <div className={`worksheet-body max-w-3xl mx-auto bg-white print:max-w-none print:shadow-none shadow-sm my-6 print:my-0 px-12 py-10 ${FONT_CLASSES[fontSize]} text-gray-900`}>
+      <div className={`worksheet-body max-w-3xl mx-auto bg-white dark:bg-white/5 print:max-w-none print:shadow-none shadow-sm my-6 print:my-0 px-12 py-10 ${FONT_CLASSES[fontSize]} text-gray-900 dark:text-white`}>
         {/* Header */}
-        <div className="border-b-2 border-gray-800 pb-4 mb-8">
+        <div className="border-b-2 border-gray-800 dark:border-white/20 pb-4 mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Worksheets</p>
-              <h1 className="text-xl font-bold text-gray-900">{quiz?.title || 'Untitled Quiz'}</h1>
+              <p className="text-xs font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1">Worksheets</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{quiz?.title || 'Untitled Quiz'}</h1>
             </div>
             <div className="text-right space-y-2 shrink-0">
               <div className="flex items-center gap-2 justify-end">
-                <span className="text-sm text-gray-500">Name</span>
-                <span className="inline-block w-40 border-b border-gray-400" />
+                <span className="text-sm text-gray-500 dark:text-white/60">Name</span>
+                <span className="inline-block w-40 border-b border-gray-400 dark:border-white/30" />
               </div>
               <div className="flex items-center gap-2 justify-end">
-                <span className="text-sm text-gray-500">Class</span>
-                <span className="inline-block w-40 border-b border-gray-400" />
+                <span className="text-sm text-gray-500 dark:text-white/60">Class</span>
+                <span className="inline-block w-40 border-b border-gray-400 dark:border-white/30" />
               </div>
               <div className="flex items-center gap-2 justify-end">
-                <span className="text-sm text-gray-500">Date</span>
-                <span className="inline-block w-40 border-b border-gray-400" />
+                <span className="text-sm text-gray-500 dark:text-white/60">Date</span>
+                <span className="inline-block w-40 border-b border-gray-400 dark:border-white/30" />
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+          <div className="flex items-center gap-4 mt-3 text-xs text-gray-500 dark:text-white/60">
             <span>Total questions: {displayQuestions.length}</span>
             <span>Worksheet time: {estimatedTime}mins</span>
           </div>
@@ -361,13 +361,13 @@ export default function Worksheet() {
         {displayQuestions.map((q, index) => (
           <div key={q.id} className="mb-6 break-inside-avoid">
             <div className="flex gap-3 items-start">
-              <span className="font-bold text-gray-900 shrink-0 w-6 text-right">{index + 1}.</span>
+              <span className="font-bold text-gray-900 dark:text-white shrink-0 w-6 text-right">{index + 1}.</span>
               <div className="flex-1">
                 {q.type !== 'fill_blank' && (
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-gray-900 dark:text-white">
                     {q.text}
                     {(q.type === 'mcq' && q.correctAnswers.length > 1) && (
-                      <span className="text-gray-400 text-xs ml-2">(Choose {q.correctAnswers.length}.)</span>
+                      <span className="text-gray-400 dark:text-white/40 text-xs ml-2">(Choose {q.correctAnswers.length}.)</span>
                     )}
                   </p>
                 )}
@@ -382,13 +382,13 @@ export default function Worksheet() {
 
         {/* Answer Key section */}
         {showAnswerKey && (
-          <div className="mt-10 pt-6 border-t-2 border-gray-300 break-before-page">
+          <div className="mt-10 pt-6 border-t-2 border-gray-300 dark:border-white/20 break-before-page">
             <h2 className="font-bold text-base mb-4">Answer Key</h2>
             <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
               {displayQuestions.map((q, i) => (
                 <div key={q.id} className="flex gap-2">
-                  <span className="font-medium text-gray-500 w-6 text-right shrink-0">{i + 1}.</span>
-                  <span className="text-gray-800">{formatAnswer(q)}</span>
+                  <span className="font-medium text-gray-500 dark:text-white/60 w-6 text-right shrink-0">{i + 1}.</span>
+                  <span className="text-gray-800 dark:text-white/80">{formatAnswer(q)}</span>
                 </div>
               ))}
             </div>

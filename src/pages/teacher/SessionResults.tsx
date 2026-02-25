@@ -272,69 +272,69 @@ export default function SessionResults() {
         <div className="animate-pulse space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-24 bg-gray-200 rounded-xl" />
+              <div key={i} className="h-24 bg-gray-200 dark:bg-white/10 rounded-xl" />
             ))}
           </div>
-          <div className="h-12 w-full bg-gray-200 rounded-lg" />
-          <div className="h-96 bg-gray-100 rounded-xl" />
+          <div className="h-12 w-full bg-gray-200 dark:bg-white/10 rounded-lg" />
+          <div className="h-96 bg-gray-100 dark:bg-white/5 rounded-xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 bg-gradient-to-b from-[#E8EAF0] to-surface min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark min-h-screen text-gray-900 dark:text-white">
       <div className="mb-6">
         <BackButton to="/history" label="Back to History" />
       </div>
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
-          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <Target className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-1 text-sm text-gray-500 font-medium">
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
               Accuracy <HelpCircle className="w-3 h-3" />
             </div>
-            <div className="text-3xl font-bold text-gray-900">{Math.round(Number(avgAccuracy))}%</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{Math.round(Number(avgAccuracy))}%</div>
           </div>
         </div>
         
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
-          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-1 text-sm text-gray-500 font-medium">
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
               Completion Rate <HelpCircle className="w-3 h-3" />
             </div>
-            <div className="text-3xl font-bold text-gray-900">{completionRate}%</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{completionRate}%</div>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
-          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <Users className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-1 text-sm text-gray-500 font-medium">
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
               Total Students
             </div>
-            <div className="text-3xl font-bold text-gray-900">{playerCount}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{playerCount}</div>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
-          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+        <div className="bg-white dark:bg-white/5 p-5 rounded-xl border border-gray-200 dark:border-white/10 shadow-[3px_3px_0px_0px_rgba(212,86,107,0.15)] flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
              <HelpCircle className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-1 text-sm text-gray-500 font-medium">
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
               Questions
             </div>
-            <div className="text-3xl font-bold text-gray-900">{analytics.length}</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.length}</div>
           </div>
         </div>
       </div>
@@ -343,28 +343,28 @@ export default function SessionResults() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
         <button 
             onClick={() => navigate(`/quiz/${quizId || ''}`)}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors text-sm"
+            className="px-4 py-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-white/70 font-medium rounded-lg transition-colors text-sm"
         >
           View quiz
         </button>
         
         <div className="flex items-center gap-2">
-          <div className="flex bg-white rounded-lg border border-gray-200 p-1">
-             <button onClick={() => addToast('info', 'Delete feature coming soon')} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md" title="Delete">
+          <div className="flex bg-white dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-1">
+             <button onClick={() => addToast('info', 'Delete feature coming soon')} className="p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Delete">
                <Trash2 className="w-4 h-4" />
              </button>
-             <button onClick={() => window.print()} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md" title="Print">
+             <button onClick={() => window.print()} className="p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Print">
                <Printer className="w-4 h-4" />
              </button>
-             <button onClick={handleExportCsv} disabled={exporting} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download CSV">
+             <button onClick={handleExportCsv} disabled={exporting} className="p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download CSV">
                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
              </button>
-              <button onClick={handleExportExcel} disabled={exportingExcel} className="p-2 text-gray-600 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download Excel">
+              <button onClick={handleExportExcel} disabled={exportingExcel} className="p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download Excel">
                {exportingExcel ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
              </button>
           </div>
           
-          <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 flex items-center gap-2 text-sm shadow-sm">
+          <button className="px-4 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/70 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-2 text-sm shadow-sm">
             <Mail className="w-4 h-4" />
             Email all parents
           </button>
@@ -377,7 +377,7 @@ export default function SessionResults() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-t-xl border-b border-gray-200 px-6">
+      <div className="bg-white dark:bg-white/5 rounded-t-xl border-b border-gray-200 dark:border-white/10 px-6">
         <div className="flex gap-8 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
@@ -385,8 +385,8 @@ export default function SessionResults() {
               onClick={() => setActiveTab(tab.id)}
               className={`py-4 text-sm font-semibold whitespace-nowrap flex items-center gap-2 border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
+                  : 'border-transparent text-gray-500 dark:text-white/60 hover:text-gray-700 dark:hover:text-white'
               }`}
             >
               {tab.label}
@@ -402,28 +402,28 @@ export default function SessionResults() {
       </div>
 
       {/* Content Area */}
-      <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 min-h-[500px] p-6">
+      <div className="bg-white dark:bg-white/5 rounded-b-xl border border-t-0 border-gray-200 dark:border-white/10 min-h-[500px] p-6">
         
         {/* Controls Row (Sort/Search) */}
         {(activeTab === 'overview' || activeTab === 'participants') && (
            <div className="flex justify-end mb-6">
              <div className="flex items-center gap-2">
-               <span className="text-sm text-gray-500">Sort by:</span>
+               <span className="text-sm text-gray-500 dark:text-white/50">Sort by:</span>
                <div className="relative">
                  <select
                    value={sortBy}
                    onChange={(e) => setSortBy(e.target.value as 'accuracy' | 'name' | 'score')}
-                   className="appearance-none bg-white border border-gray-200 text-gray-700 py-1.5 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
+                   className="appearance-none bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white/70 py-1.5 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
                  >
                    <option value="accuracy">Accuracy</option>
                    <option value="name">Name</option>
                    <option value="score">Score</option>
                  </select>
-                 <ArrowUpDown className="w-3 h-3 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                 <ArrowUpDown className="w-3 h-3 text-gray-400 dark:text-white/40 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                </div>
                <button
                  onClick={() => setSortAsc(prev => !prev)}
-                 className={`p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${sortAsc ? 'text-brand bg-brand/5' : 'text-gray-500'}`}
+                 className={`p-1.5 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors ${sortAsc ? 'text-brand bg-brand/5' : 'text-gray-500 dark:text-white/60'}`}
                  title={sortAsc ? 'Ascending' : 'Descending'}
                >
                  <ArrowUpDown className="w-4 h-4" />
