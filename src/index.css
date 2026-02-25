@@ -27,10 +27,10 @@
   --color-answer-purple: #8B5CF6;
   --color-answer-orange: #F97316;
 
-  /* Surfaces — deep purple night theme */
-  --color-surface: #1A0E3E;
-  --color-surface-dark: #0F0825;
-  --color-surface-card: #241650;
+  /* Surfaces — dark navy night theme */
+  --color-surface: #0F1729;
+  --color-surface-dark: #080F1E;
+  --color-surface-card: #162033;
 
   /* Radius */
   --radius-pill: 1000px;
@@ -92,16 +92,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #0F0825;
+    background: #080F1E;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2D1B69;
+    background: #2A3548;
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #3D2B79;
+    background: #384658;
   }
 }
 

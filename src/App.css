@@ -145,9 +145,9 @@
   animation: toast-exit 0.3s ease-in forwards;
 }
 
-/* Shimmer skeleton — dark purple */
+/* Shimmer skeleton — dark navy */
 .animate-shimmer {
-  background: linear-gradient(90deg, #1A0E3E 25%, #2D1B69 50%, #1A0E3E 75%);
+  background: linear-gradient(90deg, #0F1729 25%, #1E2D42 50%, #0F1729 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -250,7 +250,7 @@
 .btn-3d-gold {
   border-radius: 1000px;
   background: #F4CF5D;
-  color: #1A0E3E;
+  color: #080F1E;
   font-weight: 800;
   font-family: 'Rammetto One', sans-serif;
   border: none;
@@ -385,7 +385,7 @@
 /* ─── Night Card ─── */
 
 .card-night {
-  background: #241650;
+  background: #162033;
   border-radius: 1.25rem;
   border: 1px solid rgba(255,255,255,0.08);
   box-shadow:
@@ -406,7 +406,7 @@
 
 /* Night surface — vignette depth */
 .night-surface {
-  background: #241650;
+  background: #162033;
   box-shadow:
     inset 0 0 60px rgba(0,0,0,0.4),
     0 4px 12px rgba(0,0,0,0.3);

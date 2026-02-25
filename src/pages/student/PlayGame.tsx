@@ -31,9 +31,9 @@ function getYouTubeId(url: string): string | null {
 const GAME_BG: React.CSSProperties = {
   background: `
     radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%),
-    linear-gradient(160deg, #0F0825 0%, #1A0E3E 40%, #0F0825 100%)
+    linear-gradient(160deg, #080F1E 0%, #0F1729 40%, #080F1E 100%)
   `,
 };
 

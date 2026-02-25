@@ -12,7 +12,6 @@ import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, Skip
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import CodeBlock from '../../components/CodeBlock';
-import FloatingLobby from '../../components/FloatingLobby';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
 
@@ -30,9 +29,9 @@ const AVATAR_COLORS = [
 const MESH_BG: React.CSSProperties = {
   background: `
     radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%),
-    linear-gradient(160deg, #0F0825 0%, #1A0E3E 40%, #0F0825 100%)
+    linear-gradient(160deg, #080F1E 0%, #0F1729 40%, #080F1E 100%)
   `,
 };
 
@@ -733,7 +732,31 @@ export default function HostSession() {
                     })}
                   </div>
                 ) : (
-                  <FloatingLobby players={players} avatarColors={AVATAR_COLORS} />
+                  <div ref={lobbyGridRef} className="flex-1 min-h-0 overflow-y-auto pr-1">
+                    {players.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 sm:gap-2.5 content-start">
+                        {players.map((p, i) => {
+                          const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+                          return (
+                            <div
+                              key={p.id}
+                              title={p.nickname}
+                              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full ${color.bg} border ${color.border} flex items-center justify-center shrink-0 animate-fade-in cursor-default hover:scale-110 transition-transform`}
+                            >
+                              {p.avatar ? <span className="text-2xl sm:text-3xl leading-none">{p.avatar}</span> : <span className={`text-sm sm:text-base font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-3 py-8 opacity-50">
+                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
+                          <span className="text-white/30 text-lg">+</span>
+                        </div>
+                        <span className="text-white/30 italic text-sm">Waiting for players...</span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
