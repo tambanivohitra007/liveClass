@@ -97,7 +97,7 @@ export default function Discover() {
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-5 py-2 bg-white dark:bg-white/10 text-brand rounded-full text-sm font-bold border-2 border-gray-800 dark:border-white/20 shadow-[3px_3px_0px_0px_var(--retro-brand)] mb-5">
+          <div className="inline-flex items-center gap-2 px-5 py-2 bg-white dark:bg-white/10 text-brand rounded-full text-sm font-bold border-2 border-gray-800 dark:border-white/20 shadow-sm mb-5">
             <Globe className="w-4 h-4" />
             Public Library
           </div>
@@ -113,20 +113,20 @@ export default function Discover() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search public quizzes..."
-            className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-2 border-gray-800 dark:border-white/20 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-800 dark:text-white bg-white dark:bg-white/5 font-medium shadow-[3px_3px_0px_0px_var(--retro-muted)] focus:shadow-[3px_3px_0px_0px_var(--retro-brand)]"
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 dark:border-white/10 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all text-gray-800 dark:text-white bg-white dark:bg-white/5 font-medium"
           />
         </div>
 
         {/* Content */}
         {error ? (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-gray-800 dark:border-white/20 bg-danger/10 shadow-[3px_3px_0px_0px_var(--retro-danger)] mb-5">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-danger/20 bg-danger/10 shadow-sm mb-5">
               <Globe className="w-7 h-7 text-danger" />
             </div>
             <p className="text-gray-500 dark:text-white/50 mb-4 font-medium">Something went wrong loading quizzes.</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2.5 text-sm font-bold text-brand border-2 border-gray-800 dark:border-white/20 rounded-xl shadow-[2px_2px_0px_0px_var(--retro-brand)] hover:shadow-[4px_4px_0px_0px_var(--retro-brand)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 bg-white dark:bg-white/10"
+              className="btn-3d-cyan btn-3d-sm"
             >
               Try again
             </button>
@@ -144,7 +144,7 @@ export default function Discover() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-gray-800 dark:border-white/20 bg-gray-50 dark:bg-white/10 shadow-[3px_3px_0px_0px_var(--retro-muted)] mb-5">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/10 shadow-sm mb-5">
               <Globe className="w-7 h-7 text-gray-400 dark:text-white/40" />
             </div>
             <p className="text-gray-500 dark:text-white/50 font-medium">
@@ -156,7 +156,7 @@ export default function Discover() {
             {filtered.map((quiz) => (
               <div
                 key={quiz.id}
-                className="group bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 shadow-[4px_4px_0px_0px_var(--retro-brand)] hover:shadow-[6px_6px_0px_0px_var(--retro-brand)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-300 animate-fade-in overflow-hidden flex flex-col"
+                className="group card-night card-night-hover animate-fade-in overflow-hidden flex flex-col"
               >
                 {/* Color accent bar */}
                 <div className="h-1.5" />
@@ -176,7 +176,7 @@ export default function Discover() {
                   <button
                     onClick={() => handleClone(quiz)}
                     disabled={cloning === quiz.id}
-                    className="w-full py-2.5 text-sm font-bold text-brand bg-brand/5 hover:bg-brand hover:text-white rounded-xl border-2 border-gray-800 dark:border-white/20 shadow-[2px_2px_0px_0px_var(--retro-brand)] hover:shadow-[3px_3px_0px_0px_var(--retro-brand)] hover:-translate-x-px hover:-translate-y-px transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="btn-3d-cyan btn-3d-sm w-full flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Copy className="w-3.5 h-3.5" />
                     {cloning === quiz.id ? 'Cloning...' : 'Clone to My Library'}
