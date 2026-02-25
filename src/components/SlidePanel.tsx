@@ -64,24 +64,24 @@ export default function SlidePanel({ open, onClose, title, subtitle, icon, child
 
       {/* Panel */}
       <div
-        className={`relative w-full ${width} bg-white shadow-2xl flex flex-col ${
+        className={`relative w-full ${width} bg-white dark:bg-surface-card shadow-2xl flex flex-col ${
           exiting ? 'animate-slide-out-right' : 'animate-slide-in-right'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-3 min-w-0">
             {icon && <div className="text-brand flex-shrink-0">{icon}</div>}
             <div className="min-w-0">
-              <h2 className="font-bold text-lg text-gray-900 truncate">{title}</h2>
-              {subtitle && <p className="text-sm text-gray-500 truncate">{subtitle}</p>}
+              <h2 className="font-bold text-lg text-gray-900 dark:text-white truncate">{title}</h2>
+              {subtitle && <p className="text-sm text-gray-500 dark:text-white/50 truncate">{subtitle}</p>}
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-gray-500 dark:text-white/50" />
           </button>
         </div>
 
