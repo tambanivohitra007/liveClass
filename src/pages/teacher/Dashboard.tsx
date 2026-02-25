@@ -733,11 +733,11 @@ export default function Dashboard() {
                                   <select
                                     value={quiz.collectionId || ''}
                                     onChange={(e) => { handleQuizCollectionChange(quiz.id, e.target.value); setMenuOpenId(null); }}
-                                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white/70 bg-gray-50 dark:bg-white/5 outline-none"
+                                    className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-white/80 bg-gray-50 dark:bg-slate-800 outline-none"
                                   >
-                                    <option value="">Uncategorized</option>
+                                    <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Uncategorized</option>
                                     {collections.map((c) => (
-                                      <option key={c.id} value={c.id}>{c.name}</option>
+                                      <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
                                     ))}
                                   </select>
                                 </div>
