@@ -330,7 +330,7 @@ export default function Worksheet() {
       {/* ── Worksheet Body ── */}
       <div className={`worksheet-body max-w-3xl mx-auto bg-white dark:bg-white/5 print:max-w-none print:shadow-none shadow-sm my-6 print:my-0 px-12 py-10 ${FONT_CLASSES[fontSize]} text-gray-900 dark:text-white`}>
         {/* Header */}
-        <div className="border-b-2 border-gray-800 dark:border-white/20 pb-4 mb-8">
+        <div className="border-b-2 border-gray-200 dark:border-white/20 pb-4 mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-bold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1">Worksheets</p>

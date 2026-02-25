@@ -242,7 +242,7 @@ export default function AiGenerateModal({
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="e.g. Photosynthesis, World War II, Python basics"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                   autoFocus
                 />
               </div>
@@ -253,7 +253,7 @@ export default function AiGenerateModal({
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Optional: grade level, specific focus, learning objectives..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
                 />
               </div>
             </>
@@ -314,7 +314,7 @@ export default function AiGenerateModal({
                   onChange={(e) => setAdditionalContext(e.target.value)}
                   placeholder="Optional: focus on chapter 3, target grade 10..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
                 />
               </div>
             </>
@@ -329,7 +329,7 @@ export default function AiGenerateModal({
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com/article"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
                   autoFocus
                 />
               </div>
@@ -340,7 +340,7 @@ export default function AiGenerateModal({
                   onChange={(e) => setUrlContext(e.target.value)}
                   placeholder="Optional: focus on specific section, target difficulty..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900 resize-none"
                 />
               </div>
             </>
@@ -353,7 +353,7 @@ export default function AiGenerateModal({
               <select
                 value={count}
                 onChange={(e) => setCount(parseInt(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
               >
                 {[3, 5, 7, 10].map((n) => (
                   <option key={n} value={n}>{n} questions</option>
@@ -365,7 +365,7 @@ export default function AiGenerateModal({
               <select
                 value={questionType}
                 onChange={(e) => setQuestionType(e.target.value as QuestionType | 'mixed')}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
               >
                 <option value="mixed">Mixed (Variety)</option>
                 <option value="mcq">Multiple Choice</option>
@@ -383,7 +383,7 @@ export default function AiGenerateModal({
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-800 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none text-gray-900"
             >
               <option value="mixed">Mixed</option>
               <option value="easy">Easy</option>

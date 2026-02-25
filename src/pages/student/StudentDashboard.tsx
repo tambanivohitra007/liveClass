@@ -132,7 +132,7 @@ export default function StudentDashboard() {
           ].map((s) => (
             <div
               key={s.label}
-              className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-800 dark:border-white/20 p-5 animate-fade-in"
+              className="bg-white dark:bg-white/5 rounded-2xl border-2 border-gray-200 dark:border-white/20 p-5 animate-fade-in"
               style={{ boxShadow: `3px 3px 0px 0px ${s.shadow}` }}
             >
               <div className="flex items-center gap-2 mb-3">
@@ -161,7 +161,7 @@ export default function StudentDashboard() {
                     className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50/50 dark:hover:bg-white/10 transition-colors text-left"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="shrink-0 w-10 h-10 bg-brand/10 rounded-xl border-2 border-gray-800 dark:border-white/20 flex items-center justify-center">
+                      <div className="shrink-0 w-10 h-10 bg-brand/10 rounded-xl border-2 border-gray-200 dark:border-white/20 flex items-center justify-center">
                         <Gamepad2 className="w-5 h-5 text-brand" />
                       </div>
                       <div className="min-w-0">

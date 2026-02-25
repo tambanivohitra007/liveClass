@@ -97,7 +97,7 @@ export default function Discover() {
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-5 py-2 bg-white dark:bg-white/10 text-brand rounded-full text-sm font-bold border-2 border-gray-800 dark:border-white/20 shadow-sm mb-5">
+          <div className="inline-flex items-center gap-2 px-5 py-2 bg-white dark:bg-white/10 text-brand rounded-full text-sm font-bold border-2 border-gray-200 dark:border-white/20 shadow-sm mb-5">
             <Globe className="w-4 h-4" />
             Public Library
           </div>

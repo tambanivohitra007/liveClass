@@ -858,7 +858,7 @@ export default function QuizEditor() {
                       </div>
                       <div className="flex bg-gray-900 dark:bg-gray-900">
                         {/* Line numbers */}
-                        <div className="select-none text-right pr-3 pl-3 py-3 text-xs font-mono text-gray-600 dark:text-gray-600 leading-relaxed border-r border-gray-800 dark:border-gray-800" aria-hidden="true">
+                        <div className="select-none text-right pr-3 pl-3 py-3 text-xs font-mono text-gray-600 dark:text-gray-600 leading-relaxed border-r border-gray-200 dark:border-gray-200" aria-hidden="true">
                           {(activeQ.codeSnippet || '\n').split('\n').map((_, i) => (
                             <div key={i}>{i + 1}</div>
                           ))}
@@ -995,7 +995,7 @@ export default function QuizEditor() {
                     <button
                       key={c.key}
                       onClick={() => setSelectedColor(selectedColor === c.key ? '' : c.key)}
-                      className={`w-7 h-7 rounded-full ${c.bg} border-2 border-gray-800 transition-all ${
+                      className={`w-7 h-7 rounded-full ${c.bg} border-2 border-gray-200 transition-all ${
                         selectedColor === c.key ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'
                       }`}
                       title={c.label}
