@@ -191,24 +191,24 @@
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
-    0 4px 0 0 #0080B8,
-    0 6px 12px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.25);
+    0 5px 0 0 #0080B8,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.3);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .btn-3d-cyan:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
   box-shadow:
-    0 6px 0 0 #0080B8,
-    0 8px 16px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.3);
+    0 7px 0 0 #0080B8,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.35);
 }
 .btn-3d-cyan:active {
   transform: translateY(2px);
   box-shadow:
-    0 1px 0 0 #0080B8,
-    0 2px 4px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.15);
+    0 2px 0 0 #0080B8,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.18);
 }
 .btn-3d-cyan:disabled {
   opacity: 0.5;
@@ -226,24 +226,24 @@
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
-    0 4px 0 0 #5A1886,
-    0 6px 12px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.2);
+    0 5px 0 0 #5A1886,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.25);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .btn-3d-purple:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
   box-shadow:
-    0 6px 0 0 #5A1886,
-    0 8px 16px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.25);
+    0 7px 0 0 #5A1886,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .btn-3d-purple:active {
   transform: translateY(2px);
   box-shadow:
-    0 1px 0 0 #5A1886,
-    0 2px 4px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    0 2px 0 0 #5A1886,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.14);
 }
 .btn-3d-purple:disabled {
   opacity: 0.5;
@@ -261,24 +261,24 @@
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
-    0 4px 0 0 #D4A530,
-    0 6px 12px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.4);
+    0 5px 0 0 #D4A530,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.45);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .btn-3d-gold:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
   box-shadow:
-    0 6px 0 0 #D4A530,
-    0 8px 16px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.5);
+    0 7px 0 0 #D4A530,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.55);
 }
 .btn-3d-gold:active {
   transform: translateY(2px);
   box-shadow:
-    0 1px 0 0 #D4A530,
-    0 2px 4px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.3);
+    0 2px 0 0 #D4A530,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.32);
 }
 .btn-3d-gold:disabled {
   opacity: 0.5;
@@ -295,22 +295,24 @@
   padding: 12px 28px;
   cursor: pointer;
   box-shadow:
-    0 2px 0 0 rgba(0,0,0,0.06),
-    inset 0 1px 0 rgba(255,255,255,0.8);
+    0 3px 0 0 rgba(71, 85, 105, 0.22),
+    0 3px 0 2px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255,255,255,0.85);
   transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
 }
 .btn-3d-ghost:hover {
   background: #E2E8F0;
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
   box-shadow:
-    0 4px 0 0 rgba(0,0,0,0.06),
-    0 4px 12px rgba(0,0,0,0.08),
+    0 5px 0 0 rgba(71, 85, 105, 0.24),
+    0 5px 0 2px rgba(15, 23, 42, 0.14),
     inset 0 1px 0 rgba(255,255,255,0.8);
 }
 .btn-3d-ghost:active {
   transform: translateY(1px);
   box-shadow:
-    0 0 0 0 rgba(0,0,0,0.06),
+    0 1px 0 0 rgba(71, 85, 105, 0.18),
+    0 1px 0 2px rgba(15, 23, 42, 0.1),
     inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .dark .btn-3d-ghost {
@@ -318,19 +320,21 @@
   color: white;
   border-color: rgba(255,255,255,0.15);
   box-shadow:
-    0 2px 0 0 rgba(0,0,0,0.2),
+    0 3px 0 0 rgba(255,255,255,0.1),
+    0 3px 0 2px rgba(0,0,0,0.25),
     inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .dark .btn-3d-ghost:hover {
   background: rgba(255,255,255,0.12);
   box-shadow:
-    0 4px 0 0 rgba(0,0,0,0.2),
-    0 4px 12px rgba(0,0,0,0.2),
+    0 5px 0 0 rgba(255,255,255,0.12),
+    0 5px 0 2px rgba(0,0,0,0.28),
     inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .dark .btn-3d-ghost:active {
   box-shadow:
-    0 0 0 0 rgba(0,0,0,0.2),
+    0 1px 0 0 rgba(255,255,255,0.08),
+    0 1px 0 2px rgba(0,0,0,0.24),
     inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
@@ -344,24 +348,24 @@
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
-    0 4px 0 0 #B91C1C,
-    0 6px 12px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.2);
+    0 5px 0 0 #B91C1C,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.24);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .btn-3d-danger:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
   box-shadow:
-    0 6px 0 0 #B91C1C,
-    0 8px 16px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.25);
+    0 7px 0 0 #B91C1C,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .btn-3d-danger:active {
   transform: translateY(2px);
   box-shadow:
-    0 1px 0 0 #B91C1C,
-    0 2px 4px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    0 2px 0 0 #B91C1C,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.14);
 }
 
 .btn-3d-success {
@@ -374,24 +378,24 @@
   padding: 14px 32px;
   cursor: pointer;
   box-shadow:
-    0 4px 0 0 #15803D,
-    0 6px 12px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.2);
+    0 5px 0 0 #15803D,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.24);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .btn-3d-success:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
   box-shadow:
-    0 6px 0 0 #15803D,
-    0 8px 16px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.25);
+    0 7px 0 0 #15803D,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .btn-3d-success:active {
   transform: translateY(2px);
   box-shadow:
-    0 1px 0 0 #15803D,
-    0 2px 4px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    0 2px 0 0 #15803D,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.14);
 }
 
 /* Small button size variant */
