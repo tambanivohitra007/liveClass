@@ -843,7 +843,7 @@ export default function HostSession() {
                           className="px-2 py-0.5 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none"
                         >
                           {[2, 3, 4, 5, 6].map((n) => (
-                            <option key={n} value={n} className="bg-gray-800 dark:bg-gray-800">{n}</option>
+                            <option key={n} value={n} className="bg-gray-800 dark:bg-gray-800 text-white">{n}</option>
                           ))}
                         </select>
                       )}
@@ -891,7 +891,7 @@ export default function HostSession() {
                               { length: allQuestions.length - 1 },
                               (_, i) => i + 1
                             ).map((n) => (
-                              <option key={n} value={n} className="bg-gray-800 dark:bg-gray-800">
+                              <option key={n} value={n} className="bg-gray-800 dark:bg-gray-800 text-white">
                                 {n} of {allQuestions.length}
                               </option>
                             ))}
@@ -929,7 +929,7 @@ export default function HostSession() {
                       className="px-2 py-1 bg-white/10 text-white text-xs rounded-lg border border-white/20 outline-none max-w-30"
                     >
                       {Object.entries(MUSIC_TRACKS).map(([key, track]) => (
-                        <option key={key} value={key} className="bg-gray-800 dark:bg-gray-800">{track.label}</option>
+                        <option key={key} value={key} className="bg-gray-800 dark:bg-gray-800 text-white">{track.label}</option>
                       ))}
                     </select>
                   </div>

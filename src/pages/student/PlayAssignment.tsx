@@ -316,9 +316,9 @@ export default function PlayAssignment() {
                   onChange={(e) => setMatchingPairs({ ...matchingPairs, [left]: e.target.value })}
                   className="flex-1 px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 outline-none focus:border-brand"
                 >
-                  <option value="" className="bg-gray-800 dark:bg-gray-800">Select...</option>
+                  <option value="" className="bg-gray-800 dark:bg-gray-800 text-white">Select...</option>
                   {shuffledMatchOptions.map((right) => (
-                    <option key={right} value={right} className="bg-gray-800 dark:bg-gray-800">{right}</option>
+                    <option key={right} value={right} className="bg-gray-800 dark:bg-gray-800 text-white">{right}</option>
                   ))}
                 </select>
               </div>
