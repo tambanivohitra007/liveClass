@@ -368,7 +368,7 @@ export default function RubricEditor() {
       <header className="h-14 flex items-center justify-between px-4 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 shrink-0 relative z-10">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(-1)}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/60 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
