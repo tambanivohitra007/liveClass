@@ -6,6 +6,9 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import WaveBackground from '../components/ui/WaveBackground';
+import boy1 from '../assets/optimized/boy_1.jpg';
+import boy2 from '../assets/optimized/boy_2.jpg';
+import boy3 from '../assets/optimized/boy_3.jpg';
 
 const ShaderBackground = lazy(() => import('../components/ui/ShaderBackground'));
 
@@ -38,6 +41,12 @@ export default function Home() {
         <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
           <ShaderBackground />
         </Suspense>
+
+        <img
+          src={boy2}
+          alt="Student learning"
+          className="hidden xl:block absolute right-8 bottom-24 w-36 h-36 rounded-3xl object-cover border-2 border-white/25 shadow-2xl opacity-80"
+        />
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left - Join Game Card */}
@@ -108,6 +117,18 @@ export default function Home() {
               Host live quizzes that spark engagement. Track understanding in real-time.
               Works on any device.
             </p>
+
+            <div className="flex items-center gap-3">
+              {[boy1, boy2, boy3].map((photo, index) => (
+                <img
+                  key={photo}
+                  src={photo}
+                  alt={`Student ${index + 1}`}
+                  className={`w-14 h-14 rounded-2xl object-cover border-2 border-white/30 shadow-lg ${index === 1 ? '-mt-2' : ''}`}
+                />
+              ))}
+              <p className="text-xs font-semibold text-gray-500 dark:text-white/60">Loved by curious learners</p>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button

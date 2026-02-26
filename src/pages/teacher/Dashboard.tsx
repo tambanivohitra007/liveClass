@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Quiz, Collection } from '../../types/models';
+import boy1 from '../../assets/optimized/boy_1.jpg';
 
 interface QuizWithMeta extends Quiz {
   questionCount?: number;
@@ -263,11 +264,18 @@ export default function Dashboard() {
     <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl text-gray-900 dark:text-white">
-            Welcome back, {user?.displayName?.split(' ')[0] || 'Teacher'}
-          </h1>
-          <p className="text-gray-400 dark:text-white/40 mt-1 text-sm">Create, manage, and host your quizzes</p>
+        <div className="flex items-center gap-3">
+          <img
+            src={boy1}
+            alt="Teacher profile"
+            className="w-14 h-14 rounded-2xl object-cover border border-gray-200 dark:border-white/20 shadow-lg"
+          />
+          <div>
+            <h1 className="text-2xl text-gray-900 dark:text-white">
+              Welcome back, {user?.displayName?.split(' ')[0] || 'Teacher'}
+            </h1>
+            <p className="text-gray-400 dark:text-white/40 mt-1 text-sm">Create, manage, and host your quizzes</p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-3">
           <button

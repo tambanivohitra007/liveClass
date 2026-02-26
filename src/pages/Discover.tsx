@@ -6,6 +6,8 @@ import { useToastStore } from '../stores/toastStore';
 import { Search, Copy, HelpCircle, Globe } from 'lucide-react';
 import WaveBackground from '../components/ui/WaveBackground';
 import type { Quiz } from '../types/models';
+import boy3 from '../assets/optimized/boy_3.jpg';
+import boy4 from '../assets/optimized/boy_4.jpg';
 
 interface PublicQuiz extends Quiz {
   questionCount: number;
@@ -103,6 +105,18 @@ export default function Discover() {
           </div>
           <h1 className="text-4xl font-black text-gray-900 dark:text-white">Discover Quizzes</h1>
           <p className="text-gray-500 dark:text-white/50 mt-2 font-medium">Browse and clone public quizzes created by the community</p>
+          <div className="mt-5 flex items-center justify-center gap-4">
+            {[boy3, boy4].map((photo, index) => (
+              <div key={photo} className="card-night px-3 py-2 flex items-center gap-3">
+                <img
+                  src={photo}
+                  alt={`Learner showcase ${index + 1}`}
+                  className="w-11 h-11 rounded-xl object-cover border border-gray-200 dark:border-white/20"
+                />
+                <span className="text-xs font-semibold text-gray-500 dark:text-white/60">Community favorite</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Search */}

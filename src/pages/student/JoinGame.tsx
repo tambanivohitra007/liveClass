@@ -6,6 +6,7 @@ import { db, functions } from '../../lib/firebase';
 import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, ShieldCheck, User, RefreshCw, Dices } from 'lucide-react';
 import WaveBackground from '../../components/ui/WaveBackground';
 import { AVATARS } from '../../lib/avatars';
+import boy5 from '../../assets/optimized/boy_5.jpg';
 
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
@@ -230,6 +231,11 @@ export default function JoinGame() {
       <div className="relative z-10 w-full max-w-md animate-bounce-in">
         {/* Header */}
         <div className="text-center mb-8">
+          <img
+            src={boy5}
+            alt="Player avatar"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-xl mx-auto mb-4"
+          />
           <h1 className="text-5xl text-gray-900 dark:text-white tracking-tight">Join Game</h1>
           <p className="text-gray-500 dark:text-white/50 mt-2 text-sm font-medium">Enter the PIN your host shared</p>
         </div>

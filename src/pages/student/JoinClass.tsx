@@ -4,6 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import BackButton from '../../components/BackButton';
+import boy4 from '../../assets/optimized/boy_4.jpg';
 
 export default function JoinClass() {
   const [code, setCode] = useState('');
@@ -53,6 +54,13 @@ export default function JoinClass() {
       <div className="w-full max-w-sm animate-bounce-in">
         <div className="mb-4">
           <BackButton to="/student/classes" label="Back to My Classes" />
+        </div>
+        <div className="flex justify-center mb-5">
+          <img
+            src={boy4}
+            alt="Student avatar"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-xl"
+          />
         </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-gray-900 dark:text-white">Join Class</h1>
