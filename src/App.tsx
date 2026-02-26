@@ -14,6 +14,7 @@ import { useSidebarStore } from './stores/sidebarStore';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastContainer from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import KnowledgeBaseFab from './components/KnowledgeBaseFab';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -209,6 +210,7 @@ function AppContent() {
           </div>
         )}
         {!hideNavbar && <BottomTabBar />}
+        {!hideNavbar && firebaseUser && <KnowledgeBaseFab />}
       </div>
     </div>
   );
