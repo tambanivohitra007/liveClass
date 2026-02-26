@@ -9,7 +9,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Copy, Save,
-  ToggleLeft, ToggleRight, ChevronDown,
+  ToggleLeft, ToggleRight, ChevronDown, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import WaveBackground from '../../components/ui/WaveBackground';
 import type { Rubric, Criterion, CriterionType, CriterionLevel } from '../../types/models';
@@ -53,6 +53,12 @@ export default function RubricEditor() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [mobilePanel, setMobilePanel] = useState<'list' | 'editor'>('list');
+
+  const selectCriterion = (index: number) => {
+    setSelectedIndex(index);
+    setMobilePanel('editor');
+  };
 
   // Drag-drop
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -139,6 +145,7 @@ export default function RubricEditor() {
     const newC = emptyCriterion(criteria.length);
     setCriteria([...criteria, newC]);
     setSelectedIndex(criteria.length);
+    setMobilePanel('editor');
   };
 
   const updateCriterion = (index: number, updates: Partial<Criterion>) => {
@@ -334,23 +341,23 @@ export default function RubricEditor() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-surface text-white relative">
+    <div className="h-screen flex flex-col overflow-hidden bg-white dark:bg-surface text-gray-900 dark:text-white relative">
       <WaveBackground variant="dark" />
 
       {/* ── Top Bar ── */}
-      <header className="h-14 flex items-center justify-between px-4 bg-white/5 border-b border-white/10 shrink-0 relative z-10">
+      <header className="h-14 flex items-center justify-between px-4 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 shrink-0 relative z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/dashboard')}
-            className="p-2 rounded-lg hover:bg-white/10 text-white/60 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/60 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-white truncate max-w-48 md:max-w-96">
+            <span className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-48 md:max-w-96">
               {name || 'Untitled Rubric'}
             </span>
-            <span className="text-[10px] text-white/40">
+            <span className="text-[10px] text-gray-400 dark:text-white/40">
               Total: {totalMaxScore} pts | {criteria.length} criteri{criteria.length === 1 ? 'on' : 'a'}
             </span>
           </div>
@@ -359,15 +366,15 @@ export default function RubricEditor() {
           {/* Template toggle */}
           <button
             onClick={() => setIsTemplate(!isTemplate)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors hover:bg-white/10"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-white/10"
             title={isTemplate ? 'Template: ON' : 'Template: OFF'}
           >
             {isTemplate ? (
               <ToggleRight className="w-5 h-5 text-brand" />
             ) : (
-              <ToggleLeft className="w-5 h-5 text-white/40" />
+              <ToggleLeft className="w-5 h-5 text-gray-300 dark:text-white/40" />
             )}
-            <span className={isTemplate ? 'text-brand' : 'text-white/40'}>Template</span>
+            <span className={`hidden sm:inline ${isTemplate ? 'text-brand' : 'text-gray-400 dark:text-white/40'}`}>Template</span>
           </button>
 
           {/* Clone */}
@@ -412,29 +419,29 @@ export default function RubricEditor() {
       {/* ── Main Content ── */}
       <div className="flex flex-1 overflow-hidden relative z-10">
         {/* ── Left Panel: Criteria List ── */}
-        <aside className="w-80 bg-white/5 border-r border-white/10 flex flex-col shrink-0 overflow-hidden">
+        <aside className={`${mobilePanel === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-80 bg-gray-50 dark:bg-white/5 md:border-r border-gray-200 dark:border-white/10 flex-col shrink-0 overflow-hidden`}>
           {/* Rubric name + description */}
-          <div className="p-4 border-b border-white/10 space-y-2">
+          <div className="p-4 border-b border-gray-200 dark:border-white/10 space-y-2">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Rubric name"
-              className="w-full px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 text-sm font-medium outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 text-sm font-medium outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description (optional)"
               rows={2}
-              className="w-full px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 resize-none"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 resize-none"
             />
           </div>
 
           {/* Add Criterion Button */}
-          <div className="p-3 border-b border-white/10">
+          <div className="p-3 border-b border-gray-200 dark:border-white/10">
             <button
               onClick={addCriterion}
-              className="w-full py-2.5 border-2 border-dashed border-white/20 rounded-xl text-white/40 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl text-gray-400 dark:text-white/40 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
               Add Criterion
@@ -450,37 +457,38 @@ export default function RubricEditor() {
                 onDragStart={() => setDragIndex(i)}
                 onDragOver={(e) => { e.preventDefault(); setDragOverIndex(i); }}
                 onDragEnd={handleDragEnd}
-                onClick={() => setSelectedIndex(i)}
+                onClick={() => selectCriterion(i)}
                 className={`group relative flex items-start gap-2 p-2.5 rounded-xl cursor-pointer transition-all ${
                   selectedIndex === i
                     ? 'bg-brand/20 border border-brand'
-                    : 'hover:bg-white/10 border border-transparent'
+                    : 'hover:bg-gray-100 dark:hover:bg-white/10 border border-transparent'
                 } ${dragOverIndex === i && dragIndex !== i ? 'ring-2 ring-brand' : ''} ${
                   dragIndex === i ? 'opacity-40' : ''
                 }`}
               >
-                <GripVertical className="w-3.5 h-3.5 text-white/30 shrink-0 mt-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" />
+                <GripVertical className="w-3.5 h-3.5 text-gray-300 dark:text-white/30 shrink-0 mt-0.5 cursor-grab active:cursor-grabbing md:opacity-0 md:group-hover:opacity-100 transition-opacity" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`text-xs font-bold ${selectedIndex === i ? 'text-brand' : 'text-white/40'}`}>
+                    <span className={`text-xs font-bold ${selectedIndex === i ? 'text-brand' : 'text-gray-400 dark:text-white/40'}`}>
                       {i + 1}
                     </span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                      selectedIndex === i ? 'bg-brand/20 text-brand' : 'bg-white/10 text-white/60'
+                      selectedIndex === i ? 'bg-brand/20 text-brand' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60'
                     }`}>
                       {typeLabels[c.type]}
                     </span>
                   </div>
-                  <p className="text-xs text-white/70 truncate leading-tight">
+                  <p className="text-xs text-gray-600 dark:text-white/70 truncate leading-tight">
                     {c.name || 'Untitled criterion'}
                   </p>
-                  <span className="text-[10px] text-white/40">
+                  <span className="text-[10px] text-gray-400 dark:text-white/40">
                     {c.maxScore} pts {c.weight !== 1 ? `x${c.weight}` : ''}
                   </span>
                 </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 dark:text-white/20 shrink-0 self-center md:hidden" />
                 <button
                   onClick={(e) => { e.stopPropagation(); removeCriterion(i); }}
-                  className="absolute top-1.5 right-1.5 p-1 rounded-lg bg-white/10 text-white/40 hover:bg-danger/10 hover:text-danger opacity-0 group-hover:opacity-100 transition-all"
+                  className="absolute top-1.5 right-1.5 p-1 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-white/40 hover:bg-danger/10 hover:text-danger md:opacity-0 md:group-hover:opacity-100 transition-all"
                   title="Remove criterion"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -491,29 +499,57 @@ export default function RubricEditor() {
         </aside>
 
         {/* ── Main Panel: Criterion Editor ── */}
-        <main className="flex-1 overflow-y-auto">
+        <main className={`${mobilePanel === 'editor' ? 'flex' : 'hidden'} md:flex flex-1 flex-col overflow-y-auto`}>
           {selectedCriterion ? (
-            <div className="max-w-2xl mx-auto px-6 py-6 space-y-5">
-              <h2 className="text-lg font-bold text-white">
+            <div className="max-w-2xl mx-auto px-4 md:px-6 py-6 space-y-5 w-full">
+              {/* Mobile criterion nav bar */}
+              <div className="flex items-center justify-between md:hidden">
+                <button
+                  onClick={() => setMobilePanel('list')}
+                  className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                  Criterion {selectedIndex + 1} <span className="text-gray-400 dark:text-white/40 font-normal text-sm">/ {criteria.length}</span>
+                </h2>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => selectCriterion(selectedIndex - 1)}
+                    disabled={selectedIndex === 0}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors disabled:opacity-30"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => selectCriterion(selectedIndex + 1)}
+                    disabled={selectedIndex >= criteria.length - 1}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors disabled:opacity-30"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white hidden md:block">
                 Criterion {selectedIndex + 1}
               </h2>
 
               {/* Name */}
               <div>
-                <label className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5 block">
+                <label className="text-xs font-semibold text-gray-500 dark:text-white/50 uppercase tracking-wide mb-1.5 block">
                   Name
                 </label>
                 <input
                   value={selectedCriterion.name}
                   onChange={(e) => updateCriterion(selectedIndex, { name: e.target.value })}
                   placeholder="e.g. Code Quality, Presentation, Accuracy"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />
               </div>
 
               {/* Type Selector */}
               <div>
-                <label className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5 block">
+                <label className="text-xs font-semibold text-gray-500 dark:text-white/50 uppercase tracking-wide mb-1.5 block">
                   Type
                 </label>
                 <div className="flex gap-2">
@@ -543,7 +579,7 @@ export default function RubricEditor() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         selectedCriterion.type === t
                           ? 'bg-brand text-white shadow-lg shadow-brand/30'
-                          : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+                          : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60 hover:bg-gray-200 dark:hover:bg-white/20 hover:text-gray-700 dark:hover:text-white'
                       }`}
                     >
                       {typeLabels[t]}
@@ -554,7 +590,7 @@ export default function RubricEditor() {
 
               {/* Max Score */}
               <div>
-                <label className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5 block">
+                <label className="text-xs font-semibold text-gray-500 dark:text-white/50 uppercase tracking-wide mb-1.5 block">
                   Max Score
                 </label>
                 <input
@@ -563,16 +599,16 @@ export default function RubricEditor() {
                   value={selectedCriterion.maxScore}
                   onChange={(e) => updateCriterion(selectedIndex, { maxScore: Math.max(0, Number(e.target.value)) })}
                   disabled={selectedCriterion.type === 'level'}
-                  className="w-32 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-32 px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
                 {selectedCriterion.type === 'level' && (
-                  <p className="text-[10px] text-white/40 mt-1">Auto-calculated from highest level score.</p>
+                  <p className="text-[10px] text-gray-400 dark:text-white/40 mt-1">Auto-calculated from highest level score.</p>
                 )}
               </div>
 
               {/* Weight */}
               <div>
-                <label className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5 block">
+                <label className="text-xs font-semibold text-gray-500 dark:text-white/50 uppercase tracking-wide mb-1.5 block">
                   Weight
                 </label>
                 <input
@@ -581,9 +617,9 @@ export default function RubricEditor() {
                   step={0.5}
                   value={selectedCriterion.weight}
                   onChange={(e) => updateCriterion(selectedIndex, { weight: Math.max(0, Number(e.target.value)) })}
-                  className="w-32 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  className="w-32 px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />
-                <p className="text-[10px] text-white/40 mt-1">
+                <p className="text-[10px] text-gray-400 dark:text-white/40 mt-1">
                   Weighted score: {selectedCriterion.maxScore} x {selectedCriterion.weight} = {selectedCriterion.maxScore * selectedCriterion.weight} pts
                 </p>
               </div>
@@ -592,7 +628,7 @@ export default function RubricEditor() {
               {selectedCriterion.type === 'level' && (
                 <div className="card-night p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-white/50 uppercase tracking-wide flex items-center gap-1.5">
+                    <label className="text-xs font-semibold text-gray-500 dark:text-white/50 uppercase tracking-wide flex items-center gap-1.5">
                       <ChevronDown className="w-3.5 h-3.5" />
                       Levels
                     </label>
@@ -606,7 +642,7 @@ export default function RubricEditor() {
                   </div>
 
                   {(selectedCriterion.levels || []).length === 0 && (
-                    <p className="text-xs text-white/40 text-center py-4">
+                    <p className="text-xs text-gray-400 dark:text-white/40 text-center py-4">
                       No levels defined. Add levels to define scoring tiers.
                     </p>
                   )}
@@ -618,19 +654,19 @@ export default function RubricEditor() {
                           value={level.label}
                           onChange={(e) => updateLevel(selectedIndex, li, { label: e.target.value })}
                           placeholder="Level label"
-                          className="flex-1 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                         />
                         <input
                           type="number"
                           min={0}
                           value={level.score}
                           onChange={(e) => updateLevel(selectedIndex, li, { score: Math.max(0, Number(e.target.value)) })}
-                          className="w-20 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-white text-sm text-center outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                          className="w-20 px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white text-sm text-center outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                           placeholder="Score"
                         />
                         <button
                           onClick={() => removeLevel(selectedIndex, li)}
-                          className="p-1.5 rounded-lg hover:bg-danger/10 text-white/40 hover:text-danger transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-danger/10 text-gray-400 dark:text-white/40 hover:text-danger transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -643,18 +679,42 @@ export default function RubricEditor() {
               {/* Checkbox info */}
               {selectedCriterion.type === 'checkbox' && (
                 <div className="p-4 bg-brand/5 border border-brand/20 rounded-xl">
-                  <p className="text-sm text-white/60">
+                  <p className="text-sm text-gray-500 dark:text-white/60">
                     Checkbox criteria are binary: checked (1 point) or unchecked (0 points).
                   </p>
                 </div>
               )}
+
+              {/* Mobile action buttons */}
+              <div className="flex gap-2 pt-2 md:hidden">
+                <button
+                  onClick={() => removeCriterion(selectedIndex)}
+                  className="btn-3d-danger btn-3d-sm flex items-center gap-1.5 text-xs"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
+                </button>
+                <button
+                  onClick={addCriterion}
+                  className="btn-3d-ghost btn-3d-sm flex items-center gap-1.5 text-xs ml-auto"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add
+                </button>
+              </div>
             </div>
           ) : (
             /* Empty State */
-            <div className="flex-1 flex items-center justify-center h-full">
+            <div className="flex-1 flex flex-col items-center justify-center h-full px-4">
+              <button
+                onClick={() => setMobilePanel('list')}
+                className="self-start mb-4 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors md:hidden"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-white/40 mb-1">No criterion selected</h3>
-                <p className="text-sm text-white/40 mb-4">Select a criterion from the left panel or add a new one</p>
+                <h3 className="text-lg font-semibold text-gray-400 dark:text-white/40 mb-1">No criterion selected</h3>
+                <p className="text-sm text-gray-400 dark:text-white/40 mb-4">Select a criterion from the left panel or add a new one</p>
                 <button onClick={addCriterion} className="btn-3d-cyan btn-3d-sm">
                   <Plus className="w-4 h-4 inline mr-1.5" />
                   Add Criterion
