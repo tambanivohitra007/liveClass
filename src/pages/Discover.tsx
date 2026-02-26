@@ -6,8 +6,8 @@ import { useToastStore } from '../stores/toastStore';
 import { Search, Copy, HelpCircle, Globe } from 'lucide-react';
 import WaveBackground from '../components/ui/WaveBackground';
 import type { Quiz } from '../types/models';
-import boy3 from '../assets/optimized/boy_3.jpg';
-import boy4 from '../assets/optimized/boy_4.jpg';
+import boy3 from '../assets/optimized/boy_3.png';
+import boy4 from '../assets/optimized/boy_4.png';
 
 interface PublicQuiz extends Quiz {
   questionCount: number;
@@ -111,7 +111,7 @@ export default function Discover() {
                 <img
                   src={photo}
                   alt={`Learner showcase ${index + 1}`}
-                  className="w-11 h-11 rounded-xl object-cover border border-gray-200 dark:border-white/20"
+                  className="w-11 h-11 rounded-xl object-cover border border-gray-200 dark:border-white/20 opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen"
                 />
                 <span className="text-xs font-semibold text-gray-500 dark:text-white/60">Community favorite</span>
               </div>

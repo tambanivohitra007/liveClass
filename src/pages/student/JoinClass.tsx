@@ -4,7 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import BackButton from '../../components/BackButton';
-import boy4 from '../../assets/optimized/boy_4.jpg';
+import boy4 from '../../assets/optimized/boy_4.png';
 
 export default function JoinClass() {
   const [code, setCode] = useState('');
@@ -59,7 +59,7 @@ export default function JoinClass() {
           <img
             src={boy4}
             alt="Student avatar"
-            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-xl"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-lg opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen"
           />
         </div>
         <div className="text-center mb-8">

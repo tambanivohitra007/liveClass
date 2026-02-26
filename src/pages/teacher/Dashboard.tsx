@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Quiz, Collection } from '../../types/models';
-import boy1 from '../../assets/optimized/boy_1.jpg';
+import boy1 from '../../assets/optimized/boy_1.png';
 
 interface QuizWithMeta extends Quiz {
   questionCount?: number;
@@ -268,7 +268,7 @@ export default function Dashboard() {
           <img
             src={boy1}
             alt="Teacher profile"
-            className="w-14 h-14 rounded-2xl object-cover border border-gray-200 dark:border-white/20 shadow-lg"
+            className="w-14 h-14 rounded-2xl object-cover border border-gray-200 dark:border-white/20 shadow-md opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen"
           />
           <div>
             <h1 className="text-2xl text-gray-900 dark:text-white">

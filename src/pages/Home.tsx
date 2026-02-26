@@ -6,9 +6,9 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import WaveBackground from '../components/ui/WaveBackground';
-import boy1 from '../assets/optimized/boy_1.jpg';
-import boy2 from '../assets/optimized/boy_2.jpg';
-import boy3 from '../assets/optimized/boy_3.jpg';
+import boy1 from '../assets/optimized/boy_1.png';
+import boy2 from '../assets/optimized/boy_2.png';
+import boy3 from '../assets/optimized/boy_3.png';
 
 const ShaderBackground = lazy(() => import('../components/ui/ShaderBackground'));
 
@@ -45,7 +45,7 @@ export default function Home() {
         <img
           src={boy2}
           alt="Student learning"
-          className="hidden xl:block absolute right-8 bottom-24 w-36 h-36 rounded-3xl object-cover border-2 border-white/25 shadow-2xl opacity-80"
+          className="hidden xl:block absolute right-8 bottom-24 w-36 h-36 rounded-3xl object-cover border-2 border-white/25 shadow-xl opacity-70 dark:opacity-55 mix-blend-multiply dark:mix-blend-screen"
         />
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -124,7 +124,7 @@ export default function Home() {
                   key={photo}
                   src={photo}
                   alt={`Student ${index + 1}`}
-                  className={`w-14 h-14 rounded-2xl object-cover border-2 border-white/30 shadow-lg ${index === 1 ? '-mt-2' : ''}`}
+                  className={`w-14 h-14 rounded-2xl object-cover border-2 border-white/30 shadow-md opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen ${index === 1 ? '-mt-2' : ''}`}
                 />
               ))}
               <p className="text-xs font-semibold text-gray-500 dark:text-white/60">Loved by curious learners</p>
