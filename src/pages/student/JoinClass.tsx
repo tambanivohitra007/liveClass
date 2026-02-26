@@ -63,7 +63,7 @@ export default function JoinClass() {
           />
         </div>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-gray-900 dark:text-white">Join Class</h1>
+          <h1 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">Join Class</h1>
           <p className="text-gray-500 dark:text-white/60 mt-2 text-sm">Enter the code from your teacher</p>
         </div>
 

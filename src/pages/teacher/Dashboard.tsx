@@ -268,7 +268,7 @@ export default function Dashboard() {
           <img
             src={boy1}
             alt="Teacher profile"
-            className="w-28 h-28 rounded-3xl object-contain object-center opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen"
+            className="w-20 h-20 sm:w-28 sm:h-28 rounded-3xl object-contain object-center opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen"
           />
           <div className="space-y-1">
             <h1 className="text-2xl text-gray-900 dark:text-white">

@@ -105,9 +105,9 @@ export default function Discover() {
           </div>
           <h1 className="text-4xl font-black text-gray-900 dark:text-white">Discover Quizzes</h1>
           <p className="text-gray-500 dark:text-white/50 mt-2 font-medium">Browse and clone public quizzes created by the community</p>
-          <div className="mt-5 flex items-center justify-center gap-4">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             {[boy3, boy4].map((photo, index) => (
-              <div key={photo} className="card-night px-3 py-2 flex items-center gap-3">
+              <div key={photo} className="card-night px-3 py-2 flex items-center gap-2 sm:gap-3">
                 <img
                   src={photo}
                   alt={`Learner showcase ${index + 1}`}
