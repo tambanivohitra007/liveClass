@@ -41,15 +41,17 @@ export default function Home() {
           <ShaderBackground />
         </Suspense>
 
-        <img
-          src={boy2}
-          alt="Student learning"
-          className="hidden md:block absolute -left-14 md:top-[48%] lg:top-[42%] -translate-y-1/2 w-[18rem] h-[18rem] lg:w-[28rem] lg:h-[28rem] xl:w-[32rem] xl:h-[32rem] object-contain pointer-events-none z-0"
-        />
-
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center lg:items-start">
           {/* Left - Join Game Card */}
-          <div className="card-night p-8 md:p-12 animate-fade-in">
+          <div className="relative animate-fade-in">
+            <div className="mx-auto w-64 h-32 sm:w-64 sm:h-32 md:w-64 md:h-32 lg:w-[24rem] lg:h-[12rem] xl:w-[30rem] xl:h-[15rem] overflow-hidden pointer-events-none z-0">
+              <img
+                src={boy2}
+                alt="Student learning"
+                className="w-64 h-64 sm:w-64 sm:h-64 md:w-64 md:h-64 lg:w-[24rem] lg:h-[24rem] xl:w-[30rem] xl:h-[30rem] object-contain"
+              />
+            </div>
+            <div className="relative z-10 card-night p-8 md:p-12">
             <div className="mb-8">
               <h2 className="text-3xl md:text-4xl text-gray-900 dark:text-white mb-2">Join a Game</h2>
               <p className="text-gray-500 dark:text-white/60">Enter the Game PIN provided by your host to start competing!</p>
@@ -97,10 +99,11 @@ export default function Home() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
 
           {/* Right - Hero Text */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 animate-slide-up">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 animate-slide-up lg:pt-[12rem] xl:pt-[15rem] lg:self-start">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur-sm border border-gray-300 dark:border-white/20 text-sm font-medium text-gray-900 dark:text-white">
               Free for educators — no credit card required
             </div>
