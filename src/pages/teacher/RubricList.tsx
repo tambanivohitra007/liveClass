@@ -318,11 +318,11 @@ export default function RubricList() {
           <div
             role="dialog"
             aria-modal="true"
-            className="card-night w-full max-w-2xl animate-bounce-in max-h-[90vh] overflow-y-auto"
+            className="card-night w-full max-w-2xl animate-bounce-in max-h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10">
+            {/* Header — pinned */}
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10 shrink-0">
               <div className="min-w-0 flex-1">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
                   {previewRubric.name || 'Untitled Rubric'}
@@ -354,8 +354,8 @@ export default function RubricList() {
               </button>
             </div>
 
-            {/* Criteria */}
-            <div className="p-6 space-y-4">
+            {/* Criteria — scrollable */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {previewLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="w-8 h-8 border-3 border-brand/30 border-t-brand rounded-full animate-spin" />
@@ -418,8 +418,8 @@ export default function RubricList() {
               )}
             </div>
 
-            {/* Footer */}
-            <div className="flex gap-2 p-6 pt-0">
+            {/* Footer — pinned */}
+            <div className="flex gap-2 p-6 border-t border-gray-200 dark:border-white/10 shrink-0">
               <button
                 onClick={() => {
                   navigate(`/rubric/${previewRubric.id}`);
