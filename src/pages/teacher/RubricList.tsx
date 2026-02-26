@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, doc, deleteDoc, addDoc, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc, addDoc, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
@@ -8,9 +8,9 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../../components/Skeleton';
 import WaveBackground from '../../components/ui/WaveBackground';
 import {
-  Search, Plus, Trash2, Pencil, Copy, FileText, Award, CheckCircle2,
+  Search, Plus, Trash2, Pencil, Copy, FileText, Award, CheckCircle2, X as XIcon,
 } from 'lucide-react';
-import type { Rubric } from '../../types/models';
+import type { Rubric, Criterion } from '../../types/models';
 
 function formatDate(ts: unknown): string {
   if (!ts) return '';
@@ -38,6 +38,26 @@ export default function RubricList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
   const [cloning, setCloning] = useState<string | null>(null);
+  const [previewRubric, setPreviewRubric] = useState<Rubric | null>(null);
+  const [previewCriteria, setPreviewCriteria] = useState<Criterion[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const handlePreview = async (rubric: Rubric) => {
+    setPreviewRubric(rubric);
+    setPreviewLoading(true);
+    try {
+      const criteriaSnap = await getDocs(
+        query(collection(db, 'rubrics', rubric.id, 'criteria'), orderBy('order'))
+      );
+      const data = criteriaSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as Criterion[];
+      setPreviewCriteria(data);
+    } catch {
+      addToast('error', 'Failed to load criteria');
+      setPreviewRubric(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   // Fetch rubrics with real-time updates
   useEffect(() => {
@@ -192,7 +212,8 @@ export default function RubricList() {
             {filtered.map((rubric) => (
               <div
                 key={rubric.id}
-                className="group relative card-night card-night-hover flex flex-col animate-fade-in"
+                className="group relative card-night card-night-hover flex flex-col animate-fade-in cursor-pointer"
+                onClick={() => handlePreview(rubric)}
               >
                 <div className="p-5 flex-1 flex flex-col">
                   {/* Title row */}
@@ -234,7 +255,7 @@ export default function RubricList() {
                   </p>
 
                   {/* Actions */}
-                  <div className="flex gap-2 mt-auto">
+                  <div className="flex gap-1.5 mt-auto" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => navigate(`/rubric/${rubric.id}`)}
                       className="btn-3d-emerald btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5"
@@ -245,7 +266,7 @@ export default function RubricList() {
                     <button
                       onClick={() => handleClone(rubric)}
                       disabled={cloning === rubric.id}
-                      className="btn-3d-ghost btn-3d-sm px-3 text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="btn-3d-ghost btn-3d-sm px-2.5 text-sm flex items-center justify-center disabled:opacity-50"
                       title="Clone rubric"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -253,7 +274,7 @@ export default function RubricList() {
                     <button
                       onClick={() => handleDelete(rubric)}
                       disabled={deleting === rubric.id}
-                      className="btn-3d-ghost btn-3d-sm px-3 text-sm flex items-center justify-center gap-1.5 text-danger hover:bg-danger/10 disabled:opacity-50"
+                      className="btn-3d-ghost btn-3d-sm px-2.5 text-sm flex items-center justify-center text-danger hover:bg-danger/10 disabled:opacity-50"
                       title="Delete rubric"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -287,6 +308,138 @@ export default function RubricList() {
           </div>
         )}
       </div>
+
+      {/* Preview Modal */}
+      {previewRubric && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewRubric(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="card-night w-full max-w-2xl animate-bounce-in max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-200 dark:border-white/10">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                  {previewRubric.name || 'Untitled Rubric'}
+                </h3>
+                {previewRubric.description && (
+                  <p className="text-sm text-gray-400 dark:text-white/40 mt-1">{previewRubric.description}</p>
+                )}
+                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-white/40 mt-2">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {previewRubric.criteriaCount} criteria
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Award className="w-3.5 h-3.5" />
+                    {previewRubric.totalMaxScore} pts total
+                  </span>
+                  {previewRubric.isTemplate && (
+                    <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent text-[10px] font-bold uppercase">
+                      Template
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewRubric(null)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 dark:text-white/40 transition-colors shrink-0 ml-4"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Criteria */}
+            <div className="p-6 space-y-4">
+              {previewLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-3 border-brand/30 border-t-brand rounded-full animate-spin" />
+                </div>
+              ) : previewCriteria.length === 0 ? (
+                <p className="text-sm text-gray-400 dark:text-white/40 text-center py-8">No criteria found.</p>
+              ) : (
+                previewCriteria.map((c, i) => (
+                  <div key={c.id} className="bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden">
+                    {/* Criterion header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-bold text-brand">{i + 1}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/60 font-medium capitalize">
+                          {c.type}
+                        </span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {c.name || 'Untitled'}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-400 dark:text-white/40 shrink-0 ml-2">
+                        {c.maxScore} pts {c.weight !== 1 ? `x${c.weight}` : ''}
+                      </span>
+                    </div>
+
+                    {/* Levels */}
+                    {c.type === 'level' && c.levels && c.levels.length > 0 && (
+                      <div className="divide-y divide-gray-100 dark:divide-white/5">
+                        {c.levels.map((level, li) => (
+                          <div key={li} className="flex items-start gap-3 px-4 py-2.5">
+                            <span className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                              li === 0 ? 'bg-success/15 text-success' :
+                              li === 1 ? 'bg-brand/15 text-brand' :
+                              li === 2 ? 'bg-warning/15 text-warning' :
+                              'bg-danger/15 text-danger'
+                            }`}>
+                              {level.score}
+                            </span>
+                            <span className="text-sm text-gray-600 dark:text-white/60 leading-snug">
+                              {level.label || 'No description'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {c.type === 'checkbox' && (
+                      <div className="px-4 py-2.5 text-xs text-gray-400 dark:text-white/40">
+                        Binary: checked (1 pt) or unchecked (0 pts)
+                      </div>
+                    )}
+
+                    {c.type === 'numeric' && (
+                      <div className="px-4 py-2.5 text-xs text-gray-400 dark:text-white/40">
+                        Score from 0 to {c.maxScore}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-2 p-6 pt-0">
+              <button
+                onClick={() => {
+                  navigate(`/rubric/${previewRubric.id}`);
+                  setPreviewRubric(null);
+                }}
+                className="btn-3d-emerald btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit Rubric
+              </button>
+              <button
+                onClick={() => setPreviewRubric(null)}
+                className="btn-3d-ghost btn-3d-sm px-5 text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
