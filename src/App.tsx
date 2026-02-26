@@ -7,6 +7,7 @@ import { useAuthStore } from './stores/authStore';
 import { ADMIN_EMAIL } from './lib/config';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import TopBar from './components/TopBar';
 import Footer from './components/Footer';
 import BottomTabBar from './components/BottomTabBar';
 import { useSidebarStore } from './stores/sidebarStore';
@@ -149,6 +150,7 @@ function AppContent() {
         showSidebar ? (collapsed ? 'md:ml-[68px]' : 'md:ml-64') : ''
       }`}>
         {!hideNavbar && <Navbar />}
+        {showSidebar && <TopBar />}
         <ToastContainer />
         <main className={`flex-1 pattern-dots ${!hideNavbar && firebaseUser ? 'pb-20 md:pb-0' : ''}`}>
         <Routes>

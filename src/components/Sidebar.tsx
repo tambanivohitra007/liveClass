@@ -1,11 +1,7 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useSidebarStore } from '../stores/sidebarStore';
-import { useThemeStore } from '../stores/themeStore';
 import { ADMIN_EMAIL } from '../lib/config';
-import NotificationBell from './NotificationBell';
 import logo from '../assets/logo.png';
 import {
   LayoutDashboard,
@@ -19,9 +15,6 @@ import {
   Compass,
   Gamepad2,
   Shield,
-  LogOut,
-  Sun,
-  Moon,
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react';
@@ -84,9 +77,7 @@ const adminItem: NavItem = { label: 'Admin', icon: Shield, path: '/admin', match
 export default function Sidebar() {
   const { firebaseUser, user } = useAuthStore();
   const { collapsed, toggleSidebar } = useSidebarStore();
-  const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
-  const navigate = useNavigate();
 
   if (!firebaseUser) return null;
 
@@ -97,15 +88,6 @@ export default function Sidebar() {
     if (item.exact) return location.pathname === item.path;
     if (item.matchPrefix) return location.pathname.startsWith(item.matchPrefix);
     return location.pathname === item.path;
-  };
-
-  const initials = user?.displayName
-    ? user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    navigate('/');
   };
 
   const renderNavItem = (item: NavItem) => {
@@ -217,81 +199,7 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom pinned area */}
-      <div className="border-t border-white/10 p-2 flex flex-col gap-1 shrink-0">
-        {/* Theme toggle */}
-        <div className="relative group">
-          <button
-            onClick={toggleTheme}
-            className={`flex items-center gap-3 text-white/50 hover:text-white hover:bg-white/5 transition-colors ${
-              collapsed
-                ? 'w-10 h-10 mx-auto rounded-xl justify-center'
-                : 'w-full px-3 py-2.5 rounded-xl'
-            }`}
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5 shrink-0" /> : <Moon className="w-5 h-5 shrink-0" />}
-            {!collapsed && <span className="text-sm font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
-          </button>
-          {collapsed && (
-            <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-surface-card text-white text-xs rounded-lg border border-white/10 shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </span>
-          )}
-        </div>
-
-        {/* Notification bell */}
-        <div className={`relative group ${collapsed ? 'flex justify-center' : 'px-1'}`}>
-          <NotificationBell position="right" />
-        </div>
-
-        {/* Profile row */}
-        <div className="relative group">
-          <button
-            onClick={() => navigate('/profile')}
-            className={`flex items-center gap-3 text-white/70 hover:bg-white/5 transition-colors ${
-              collapsed
-                ? 'w-10 h-10 mx-auto rounded-xl justify-center'
-                : 'w-full px-3 py-2.5 rounded-xl'
-            }`}
-          >
-            <div className="w-8 h-8 bg-gradient-to-br from-brand to-gold rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm shrink-0">
-              {initials}
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-medium text-white truncate">{user?.displayName || 'User'}</p>
-                {user?.role && (
-                  <span className="text-[10px] text-brand capitalize">{user.role}</span>
-                )}
-              </div>
-            )}
-          </button>
-          {collapsed && (
-            <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-surface-card text-white text-xs rounded-lg border border-white/10 shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-              {user?.displayName || 'Profile'}
-            </span>
-          )}
-        </div>
-
-        {/* Logout */}
-        <div className="relative group">
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-3 text-danger/70 hover:text-danger hover:bg-danger/10 transition-colors ${
-              collapsed
-                ? 'w-10 h-10 mx-auto rounded-xl justify-center'
-                : 'w-full px-3 py-2.5 rounded-xl'
-            }`}
-          >
-            <LogOut className="w-5 h-5 shrink-0" />
-            {!collapsed && <span className="text-sm font-medium">Log out</span>}
-          </button>
-          {collapsed && (
-            <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-surface-card text-white text-xs rounded-lg border border-white/10 shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-              Log out
-            </span>
-          )}
-        </div>
-
+      <div className="border-t border-white/10 p-2 shrink-0">
         {/* Collapse toggle */}
         <div className="relative group">
           <button

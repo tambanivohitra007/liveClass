@@ -18,7 +18,7 @@ export default function BackButton({ to, label = 'Back', onClick }: BackButtonPr
   return (
     <button
       onClick={handleClick}
-      className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+      className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors cursor-pointer"
     >
       <ArrowLeft className="w-4 h-4" /> {label}
     </button>

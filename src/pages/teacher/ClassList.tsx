@@ -20,14 +20,6 @@ const CARD_GRADIENTS: Record<string, string> = {
 };
 const DEFAULT_GRADIENT = 'bg-gradient-to-br from-[#94A3B8] to-[#64748B]';
 
-function daysUntil(ts: number): string {
-  const diff = ts - Date.now();
-  if (diff <= 0) return 'Expired';
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days === 1) return '1 day left';
-  return `${days} days left`;
-}
-
 export default function ClassList() {
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
