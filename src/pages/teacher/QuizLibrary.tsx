@@ -403,7 +403,7 @@ export default function QuizLibrary() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         <div className="h-8 w-48 bg-gray-100 dark:bg-white/10 rounded-lg animate-pulse" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -416,7 +416,7 @@ export default function QuizLibrary() {
     <div className="relative min-h-screen bg-surface">
       <WaveBackground variant="dark" position="bottom" />
       <div className="absolute inset-0 pattern-stars pointer-events-none" />
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>

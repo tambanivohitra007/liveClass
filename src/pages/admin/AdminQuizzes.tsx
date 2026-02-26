@@ -109,7 +109,7 @@ export default function AdminQuizzes() {
   return (
     <div>
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 px-4 py-3 text-center">
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
           <p className="text-xs text-gray-500 dark:text-white/50">Total Quizzes</p>

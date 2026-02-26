@@ -242,19 +242,19 @@ export default function QuizPreview() {
     <div className="dark">
       <div className="min-h-screen bg-surface-dark flex flex-col">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-gray-200 dark:border-white/10 gap-2">
         <button
           onClick={() => navigate(-1)}
           className="btn-3d-ghost btn-3d-sm flex items-center gap-1.5"
         >
           <ArrowLeft className="w-4 h-4" />
-          Exit Preview
+          <span className="hidden sm:inline">Exit Preview</span>
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Eye className="w-4 h-4 text-warning" />
-          <span className="text-warning text-sm font-medium">Preview Mode</span>
+          <span className="text-warning text-xs sm:text-sm font-medium">Preview</span>
         </div>
-        <span className="text-gray-400 dark:text-white/40 text-sm">
+        <span className="text-gray-400 dark:text-white/40 text-xs sm:text-sm tabular-nums">
           {currentIndex + 1} / {questions.length}
         </span>
       </div>
@@ -322,7 +322,7 @@ export default function QuizPreview() {
             {isMultiAnswer && state === 'answering' && (
               <p className="text-center text-gray-500 dark:text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
             )}
-            <div className="grid grid-cols-2 gap-3 flex-1 max-h-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 sm:max-h-100">
               {question.options.map((opt, i) => {
                 const correct = isCorrect(opt);
                 const selected = isMultiAnswer ? selectedAnswers.includes(opt) : selectedAnswer === opt;
@@ -578,12 +578,12 @@ export default function QuizPreview() {
             <ChevronLeft className="w-4 h-4" />
             Previous
           </button>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap justify-center max-w-[60%]">
             {questions.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentIndex(i)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                className={`w-2.5 h-2.5 rounded-full transition-all shrink-0 ${
                   i === currentIndex ? 'bg-brand scale-125' : 'bg-gray-200 dark:bg-white/20 hover:bg-gray-400 dark:hover:bg-white/40'
                 }`}
               />
