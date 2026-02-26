@@ -212,12 +212,14 @@ export default function Home() {
         <div className="absolute bottom-10 left-20 w-80 h-80 bg-brand/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-3xl mx-auto px-4 text-center">
-          <div className="relative overflow-hidden card-night px-8 py-14 md:px-16 md:py-16">
+          <div className="relative overflow-hidden card-night rounded-[2rem] border-2 border-gray-200 dark:border-white/15 px-8 py-14 md:px-16 md:py-16">
             <img
               src={boy1}
               alt="Student avatar"
               className="absolute -left-16 sm:-left-20 md:-left-24 top-0 sm:-top-2 w-64 h-64 sm:w-80 sm:h-80 md:w-[24rem] md:h-[24rem] object-contain opacity-35 dark:opacity-50 pointer-events-none z-0"
             />
+            <div className="absolute bottom-5 left-8 w-7 h-7 rounded-full bg-white dark:bg-slate-900 border-2 border-gray-200 dark:border-white/15" />
+            <div className="absolute bottom-1 left-3 w-4 h-4 rounded-full bg-white dark:bg-slate-900 border-2 border-gray-200 dark:border-white/15" />
             <div className="relative z-10 inline-block mb-6">
               <h2 className="text-3xl md:text-5xl text-gray-900 dark:text-white">
                 Ready to transform your classroom?
