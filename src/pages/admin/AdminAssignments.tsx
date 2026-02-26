@@ -3,10 +3,12 @@ import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/fire
 import { db } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete, confirmAction } from '../../lib/swal';
-import { Search, Trash2, Clock, ClipboardList, X } from 'lucide-react';
+import { Search, Trash2, Clock, ClipboardList, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, Quiz, Assignment, Classroom } from '../../types/models';
 
 type StatusFilter = 'all' | 'active' | 'upcoming' | 'expired';
+
+const PAGE_SIZE = 10;
 
 function deriveStatus(assignment: Assignment): 'active' | 'upcoming' | 'expired' {
   const now = Date.now();
@@ -25,6 +27,7 @@ export default function AdminAssignments() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [extendId, setExtendId] = useState<string | null>(null);
   const [extendDate, setExtendDate] = useState('');
+  const [page, setPage] = useState(1);
   const { addToast } = useToastStore();
 
   useEffect(() => {
@@ -86,6 +89,14 @@ export default function AdminAssignments() {
 
     return list.sort((a, b) => b.endAt - a.endAt);
   }, [assignments, statusFilter, searchQuery, quizMap, userMap]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleDelete = async (assignment: Assignment) => {
     const quiz = quizMap[assignment.quizId];
@@ -221,7 +232,7 @@ export default function AdminAssignments() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-white/10">
-                {filtered.map((assignment) => {
+                {paged.map((assignment) => {
                   const quiz = quizMap[assignment.quizId];
                   const owner = userMap[assignment.ownerId];
                   const classroom = assignment.classroomId ? classroomMap[assignment.classroomId] : null;
@@ -285,6 +296,44 @@ export default function AdminAssignments() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-white/10">
+              <span className="text-xs text-gray-400 dark:text-white/40">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                      p === page
+                        ? 'bg-brand text-white'
+                        : 'text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
