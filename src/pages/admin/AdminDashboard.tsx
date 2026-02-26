@@ -62,22 +62,22 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* Tabs — full-width segmented control */}
+      <div className="flex bg-gray-100 dark:bg-white/5 rounded-xl p-1 mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.key
-                ? 'bg-rose-500 text-white shadow-sm border-2 border-rose-400'
-                : 'bg-white dark:bg-white/5 text-gray-600 dark:text-white/70 border-2 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                ? 'bg-rose-500 text-white shadow-sm'
+                : 'text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             {tab.icon}
-            {tab.label}
-            <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-              activeTab === tab.key ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-xs ${
+              activeTab === tab.key ? 'bg-white/20' : 'bg-gray-200 dark:bg-white/10'
             }`}>
               {counts[tab.key]}
             </span>

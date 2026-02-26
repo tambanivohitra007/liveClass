@@ -7,6 +7,8 @@ import { Search, Trash2, ArrowRightLeft, ExternalLink, Eye, EyeOff, FileText, X,
 import { useNavigate } from 'react-router-dom';
 import type { Quiz, User } from '../../types/models';
 
+type VisibilityFilter = 'all' | 'public' | 'private';
+
 const PAGE_SIZE = 10;
 
 export default function AdminQuizzes() {
@@ -14,6 +16,7 @@ export default function AdminQuizzes() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('all');
   const [deleting, setDeleting] = useState<string | null>(null);
   const [transferQuizId, setTransferQuizId] = useState<string | null>(null);
   const [transferTargetId, setTransferTargetId] = useState('');
@@ -52,22 +55,31 @@ export default function AdminQuizzes() {
   );
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return quizzes;
-    const q = searchQuery.toLowerCase();
-    return quizzes.filter((quiz) => {
-      const owner = userMap[quiz.ownerId];
-      return (
-        quiz.title.toLowerCase().includes(q) ||
-        owner?.displayName.toLowerCase().includes(q) ||
-        owner?.email.toLowerCase().includes(q)
-      );
-    });
-  }, [quizzes, searchQuery, userMap]);
+    let list = quizzes;
 
-  // Reset page when search changes
+    if (visibilityFilter !== 'all') {
+      list = list.filter((q) => q.visibility === visibilityFilter);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((quiz) => {
+        const owner = userMap[quiz.ownerId];
+        return (
+          quiz.title.toLowerCase().includes(q) ||
+          owner?.displayName.toLowerCase().includes(q) ||
+          owner?.email.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    return list;
+  }, [quizzes, searchQuery, visibilityFilter, userMap]);
+
+  // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, visibilityFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -133,6 +145,34 @@ export default function AdminQuizzes() {
           <p className="text-2xl font-bold text-gray-400 dark:text-white/40">{stats.private}</p>
           <p className="text-xs text-gray-500 dark:text-white/50">Private</p>
         </div>
+      </div>
+
+      {/* Visibility Filter — segmented control */}
+      <div className="flex bg-gray-100 dark:bg-white/5 rounded-xl p-1 mb-4">
+        {([
+          { key: 'all' as VisibilityFilter, label: 'All', count: stats.total },
+          { key: 'public' as VisibilityFilter, label: 'Public', count: stats.public },
+          { key: 'private' as VisibilityFilter, label: 'Private', count: stats.private },
+        ]).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setVisibilityFilter(tab.key)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all ${
+              visibilityFilter === tab.key
+                ? 'bg-brand text-white shadow-sm'
+                : 'text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            {tab.key === 'public' && <Eye className="w-4 h-4" />}
+            {tab.key === 'private' && <EyeOff className="w-4 h-4" />}
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-xs ${
+              visibilityFilter === tab.key ? 'bg-white/20' : 'bg-gray-200 dark:bg-white/10'
+            }`}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* Search */}
