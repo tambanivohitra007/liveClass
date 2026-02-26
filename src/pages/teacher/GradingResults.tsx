@@ -249,7 +249,7 @@ export default function GradingResults() {
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="w-3.5 h-3.5 text-white/30" />;
+    if (sortField !== field) return <ArrowUpDown className="w-3.5 h-3.5 text-gray-300 dark:text-white/30" />;
     return sortAsc
       ? <ChevronUp className="w-3.5 h-3.5 text-brand" />
       : <ChevronDown className="w-3.5 h-3.5 text-brand" />;
@@ -264,7 +264,7 @@ export default function GradingResults() {
         <WaveBackground />
         <div className="pattern-stars absolute inset-0 pointer-events-none" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 space-y-6 animate-fade-in">
-          <div className="h-8 w-48 bg-white/10 rounded-lg animate-pulse" />
+          <div className="h-8 w-48 bg-gray-100 dark:bg-white/10 rounded-lg animate-pulse" />
           <SkeletonStats />
           <div className="card-night p-6">
             <SkeletonTable rows={6} />
@@ -281,7 +281,7 @@ export default function GradingResults() {
     : 'bg-brand/15 text-brand border-brand/20';
 
   return (
-    <div className="min-h-screen bg-surface relative text-white">
+    <div className="min-h-screen bg-surface relative text-gray-900 dark:text-white">
       <WaveBackground />
       <div className="pattern-stars absolute inset-0 pointer-events-none" />
 
@@ -291,9 +291,9 @@ export default function GradingResults() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/grading')}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              className="p-2 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-white/70" />
+              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-white/70" />
             </button>
             <div>
               <div className="flex items-center gap-3">
@@ -303,7 +303,7 @@ export default function GradingResults() {
                 </span>
               </div>
               {rubric && (
-                <p className="text-sm text-white/50 mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-white/50 mt-0.5">
                   Rubric: {rubric.name}
                 </p>
               )}
@@ -338,7 +338,7 @@ export default function GradingResults() {
               className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
                 activeTab === tab.id
                   ? 'bg-brand text-white'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80'
+                  : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-white/80'
               }`}
             >
               {tab.label}
@@ -352,24 +352,24 @@ export default function GradingResults() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="card-night p-5 flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center text-white/70">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
                   <Users className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-sm text-white/50 font-medium">Students Graded</div>
+                  <div className="text-sm text-gray-500 dark:text-white/50 font-medium">Students Graded</div>
                   <div className="text-3xl font-bold">
                     {gradingSession.gradedCount}
-                    <span className="text-lg text-white/40 font-normal ml-1">/ {gradingSession.studentCount}</span>
+                    <span className="text-lg text-gray-400 dark:text-white/40 font-normal ml-1">/ {gradingSession.studentCount}</span>
                   </div>
                 </div>
               </div>
 
               <div className="card-night p-5 flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center text-white/70">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
                   <BarChart3 className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-sm text-white/50 font-medium">Average Score</div>
+                  <div className="text-sm text-gray-500 dark:text-white/50 font-medium">Average Score</div>
                   <div className="text-3xl font-bold">
                     {gradingSession.avgScore != null ? Math.round(gradingSession.avgScore * 10) / 10 : '--'}
                   </div>
@@ -377,24 +377,24 @@ export default function GradingResults() {
               </div>
 
               <div className="card-night p-5 flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center text-white/70">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-sm text-white/50 font-medium">Average Percentage</div>
+                  <div className="text-sm text-gray-500 dark:text-white/50 font-medium">Average Percentage</div>
                   <div className="text-3xl font-bold">
                     {gradingSession.avgPercentage != null ? Math.round(gradingSession.avgPercentage) : '--'}
-                    <span className="text-lg text-white/40 font-normal">%</span>
+                    <span className="text-lg text-gray-400 dark:text-white/40 font-normal">%</span>
                   </div>
                 </div>
               </div>
 
               <div className="card-night p-5 flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center text-white/70">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
                   <Award className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-sm text-white/50 font-medium">Highest Score</div>
+                  <div className="text-sm text-gray-500 dark:text-white/50 font-medium">Highest Score</div>
                   <div className="text-3xl font-bold">{highestScore}</div>
                 </div>
               </div>
@@ -408,17 +408,17 @@ export default function GradingResults() {
               </h3>
 
               {evaluations.length === 0 ? (
-                <div className="text-center py-12 text-white/40">
+                <div className="text-center py-12 text-gray-400 dark:text-white/40">
                   No evaluations yet. Start grading to see the distribution.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {scoreDistribution.map((bucket) => (
                     <div key={bucket.label} className="flex items-center gap-4">
-                      <span className="text-sm text-white/60 w-20 text-right font-medium shrink-0">
+                      <span className="text-sm text-gray-500 dark:text-white/60 w-20 text-right font-medium shrink-0">
                         {bucket.label}
                       </span>
-                      <div className="flex-1 h-8 bg-white/5 rounded-lg overflow-hidden relative">
+                      <div className="flex-1 h-8 bg-gray-50 dark:bg-white/5 rounded-lg overflow-hidden relative">
                         <div
                           className={`h-full ${bucket.color} rounded-lg transition-all duration-500`}
                           style={{ width: `${(bucket.count / maxBucketCount) * 100}%` }}
@@ -438,7 +438,7 @@ export default function GradingResults() {
         {activeTab === 'students' && (
           <div className="animate-fade-in">
             {evaluations.length === 0 ? (
-              <div className="card-night p-12 text-center text-white/40">
+              <div className="card-night p-12 text-center text-gray-400 dark:text-white/40">
                 <ClipboardCheck className="w-10 h-10 mx-auto mb-3 opacity-40" />
                 <p className="text-lg font-medium">No evaluations yet</p>
                 <p className="text-sm mt-1">Start grading to see student results here.</p>
@@ -448,10 +448,10 @@ export default function GradingResults() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px]">
                     <thead>
-                      <tr className="border-b border-white/10">
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-white/50 w-12">#</th>
+                      <tr className="border-b border-gray-200 dark:border-white/10">
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500 dark:text-white/50 w-12">#</th>
                         <th
-                          className="text-left py-3 px-4 text-sm font-semibold text-white/50 cursor-pointer select-none"
+                          className="text-left py-3 px-4 text-sm font-semibold text-gray-500 dark:text-white/50 cursor-pointer select-none"
                           onClick={() => handleSort('name')}
                         >
                           <span className="flex items-center gap-1.5">
@@ -459,7 +459,7 @@ export default function GradingResults() {
                           </span>
                         </th>
                         <th
-                          className="text-left py-3 px-4 text-sm font-semibold text-white/50 cursor-pointer select-none"
+                          className="text-left py-3 px-4 text-sm font-semibold text-gray-500 dark:text-white/50 cursor-pointer select-none"
                           onClick={() => handleSort('studentNumber')}
                         >
                           <span className="flex items-center gap-1.5">
@@ -467,7 +467,7 @@ export default function GradingResults() {
                           </span>
                         </th>
                         <th
-                          className="text-center py-3 px-4 text-sm font-semibold text-white/50 cursor-pointer select-none"
+                          className="text-center py-3 px-4 text-sm font-semibold text-gray-500 dark:text-white/50 cursor-pointer select-none"
                           onClick={() => handleSort('totalScore')}
                         >
                           <span className="flex items-center justify-center gap-1.5">
@@ -475,14 +475,14 @@ export default function GradingResults() {
                           </span>
                         </th>
                         <th
-                          className="text-center py-3 px-4 text-sm font-semibold text-white/50 cursor-pointer select-none"
+                          className="text-center py-3 px-4 text-sm font-semibold text-gray-500 dark:text-white/50 cursor-pointer select-none"
                           onClick={() => handleSort('percentage')}
                         >
                           <span className="flex items-center justify-center gap-1.5">
                             Percentage <SortIcon field="percentage" />
                           </span>
                         </th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-white/50">Comment</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-500 dark:text-white/50">Comment</th>
                         <th className="w-10" />
                       </tr>
                     </thead>
@@ -492,17 +492,17 @@ export default function GradingResults() {
                         return (
                           <Fragment key={evaluation.id}>
                             <tr
-                              className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
+                              className="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
                               onClick={() => toggleExpand(evaluation.id)}
                             >
-                              <td className="py-3 px-4 text-sm text-white/40">{idx + 1}</td>
+                              <td className="py-3 px-4 text-sm text-gray-400 dark:text-white/40">{idx + 1}</td>
                               <td className="py-3 px-4 font-medium">{evaluation.studentName}</td>
-                              <td className="py-3 px-4 text-white/60 text-sm">
+                              <td className="py-3 px-4 text-gray-500 dark:text-white/60 text-sm">
                                 {evaluation.studentNumber || '--'}
                               </td>
                               <td className="py-3 px-4 text-center font-bold">
                                 {evaluation.totalScore}
-                                <span className="text-white/40 font-normal text-sm ml-1">
+                                <span className="text-gray-400 dark:text-white/40 font-normal text-sm ml-1">
                                   / {evaluation.maxPossibleScore}
                                 </span>
                               </td>
@@ -511,22 +511,22 @@ export default function GradingResults() {
                                   {Math.round(evaluation.percentage)}%
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-sm text-white/60 max-w-xs truncate">
+                              <td className="py-3 px-4 text-sm text-gray-500 dark:text-white/60 max-w-xs truncate">
                                 {evaluation.comment || '--'}
                               </td>
                               <td className="py-3 px-2">
                                 {isExpanded
-                                  ? <ChevronUp className="w-4 h-4 text-white/40" />
-                                  : <ChevronDown className="w-4 h-4 text-white/40" />}
+                                  ? <ChevronUp className="w-4 h-4 text-gray-400 dark:text-white/40" />
+                                  : <ChevronDown className="w-4 h-4 text-gray-400 dark:text-white/40" />}
                               </td>
                             </tr>
 
                             {/* Expanded Detail Row */}
                             {isExpanded && (
-                              <tr className="bg-white/[0.02]">
+                              <tr className="bg-gray-50/50 dark:bg-white/[0.02]">
                                 <td colSpan={7} className="px-4 py-4">
                                   <div className="pl-8 space-y-3">
-                                    <h4 className="text-sm font-semibold text-white/70 mb-2">
+                                    <h4 className="text-sm font-semibold text-gray-600 dark:text-white/70 mb-2">
                                       Per-Criterion Breakdown
                                     </h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -540,10 +540,10 @@ export default function GradingResults() {
                                         return (
                                           <div
                                             key={criterion.id}
-                                            className="bg-white/5 rounded-lg p-3 border border-white/5"
+                                            className="bg-gray-50 dark:bg-white/5 rounded-lg p-3 border border-gray-100 dark:border-white/5"
                                           >
                                             <div className="flex justify-between items-start mb-1">
-                                              <span className="text-sm font-medium text-white/80 truncate mr-2">
+                                              <span className="text-sm font-medium text-gray-700 dark:text-white/80 truncate mr-2">
                                                 {criterion.name}
                                               </span>
                                               <span className={`text-sm font-bold shrink-0 ${percentageColorClass(pct)}`}>
@@ -551,11 +551,11 @@ export default function GradingResults() {
                                               </span>
                                             </div>
                                             {evalScore?.levelLabel && (
-                                              <span className="text-xs text-white/40">
+                                              <span className="text-xs text-gray-400 dark:text-white/40">
                                                 {evalScore.levelLabel}
                                               </span>
                                             )}
-                                            <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                            <div className="mt-2 h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
                                               <div
                                                 className={`h-full rounded-full ${
                                                   pct >= 70 ? 'bg-success' : pct >= 40 ? 'bg-amber-500' : 'bg-danger'
@@ -568,11 +568,11 @@ export default function GradingResults() {
                                       })}
                                     </div>
                                     {evaluation.comment && (
-                                      <div className="mt-3 bg-white/5 rounded-lg p-3 border border-white/5">
-                                        <span className="text-xs font-semibold text-white/50 uppercase tracking-wide">
+                                      <div className="mt-3 bg-gray-50 dark:bg-white/5 rounded-lg p-3 border border-gray-100 dark:border-white/5">
+                                        <span className="text-xs font-semibold text-gray-500 dark:text-white/50 uppercase tracking-wide">
                                           Comment
                                         </span>
-                                        <p className="text-sm text-white/70 mt-1">{evaluation.comment}</p>
+                                        <p className="text-sm text-gray-600 dark:text-white/70 mt-1">{evaluation.comment}</p>
                                       </div>
                                     )}
                                   </div>
@@ -593,7 +593,7 @@ export default function GradingResults() {
         {activeTab === 'criteria' && (
           <div className="space-y-4 animate-fade-in">
             {criteria.length === 0 ? (
-              <div className="card-night p-12 text-center text-white/40">
+              <div className="card-night p-12 text-center text-gray-400 dark:text-white/40">
                 <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-40" />
                 <p className="text-lg font-medium">No criteria found</p>
               </div>
@@ -604,36 +604,36 @@ export default function GradingResults() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <div>
                       <h3 className="text-lg font-bold">{criterion.name}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-white/50">
+                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500 dark:text-white/50">
                         <span className="capitalize">Type: {criterion.type}</span>
-                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                         <span>Max: {criterion.maxScore}</span>
-                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                         <span>Weight: {criterion.weight}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-brand">{avg}</div>
-                        <div className="text-xs text-white/40">Avg</div>
+                        <div className="text-xs text-gray-400 dark:text-white/40">Avg</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-danger">{min}</div>
-                        <div className="text-xs text-white/40">Min</div>
+                        <div className="text-xs text-gray-400 dark:text-white/40">Min</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-success">{max}</div>
-                        <div className="text-xs text-white/40">Max</div>
+                        <div className="text-xs text-gray-400 dark:text-white/40">Max</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Quartile Distribution */}
                   <div className="space-y-2">
-                    <div className="text-xs font-semibold text-white/40 uppercase tracking-wide">
+                    <div className="text-xs font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wide">
                       Score Distribution
                     </div>
-                    <div className="flex h-6 rounded-lg overflow-hidden bg-white/5">
+                    <div className="flex h-6 rounded-lg overflow-hidden bg-gray-50 dark:bg-white/5">
                       {quartiles.map((pct, qi) => {
                         const colors = ['bg-danger', 'bg-amber-500', 'bg-warning', 'bg-success'];
                         const labels = ['0-25%', '25-50%', '50-75%', '75-100%'];
@@ -650,7 +650,7 @@ export default function GradingResults() {
                         );
                       })}
                     </div>
-                    <div className="flex justify-between text-[10px] text-white/30">
+                    <div className="flex justify-between text-[10px] text-gray-300 dark:text-white/30">
                       <span>0-25%</span>
                       <span>25-50%</span>
                       <span>50-75%</span>

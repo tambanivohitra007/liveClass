@@ -232,13 +232,13 @@ export default function GradingSessionCreate() {
         <div className="mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors mb-4"
+            className="flex items-center gap-2 text-sm text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
-          <h1 className="text-2xl text-white">New Grading Session</h1>
-          <p className="text-white/40 mt-1 text-sm">Set up a new grading session in a few steps</p>
+          <h1 className="text-2xl text-gray-900 dark:text-white">New Grading Session</h1>
+          <p className="text-gray-400 dark:text-white/40 mt-1 text-sm">Set up a new grading session in a few steps</p>
         </div>
 
         {/* Step Indicator */}
@@ -255,14 +255,14 @@ export default function GradingSessionCreate() {
                         ? 'bg-success text-white'
                         : isActive
                           ? 'bg-brand text-white shadow-lg shadow-brand/30'
-                          : 'bg-white/10 text-white/40'
+                          : 'bg-gray-100 dark:bg-white/10 text-gray-400 dark:text-white/40'
                     }`}
                   >
                     {isCompleted ? <Check className="w-5 h-5" /> : i + 1}
                   </div>
                   <span
                     className={`text-[11px] font-medium transition-colors duration-300 ${
-                      isActive ? 'text-white' : isCompleted ? 'text-success' : 'text-white/40'
+                      isActive ? 'text-gray-900 dark:text-white' : isCompleted ? 'text-success' : 'text-gray-400 dark:text-white/40'
                     }`}
                   >
                     {s.label}
@@ -271,7 +271,7 @@ export default function GradingSessionCreate() {
                 {i < STEPS.length - 1 && (
                   <div
                     className={`w-10 h-0.5 rounded-full mb-5 transition-colors duration-300 ${
-                      i < step ? 'bg-success' : 'bg-white/10'
+                      i < step ? 'bg-success' : 'bg-gray-200 dark:bg-white/10'
                     }`}
                   />
                 )}
@@ -286,18 +286,18 @@ export default function GradingSessionCreate() {
           {step === 0 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Session Name</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-white/70 mb-1.5">Session Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Midterm Grading - Class A"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white/70 mb-3">Student Source</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-white/70 mb-3">Student Source</label>
                 <div className="grid grid-cols-2 gap-4">
                   {/* Session source card */}
                   <button
@@ -310,16 +310,16 @@ export default function GradingSessionCreate() {
                     className={`card-night p-5 text-left transition-all duration-200 ${
                       sourceType === 'session'
                         ? 'ring-2 ring-brand bg-brand/5'
-                        : 'hover:bg-white/5'
+                        : 'hover:bg-gray-50 dark:hover:bg-white/5'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
-                      sourceType === 'session' ? 'bg-brand/20 text-brand' : 'bg-white/10 text-white/50'
+                      sourceType === 'session' ? 'bg-brand/20 text-brand' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'
                     }`}>
                       <ClipboardCheck className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-sm text-white mb-1">LiveClass Session</h3>
-                    <p className="text-xs text-white/40">Grade students from a completed live session</p>
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-1">LiveClass Session</h3>
+                    <p className="text-xs text-gray-400 dark:text-white/40">Grade students from a completed live session</p>
                   </button>
 
                   {/* Roster source card */}
@@ -333,16 +333,16 @@ export default function GradingSessionCreate() {
                     className={`card-night p-5 text-left transition-all duration-200 ${
                       sourceType === 'roster'
                         ? 'ring-2 ring-brand bg-brand/5'
-                        : 'hover:bg-white/5'
+                        : 'hover:bg-gray-50 dark:hover:bg-white/5'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
-                      sourceType === 'roster' ? 'bg-brand/20 text-brand' : 'bg-white/10 text-white/50'
+                      sourceType === 'roster' ? 'bg-brand/20 text-brand' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50'
                     }`}>
                       <Users className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-sm text-white mb-1">Student Roster</h3>
-                    <p className="text-xs text-white/40">Grade students from a predefined roster list</p>
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-1">Student Roster</h3>
+                    <p className="text-xs text-gray-400 dark:text-white/40">Grade students from a predefined roster list</p>
                   </button>
                 </div>
               </div>
@@ -352,22 +352,22 @@ export default function GradingSessionCreate() {
           {/* Step 2: Pick Source */}
           {step === 1 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-white mb-2">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                 {sourceType === 'session' ? 'Select a Session' : 'Select a Roster'}
               </h2>
 
               {loadingSources ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="w-8 h-8 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                  <p className="text-white/40 text-sm mt-3">Loading...</p>
+                  <p className="text-gray-400 dark:text-white/40 text-sm mt-3">Loading...</p>
                 </div>
               ) : sourceType === 'session' ? (
                 sessions.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="mx-auto w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                      <ClipboardCheck className="w-8 h-8 text-white/30" />
+                    <div className="mx-auto w-16 h-16 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center mb-4">
+                      <ClipboardCheck className="w-8 h-8 text-gray-300 dark:text-white/30" />
                     </div>
-                    <p className="text-white/50 text-sm">No ended sessions found</p>
+                    <p className="text-gray-500 dark:text-white/50 text-sm">No ended sessions found</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
@@ -379,17 +379,17 @@ export default function GradingSessionCreate() {
                         className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
                           sourceId === s.id
                             ? 'border-brand bg-brand/10 ring-2 ring-brand'
-                            : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20'
+                            : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 hover:border-gray-300 dark:hover:border-white/20'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-sm text-white truncate">{s.quizTitle}</h3>
-                            <div className="flex items-center gap-3 mt-1 text-xs text-white/40">
+                            <h3 className="font-bold text-sm text-gray-900 dark:text-white truncate">{s.quizTitle}</h3>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 dark:text-white/40">
                               <span>PIN: {s.pinCode}</span>
-                              <span className="w-1 h-1 rounded-full bg-white/20" />
+                              <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                               <span>{s.playerCount} players</span>
-                              <span className="w-1 h-1 rounded-full bg-white/20" />
+                              <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                               <span>{formatDate(s.endedAt)}</span>
                             </div>
                           </div>
@@ -406,10 +406,10 @@ export default function GradingSessionCreate() {
               ) : (
                 rosters.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="mx-auto w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                      <Users className="w-8 h-8 text-white/30" />
+                    <div className="mx-auto w-16 h-16 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center mb-4">
+                      <Users className="w-8 h-8 text-gray-300 dark:text-white/30" />
                     </div>
-                    <p className="text-white/50 text-sm">No rosters found</p>
+                    <p className="text-gray-500 dark:text-white/50 text-sm">No rosters found</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
@@ -421,13 +421,13 @@ export default function GradingSessionCreate() {
                         className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
                           sourceId === r.id
                             ? 'border-brand bg-brand/10 ring-2 ring-brand'
-                            : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20'
+                            : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 hover:border-gray-300 dark:hover:border-white/20'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-sm text-white truncate">{r.name}</h3>
-                            <p className="text-xs text-white/40 mt-1">{r.studentCount} students</p>
+                            <h3 className="font-bold text-sm text-gray-900 dark:text-white truncate">{r.name}</h3>
+                            <p className="text-xs text-gray-400 dark:text-white/40 mt-1">{r.studentCount} students</p>
                           </div>
                           {sourceId === r.id && (
                             <div className="w-6 h-6 rounded-full bg-brand flex items-center justify-center shrink-0 ml-3">
@@ -446,26 +446,26 @@ export default function GradingSessionCreate() {
           {/* Step 3: Pick Rubric */}
           {step === 2 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-white mb-2">Select a Rubric</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Select a Rubric</h2>
 
               {loadingRubrics ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="w-8 h-8 border-3 border-brand border-t-transparent rounded-full animate-spin" />
-                  <p className="text-white/40 text-sm mt-3">Loading rubrics...</p>
+                  <p className="text-gray-400 dark:text-white/40 text-sm mt-3">Loading rubrics...</p>
                 </div>
               ) : rubrics.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                    <Layers className="w-8 h-8 text-white/30" />
+                  <div className="mx-auto w-16 h-16 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center mb-4">
+                    <Layers className="w-8 h-8 text-gray-300 dark:text-white/30" />
                   </div>
-                  <p className="text-white/50 text-sm">No rubrics found. Create one first.</p>
+                  <p className="text-gray-500 dark:text-white/50 text-sm">No rubrics found. Create one first.</p>
                 </div>
               ) : (
                 <div className="space-y-6 max-h-96 overflow-y-auto pr-1">
                   {/* My Rubrics */}
                   {myRubrics.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-white/30 mb-3">My Rubrics</h3>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300 dark:text-white/30 mb-3">My Rubrics</h3>
                       <div className="space-y-2">
                         {myRubrics.map((r) => (
                           <button
@@ -475,18 +475,18 @@ export default function GradingSessionCreate() {
                             className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
                               rubricId === r.id
                                 ? 'border-brand bg-brand/10 ring-2 ring-brand'
-                                : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20'
+                                : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 hover:border-gray-300 dark:hover:border-white/20'
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-sm text-white truncate">{r.name}</h4>
+                                <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">{r.name}</h4>
                                 {r.description && (
-                                  <p className="text-xs text-white/40 mt-1 line-clamp-1">{r.description}</p>
+                                  <p className="text-xs text-gray-400 dark:text-white/40 mt-1 line-clamp-1">{r.description}</p>
                                 )}
-                                <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
+                                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-white/40">
                                   <span>{r.criteriaCount} criteria</span>
-                                  <span className="w-1 h-1 rounded-full bg-white/20" />
+                                  <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                                   <span>{r.totalMaxScore} pts max</span>
                                 </div>
                               </div>
@@ -505,7 +505,7 @@ export default function GradingSessionCreate() {
                   {/* Template Rubrics */}
                   {templateRubrics.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-white/30 mb-3">Templates</h3>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300 dark:text-white/30 mb-3">Templates</h3>
                       <div className="space-y-2">
                         {templateRubrics.map((r) => (
                           <button
@@ -515,23 +515,23 @@ export default function GradingSessionCreate() {
                             className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
                               rubricId === r.id
                                 ? 'border-brand bg-brand/10 ring-2 ring-brand'
-                                : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20'
+                                : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/8 hover:border-gray-300 dark:hover:border-white/20'
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <h4 className="font-bold text-sm text-white truncate">{r.name}</h4>
+                                  <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate">{r.name}</h4>
                                   <span className="shrink-0 px-2 py-0.5 rounded-full bg-accent/15 text-accent text-[10px] font-bold uppercase tracking-wider">
                                     Template
                                   </span>
                                 </div>
                                 {r.description && (
-                                  <p className="text-xs text-white/40 mt-1 line-clamp-1">{r.description}</p>
+                                  <p className="text-xs text-gray-400 dark:text-white/40 mt-1 line-clamp-1">{r.description}</p>
                                 )}
-                                <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
+                                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-white/40">
                                   <span>{r.criteriaCount} criteria</span>
-                                  <span className="w-1 h-1 rounded-full bg-white/20" />
+                                  <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                                   <span>{r.totalMaxScore} pts max</span>
                                 </div>
                               </div>
@@ -554,34 +554,34 @@ export default function GradingSessionCreate() {
           {/* Step 4: Confirm & Create */}
           {step === 3 && (
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-white mb-2">Review & Create</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Review & Create</h2>
 
-              <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-4">
+              <div className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/50">Session Name</span>
-                  <span className="text-sm font-bold text-white">{name}</span>
+                  <span className="text-sm text-gray-500 dark:text-white/50">Session Name</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">{name}</span>
                 </div>
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-gray-200 dark:bg-white/10" />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/50">Source Type</span>
-                  <span className="text-sm font-bold text-white">
+                  <span className="text-sm text-gray-500 dark:text-white/50">Source Type</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">
                     {sourceType === 'session' ? 'LiveClass Session' : 'Student Roster'}
                   </span>
                 </div>
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-gray-200 dark:bg-white/10" />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/50">Source</span>
-                  <span className="text-sm font-bold text-white truncate ml-4">{sourceName}</span>
+                  <span className="text-sm text-gray-500 dark:text-white/50">Source</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white truncate ml-4">{sourceName}</span>
                 </div>
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-gray-200 dark:bg-white/10" />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/50">Students</span>
-                  <span className="text-sm font-bold text-white">{selectedStudentCount}</span>
+                  <span className="text-sm text-gray-500 dark:text-white/50">Students</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">{selectedStudentCount}</span>
                 </div>
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-gray-200 dark:bg-white/10" />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/50">Rubric</span>
-                  <span className="text-sm font-bold text-white truncate ml-4">{rubricName}</span>
+                  <span className="text-sm text-gray-500 dark:text-white/50">Rubric</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white truncate ml-4">{rubricName}</span>
                 </div>
               </div>
 

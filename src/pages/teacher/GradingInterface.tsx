@@ -13,15 +13,6 @@ import {
 import { confirmAction } from '../../lib/swal';
 import type { Evaluation, EvaluationScore } from '../../types/models';
 
-const MESH_BG: React.CSSProperties = {
-  background: `
-    radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 0%, rgba(112,30,168,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(244,207,93,0.06) 0%, transparent 50%),
-    linear-gradient(160deg, #080F1E 0%, #0F1729 40%, #080F1E 100%)
-  `,
-};
-
 export default function GradingInterface() {
   const { gradingSessionId } = useParams<{ gradingSessionId: string }>();
   const navigate = useNavigate();
@@ -39,13 +30,6 @@ export default function GradingInterface() {
   const [comment, setComment] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
-
-  // Force dark mode
-  useEffect(() => {
-    const wasDark = document.documentElement.classList.contains('dark');
-    document.documentElement.classList.add('dark');
-    return () => { if (!wasDark) document.documentElement.classList.remove('dark'); };
-  }, []);
 
   // Current student
   const currentStudent = students[currentStudentIndex];
@@ -211,7 +195,7 @@ export default function GradingInterface() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={MESH_BG}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-surface">
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -220,9 +204,9 @@ export default function GradingInterface() {
   // No students
   if (!loading && students.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={MESH_BG}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-surface">
         <div className="text-center">
-          <p className="text-white/60 text-lg mb-4">No students found</p>
+          <p className="text-gray-500 dark:text-white/60 text-lg mb-4">No students found</p>
           <button
             onClick={() => navigate('/dashboard')}
             className="text-brand underline text-sm"
@@ -270,15 +254,15 @@ export default function GradingInterface() {
   };
 
   return (
-    <div className="min-h-screen bg-surface text-white flex" style={MESH_BG}>
+    <div className="min-h-screen bg-gray-50 dark:bg-surface text-gray-900 dark:text-white flex">
 
       {/* ===================== DESKTOP SIDEBAR ===================== */}
-      <aside className="hidden md:flex flex-col w-72 bg-[#0B1220] border-r border-white/10 shrink-0 h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col w-72 bg-white dark:bg-[#0B1220] border-r border-gray-200 dark:border-white/10 shrink-0 h-screen sticky top-0">
         {/* Sidebar header */}
-        <div className="px-4 py-3 border-b border-white/10 flex items-center gap-2">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10 flex items-center gap-2">
           <button
             onClick={handleExit}
-            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white"
             title="Back to dashboard"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -304,12 +288,12 @@ export default function GradingInterface() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-[#0B1220] border-r border-white/10 flex flex-col animate-slide-right z-10">
-            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-[#0B1220] border-r border-gray-200 dark:border-white/10 flex flex-col animate-slide-right z-10">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
               <span className="text-sm font-bold">Students</span>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -328,11 +312,11 @@ export default function GradingInterface() {
       <div className="flex-1 flex flex-col min-h-screen">
 
         {/* ─── HEADER BAR ─── */}
-        <header className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-white/10 px-4 py-2.5 flex items-center gap-3">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-surface/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 px-4 py-2.5 flex items-center gap-3">
           {/* Mobile hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors text-white/60"
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-white/60"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -340,7 +324,7 @@ export default function GradingInterface() {
           {/* Back button (mobile only, since desktop has sidebar) */}
           <button
             onClick={handleExit}
-            className="md:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white"
             title="Back"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -355,12 +339,12 @@ export default function GradingInterface() {
           <div className="flex-1" />
 
           {/* Progress */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
             <CheckCircle2 className="w-3.5 h-3.5 text-brand" />
             <span className="text-xs font-bold tabular-nums">
               {gradedCount}/{students.length}
             </span>
-            <span className="text-xs text-white/40 hidden sm:inline">graded</span>
+            <span className="text-xs text-gray-400 dark:text-white/40 hidden sm:inline">graded</span>
           </div>
 
           {/* Save status */}
@@ -371,18 +355,18 @@ export default function GradingInterface() {
             <button
               onClick={goPrev}
               disabled={currentStudentIndex <= 0}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Previous student"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold tabular-nums text-white/60 min-w-[40px] text-center">
+            <span className="text-xs font-bold tabular-nums text-gray-500 dark:text-white/60 min-w-[40px] text-center">
               {currentStudentIndex + 1}/{students.length}
             </span>
             <button
               onClick={goNext}
               disabled={currentStudentIndex >= students.length - 1}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Next student"
             >
               <ChevronRight className="w-4 h-4" />
@@ -402,7 +386,7 @@ export default function GradingInterface() {
         </header>
 
         {/* ─── MOBILE STUDENT STRIP ─── */}
-        <div className="md:hidden px-3 py-2 border-b border-white/5 overflow-x-auto">
+        <div className="md:hidden px-3 py-2 border-b border-gray-100 dark:border-white/5 overflow-x-auto">
           <div className="flex gap-2">
             {students.map((student, index) => {
               const isActive = index === currentStudentIndex;
@@ -417,7 +401,7 @@ export default function GradingInterface() {
                       ? 'bg-brand text-white shadow-lg shadow-brand/30'
                       : hasScore
                         ? 'bg-success/10 text-success border border-success/20'
-                        : 'bg-white/5 text-white/50 border border-white/10'
+                        : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-white/50 border border-gray-200 dark:border-white/10'
                   }`}
                 >
                   {getStudentName(student).split(' ')[0]}
@@ -444,7 +428,7 @@ export default function GradingInterface() {
                 )}
               </div>
               {getStudentNumber(currentStudent) && (
-                <p className="text-sm text-white/40">{getStudentNumber(currentStudent)}</p>
+                <p className="text-sm text-gray-400 dark:text-white/40">{getStudentNumber(currentStudent)}</p>
               )}
             </div>
           )}
@@ -459,7 +443,7 @@ export default function GradingInterface() {
                   className={`card-night p-4 sm:p-5 transition-all ${
                     scored
                       ? 'border-success/30 border-l-4 border-l-success'
-                      : 'border-white/10'
+                      : 'border-gray-200 dark:border-white/10'
                   }`}
                 >
                   {/* Card header */}
@@ -479,7 +463,7 @@ export default function GradingInterface() {
                         x{c.weight}
                       </span>
                     )}
-                    <span className="text-sm font-bold tabular-nums text-white/50">
+                    <span className="text-sm font-bold tabular-nums text-gray-500 dark:text-white/50">
                       {currentScores[c.id]?.score || 0} / {c.maxScore} pts
                     </span>
                   </div>
@@ -497,7 +481,7 @@ export default function GradingInterface() {
 
           {/* Comment textarea */}
           <div className="max-w-2xl mt-4 sm:mt-6">
-            <label className="block text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-2">
               Comment
             </label>
             <textarea
@@ -505,7 +489,7 @@ export default function GradingInterface() {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Add feedback for this student..."
               rows={3}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 resize-y focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors"
+              className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-white/30 resize-y focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-colors"
             />
           </div>
 
@@ -513,12 +497,12 @@ export default function GradingInterface() {
           <div className="max-w-2xl mt-4 sm:mt-6">
             <div className="card-night p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-1">Total Score</p>
+                <p className="text-xs font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1">Total Score</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl sm:text-4xl font-bold tabular-nums">
                     {totalScore.toFixed(1)}
                   </span>
-                  <span className="text-sm text-white/30">/ {maxPossibleScore.toFixed(1)}</span>
+                  <span className="text-sm text-gray-300 dark:text-white/30">/ {maxPossibleScore.toFixed(1)}</span>
                   <span className={`text-sm font-bold px-2 py-0.5 rounded-full ml-2 ${
                     percentage >= 70 ? 'bg-success/20 text-success' :
                     percentage >= 40 ? 'bg-warning/20 text-warning' :
@@ -549,30 +533,30 @@ export default function GradingInterface() {
           </div>
 
           {/* Keyboard hints (desktop only) */}
-          <div className="hidden md:flex max-w-2xl mt-6 items-center justify-center gap-4 text-white/15 text-xs">
+          <div className="hidden md:flex max-w-2xl mt-6 items-center justify-center gap-4 text-gray-200 dark:text-white/15 text-xs">
             <span>
-              <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">&larr;</kbd>
-              <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px] ml-1">&rarr;</kbd>
+              <kbd className="px-1.5 py-0.5 bg-gray-50 dark:bg-white/5 rounded text-gray-300 dark:text-white/25 text-[10px]">&larr;</kbd>
+              <kbd className="px-1.5 py-0.5 bg-gray-50 dark:bg-white/5 rounded text-gray-300 dark:text-white/25 text-[10px] ml-1">&rarr;</kbd>
               navigate students
             </span>
             <span>
-              <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Enter</kbd>
+              <kbd className="px-1.5 py-0.5 bg-gray-50 dark:bg-white/5 rounded text-gray-300 dark:text-white/25 text-[10px]">Enter</kbd>
               complete & next
             </span>
             <span>
-              <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Esc</kbd>
+              <kbd className="px-1.5 py-0.5 bg-gray-50 dark:bg-white/5 rounded text-gray-300 dark:text-white/25 text-[10px]">Esc</kbd>
               exit
             </span>
           </div>
         </main>
 
         {/* ─── MOBILE FIXED BOTTOM BAR ─── */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface/95 backdrop-blur-xl border-t border-white/10 px-4 py-3 flex items-center gap-3">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-surface/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/10 px-4 py-3 flex items-center gap-3">
           {/* Nav arrows */}
           <button
             onClick={goPrev}
             disabled={currentStudentIndex <= 0}
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -590,7 +574,7 @@ export default function GradingInterface() {
           <button
             onClick={goNext}
             disabled={currentStudentIndex >= students.length - 1}
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -600,14 +584,14 @@ export default function GradingInterface() {
       {/* ===================== EXIT CONFIRMATION DIALOG ===================== */}
       {showExitDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface-dark border border-white/10 rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl">
+          <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
                 <CloudOff className="w-5 h-5 text-warning" />
               </div>
-              <h3 className="text-lg font-bold text-white">Leave grading?</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Leave grading?</h3>
             </div>
-            <p className="text-white/60 text-sm mb-6">
+            <p className="text-gray-500 dark:text-white/60 text-sm mb-6">
               {pendingCount > 0
                 ? `You have ${pendingCount} unsaved change${pendingCount !== 1 ? 's' : ''}. Leaving now may result in lost work.`
                 : 'Your progress has been saved. You can return to continue grading later.'}
@@ -615,7 +599,7 @@ export default function GradingInterface() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowExitDialog(false)}
-                className="flex-1 px-5 py-3 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors"
+                className="flex-1 px-5 py-3 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
               >
                 Stay
               </button>

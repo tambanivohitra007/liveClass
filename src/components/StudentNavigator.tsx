@@ -32,8 +32,8 @@ function getGradingStatus(evaluation: Evaluation | undefined): 'none' | 'partial
 export default function StudentNavigator({ students, evaluations, currentIndex, onSelect }: Props) {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-white/10">
-        <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10">
+        <p className="text-xs font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider">
           Students ({students.length})
         </p>
       </div>
@@ -50,14 +50,14 @@ export default function StudentNavigator({ students, evaluations, currentIndex, 
               className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors ${
                 isActive
                   ? 'bg-brand/20 border-l-2 border-brand'
-                  : 'hover:bg-white/5 border-l-2 border-transparent'
+                  : 'hover:bg-gray-50 dark:hover:bg-white/5 border-l-2 border-transparent'
               }`}
             >
               {/* Status indicator */}
               <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
                 status === 'complete' ? 'bg-success/20 text-success' :
                 status === 'partial' ? 'bg-warning/20 text-warning' :
-                'bg-white/10 text-white/30'
+                'bg-gray-100 dark:bg-white/10 text-gray-300 dark:text-white/30'
               }`}>
                 {status === 'complete' ? <Check className="w-3.5 h-3.5" /> :
                  status === 'partial' ? <Minus className="w-3.5 h-3.5" /> :
@@ -66,11 +66,11 @@ export default function StudentNavigator({ students, evaluations, currentIndex, 
 
               {/* Name + number */}
               <div className="min-w-0 flex-1">
-                <p className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-white/70'}`}>
+                <p className={`text-sm font-medium truncate ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-white/70'}`}>
                   {getStudentName(student)}
                 </p>
                 {getStudentNumber(student) && (
-                  <p className="text-[11px] text-white/40 truncate">
+                  <p className="text-[11px] text-gray-400 dark:text-white/40 truncate">
                     {getStudentNumber(student)}
                   </p>
                 )}
