@@ -114,9 +114,9 @@ export default function Sidebar() {
           {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
         </Link>
         {collapsed && (
-          <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-surface-card text-white text-xs rounded-lg border border-white/10 shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+          <div className="fixed left-[72px] px-2.5 py-1 bg-surface-card text-white text-xs rounded-lg border border-white/10 shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
             {item.label}
-          </span>
+          </div>
         )}
       </div>
     );
@@ -160,7 +160,7 @@ export default function Sidebar() {
       </div>
 
       {/* Scrollable nav */}
-      <div className="flex-1 overflow-y-auto py-4 scrollbar-thin">
+      <div className={`flex-1 overflow-y-auto overflow-x-hidden py-4 ${collapsed ? 'scrollbar-none' : 'scrollbar-thin'}`}>
         {isApprovedTeacher ? (
           <>
             {teacherSections.map((section, i) => renderSection(section, i))}
