@@ -264,17 +264,17 @@ export default function Dashboard() {
     <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <img
             src={boy1}
             alt="Teacher profile"
-            className="w-14 h-14 rounded-2xl object-cover border border-gray-200 dark:border-white/20 shadow-md opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen"
+            className="w-28 h-28 rounded-3xl object-contain object-center opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen"
           />
-          <div>
+          <div className="space-y-1">
             <h1 className="text-2xl text-gray-900 dark:text-white">
               Welcome back, {user?.displayName?.split(' ')[0] || 'Teacher'}
             </h1>
-            <p className="text-gray-400 dark:text-white/40 mt-1 text-sm">Create, manage, and host your quizzes</p>
+            <p className="text-gray-400 dark:text-white/40 text-sm">Create, manage, and host your quizzes</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-3">
