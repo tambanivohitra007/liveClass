@@ -184,8 +184,23 @@ export default function Home() {
             {steps.map((step, i) => (
               <div
                 key={step.title}
-                className="relative card-night card-night-hover p-8 pt-10"
+                className={`relative card-night card-night-hover rounded-[2rem] border-2 border-gray-200 dark:border-white/15 p-8 pt-10 pb-10 transition-transform ${
+                  i === 0
+                    ? 'md:-rotate-2'
+                    : i === 1
+                      ? 'md:rotate-2'
+                      : 'md:-rotate-2'
+                }`}
               >
+                <div
+                  className={`absolute -bottom-3 left-1/2 w-6 h-6 rotate-45 rounded-[0.35rem] border-r-2 border-b-2 border-gray-200 dark:border-white/15 bg-white dark:bg-slate-900/90 pointer-events-none ${
+                    i === 0
+                      ? '-translate-x-1/2 -translate-x-4'
+                      : i === 1
+                        ? '-translate-x-1/2'
+                        : '-translate-x-1/2 translate-x-4'
+                  }`}
+                />
                 {/* Number badge */}
                 <div className="absolute -top-4 -right-3 bg-brand text-white w-11 h-11 rounded-full flex items-center justify-center text-lg">
                   {i + 1}
