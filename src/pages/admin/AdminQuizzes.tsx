@@ -3,9 +3,11 @@ import { collection, onSnapshot, doc, deleteDoc, updateDoc, query, where, getDoc
 import { db } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete, confirmAction } from '../../lib/swal';
-import { Search, Trash2, ArrowRightLeft, ExternalLink, Eye, EyeOff, FileText, X } from 'lucide-react';
+import { Search, Trash2, ArrowRightLeft, ExternalLink, Eye, EyeOff, FileText, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Quiz, User } from '../../types/models';
+
+const PAGE_SIZE = 10;
 
 export default function AdminQuizzes() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -15,6 +17,7 @@ export default function AdminQuizzes() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [transferQuizId, setTransferQuizId] = useState<string | null>(null);
   const [transferTargetId, setTransferTargetId] = useState('');
+  const [page, setPage] = useState(1);
   const { addToast } = useToastStore();
   const navigate = useNavigate();
 
@@ -60,6 +63,14 @@ export default function AdminQuizzes() {
       );
     });
   }, [quizzes, searchQuery, userMap]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const stats = useMemo(() => ({
     total: quizzes.length,
@@ -162,7 +173,7 @@ export default function AdminQuizzes() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-white/10">
-                {filtered.map((quiz) => {
+                {paged.map((quiz) => {
                   const owner = userMap[quiz.ownerId];
                   return (
                     <tr key={quiz.id} className="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
@@ -221,6 +232,44 @@ export default function AdminQuizzes() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-white/10">
+              <span className="text-xs text-gray-400 dark:text-white/40">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                      p === page
+                        ? 'bg-brand text-white'
+                        : 'text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

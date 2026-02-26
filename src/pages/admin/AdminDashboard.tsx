@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
-import { CheckCircle, XCircle, Clock, UserX } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User } from '../../types/models';
 
 type Tab = 'pending' | 'approved' | 'rejected';
+
+const PAGE_SIZE = 10;
 
 export default function AdminDashboard() {
   const [teachers, setTeachers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('pending');
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const { addToast } = useToastStore();
 
   useEffect(() => {
@@ -32,10 +35,18 @@ export default function AdminDashboard() {
     }
   };
 
+  // Reset page when switching tabs
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
+
   const filtered = teachers.filter((t) => {
     if (activeTab === 'pending') return !t.approvalStatus || t.approvalStatus === 'pending';
     return t.approvalStatus === activeTab;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const counts = {
     pending: teachers.filter((t) => !t.approvalStatus || t.approvalStatus === 'pending').length,
@@ -95,7 +106,7 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-white/10">
-              {filtered.map((teacher) => (
+              {paged.map((teacher) => (
                 <tr key={teacher.id} className="hover:bg-gray-50/50 dark:hover:bg-white/10 transition-colors">
                   <td className="px-5 py-4">
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{teacher.displayName}</p>
@@ -144,6 +155,44 @@ export default function AdminDashboard() {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-white/10">
+              <span className="text-xs text-gray-400 dark:text-white/40">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                      p === page
+                        ? 'bg-rose-500 text-white'
+                        : 'text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

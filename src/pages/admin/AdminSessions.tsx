@@ -3,11 +3,13 @@ import { collection, onSnapshot, doc, updateDoc, deleteDoc, getDocs } from 'fire
 import { db } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete, confirmAction } from '../../lib/swal';
-import { Search, Trash2, ExternalLink, StopCircle, Radio } from 'lucide-react';
+import { Search, Trash2, ExternalLink, StopCircle, Radio, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { User, Quiz, Session } from '../../types/models';
 
 type StatusFilter = 'all' | 'lobby' | 'live' | 'ended';
+
+const PAGE_SIZE = 10;
 
 export default function AdminSessions() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -17,6 +19,7 @@ export default function AdminSessions() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [page, setPage] = useState(1);
   const { addToast } = useToastStore();
   const navigate = useNavigate();
 
@@ -102,6 +105,14 @@ export default function AdminSessions() {
       return (b.startedAt ?? 0) - (a.startedAt ?? 0);
     });
   }, [sessions, statusFilter, searchQuery, quizMap, userMap]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleForceEnd = async (session: Session) => {
     const quiz = quizMap[session.quizId];
@@ -226,7 +237,7 @@ export default function AdminSessions() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-white/10">
-                {filtered.map((session) => {
+                {paged.map((session) => {
                   const quiz = quizMap[session.quizId];
                   const host = userMap[session.hostId];
                   return (
@@ -291,6 +302,44 @@ export default function AdminSessions() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-white/10">
+              <span className="text-xs text-gray-400 dark:text-white/40">
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                      p === page
+                        ? 'bg-brand text-white'
+                        : 'text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
