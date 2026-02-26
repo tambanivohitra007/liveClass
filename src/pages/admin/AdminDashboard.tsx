@@ -52,7 +52,7 @@ export default function AdminDashboard() {
   return (
     <div>
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.key}

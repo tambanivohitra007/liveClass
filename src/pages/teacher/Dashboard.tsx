@@ -269,7 +269,7 @@ export default function Dashboard() {
           </h1>
           <p className="text-gray-400 dark:text-white/40 mt-1 text-sm">Create, manage, and host your quizzes</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           <button
             onClick={() => navigate('/history')}
             className="btn-3d-ghost btn-3d-sm flex items-center gap-2 text-sm"
@@ -303,13 +303,14 @@ export default function Dashboard() {
             className="btn-3d-cyan btn-3d-sm flex items-center gap-2 text-sm"
           >
             <Plus className="w-4 h-4" />
-            Create New Quiz
+            <span className="hidden sm:inline">Create New</span>
+            <span className="sm:hidden">New</span>
           </button>
         </div>
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           {
             icon: <FileText className="w-4 h-4" />, label: 'Quizzes', value: stats.totalQuizzes, color: 'text-brand bg-brand/10',
