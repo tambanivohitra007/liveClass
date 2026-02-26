@@ -74,7 +74,7 @@ export default function KnowledgeBaseFab() {
       <button
         onClick={() => setOpen(true)}
         title="Help & Knowledge Base"
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-full bg-brand hover:bg-brand/90 text-white flex items-center justify-center shadow-lg transition-colors"
+        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-full bg-[#DC143C] hover:bg-[#B01030] text-white flex items-center justify-center shadow-lg transition-colors"
       >
         <span className="text-xl font-bold">?</span>
       </button>
