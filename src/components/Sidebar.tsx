@@ -95,26 +95,52 @@ export default function Sidebar() {
     const Icon = item.icon;
 
     return (
-      <div key={item.path} className="relative group">
+      <div key={item.path} className="relative group px-2 mb-1">
         <Link
           to={item.path}
-          className={`flex items-center gap-3 no-underline transition-colors ${
+          className={`relative flex items-center gap-3 no-underline transition-all duration-300 ${
             collapsed
               ? `w-10 h-10 mx-auto rounded-xl justify-center ${
-                  active ? 'bg-brand/15 text-brand' : 'text-white/50 hover:text-white hover:bg-white/5'
+                  active 
+                    ? 'text-white shadow-[0_0_15px_rgba(56,189,248,0.3)]' 
+                    : 'text-white/40 hover:text-white hover:bg-white/5'
                 }`
-              : `px-3 py-2.5 mx-2 rounded-xl ${
+              : `px-3.5 py-2.5 rounded-xl overflow-hidden ${
                   active
-                    ? 'bg-brand/15 text-white border-l-3 border-brand'
+                    ? 'text-white shadow-sm'
                     : 'text-white/50 hover:text-white hover:bg-white/5'
                 }`
           }`}
         >
-          <Icon className="w-5 h-5 shrink-0" />
-          {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
+          {/* Active Background & Glow Effects */}
+          {active && (
+            <>
+              {/* Main gradient background */}
+              <div className={`absolute inset-0 bg-gradient-to-r from-brand/20 via-brand/10 to-transparent opacity-100 transition-opacity duration-300 ${collapsed ? 'rounded-xl' : 'rounded-xl'}`} />
+              
+              {/* Left accent pill (only when expanded) */}
+              {!collapsed && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand rounded-r-full shadow-[0_0_8px_rgba(56,189,248,0.6)]" />
+              )}
+
+              {/* Collapsed glowy circle bg */}
+              {collapsed && (
+                 <div className="absolute inset-0 bg-brand/20 rounded-xl" />
+              )}
+            </>
+          )}
+
+          <div className="relative z-10 flex items-center gap-3">
+             <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${active ? 'text-brand drop-shadow-[0_0_3px_rgba(56,189,248,0.5)]' : ''}`} />
+             {!collapsed && (
+              <span className={`text-sm tracking-wide transition-all duration-300 ${active ? 'font-semibold text-white' : 'font-medium'}`}>
+                {item.label}
+              </span>
+             )}
+          </div>
         </Link>
         {collapsed && (
-          <div className="fixed left-[72px] px-2.5 py-1 bg-surface-card text-white text-xs rounded-lg border border-white/10 shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+          <div className="fixed left-[72px] px-3 py-1.5 bg-[#1a2333] text-white text-xs font-medium rounded-lg border border-white/10 shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 translate-x-2 group-hover:translate-x-0">
             {item.label}
           </div>
         )}
@@ -123,15 +149,15 @@ export default function Sidebar() {
   };
 
   const renderSection = (section: NavSection, index: number) => (
-    <div key={section.title} className={index > 0 ? 'mt-4' : ''}>
+    <div key={section.title} className={index > 0 ? 'mt-6' : 'mt-2'}>
       {collapsed ? (
-        index > 0 && <hr className="mx-4 my-2 border-white/10" />
+        index > 0 && <hr className="mx-4 my-3 border-white/5 opacity-50" />
       ) : (
-        <p className="px-5 mb-1.5 text-[10px] uppercase tracking-widest text-white/30 select-none">
+        <p className="px-5 mb-2 text-[11px] font-bold uppercase tracking-[0.15em] text-white/20 select-none bg-gradient-to-r from-white/20 to-transparent bg-clip-text text-transparent">
           {section.title}
         </p>
       )}
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-1">
         {section.items.map(renderNavItem)}
       </div>
     </div>
