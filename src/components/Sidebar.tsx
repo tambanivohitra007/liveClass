@@ -25,6 +25,7 @@ interface NavItem {
   path: string;
   exact?: boolean;
   matchPrefix?: string;
+  color?: string;
 }
 
 interface NavSection {
@@ -32,47 +33,106 @@ interface NavSection {
   items: NavItem[];
 }
 
+const COLORS = {
+  blue: {
+    text: 'text-sky-400',
+    bg: 'bg-sky-400',
+    gradient: 'from-sky-400/20 via-sky-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(56,189,248,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(56,189,248,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(56,189,248,0.6)]'
+  },
+  purple: {
+    text: 'text-purple-400',
+    bg: 'bg-purple-400',
+    gradient: 'from-purple-400/20 via-purple-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(168,85,247,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(168,85,247,0.6)]'
+  },
+  orange: {
+    text: 'text-orange-400',
+    bg: 'bg-orange-400',
+    gradient: 'from-orange-400/20 via-orange-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(251,146,60,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(251,146,60,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(251,146,60,0.6)]'
+  },
+  pink: {
+    text: 'text-pink-400',
+    bg: 'bg-pink-400',
+    gradient: 'from-pink-400/20 via-pink-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(244,114,182,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(244,114,182,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(244,114,182,0.6)]'
+  },
+  emerald: {
+    text: 'text-emerald-400',
+    bg: 'bg-emerald-400',
+    gradient: 'from-emerald-400/20 via-emerald-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(52,211,153,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(52,211,153,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+  },
+  amber: {
+    text: 'text-amber-400',
+    bg: 'bg-amber-400',
+    gradient: 'from-amber-400/20 via-amber-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(251,191,36,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(251,191,36,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+  },
+  rose: {
+    text: 'text-rose-400',
+    bg: 'bg-rose-400',
+    gradient: 'from-rose-400/20 via-rose-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(251,113,133,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(251,113,133,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(251,113,133,0.6)]'
+  }
+};
+
 const teacherSections: NavSection[] = [
   {
     title: 'Main',
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', exact: true },
+      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', exact: true, color: 'blue' },
     ],
   },
   {
     title: 'Content',
     items: [
-      { label: 'Quizzes', icon: BookOpen, path: '/library', matchPrefix: '/library' },
-      { label: 'Classes', icon: Users, path: '/classes', matchPrefix: '/class' },
-      { label: 'Assignments', icon: FileText, path: '/assignment/new', matchPrefix: '/assignment' },
+      { label: 'Classes', icon: Users, path: '/classes', matchPrefix: '/class', color: 'orange' },
+      { label: 'Quizzes', icon: BookOpen, path: '/library', matchPrefix: '/library', color: 'purple' },
+      { label: 'Assignments', icon: FileText, path: '/assignment/new', matchPrefix: '/assignment', color: 'pink' },
     ],
   },
   {
     title: 'Grading',
     items: [
-      { label: 'Grade', icon: ClipboardCheck, path: '/grading/new', matchPrefix: '/grading' },
-      { label: 'Rubrics', icon: ListChecks, path: '/rubrics', matchPrefix: '/rubric' },
-      { label: 'Rosters', icon: UserCheck, path: '/rosters', matchPrefix: '/roster' },
+      { label: 'Grade', icon: ClipboardCheck, path: '/grading/new', matchPrefix: '/grading', color: 'emerald' },
+      { label: 'Rubrics', icon: ListChecks, path: '/rubrics', matchPrefix: '/rubric', color: 'emerald' },
+      { label: 'Rosters', icon: UserCheck, path: '/rosters', matchPrefix: '/roster', color: 'emerald' },
     ],
   },
   {
     title: 'Activity',
     items: [
-      { label: 'History', icon: History, path: '/history', exact: true },
-      { label: 'Discover', icon: Compass, path: '/discover', exact: true },
-      { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true },
+      { label: 'Discover', icon: Compass, path: '/discover', exact: true, color: 'amber' },
+      { label: 'History', icon: History, path: '/history', exact: true, color: 'amber' },
+      { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true, color: 'blue' },
     ],
   },
 ];
 
 const studentItems: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/student/dashboard', exact: true },
-  { label: 'My Classes', icon: Users, path: '/student/classes', matchPrefix: '/student/class' },
-  { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true },
-  { label: 'Discover', icon: Compass, path: '/discover', exact: true },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/student/dashboard', exact: true, color: 'blue' },
+  { label: 'My Classes', icon: Users, path: '/student/classes', matchPrefix: '/student/class', color: 'orange' },
+  { label: 'Discover', icon: Compass, path: '/discover', exact: true, color: 'amber' },
+  { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true, color: 'purple' },
 ];
 
-const adminItem: NavItem = { label: 'Admin', icon: Shield, path: '/admin', matchPrefix: '/admin' };
+const adminItem: NavItem = { label: 'Admin', icon: Shield, path: '/admin', matchPrefix: '/admin', color: 'rose' };
 
 export default function Sidebar() {
   const { firebaseUser, user } = useAuthStore();
@@ -93,6 +153,7 @@ export default function Sidebar() {
   const renderNavItem = (item: NavItem) => {
     const active = isItemActive(item);
     const Icon = item.icon;
+    const colorTheme = COLORS[item.color as keyof typeof COLORS] || COLORS.blue;
 
     return (
       <div key={item.path} className="relative group px-2 mb-1">
@@ -102,7 +163,7 @@ export default function Sidebar() {
             collapsed
               ? `w-10 h-10 mx-auto rounded-xl justify-center ${
                   active 
-                    ? 'text-white shadow-[0_0_15px_rgba(56,189,248,0.3)]' 
+                    ? `text-white ${colorTheme.shadow}` 
                     : 'text-white/40 hover:text-white hover:bg-white/5'
                 }`
               : `px-3.5 py-2.5 rounded-xl overflow-hidden ${
@@ -116,22 +177,22 @@ export default function Sidebar() {
           {active && (
             <>
               {/* Main gradient background */}
-              <div className={`absolute inset-0 bg-gradient-to-r from-brand/20 via-brand/10 to-transparent opacity-100 transition-opacity duration-300 ${collapsed ? 'rounded-xl' : 'rounded-xl'}`} />
+              <div className={`absolute inset-0 bg-gradient-to-r ${colorTheme.gradient} to-transparent opacity-100 transition-opacity duration-300 ${collapsed ? 'rounded-xl' : 'rounded-xl'}`} />
               
               {/* Left accent pill (only when expanded) */}
               {!collapsed && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand rounded-r-full shadow-[0_0_8px_rgba(56,189,248,0.6)]" />
+                <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 ${colorTheme.bg} rounded-r-full ${colorTheme.pillShadow}`} />
               )}
 
               {/* Collapsed glowy circle bg */}
               {collapsed && (
-                 <div className="absolute inset-0 bg-brand/20 rounded-xl" />
+                 <div className={`absolute inset-0 ${colorTheme.bg} opacity-20 rounded-xl`} />
               )}
             </>
           )}
 
           <div className="relative z-10 flex items-center gap-3">
-             <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${active ? 'text-brand drop-shadow-[0_0_3px_rgba(56,189,248,0.5)]' : ''}`} />
+             <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${active ? `${colorTheme.text} ${colorTheme.dropShadow}` : ''}`} />
              {!collapsed && (
               <span className={`text-sm tracking-wide transition-all duration-300 ${active ? 'font-semibold text-white' : 'font-medium'}`}>
                 {item.label}
