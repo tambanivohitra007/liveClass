@@ -153,65 +153,78 @@ export default function ClassList() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 stagger-children">
           {classrooms.map((cls) => {
             const isExpired = Date.now() > cls.joinCodeExpiresAt;
+            const bgClass = CARD_GRADIENTS[cls.color] || DEFAULT_GRADIENT;
+
             return (
               <div
                 key={cls.id}
                 onClick={() => navigate(`/classroom/${cls.id}`)}
-                className="group card-night card-night-hover flex flex-col animate-fade-in cursor-pointer"
+                className="group relative flex flex-col pt-4 animate-fade-in cursor-pointer h-full"
               >
-                {/* Color banner */}
-                <div className={`h-24 ${CARD_GRADIENTS[cls.color] || DEFAULT_GRADIENT} relative overflow-hidden rounded-t-2xl`}>
-                  <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
-                  <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
-                  <div className="absolute left-1/2 -top-8 w-32 h-32 rounded-full bg-white/5" />
-                  {cls.ownerId !== user?.id && (
-                    <div className="absolute top-3 left-3 px-2.5 py-1 bg-black/40 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white uppercase tracking-wider">
-                      Co-teacher
-                    </div>
-                  )}
-                </div>
-
-                {/* Card body */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1 mb-1">
-                    {cls.name}
-                  </h3>
-                  {cls.description && (
-                    <p className="text-sm text-gray-500 dark:text-white/50 line-clamp-1 mb-3">{cls.description}</p>
-                  )}
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-white/50 mb-4">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5" />
-                      {cls.studentCount} student{cls.studentCount !== 1 ? 's' : ''}
-                    </span>
-                    <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/30" />
-                    <span className="flex items-center gap-1">
-                      <UserPlus className="w-3.5 h-3.5" />
-                      {cls.coTeacherCount}
-                    </span>
-                  </div>
-
-                  {/* Join code */}
-                  <div className="mt-auto flex items-center justify-between bg-gray-50 dark:bg-white/10 rounded-xl px-3 py-2">
-                    <div>
-                      <span className="font-mono font-bold text-gray-900 dark:text-white tracking-wider">{cls.joinCode}</span>
-                      {isExpired ? (
-                        <span className="ml-2 text-[10px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5">
-                          <AlertTriangle className="w-2.5 h-2.5" /> Expired
-                        </span>
-                      ) : (
-                        <span className="ml-2 text-[10px] text-gray-400 dark:text-white/40">{daysUntil(cls.joinCodeExpiresAt)}</span>
+                {/* Folder Tab */}
+                <div 
+                  className={`absolute top-0.5 left-0 w-1/3 h-6 rounded-t-xl z-0 transition-all duration-300 group-hover:-translate-y-1 ${bgClass}`} 
+                />
+                
+                {/* Folder Body (Card) */}
+                <div className="relative z-10 flex-1 flex flex-col bg-white dark:bg-[#1E1E24] rounded-tr-2xl rounded-b-2xl shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden transition-all duration-300 group-hover:shadow-lg dark:group-hover:shadow-black/50">
+                  
+                  {/* Color Strip */}
+                  <div className={`h-1.5 w-full ${bgClass}`} />
+                  
+                  {/* Content */}
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
+                       <h3 className="font-bold text-lg leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1">
+                        {cls.name}
+                      </h3>
+                      {cls.ownerId !== user?.id && (
+                        <div className="shrink-0 px-2 py-0.5 bg-gray-100 dark:bg-white/10 rounded text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Co-teacher
+                        </div>
                       )}
                     </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); copyCode(cls.joinCode); }}
-                      className="p-1.5 rounded-lg text-gray-400 dark:text-white/40 hover:text-brand hover:bg-white dark:hover:bg-white/10 transition-colors"
-                      title="Copy code"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
+                   
+                    {cls.description && (
+                      <p className="text-sm text-gray-500 dark:text-white/50 line-clamp-2 mb-4 min-h-[2.5rem]">{cls.description}</p>
+                    )}
+
+                    <div className="mt-auto pt-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
+                       {/* Stats */}
+                      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-white/50">
+                        <span className="flex items-center gap-1.5" title="Students">
+                          <Users className="w-4 h-4" />
+                          {cls.studentCount}
+                        </span>
+                        {cls.coTeacherCount > 0 && (
+                          <span className="flex items-center gap-1.5" title="Co-teachers">
+                            <UserPlus className="w-4 h-4" />
+                            {cls.coTeacherCount}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Code */}
+                      <div className="flex items-center gap-2">
+                         <div className="flex flex-col items-end">
+                            <span className="font-mono text-xs font-bold text-gray-900 dark:text-white tracking-wider bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded">
+                              {cls.joinCode}
+                            </span>
+                            {isExpired && (
+                              <span className="text-[10px] text-danger flex items-center gap-0.5 mt-0.5">
+                                <AlertTriangle className="w-3 h-3" /> Expired
+                              </span>
+                            )}
+                         </div>
+                         <button
+                            onClick={(e) => { e.stopPropagation(); copyCode(cls.joinCode); }}
+                            className="p-1.5 rounded-lg text-gray-400 dark:text-white/40 hover:text-brand hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                            title="Copy code"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -221,12 +234,18 @@ export default function ClassList() {
           {/* Create placeholder */}
           <button
             onClick={() => setShowModal(true)}
-            className="min-h-60 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
+            className="group relative flex flex-col pt-4 min-h-60 animate-fade-in w-full text-left"
           >
-            <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-400 dark:text-white/40 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
-              <Plus className="w-7 h-7" />
+            {/* Dashed Folder Tab */}
+            <div className="absolute top-0.5 left-0 w-1/3 h-6 rounded-t-xl bg-transparent border-t-2 border-l-2 border-r-2 border-dashed border-gray-300 dark:border-white/20 border-b-0 z-0 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-brand/50 group-hover:bg-brand/5" />
+
+            {/* Dashed Folder Body */}
+            <div className="relative z-10 flex-1 w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-tr-2xl rounded-b-2xl bg-transparent hover:bg-brand/5 hover:border-brand/50 transition-all duration-200 group/create">
+              <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-400 dark:text-white/40 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
+                <Plus className="w-7 h-7" />
+              </div>
+              <span className="font-bold text-gray-500 dark:text-white/50 group-hover/create:text-brand transition-colors">New Class</span>
             </div>
-            <span className="font-bold text-gray-500 dark:text-white/50 group-hover/create:text-brand transition-colors">New Class</span>
           </button>
         </div>
       )}
