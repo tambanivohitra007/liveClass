@@ -185,10 +185,8 @@ function AppContent() {
           <Route path="/collection/:collectionId" element={<TeacherRoute><CollectionView /></TeacherRoute>} />
           <Route path="/assignment/new" element={<TeacherRoute><AssignmentCreate /></TeacherRoute>} />
           <Route path="/rubrics" element={<TeacherRoute><RubricList /></TeacherRoute>} />
-          <Route path="/rubric/new" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
           <Route path="/rubric/:rubricId" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
           <Route path="/rosters" element={<TeacherRoute><RosterList /></TeacherRoute>} />
-          <Route path="/roster/new" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />
           <Route path="/roster/:rosterId" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />
           <Route path="/grading/new" element={<TeacherRoute><GradingSessionCreate /></TeacherRoute>} />
           <Route path="/grading/:gradingSessionId" element={<TeacherRoute><GradingInterface /></TeacherRoute>} />
