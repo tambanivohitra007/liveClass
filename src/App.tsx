@@ -26,6 +26,7 @@ import AdminOverview from './pages/admin/AdminOverview';
 import AdminSessions from './pages/admin/AdminSessions';
 import AdminAssignments from './pages/admin/AdminAssignments';
 import Dashboard from './pages/teacher/Dashboard';
+import QuizLibrary from './pages/teacher/QuizLibrary';
 import QuizEditor from './pages/teacher/QuizEditor';
 import HostSession from './pages/teacher/HostSession';
 import SessionResults from './pages/teacher/SessionResults';
@@ -173,6 +174,7 @@ function AppContent() {
           </Route>
 
           <Route path="/dashboard" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
+          <Route path="/library" element={<TeacherRoute><QuizLibrary /></TeacherRoute>} />
           <Route path="/quiz/:quizId" element={<TeacherRoute><QuizEditor /></TeacherRoute>} />
           <Route path="/quiz/:quizId/host" element={<TeacherRoute><HostSession /></TeacherRoute>} />
           <Route path="/quiz/:quizId/preview" element={<TeacherRoute><QuizPreview /></TeacherRoute>} />

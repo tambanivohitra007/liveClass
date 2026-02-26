@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Users,
   FileText,
+  BookOpen,
   ClipboardCheck,
   ListChecks,
   UserCheck,
@@ -48,6 +49,7 @@ const teacherSections: NavSection[] = [
   {
     title: 'Content',
     items: [
+      { label: 'Quizzes', icon: BookOpen, path: '/library', matchPrefix: '/library' },
       { label: 'Classes', icon: Users, path: '/classes', matchPrefix: '/class' },
       { label: 'Assignments', icon: FileText, path: '/assignment/new', matchPrefix: '/assignment' },
     ],
