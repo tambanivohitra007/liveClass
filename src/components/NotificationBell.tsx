@@ -38,7 +38,7 @@ function getNotificationRoute(n: AppNotification): string {
   }
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ position = 'dropdown' }: { position?: 'dropdown' | 'right' }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -93,7 +93,9 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-gradient-to-b from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] rounded-sm shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down">
+        <div className={`absolute w-80 bg-gradient-to-b from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] rounded-sm shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down ${
+          position === 'right' ? 'left-full top-0 ml-2' : 'right-0 top-full mt-2'
+        }`}>
           <div className="px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
             <p className="font-semibold text-white text-sm">Notifications</p>
             {unreadCount > 0 && (
