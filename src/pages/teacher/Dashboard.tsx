@@ -251,7 +251,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        <div className="h-8 w-48 bg-gray-100 dark:bg-white/10 rounded-lg animate-pulse" />
+        <div className="h-8 w-48 rounded-lg animate-shimmer" />
         <SkeletonStats />
       </div>
     );

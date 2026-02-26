@@ -154,6 +154,7 @@
 .dark .animate-shimmer {
   background: linear-gradient(90deg, #0F1729 25%, #1E2D42 50%, #0F1729 75%);
   background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 /* 3D Card Flip */
@@ -870,5 +871,9 @@
 
   .animate-spin {
     animation: spin 1s linear infinite !important;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite !important;
   }
 }
