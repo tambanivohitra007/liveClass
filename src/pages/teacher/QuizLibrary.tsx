@@ -444,19 +444,19 @@ export default function QuizLibrary() {
         </div>
 
         {/* Search Bar + View Toggle */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative group flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-white/30 group-focus-within:text-brand transition-colors" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search your library for quizzes, topics, or folders..."
+              placeholder="Search quizzes, topics, or folders..."
               className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-900 dark:text-white"
             />
           </div>
           {/* View toggle */}
-          <div className="flex items-center bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-1 shrink-0">
+          <div className="flex items-center self-end sm:self-auto bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-1 shrink-0">
             {([
               { mode: 'card' as const, icon: LayoutGrid, label: 'Card view' },
               { mode: 'list' as const, icon: List, label: 'List view' },
@@ -679,7 +679,7 @@ export default function QuizLibrary() {
           /* Table View */
           <div className="card-night overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-200 dark:border-white/10 text-[11px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider">
+            <div className="grid grid-cols-[1fr_80px_auto] sm:grid-cols-[1fr_80px_120px_auto] md:grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-200 dark:border-white/10 text-[11px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider">
               <span>Title</span>
               <span className="text-center">Questions</span>
               <span className="hidden md:block">Collection</span>
@@ -692,7 +692,7 @@ export default function QuizLibrary() {
               return (
                 <div
                   key={quiz.id}
-                  className={`grid grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors items-center group cursor-pointer ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
+                  className={`grid grid-cols-[1fr_80px_auto] sm:grid-cols-[1fr_80px_120px_auto] md:grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors items-center group cursor-pointer ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
                   onClick={() => navigate(`/quiz/${quiz.id}`)}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
