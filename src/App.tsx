@@ -44,6 +44,13 @@ import StudentClassDetail from './pages/student/StudentClassDetail';
 import Discover from './pages/Discover';
 import Flashcards from './pages/Flashcards';
 import Worksheet from './pages/teacher/Worksheet';
+import RubricList from './pages/teacher/RubricList';
+import RubricEditor from './pages/teacher/RubricEditor';
+import RosterList from './pages/teacher/RosterList';
+import RosterEditor from './pages/teacher/RosterEditor';
+import GradingSessionCreate from './pages/teacher/GradingSessionCreate';
+import GradingInterface from './pages/teacher/GradingInterface';
+import GradingResults from './pages/teacher/GradingResults';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 import './App.css';
@@ -125,7 +132,9 @@ function AppContent() {
 
   // Hide navbar on full-screen game pages
   const isQuizEditor = location.pathname.startsWith('/quiz/') && !location.pathname.endsWith('/host') && !location.pathname.endsWith('/preview') && !location.pathname.endsWith('/worksheet') && !location.pathname.endsWith('/flashcards');
-  const hideNavbar = location.pathname.startsWith('/play/') || isQuizEditor || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
+  const isGradingInterface = /^\/grading\/[^/]+$/.test(location.pathname);
+  const isRubricEditor = location.pathname.startsWith('/rubric/');
+  const hideNavbar = location.pathname.startsWith('/play/') || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -164,6 +173,15 @@ function AppContent() {
         <Route path="/history" element={<TeacherRoute><SessionHistory /></TeacherRoute>} />
         <Route path="/collection/:collectionId" element={<TeacherRoute><CollectionView /></TeacherRoute>} />
         <Route path="/assignment/new" element={<TeacherRoute><AssignmentCreate /></TeacherRoute>} />
+        <Route path="/rubrics" element={<TeacherRoute><RubricList /></TeacherRoute>} />
+        <Route path="/rubric/new" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
+        <Route path="/rubric/:rubricId" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
+        <Route path="/rosters" element={<TeacherRoute><RosterList /></TeacherRoute>} />
+        <Route path="/roster/new" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />
+        <Route path="/roster/:rosterId" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />
+        <Route path="/grading/new" element={<TeacherRoute><GradingSessionCreate /></TeacherRoute>} />
+        <Route path="/grading/:gradingSessionId" element={<TeacherRoute><GradingInterface /></TeacherRoute>} />
+        <Route path="/grading/:gradingSessionId/results" element={<TeacherRoute><GradingResults /></TeacherRoute>} />
         <Route path="/classes" element={<TeacherRoute><ClassList /></TeacherRoute>} />
         <Route path="/classroom/:classroomId" element={<TeacherRoute><ClassDetail /></TeacherRoute>} />
 

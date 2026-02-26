@@ -11,7 +11,7 @@ import { SkeletonCard, SkeletonStats } from '../../components/Skeleton';
 import AiGenerateModal from '../../components/AiGenerateModal';
 import WaveBackground from '../../components/ui/WaveBackground';
 import {
-  Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList,
+  Trash2, Search, FileText, Users, HelpCircle, Play, Plus, ClipboardList, ClipboardCheck,
   Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, BarChart3, Printer,
   Clock, ArrowRight, LayoutGrid, List, Table2,
 } from 'lucide-react';
@@ -506,6 +506,13 @@ export default function Dashboard() {
           >
             <Sparkles className="w-4 h-4" />
             <span className="hidden sm:inline">AI Generate</span>
+          </button>
+          <button
+            onClick={() => navigate('/grading/new')}
+            className="btn-3d-ghost btn-3d-sm flex items-center gap-2 text-sm"
+          >
+            <ClipboardCheck className="w-4 h-4" />
+            <span className="hidden sm:inline">Grade</span>
           </button>
           <button
             onClick={() => navigate('/assignment/new')}

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { LayoutDashboard, LogOut, Settings, Shield, ChevronDown, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Shield, ChevronDown, Sun, Moon, ClipboardCheck } from 'lucide-react';
 import { ADMIN_EMAIL } from '../lib/config';
 import { useThemeStore } from '../stores/themeStore';
 import NotificationBell from './NotificationBell';
@@ -81,6 +81,18 @@ export default function Navbar() {
               {isApprovedTeacher && (
                 <Link to="/history" className={navLinkClass('/history')}>
                   History
+                </Link>
+              )}
+              {isApprovedTeacher && (
+                <Link to="/grading/new" className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors no-underline ${
+                  location.pathname.startsWith('/grading') || location.pathname.startsWith('/rubric') || location.pathname.startsWith('/roster')
+                    ? 'bg-brand/20 text-white'
+                    : 'text-white/60 hover:text-white hover:bg-white/10'
+                }`}>
+                  <span className="flex items-center gap-1.5">
+                    <ClipboardCheck className="w-3.5 h-3.5" />
+                    Grading
+                  </span>
                 </Link>
               )}
               {isAdmin && (

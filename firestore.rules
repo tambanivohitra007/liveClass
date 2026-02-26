@@ -120,6 +120,58 @@ service cloud.firestore {
       allow create, delete: if false;
     }
 
+    // Rubrics: read by any authed user (template browsing); CRUD by owner + admin
+    match /rubrics/{rubricId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
+
+      match /criteria/{criterionId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
+          && get(/databases/$(database)/documents/rubrics/$(rubricId)).data.ownerId == request.auth.uid;
+      }
+    }
+
+    // Rosters: read/CRUD by owner + admin
+    match /rosters/{rosterId} {
+      allow read: if request.auth != null
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
+
+      match /students/{studentId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
+          && get(/databases/$(database)/documents/rosters/$(rosterId)).data.ownerId == request.auth.uid;
+      }
+    }
+
+    // Grading Sessions: read/CRUD by owner + admin
+    match /grading_sessions/{gsId} {
+      allow read: if request.auth != null
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && (resource.data.ownerId == request.auth.uid
+          || request.auth.token.email == 'rindra.it@gmail.com');
+
+      match /evaluations/{evalId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
+          && get(/databases/$(database)/documents/grading_sessions/$(gsId)).data.ownerId == request.auth.uid;
+      }
+    }
+
     // Classrooms
     match /classrooms/{classroomId} {
       allow read: if request.auth != null;

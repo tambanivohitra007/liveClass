@@ -215,6 +215,91 @@ export interface ViolationDoc {
   events: ViolationEvent[];
 }
 
+// --- Grading Types ---
+export type CriterionType = 'numeric' | 'level' | 'checkbox';
+
+export interface CriterionLevel {
+  label: string;
+  score: number;
+}
+
+export interface Criterion {
+  id: string;
+  name: string;
+  type: CriterionType;
+  maxScore: number;
+  weight: number;
+  order: number;
+  levels?: CriterionLevel[];
+}
+
+export interface Rubric {
+  id: string;
+  ownerId: string;
+  name: string;
+  description: string;
+  isTemplate: boolean;
+  totalMaxScore: number;
+  criteriaCount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface RosterStudent {
+  id: string;
+  name: string;
+  studentNumber?: string;
+  email?: string;
+  order: number;
+}
+
+export interface Roster {
+  id: string;
+  ownerId: string;
+  name: string;
+  studentCount: number;
+  classroomId?: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type GradingSourceType = 'session' | 'roster';
+export type GradingSessionStatus = 'active' | 'completed';
+
+export interface GradingSession {
+  id: string;
+  ownerId: string;
+  name: string;
+  rubricId: string;
+  sourceType: GradingSourceType;
+  sourceId: string;
+  status: GradingSessionStatus;
+  studentCount: number;
+  gradedCount: number;
+  avgScore?: number;
+  avgPercentage?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface EvaluationScore {
+  score: number;
+  levelLabel?: string;
+}
+
+export interface Evaluation {
+  id: string;
+  studentName: string;
+  studentNumber?: string;
+  totalScore: number;
+  maxPossibleScore: number;
+  percentage: number;
+  comment: string;
+  scores: Record<string, EvaluationScore>;
+  gradedAt: number;
+  syncedAt?: number;
+}
+
 export type NotificationType = 'new_assignment' | 'session_started' | 'class_joined' | 'class_removed';
 
 export interface AppNotification {
