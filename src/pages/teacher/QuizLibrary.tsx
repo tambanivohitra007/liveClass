@@ -511,7 +511,7 @@ export default function QuizLibrary() {
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); openEditCollModal(coll); }}
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gray-500 dark:bg-gray-700 text-white flex items-center justify-center opacity-0 group-hover/pill:opacity-100 transition-opacity shadow-sm"
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gray-500 dark:bg-gray-700 text-white flex items-center justify-center opacity-100 md:opacity-0 md:group-hover/pill:opacity-100 transition-opacity shadow-sm"
                   title="Edit collection"
                 >
                   <Pencil className="w-2.5 h-2.5" />
@@ -550,16 +550,19 @@ export default function QuizLibrary() {
           </div>
         ) : viewMode === 'card' ? (
           /* Card View */
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 stagger-children">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 stagger-children">
             {filtered.map((quiz) => {
               const collNameVal = getCollectionName(quiz);
               return (
                 <div
                   key={quiz.id}
-                  className={`group relative card-night card-night-hover flex flex-col animate-fade-in ${menuOpenId === quiz.id ? 'z-50' : 'z-0'}`}
+                  className={`group relative card-night card-night-hover flex flex-row sm:flex-col animate-fade-in ${menuOpenId === quiz.id ? 'z-50' : 'z-0'}`}
                 >
                   {/* Banner */}
-                  <div className={`h-32 ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} relative overflow-hidden rounded-t-2xl`}>
+                  <div
+                    className={`w-24 h-auto sm:w-full sm:h-32 ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} relative overflow-hidden rounded-l-2xl sm:rounded-l-none sm:rounded-t-2xl shrink-0 cursor-pointer`}
+                    onClick={() => navigate(`/quiz/${quiz.id}`)}
+                  >
                     {quiz.coverImageUrl ? (
                       <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -570,20 +573,20 @@ export default function QuizLibrary() {
                       </>
                     )}
                     {collNameVal && (
-                      <div className="absolute top-3 left-3 px-2.5 py-1 bg-black/40 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white uppercase tracking-wider">
+                      <div className="hidden sm:block absolute top-3 left-3 px-2.5 py-1 bg-black/40 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white uppercase tracking-wider">
                         {collNameVal}
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <div className="hidden sm:flex absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-3">
                       <button
-                        onClick={() => handleHostLive(quiz.id)}
+                        onClick={(e) => { e.stopPropagation(); handleHostLive(quiz.id); }}
                         className="p-3 bg-brand text-white rounded-full hover:scale-110 transition-transform shadow-lg"
                         title="Host Live"
                       >
                         <Play className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => navigate(`/quiz/${quiz.id}`)}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/quiz/${quiz.id}`); }}
                         className="p-3 bg-white/10 text-white rounded-full hover:scale-110 transition-transform shadow-lg"
                         title="Edit"
                       >
@@ -592,27 +595,43 @@ export default function QuizLibrary() {
                     </div>
                   </div>
 
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1">
+                  <div className="p-3 sm:p-5 flex-1 flex flex-col min-w-0">
+                    <div className="flex justify-between items-start mb-1 sm:mb-2">
+                      <h3
+                        className="font-bold text-sm sm:text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1 cursor-pointer"
+                        onClick={() => navigate(`/quiz/${quiz.id}`)}
+                      >
                         {quiz.title || 'Untitled Quiz'}
                       </h3>
                       {renderMoreMenu(quiz)}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-white/40 mb-5">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400 dark:text-white/40 mb-2 sm:mb-5">
                       <span className="flex items-center gap-1">
-                        <HelpCircle className="w-3.5 h-3.5" />
+                        <HelpCircle className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                         {quiz.questionCount ?? '?'} Qs
                       </span>
                       <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
                       <span>{formatDate(quiz.updatedAt)}</span>
+                      {collNameVal && (
+                        <span className="sm:hidden text-[10px] text-gray-400 dark:text-white/40 truncate">
+                          {collNameVal}
+                        </span>
+                      )}
                     </div>
-                    <button
-                      onClick={() => handleHostLive(quiz.id)}
-                      className="btn-3d-cyan btn-3d-sm w-full text-sm mt-auto"
-                    >
-                      Host Live
-                    </button>
+                    <div className="flex gap-2 mt-auto">
+                      <button
+                        onClick={() => handleHostLive(quiz.id)}
+                        className="btn-3d-cyan btn-3d-sm flex-1 text-xs sm:text-sm"
+                      >
+                        Host Live
+                      </button>
+                      <button
+                        onClick={() => navigate(`/quiz/${quiz.id}`)}
+                        className="sm:hidden btn-3d-ghost btn-3d-sm text-xs px-3"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -621,12 +640,12 @@ export default function QuizLibrary() {
             {/* Create Placeholder Card */}
             <button
               onClick={() => navigate('/quiz/new')}
-              className="min-h-70 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create"
+              className="min-h-24 sm:min-h-70 flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-0 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create p-4 sm:p-0"
             >
-              <div className="w-14 h-14 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 dark:text-white/30 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
-                <Plus className="w-7 h-7" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 dark:text-white/30 group-hover/create:bg-brand group-hover/create:text-white transition-all sm:mb-4 hover-jelly shrink-0">
+                <Plus className="w-5 h-5 sm:w-7 sm:h-7" />
               </div>
-              <span className="font-bold text-gray-400 dark:text-white/40 group-hover/create:text-brand transition-colors">New Quiz</span>
+              <span className="font-bold text-gray-400 dark:text-white/40 group-hover/create:text-brand transition-colors text-sm">New Quiz</span>
             </button>
           </div>
         ) : viewMode === 'list' ? (
