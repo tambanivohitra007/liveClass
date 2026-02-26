@@ -126,7 +126,7 @@ export default function Discover() {
             <p className="text-gray-500 dark:text-white/50 mb-4 font-medium">Something went wrong loading quizzes.</p>
             <button
               onClick={() => window.location.reload()}
-              className="btn-3d-cyan btn-3d-sm"
+              className="btn-3d-gold btn-3d-sm"
             >
               Try again
             </button>
@@ -176,7 +176,7 @@ export default function Discover() {
                   <button
                     onClick={() => handleClone(quiz)}
                     disabled={cloning === quiz.id}
-                    className="btn-3d-cyan btn-3d-sm w-full flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="btn-3d-gold btn-3d-sm w-full flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <Copy className="w-3.5 h-3.5" />
                     {cloning === quiz.id ? 'Cloning...' : 'Clone to My Library'}

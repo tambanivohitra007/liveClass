@@ -101,7 +101,7 @@ export default function RosterList() {
           </div>
           <button
             onClick={() => navigate('/roster/new')}
-            className="btn-3d-cyan btn-3d-sm flex items-center gap-2 text-sm"
+            className="btn-3d-emerald btn-3d-sm flex items-center gap-2 text-sm"
           >
             <Plus className="w-4 h-4" />
             New Roster
@@ -135,7 +135,7 @@ export default function RosterList() {
             </p>
             <button
               onClick={() => navigate('/roster/new')}
-              className="btn-3d-cyan"
+              className="btn-3d-emerald"
             >
               Create your first roster
             </button>
@@ -189,7 +189,7 @@ export default function RosterList() {
                   <div className="flex gap-2 mt-auto">
                     <button
                       onClick={() => navigate(`/roster/${roster.id}`)}
-                      className="btn-3d-cyan btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5"
+                      className="btn-3d-emerald btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       Edit

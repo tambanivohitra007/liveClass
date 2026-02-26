@@ -119,7 +119,7 @@ export default function ClassList() {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="btn-3d-cyan btn-3d-sm flex items-center gap-2 text-sm"
+          className="btn-3d-orange btn-3d-sm flex items-center gap-2 text-sm"
         >
           <Plus className="w-4 h-4" />
           Create Class
@@ -136,7 +136,7 @@ export default function ClassList() {
           <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Create your first class to start managing students</p>
           <button
             onClick={() => setShowModal(true)}
-            className="btn-3d-cyan"
+            className="btn-3d-orange"
           >
             Create your first class
           </button>
@@ -296,7 +296,7 @@ export default function ClassList() {
                 <button
                   onClick={handleCreate}
                   disabled={creating || !name.trim()}
-                  className="btn-3d-cyan btn-3d-sm flex-1 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="btn-3d-orange btn-3d-sm flex-1 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {creating ? (
                     <>

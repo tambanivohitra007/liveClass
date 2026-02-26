@@ -77,7 +77,7 @@ export default function StudentClasses() {
           </div>
           <button
             onClick={() => navigate('/join-class')}
-            className="btn-3d-cyan btn-3d-sm flex items-center gap-2 text-sm"
+            className="btn-3d-orange btn-3d-sm flex items-center gap-2 text-sm"
           >
             <UserPlus className="w-4 h-4" />
             Join a Class
@@ -94,7 +94,7 @@ export default function StudentClasses() {
             <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Join a class using a code from your teacher</p>
             <button
               onClick={() => navigate('/join-class')}
-              className="btn-3d-cyan"
+              className="btn-3d-orange"
             >
               Join a Class
             </button>

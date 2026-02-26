@@ -125,7 +125,7 @@ export default function AssignmentCreate() {
         <button
           type="submit"
           disabled={saving}
-          className="btn-3d-cyan w-full disabled:opacity-50"
+          className="btn-3d-pink w-full disabled:opacity-50"
         >
           {saving ? 'Creating...' : 'Create Assignment'}
         </button>

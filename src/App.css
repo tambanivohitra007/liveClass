@@ -216,6 +216,41 @@
   transform: none;
 }
 
+.btn-3d-blue {
+  border-radius: 1000px;
+  background: #3B82F6;
+  color: white;
+  font-weight: 800;
+  font-family: 'Acme', sans-serif;
+  border: 2px solid #60A5FA;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 5px 0 0 #1D4ED8,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-blue:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 7px 0 0 #1D4ED8,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.btn-3d-blue:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 0 #1D4ED8,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.btn-3d-blue:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-3d-purple {
   border-radius: 1000px;
   background: #701EA8;
@@ -281,6 +316,146 @@
     inset 0 1px 0 rgba(255,255,255,0.32);
 }
 .btn-3d-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-3d-orange {
+  border-radius: 1000px;
+  background: #FB923C;
+  color: white;
+  font-weight: 800;
+  font-family: 'Acme', sans-serif;
+  border: 2px solid #FDBA74;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 5px 0 0 #C2410C,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-orange:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 7px 0 0 #C2410C,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.btn-3d-orange:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 0 #C2410C,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.btn-3d-orange:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-3d-pink {
+  border-radius: 1000px;
+  background: #F472B6;
+  color: white;
+  font-weight: 800;
+  font-family: 'Acme', sans-serif;
+  border: 2px solid #FBCFE8;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 5px 0 0 #BE185D,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-pink:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 7px 0 0 #BE185D,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.btn-3d-pink:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 0 #BE185D,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.btn-3d-pink:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-3d-emerald {
+  border-radius: 1000px;
+  background: #34D399;
+  color: white;
+  font-weight: 800;
+  font-family: 'Acme', sans-serif;
+  border: 2px solid #6EE7B7;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 5px 0 0 #059669,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-emerald:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 7px 0 0 #059669,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.btn-3d-emerald:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 0 #059669,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.btn-3d-emerald:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-3d-rose {
+  border-radius: 1000px;
+  background: #FB7185;
+  color: white;
+  font-weight: 800;
+  font-family: 'Acme', sans-serif;
+  border: 2px solid #FECDD3;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow:
+    0 5px 0 0 #BE123C,
+    0 5px 0 2px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-3d-rose:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 7px 0 0 #BE123C,
+    0 7px 0 2px rgba(15, 23, 42, 0.26),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.btn-3d-rose:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 0 #BE123C,
+    0 2px 0 2px rgba(15, 23, 42, 0.2),
+    inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.btn-3d-rose:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;

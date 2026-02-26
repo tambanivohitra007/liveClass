@@ -285,7 +285,7 @@ export default function JoinGame() {
                 type="button"
                 onClick={handleRejoin}
                 disabled={joining}
-                className="btn-3d-cyan w-full text-lg disabled:opacity-40"
+                className="btn-3d-purple w-full text-lg disabled:opacity-40"
               >
                 {joining ? 'Rejoining...' : 'Rejoin Game'}
               </button>
@@ -319,7 +319,7 @@ export default function JoinGame() {
               <button
                 type="submit"
                 disabled={pin.length < 4}
-                className="btn-3d-cyan w-full mt-5 text-lg disabled:opacity-40"
+                className="btn-3d-purple w-full mt-5 text-lg disabled:opacity-40"
               >
                 Next
               </button>
