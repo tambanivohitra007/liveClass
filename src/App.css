@@ -871,13 +871,19 @@
 
   .animate-spin {
     animation: spin 1s linear infinite !important;
+    animation-duration: 1s !important;
+    animation-iteration-count: infinite !important;
   }
 
   .animate-shimmer {
     animation: shimmer 1.5s ease-in-out infinite !important;
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
   }
 
   .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+    animation-duration: 2s !important;
+    animation-iteration-count: infinite !important;
   }
 }

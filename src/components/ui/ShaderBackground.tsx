@@ -159,17 +159,25 @@ function ShaderPlane() {
   const meshRef = useRef<THREE.Mesh>(null!);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const materialRef = useRef<any>(null!);
+  const geoRef = useRef<THREE.PlaneGeometry>(null!);
 
   useFrame((state) => {
     if (!materialRef.current) return;
     materialRef.current.iTime = state.clock.elapsedTime;
     const { width, height } = state.size;
     materialRef.current.iResolution.set(width, height);
+
+    // Scale plane to fill the viewport exactly
+    const fov = (state.camera as THREE.PerspectiveCamera).fov;
+    const dist = state.camera.position.z;
+    const vHeight = 2 * Math.tan((fov * Math.PI) / 360) * dist;
+    const vWidth = vHeight * (width / height);
+    meshRef.current.scale.set(vWidth, vHeight, 1);
   });
 
   return (
-    <mesh ref={meshRef} position={[0, -0.75, -0.5]}>
-      <planeGeometry args={[4, 4]} />
+    <mesh ref={meshRef} position={[0, 0, 0]}>
+      <planeGeometry ref={geoRef} args={[1, 1]} />
       <cPPNShaderMaterial ref={materialRef} side={THREE.DoubleSide} />
     </mesh>
   );
@@ -188,7 +196,7 @@ export default function ShaderBackground() {
 
   return (
     <div
-      className="absolute inset-0 -z-10 w-full h-full transition-opacity duration-1000"
+      className="absolute inset-0 z-0 w-full h-full transition-opacity duration-1000"
       style={{ opacity: visible ? 1 : 0 }}
       aria-hidden
     >
@@ -200,9 +208,9 @@ export default function ShaderBackground() {
       >
         <ShaderPlane />
       </Canvas>
-      {/* Brand-tinted overlay for text readability */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#1A3263]/70 via-[#B94458]/30 to-[#1A3263]/60" />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+      {/* Subtle overlay for text readability */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#1A3263]/40 via-transparent to-[#1A3263]/30" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
     </div>
   );
 }
