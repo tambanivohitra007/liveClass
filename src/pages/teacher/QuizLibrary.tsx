@@ -10,9 +10,8 @@ import { SkeletonCard } from '../../components/Skeleton';
 import AiGenerateModal from '../../components/AiGenerateModal';
 import WaveBackground from '../../components/ui/WaveBackground';
 import {
-  Trash2, Search, HelpCircle, Play, Plus,
+  Trash2, Search, Play, Plus,
   Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, Printer,
-  LayoutGrid, List, Table2,
 } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
@@ -83,14 +82,6 @@ export default function QuizLibrary() {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [viewMode, setViewMode] = useState<'card' | 'list' | 'table'>(
-    () => (localStorage.getItem('dashboard_viewMode') as 'card' | 'list' | 'table') || 'card'
-  );
-
-  const changeViewMode = (mode: 'card' | 'list' | 'table') => {
-    setViewMode(mode);
-    localStorage.setItem('dashboard_viewMode', mode);
-  };
 
   // Close menu on outside click
   useEffect(() => {
@@ -443,43 +434,20 @@ export default function QuizLibrary() {
           </div>
         </div>
 
-        {/* Search Bar + View Toggle */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative group flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-white/30 group-focus-within:text-brand transition-colors" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search quizzes, topics, or folders..."
-              className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-900 dark:text-white"
-            />
-          </div>
-          {/* View toggle */}
-          <div className="flex items-center self-end sm:self-auto bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-1 shrink-0">
-            {([
-              { mode: 'card' as const, icon: LayoutGrid, label: 'Card view' },
-              { mode: 'list' as const, icon: List, label: 'List view' },
-              { mode: 'table' as const, icon: Table2, label: 'Table view' },
-            ]).map(({ mode, icon: Icon, label }) => (
-              <button
-                key={mode}
-                onClick={() => changeViewMode(mode)}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === mode
-                    ? 'bg-brand text-white shadow-sm'
-                    : 'text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60'
-                }`}
-                title={label}
-              >
-                <Icon className="w-4 h-4" />
-              </button>
-            ))}
-          </div>
+        {/* Search Bar */}
+        <div className="relative group mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 dark:text-white/30 group-focus-within:text-brand transition-colors" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search quizzes..."
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all text-sm text-gray-900 dark:text-white"
+          />
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-5 no-scrollbar">
           <button
             onClick={() => setSelectedFilter('all')}
             className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap spring-transition ${
@@ -548,193 +516,128 @@ export default function QuizLibrary() {
             <EmptySearch />
             <p className="text-gray-500 dark:text-white/50 mt-4 text-sm">No quizzes match "{searchQuery || collections.find(c => c.id === selectedFilter)?.name}"</p>
           </div>
-        ) : viewMode === 'card' ? (
-          /* Card View */
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 stagger-children">
-            {filtered.map((quiz) => {
-              const collNameVal = getCollectionName(quiz);
-              return (
-                <div
-                  key={quiz.id}
-                  className={`group relative card-night card-night-hover flex flex-row sm:flex-col animate-fade-in ${menuOpenId === quiz.id ? 'z-50' : 'z-0'}`}
-                >
-                  {/* Banner */}
+        ) : (
+          <div className="space-y-2 stagger-children">
+            {/* Mobile: simple list — Desktop: card grid */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {filtered.map((quiz) => {
+                const collNameVal = getCollectionName(quiz);
+                return (
                   <div
-                    className={`w-24 h-auto sm:w-full sm:h-32 ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} relative overflow-hidden rounded-l-2xl sm:rounded-l-none sm:rounded-t-2xl shrink-0 cursor-pointer`}
-                    onClick={() => navigate(`/quiz/${quiz.id}`)}
+                    key={quiz.id}
+                    className={`group relative card-night card-night-hover flex flex-col animate-fade-in ${menuOpenId === quiz.id ? 'z-50' : 'z-0'}`}
                   >
-                    {quiz.coverImageUrl ? (
-                      <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <>
-                        <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
-                        <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
-                        <div className="absolute left-1/2 -top-8 w-32 h-32 rounded-full bg-white/5" />
-                      </>
-                    )}
-                    {collNameVal && (
-                      <div className="hidden sm:block absolute top-3 left-3 px-2.5 py-1 bg-black/40 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white uppercase tracking-wider">
-                        {collNameVal}
-                      </div>
-                    )}
-                    <div className="hidden sm:flex absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-3">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleHostLive(quiz.id); }}
-                        className="p-3 bg-brand text-white rounded-full hover:scale-110 transition-transform shadow-lg"
-                        title="Host Live"
-                      >
-                        <Play className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); navigate(`/quiz/${quiz.id}`); }}
-                        className="p-3 bg-white/10 text-white rounded-full hover:scale-110 transition-transform shadow-lg"
-                        title="Edit"
-                      >
-                        <Pencil className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-3 sm:p-5 flex-1 flex flex-col min-w-0">
-                    <div className="flex justify-between items-start mb-1 sm:mb-2">
-                      <h3
-                        className="font-bold text-sm sm:text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1 cursor-pointer"
-                        onClick={() => navigate(`/quiz/${quiz.id}`)}
-                      >
-                        {quiz.title || 'Untitled Quiz'}
-                      </h3>
-                      {renderMoreMenu(quiz)}
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400 dark:text-white/40 mb-2 sm:mb-5">
-                      <span className="flex items-center gap-1">
-                        <HelpCircle className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                        {quiz.questionCount ?? '?'} Qs
-                      </span>
-                      <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
-                      <span>{formatDate(quiz.updatedAt)}</span>
-                      {collNameVal && (
-                        <span className="sm:hidden text-[10px] text-gray-400 dark:text-white/40 truncate">
-                          {collNameVal}
-                        </span>
+                    <div
+                      className={`w-full h-32 ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} relative overflow-hidden rounded-t-2xl shrink-0 cursor-pointer`}
+                      onClick={() => navigate(`/quiz/${quiz.id}`)}
+                    >
+                      {quiz.coverImageUrl ? (
+                        <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
+                          <div className="absolute right-10 bottom-1 w-16 h-16 rounded-full bg-white/5" />
+                        </>
                       )}
+                      {collNameVal && (
+                        <div className="absolute top-3 left-3 px-2.5 py-1 bg-black/40 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white uppercase tracking-wider">
+                          {collNameVal}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleHostLive(quiz.id); }}
+                          className="p-3 bg-brand text-white rounded-full hover:scale-110 transition-transform shadow-lg"
+                          title="Host Live"
+                        >
+                          <Play className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/quiz/${quiz.id}`); }}
+                          className="p-3 bg-white/10 text-white rounded-full hover:scale-110 transition-transform shadow-lg"
+                          title="Edit"
+                        >
+                          <Pencil className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 mt-auto">
+                    <div className="p-5 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3
+                          className="font-bold text-base leading-tight text-gray-900 dark:text-white group-hover:text-brand transition-colors line-clamp-1 cursor-pointer"
+                          onClick={() => navigate(`/quiz/${quiz.id}`)}
+                        >
+                          {quiz.title || 'Untitled Quiz'}
+                        </h3>
+                        {renderMoreMenu(quiz)}
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-gray-400 dark:text-white/40 mb-5">
+                        <span>{quiz.questionCount ?? '?'} Qs</span>
+                        <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-white/20" />
+                        <span>{formatDate(quiz.updatedAt)}</span>
+                      </div>
                       <button
                         onClick={() => handleHostLive(quiz.id)}
-                        className="btn-3d-cyan btn-3d-sm flex-1 text-xs sm:text-sm"
+                        className="mt-auto w-full py-2 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand/90 transition-colors"
                       >
                         Host Live
                       </button>
-                      <button
-                        onClick={() => navigate(`/quiz/${quiz.id}`)}
-                        className="sm:hidden btn-3d-ghost btn-3d-sm text-xs px-3"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
                     </div>
                   </div>
+                );
+              })}
+              <button
+                onClick={() => navigate('/quiz/new')}
+                className="min-h-70 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all group/create"
+              >
+                <div className="w-14 h-14 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 dark:text-white/30 group-hover/create:bg-brand group-hover/create:text-white transition-all mb-4 hover-jelly">
+                  <Plus className="w-7 h-7" />
                 </div>
-              );
-            })}
-
-            {/* Create Placeholder Card */}
-            <button
-              onClick={() => navigate('/quiz/new')}
-              className="min-h-24 sm:min-h-70 flex flex-row sm:flex-col items-center justify-center gap-3 sm:gap-0 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all duration-200 group/create p-4 sm:p-0"
-            >
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-300 dark:text-white/30 group-hover/create:bg-brand group-hover/create:text-white transition-all sm:mb-4 hover-jelly shrink-0">
-                <Plus className="w-5 h-5 sm:w-7 sm:h-7" />
-              </div>
-              <span className="font-bold text-gray-400 dark:text-white/40 group-hover/create:text-brand transition-colors text-sm">New Quiz</span>
-            </button>
-          </div>
-        ) : viewMode === 'list' ? (
-          /* List View */
-          <div className="space-y-2 stagger-children">
-            {filtered.map((quiz) => {
-              const collNameVal = getCollectionName(quiz);
-              return (
-                <div
-                  key={quiz.id}
-                  className={`card-night card-night-hover flex items-center gap-4 p-4 animate-fade-in group ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
-                >
-                  {/* Color indicator */}
-                  <div className={`w-2 h-10 rounded-full ${getCardGradient(quiz)} shrink-0`} />
-                  {/* Title + collection */}
-                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/quiz/${quiz.id}`)}>
-                    <h3 className="font-bold text-sm text-gray-900 dark:text-white truncate group-hover:text-brand transition-colors">
-                      {quiz.title || 'Untitled Quiz'}
-                    </h3>
-                    {collNameVal && <span className="text-[10px] text-gray-400 dark:text-white/40">{collNameVal}</span>}
-                  </div>
-                  {/* Question count */}
-                  <div className="hidden sm:flex items-center gap-1 text-sm text-gray-400 dark:text-white/40 shrink-0">
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    {quiz.questionCount ?? '?'} Qs
-                  </div>
-                  {/* Date */}
-                  <span className="hidden md:block text-sm text-gray-400 dark:text-white/40 shrink-0 w-28 text-right">
-                    {formatDate(quiz.updatedAt)}
-                  </span>
-                  {/* Actions */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button onClick={() => handleHostLive(quiz.id)} className="btn-3d-cyan btn-3d-sm text-xs">
-                      Host
-                    </button>
-                    {renderMoreMenu(quiz)}
-                  </div>
-                </div>
-              );
-            })}
-            {/* New Quiz row */}
-            <button
-              onClick={() => navigate('/quiz/new')}
-              className="w-full p-4 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl hover:border-brand hover:bg-brand/5 transition-all text-gray-400 dark:text-white/40 hover:text-brand font-bold text-sm"
-            >
-              <Plus className="w-4 h-4" /> New Quiz
-            </button>
-          </div>
-        ) : (
-          /* Table View */
-          <div className="card-night overflow-hidden">
-            {/* Header */}
-            <div className="grid grid-cols-[1fr_80px_auto] sm:grid-cols-[1fr_80px_120px_auto] md:grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-200 dark:border-white/10 text-[11px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider">
-              <span>Title</span>
-              <span className="text-center">Questions</span>
-              <span className="hidden md:block">Collection</span>
-              <span className="hidden sm:block">Updated</span>
-              <span className="text-right">Actions</span>
+                <span className="font-bold text-gray-400 dark:text-white/40 group-hover/create:text-brand transition-colors text-sm">New Quiz</span>
+              </button>
             </div>
-            {/* Rows */}
-            {filtered.map((quiz) => {
-              const collNameVal = getCollectionName(quiz);
-              return (
-                <div
-                  key={quiz.id}
-                  className={`grid grid-cols-[1fr_80px_auto] sm:grid-cols-[1fr_80px_120px_auto] md:grid-cols-[1fr_80px_120px_120px_auto] gap-4 px-5 py-3 border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors items-center group cursor-pointer ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
-                  onClick={() => navigate(`/quiz/${quiz.id}`)}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`w-2 h-2 rounded-full ${getCardGradient(quiz)} shrink-0`} />
-                    <span className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-brand transition-colors">
-                      {quiz.title || 'Untitled Quiz'}
-                    </span>
+
+            {/* Mobile: simple list rows */}
+            <div className="sm:hidden space-y-2">
+              {filtered.map((quiz) => {
+                const collNameVal = getCollectionName(quiz);
+                return (
+                  <div
+                    key={quiz.id}
+                    onClick={() => navigate(`/quiz/${quiz.id}`)}
+                    className={`flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 active:bg-gray-100 dark:active:bg-white/10 cursor-pointer ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} shrink-0 overflow-hidden`}>
+                      {quiz.coverImageUrl && <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                        {quiz.title || 'Untitled Quiz'}
+                      </h3>
+                      <p className="text-xs text-gray-400 dark:text-white/40 mt-0.5">
+                        {quiz.questionCount ?? '?'} Qs · {formatDate(quiz.updatedAt)}{collNameVal ? ` · ${collNameVal}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleHostLive(quiz.id)}
+                        className="p-2 rounded-lg text-brand hover:bg-brand/10 transition-colors"
+                        title="Host Live"
+                      >
+                        <Play className="w-4 h-4" />
+                      </button>
+                      {renderMoreMenu(quiz)}
+                    </div>
                   </div>
-                  <span className="text-sm text-gray-400 dark:text-white/50 text-center">{quiz.questionCount ?? '?'}</span>
-                  <span className="hidden md:block text-xs text-gray-400 dark:text-white/40 truncate">{collNameVal || '\u2014'}</span>
-                  <span className="hidden sm:block text-xs text-gray-400 dark:text-white/40">{formatDate(quiz.updatedAt)}</span>
-                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => handleHostLive(quiz.id)} className="p-1.5 rounded-lg text-brand hover:bg-brand/10 transition-colors" title="Host Live">
-                      <Play className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => navigate(`/quiz/${quiz.id}`)} className="p-1.5 rounded-lg text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors" title="Edit">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    {renderMoreMenu(quiz)}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+              <button
+                onClick={() => navigate('/quiz/new')}
+                className="w-full p-3 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl hover:border-brand hover:bg-brand/5 transition-all text-gray-400 dark:text-white/40 hover:text-brand font-semibold text-sm"
+              >
+                <Plus className="w-4 h-4" /> New Quiz
+              </button>
+            </div>
           </div>
         )}
 

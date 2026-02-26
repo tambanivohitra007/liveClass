@@ -146,7 +146,7 @@ function AppContent() {
   return (
     <div className="flex min-h-screen">
       {showSidebar && <Sidebar />}
-      <div className={`flex flex-col flex-1 min-h-screen transition-[margin-left] duration-300 ${
+      <div className={`flex flex-col flex-1 min-w-0 min-h-screen overflow-x-hidden transition-[margin-left] duration-300 ${
         showSidebar ? (collapsed ? 'md:ml-[68px]' : 'md:ml-64') : ''
       }`}>
         {!hideNavbar && <Navbar />}
