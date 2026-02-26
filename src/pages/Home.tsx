@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import WaveBackground from '../components/ui/WaveBackground';
+import boy1 from '../assets/optimized/boy_1.png';
 import boy2 from '../assets/optimized/boy_2.png';
 import boy3 from '../assets/optimized/boy_3.png';
 
@@ -154,16 +155,18 @@ export default function Home() {
       <section className="py-24 relative overflow-hidden bg-surface">
         <WaveBackground variant="dark" position="bottom" />
         <div className="absolute inset-0 pattern-stars pointer-events-none" />
-        <img
-          src={boy3}
-          alt="Student learning"
-          className="hidden md:block absolute -right-12 md:-bottom-4 lg:-right-14 lg:-bottom-10 w-[18rem] h-[18rem] lg:w-[28rem] lg:h-[28rem] xl:w-[32rem] xl:h-[32rem] object-contain pointer-events-none z-0"
-        />
         <div className="max-w-6xl mx-auto px-4 relative z-10">
           {/* Section header */}
           <div className="text-center space-y-4 mb-20">
             <div className="text-lg text-brand font-bold">
               Simple as 1-2-3
+            </div>
+            <div className="mx-auto w-40 h-20 sm:w-52 sm:h-26 md:w-64 md:h-32 lg:w-72 lg:h-36 overflow-hidden pointer-events-none">
+              <img
+                src={boy3}
+                alt="Student learning"
+                className="w-40 h-40 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-72 lg:h-72 object-contain mx-auto"
+              />
             </div>
             <div className="relative inline-block">
               <h2 className="text-3xl md:text-5xl text-gray-900 dark:text-white">
@@ -209,16 +212,21 @@ export default function Home() {
         <div className="absolute bottom-10 left-20 w-80 h-80 bg-brand/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-3xl mx-auto px-4 text-center">
-          <div className="card-night px-8 py-14 md:px-16 md:py-16">
-            <div className="relative inline-block mb-6">
+          <div className="relative overflow-hidden card-night px-8 py-14 md:px-16 md:py-16">
+            <img
+              src={boy1}
+              alt="Student avatar"
+              className="absolute -left-16 sm:-left-20 md:-left-24 top-0 sm:-top-2 w-64 h-64 sm:w-80 sm:h-80 md:w-[24rem] md:h-[24rem] object-contain opacity-35 dark:opacity-50 pointer-events-none z-0"
+            />
+            <div className="relative z-10 inline-block mb-6">
               <h2 className="text-3xl md:text-5xl text-gray-900 dark:text-white">
                 Ready to transform your classroom?
               </h2>
             </div>
-            <p className="text-lg text-gray-600 dark:text-white/70 mb-10 max-w-xl mx-auto">
+            <p className="relative z-10 text-lg text-gray-600 dark:text-white/70 mb-10 max-w-xl mx-auto">
               Join thousands of educators using LiveClass to make learning interactive, measurable, and fun.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="relative z-10 flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate(firebaseUser ? dashboardPath : '/signup')}
                 className="btn-3d-gold btn-3d-lg group flex items-center justify-center gap-2"
