@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
+exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateRubric = exports.generateQuestions = exports.reportViolation = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const cheerio = __importStar(require("cheerio"));
@@ -1340,6 +1340,130 @@ ${description ? `Context: ${description}` : ""}`;
             throw err;
         console.error("AI generation failed:", err);
         throw new https_1.HttpsError("internal", "AI generation failed");
+    }
+});
+// --- AI Rubric Generator (Bloom's Taxonomy) ---
+exports.generateRubric = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "1GiB", secrets: [geminiApiKey] }, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { topic, assessmentType = "Essay", criteriaCount: rawCount = 6, gradeLevel, } = request.data;
+    if (!topic || topic.trim().length < 3) {
+        throw new https_1.HttpsError("invalid-argument", "Topic must be at least 3 characters");
+    }
+    const criteriaCount = Math.max(3, Math.min(8, rawCount));
+    const apiKey = geminiApiKey.value();
+    // Fallback: no API key — return template criteria
+    if (!apiKey) {
+        const bloomLevels = [
+            "Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create",
+        ];
+        const fallbackCriteria = Array.from({ length: criteriaCount }, (_, i) => {
+            const bloom = bloomLevels[i % bloomLevels.length];
+            return {
+                id: crypto.randomUUID(),
+                name: `${bloom}: ${topic}`,
+                type: "level",
+                weight: 1,
+                order: i,
+                maxScore: 4,
+                levels: [
+                    { label: `Excellent ${bloom.toLowerCase()} demonstrated`, score: 4 },
+                    { label: `Good ${bloom.toLowerCase()} demonstrated`, score: 3 },
+                    { label: `Developing ${bloom.toLowerCase()}`, score: 2 },
+                    { label: `Beginning ${bloom.toLowerCase()}`, score: 1 },
+                ],
+            };
+        });
+        return {
+            name: `${topic} Rubric`,
+            description: `Assessment rubric for ${topic} (${assessmentType})`,
+            criteria: fallbackCriteria,
+            note: "Generated with template criteria (no AI key configured). Edit the descriptors to be more specific.",
+        };
+    }
+    const gradeLevelHint = gradeLevel ? `\nTarget grade level: ${gradeLevel}.` : "";
+    const prompt = `You are an expert educator. Generate a scoring rubric for the following:
+Topic: ${topic}
+Assessment type: ${assessmentType}
+Number of criteria: ${criteriaCount}${gradeLevelHint}
+
+INSTRUCTIONS:
+- Align each criterion with a Bloom's Taxonomy cognitive level (Remember, Understand, Apply, Analyze, Evaluate, Create).
+- If ${criteriaCount} <= 6, pick the most relevant Bloom's levels for this "${assessmentType}" assessment.
+- If ${criteriaCount} > 6, add specialized criteria that span the taxonomy.
+- Each criterion must have exactly 4 performance levels scored 4, 3, 2, 1.
+- Level labels must be MEASURABLE and SPECIFIC performance descriptors (not generic like "good work").
+  Example good label: "Accurately identifies and explains all key photosynthesis stages with examples"
+  Example bad label: "Excellent work on content"
+- The 4 levels should be named contextually (e.g. "Exemplary", "Proficient", "Developing", "Beginning" or similar).
+
+Return ONLY valid JSON (no markdown fences, no commentary) in this exact format:
+{
+  "name": "Rubric name",
+  "description": "Brief rubric description",
+  "criteria": [
+    {
+      "name": "Criterion name (include Bloom level)",
+      "bloomLevel": "Remember|Understand|Apply|Analyze|Evaluate|Create",
+      "weight": 1,
+      "levels": [
+        { "label": "Specific measurable descriptor for score 4", "score": 4 },
+        { "label": "Specific measurable descriptor for score 3", "score": 3 },
+        { "label": "Specific measurable descriptor for score 2", "score": 2 },
+        { "label": "Specific measurable descriptor for score 1", "score": 1 }
+      ]
+    }
+  ]
+}`;
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+            }),
+        });
+        if (!res.ok) {
+            const errBody = await res.text();
+            console.error("Gemini API error:", errBody);
+            throw new https_1.HttpsError("internal", "AI service returned an error");
+        }
+        const json = await res.json();
+        const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        // Strip markdown fences if present
+        const cleaned = rawText.replace(/```json\s*/gi, "").replace(/```\s*/gi, "");
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            console.error("No JSON found in AI response:", rawText);
+            throw new https_1.HttpsError("internal", "Failed to parse AI response");
+        }
+        const parsed = JSON.parse(jsonMatch[0]);
+        const criteria = (parsed.criteria || []).map((c, index) => {
+            const levels = c.levels || [];
+            const maxScore = levels.length > 0 ? Math.max(...levels.map((l) => l.score)) : 4;
+            return {
+                id: crypto.randomUUID(),
+                name: c.name || `Criterion ${index + 1}`,
+                type: "level",
+                weight: c.weight || 1,
+                order: index,
+                maxScore,
+                levels,
+            };
+        });
+        return {
+            name: parsed.name || `${topic} Rubric`,
+            description: parsed.description || "",
+            criteria,
+        };
+    }
+    catch (err) {
+        if (err instanceof https_1.HttpsError)
+            throw err;
+        console.error("AI rubric generation failed:", err);
+        throw new https_1.HttpsError("internal", "AI rubric generation failed");
     }
 });
 // --- AI Evaluation ---

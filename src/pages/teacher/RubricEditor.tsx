@@ -9,9 +9,11 @@ import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Copy, Save,
-  ToggleLeft, ToggleRight, ChevronDown, ChevronLeft, ChevronRight,
+  ToggleLeft, ToggleRight, ChevronDown, ChevronLeft, ChevronRight, Sparkles,
 } from 'lucide-react';
 import WaveBackground from '../../components/ui/WaveBackground';
+import AiRubricModal from '../../components/AiRubricModal';
+import { confirmAction } from '../../lib/swal';
 import type { Rubric, Criterion, CriterionType, CriterionLevel } from '../../types/models';
 
 const emptyCriterion = (order: number): Criterion => ({
@@ -54,6 +56,7 @@ export default function RubricEditor() {
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [mobilePanel, setMobilePanel] = useState<'list' | 'editor'>('list');
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const selectCriterion = (index: number) => {
     setSelectedIndex(index);
@@ -330,6 +333,23 @@ export default function RubricEditor() {
     }
   };
 
+  const handleAiGenerated = async (result: { name: string; description: string; criteria: Criterion[] }) => {
+    const hasContent = criteria.some(c => c.name.trim() !== '');
+    if (hasContent) {
+      const { isConfirmed } = await confirmAction(
+        'Replace existing criteria?',
+        `This will replace your current ${criteria.length} criteria with ${result.criteria.length} AI-generated ones.`,
+        'Replace',
+      );
+      if (!isConfirmed) return;
+    }
+    setName(result.name);
+    setDescription(result.description);
+    setCriteria(result.criteria);
+    setSelectedIndex(0);
+    setMobilePanel('list');
+  };
+
   const selectedCriterion = criteria[selectedIndex] as Criterion | undefined;
 
   if (loading) {
@@ -388,6 +408,15 @@ export default function RubricEditor() {
               <span className="hidden md:inline">Clone</span>
             </button>
           )}
+
+          {/* AI Generate */}
+          <button
+            onClick={() => setShowAiModal(true)}
+            className="btn-3d-purple btn-3d-sm flex items-center gap-1.5"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden md:inline">AI Generate</span>
+          </button>
 
           {/* Save */}
           <button
@@ -724,6 +753,12 @@ export default function RubricEditor() {
           )}
         </main>
       </div>
+
+      <AiRubricModal
+        open={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        onGenerated={handleAiGenerated}
+      />
     </div>
   );
 }
