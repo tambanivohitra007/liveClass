@@ -435,7 +435,7 @@ export default function QuizLibrary() {
             </button>
             <button
               onClick={() => navigate('/quiz/new')}
-              className="btn-3d-purple btn-3d-sm flex items-center gap-2 text-sm"
+              className="btn-3d-cyan btn-3d-sm flex items-center gap-2 text-sm"
             >
               <Plus className="w-4 h-4" />
               New Quiz
@@ -538,7 +538,7 @@ export default function QuizLibrary() {
             <p className="text-gray-500 dark:text-white/50 mb-6 text-sm">Create your first quiz to get started</p>
             <button
               onClick={() => navigate('/quiz/new')}
-              className="btn-3d-purple"
+              className="btn-3d-cyan"
             >
               Create your first quiz
             </button>
@@ -621,7 +621,7 @@ export default function QuizLibrary() {
                     <div className="flex gap-2 mt-auto">
                       <button
                         onClick={() => handleHostLive(quiz.id)}
-                        className="btn-3d-purple btn-3d-sm flex-1 text-xs sm:text-sm"
+                        className="btn-3d-cyan btn-3d-sm flex-1 text-xs sm:text-sm"
                       >
                         Host Live
                       </button>
@@ -678,7 +678,7 @@ export default function QuizLibrary() {
                   </span>
                   {/* Actions */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <button onClick={() => handleHostLive(quiz.id)} className="btn-3d-purple btn-3d-sm text-xs">
+                    <button onClick={() => handleHostLive(quiz.id)} className="btn-3d-cyan btn-3d-sm text-xs">
                       Host
                     </button>
                     {renderMoreMenu(quiz)}
@@ -803,7 +803,7 @@ export default function QuizLibrary() {
                   <button
                     onClick={handleSaveColl}
                     disabled={savingColl || !collName.trim()}
-                    className="btn-3d-purple flex-1 disabled:opacity-50"
+                    className="btn-3d-cyan flex-1 disabled:opacity-50"
                   >
                     {savingColl ? 'Saving...' : editingColl ? 'Update' : 'Create'}
                   </button>
