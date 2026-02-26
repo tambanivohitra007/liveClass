@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import WaveBackground from '../components/ui/WaveBackground';
-import boy1 from '../assets/optimized/boy_1.png';
 import boy2 from '../assets/optimized/boy_2.png';
 import boy3 from '../assets/optimized/boy_3.png';
 
@@ -45,7 +44,7 @@ export default function Home() {
         <img
           src={boy2}
           alt="Student learning"
-          className="hidden xl:block absolute right-8 bottom-24 w-36 h-36 rounded-3xl object-cover border-2 border-white/25 shadow-xl opacity-70 dark:opacity-55 mix-blend-multiply dark:mix-blend-screen"
+          className="hidden md:block absolute -left-14 md:top-[48%] lg:top-[42%] -translate-y-1/2 w-[18rem] h-[18rem] lg:w-[28rem] lg:h-[28rem] xl:w-[32rem] xl:h-[32rem] object-contain pointer-events-none z-0"
         />
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -118,18 +117,6 @@ export default function Home() {
               Works on any device.
             </p>
 
-            <div className="flex items-center gap-3">
-              {[boy1, boy2, boy3].map((photo, index) => (
-                <img
-                  key={photo}
-                  src={photo}
-                  alt={`Student ${index + 1}`}
-                  className={`w-14 h-14 rounded-2xl object-cover border-2 border-white/30 shadow-md opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen ${index === 1 ? '-mt-2' : ''}`}
-                />
-              ))}
-              <p className="text-xs font-semibold text-gray-500 dark:text-white/60">Loved by curious learners</p>
-            </div>
-
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <button
                 onClick={() => navigate(firebaseUser ? dashboardPath : '/signup')}
@@ -164,6 +151,11 @@ export default function Home() {
       <section className="py-24 relative overflow-hidden bg-surface">
         <WaveBackground variant="dark" position="bottom" />
         <div className="absolute inset-0 pattern-stars pointer-events-none" />
+        <img
+          src={boy3}
+          alt="Student learning"
+          className="hidden md:block absolute -right-12 md:-bottom-4 lg:-right-14 lg:-bottom-10 w-[18rem] h-[18rem] lg:w-[28rem] lg:h-[28rem] xl:w-[32rem] xl:h-[32rem] object-contain pointer-events-none z-0"
+        />
         <div className="max-w-6xl mx-auto px-4 relative z-10">
           {/* Section header */}
           <div className="text-center space-y-4 mb-20">
