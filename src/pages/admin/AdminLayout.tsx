@@ -38,8 +38,8 @@ export default function AdminLayout() {
         </div>
       </div>
 
-      {/* Nav Tabs — segmented control */}
-      <div className="flex bg-gray-100 dark:bg-white/5 rounded-xl p-1 mb-6">
+      {/* Nav Tabs */}
+      <div className="flex border-b border-white/10 mb-6">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const active = isTabActive(tab);
@@ -48,14 +48,17 @@ export default function AdminLayout() {
               key={tab.path}
               to={tab.path}
               title={tab.label}
-              className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 py-2 rounded-lg text-sm font-medium transition-all no-underline whitespace-nowrap ${
+              className={`relative flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-2 sm:px-4 py-2.5 text-sm font-medium transition-all no-underline whitespace-nowrap ${
                 active
-                  ? 'bg-brand text-white shadow-sm'
-                  : 'text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white'
+                  ? 'text-brand'
+                  : 'text-white/50 hover:text-white/80'
               }`}
             >
               <Icon className="w-4 h-4" />
-              <span className="text-[10px] sm:text-sm">{tab.label}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
+              {active && (
+                <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand rounded-full" />
+              )}
             </Link>
           );
         })}
