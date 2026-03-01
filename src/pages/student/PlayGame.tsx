@@ -509,7 +509,7 @@ export default function PlayGame() {
   if (!session) {
     return (
       <div className="min-h-dvh flex items-center justify-center" style={GAME_BG}>
-        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" role="status" aria-label="Loading session" />
       </div>
     );
   }
@@ -549,8 +549,8 @@ export default function PlayGame() {
                 <Pencil className="w-3.5 h-3.5" /> Edit Profile
               </button>
 
-              <div>
-                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
+              <div role="status">
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" aria-hidden="true" />
                 <p className="text-white/50">Waiting for the host to start...</p>
               </div>
             </>
@@ -660,9 +660,9 @@ export default function PlayGame() {
       <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         <Confetti active={feedback.correct} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
-        <div className="max-w-md mx-auto text-center py-8 sm:py-12">
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12" aria-live="polite">
           <div className="animate-bounce-in">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-4" aria-hidden="true">
               {feedback.correct
                 ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
                 : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
@@ -729,10 +729,10 @@ export default function PlayGame() {
       <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         {!alreadySawFeedback && <Confetti active={feedback?.correct === true} />}
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
-        <div className="max-w-md mx-auto text-center py-8 sm:py-12">
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12" aria-live="polite">
           {feedback && (
             <div className={alreadySawFeedback ? '' : 'animate-bounce-in'}>
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-4" aria-hidden="true">
                 {feedback.correct
                   ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
                   : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
@@ -768,9 +768,9 @@ export default function PlayGame() {
       <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         <Confetti active={feedback.correct} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
-        <div className="max-w-md mx-auto text-center py-8 sm:py-12">
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12" aria-live="polite">
           <div className="animate-bounce-in">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-4" aria-hidden="true">
               {feedback.correct
                 ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
                 : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
@@ -805,7 +805,7 @@ export default function PlayGame() {
   if (!currentQuestion) {
     return (
       <div className="min-h-dvh flex items-center justify-center" style={GAME_BG}>
-        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" role="status" aria-label="Loading question" />
       </div>
     );
   }
@@ -826,8 +826,8 @@ export default function PlayGame() {
         </div>
         <div className="flex flex-col items-center">
           {submitted ? (
-            <div className="w-20 h-20 flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-success/20 border-2 border-success flex items-center justify-center animate-bounce-in">
+            <div className="w-20 h-20 flex items-center justify-center" role="status" aria-label="Answer submitted">
+              <div className="w-12 h-12 rounded-full bg-success/20 border-2 border-success flex items-center justify-center animate-bounce-in" aria-hidden="true">
                 <svg className="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -857,7 +857,7 @@ export default function PlayGame() {
         <div className="text-center py-3 sm:py-6 animate-fade-in">
           <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">{currentQuestion.text}</h2>
           {currentQuestion.imageUrl && (
-            <img src={currentQuestion.imageUrl} alt="" className="max-h-28 sm:max-h-40 mx-auto mt-4 rounded-xl object-contain" />
+            <img src={currentQuestion.imageUrl} alt="Question image" className="max-h-28 sm:max-h-40 mx-auto mt-4 rounded-xl object-contain" />
           )}
           {currentQuestion.videoUrl && getYouTubeId(currentQuestion.videoUrl) && (
             <div className="mt-4 mx-auto w-full max-w-md aspect-video rounded-xl overflow-hidden">
@@ -898,6 +898,8 @@ export default function PlayGame() {
                       }
                     }}
                     disabled={submitted}
+                    aria-pressed={isSelected}
+                    aria-label={`Answer ${answerLabels[i % answerLabels.length]}: ${opt}`}
                     className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-4 min-h-14 select-none touch-manipulation transition-all ${
                       answerColors[i % answerColors.length]
                     } ${
@@ -1059,6 +1061,8 @@ export default function PlayGame() {
                 key={i}
                 onClick={() => { if (!submitted) { hapticLight(); setSelectedAnswer(opt); } }}
                 disabled={submitted}
+                aria-pressed={selectedAnswer === opt}
+                aria-label={`Option ${answerLabels[i % answerLabels.length]}: ${opt}`}
                 className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-4 min-h-14 select-none touch-manipulation transition-all ${
                   answerColors[i % answerColors.length]
                 } ${
@@ -1095,14 +1099,14 @@ export default function PlayGame() {
         )}
 
         {submitted && !feedback && !submitFailed && (
-          <div className="mt-4 py-4 text-center text-white/50 animate-fade-in">
-            <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-2" />
+          <div className="mt-4 py-4 text-center text-white/50 animate-fade-in" role="status">
+            <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-2" aria-hidden="true" />
             Waiting for results...
           </div>
         )}
 
         {submitFailed && (
-          <div className="mt-4 text-center animate-fade-in">
+          <div className="mt-4 text-center animate-fade-in" role="alert">
             <p className="text-danger font-bold mb-2">Failed to submit answer</p>
             <button
               onClick={submitAnswer}

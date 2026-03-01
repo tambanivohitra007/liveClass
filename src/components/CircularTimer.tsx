@@ -11,8 +11,13 @@ export default function CircularTimer({ timeLeft, totalTime }: CircularTimerProp
   const isUrgent = timeLeft <= 5;
 
   return (
-    <div className={`relative w-16 h-16 sm:w-20 sm:h-20 ${isUrgent ? 'animate-timer-pulse' : ''}`}>
-      <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+    <div
+      className={`relative w-16 h-16 sm:w-20 sm:h-20 ${isUrgent ? 'animate-timer-pulse' : ''}`}
+      role="timer"
+      aria-label={`${timeLeft} seconds remaining`}
+      aria-live={isUrgent ? 'assertive' : 'off'}
+    >
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
         {/* Background circle */}
         <circle
           cx="40" cy="40" r={radius}
@@ -33,7 +38,7 @@ export default function CircularTimer({ timeLeft, totalTime }: CircularTimerProp
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`text-xl sm:text-2xl font-black ${isUrgent ? 'text-danger' : 'text-white'}`}>
+        <span className={`text-xl sm:text-2xl font-black ${isUrgent ? 'text-danger' : 'text-white'}`} aria-hidden="true">
           {timeLeft}
         </span>
       </div>

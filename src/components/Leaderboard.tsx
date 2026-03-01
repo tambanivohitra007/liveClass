@@ -9,6 +9,12 @@ import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(Flip);
 
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 interface LeaderboardPlayer {
   playerId: string;
   nickname?: string;
@@ -236,7 +242,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
   const rest = displayEntries.slice(1);
 
   return (
-    <div className="animate-fade-in" ref={containerRef}>
+    <div className="animate-fade-in" ref={containerRef} role="region" aria-label="Leaderboard">
       {/* Header */}
       <div className="text-center mb-5">
         <h3 className="text-xl font-bold text-white mb-1">Current Standings</h3>
@@ -259,7 +265,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
       </div>
 
       {/* #1 Hero Card */}
-      <div className="mb-3" data-flip-id={leader.playerId} ref={heroRef}>
+      <div className="mb-3" data-flip-id={leader.playerId} ref={heroRef} aria-label={`1st place: ${leader.nickname || leader.playerId.slice(0, 8)}, ${leader.totalPoints} points`}>
         <div className={`relative bg-gradient-to-r from-brand via-warning to-brand p-[2px] rounded-2xl shadow-lg shadow-brand/25${isNewLeader ? ' new-leader-celebrate' : ''}`}>
           <div className="bg-surface-dark/90 backdrop-blur rounded-[14px] p-5 flex items-center justify-between">
             <div className="flex items-center gap-5">
@@ -299,7 +305,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
       </div>
 
       {/* Remaining Players */}
-      <div className="space-y-2">
+      <div className="space-y-2" role="list" aria-label="Player rankings">
         {rest.map((entry) => {
           const didOvertake = overtakers.has(entry.playerId);
           const delta = rankDeltas.get(entry.playerId);
@@ -308,6 +314,8 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
             <div
               key={entry.playerId}
               data-flip-id={entry.playerId}
+              role="listitem"
+              aria-label={`${ordinal(entry.rank)}: ${entry.nickname || entry.playerId.slice(0, 8)}, ${entry.totalPoints} points`}
               className={`bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-colors rounded-xl px-4 py-3 flex items-center justify-between${didOvertake ? ' leaderboard-overtake' : ''}`}
             >
               <div className="flex items-center gap-3">

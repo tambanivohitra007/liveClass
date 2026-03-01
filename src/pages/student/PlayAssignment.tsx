@@ -143,7 +143,7 @@ export default function PlayAssignment() {
   if (!assignment) {
     return (
       <div className="min-h-dvh bg-surface-dark flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" role="status" aria-label="Loading assignment" />
       </div>
     );
   }
@@ -189,7 +189,7 @@ export default function PlayAssignment() {
   if (questions.length === 0) {
     return (
       <div className="min-h-dvh bg-surface-dark flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" role="status" aria-label="Loading questions" />
       </div>
     );
   }
@@ -206,7 +206,7 @@ export default function PlayAssignment() {
           <span>Question {currentIndex + 1} of {questions.length}</span>
           <span>Assignment</span>
         </div>
-        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden" role="progressbar" aria-valuenow={currentIndex + 1} aria-valuemin={1} aria-valuemax={questions.length} aria-label={`Question ${currentIndex + 1} of ${questions.length}`}>
           <div
             className="h-full bg-brand rounded-full transition-all duration-500"
             style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
@@ -219,7 +219,7 @@ export default function PlayAssignment() {
         <div className="text-center py-8 animate-fade-in">
           <h2 className="text-xl md:text-2xl font-bold text-white">{question.text}</h2>
           {question.imageUrl && (
-            <img src={question.imageUrl} alt="" className="max-h-40 mx-auto mt-4 rounded-xl" />
+            <img src={question.imageUrl} alt="Question image" className="max-h-40 mx-auto mt-4 rounded-xl" />
           )}
         </div>
 
@@ -245,6 +245,8 @@ export default function PlayAssignment() {
                         setSelectedAnswer(opt);
                       }
                     }}
+                    aria-pressed={isSelected}
+                    aria-label={`Answer: ${opt}`}
                     className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center p-4 min-h-14 select-none touch-manipulation transition-all ${
                       answerColors[i % answerColors.length]
                     } ${isSelected ? 'ring-4 ring-white scale-95' : 'active:scale-95'}`}

@@ -272,7 +272,7 @@ export default function JoinGame() {
         <div className="card-night p-8">
           {/* Error */}
           {error && (
-            <div className="mb-5 p-3 bg-danger/10 rounded-xl border border-danger/30 text-danger text-sm font-bold text-center animate-fade-in">
+            <div className="mb-5 p-3 bg-danger/10 rounded-xl border border-danger/30 text-danger text-sm font-bold text-center animate-fade-in" role="alert">
               {error}
             </div>
           )}
@@ -348,6 +348,7 @@ export default function JoinGame() {
                   <button
                     key={ci}
                     onClick={() => handleVerify(ci)}
+                    aria-label={`Pattern option ${ci + 1}`}
                     className="flex justify-center gap-2 p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-300"
                   >
                     {choice.map((s, i) => (
@@ -387,6 +388,7 @@ export default function JoinGame() {
                   type="button"
                   onClick={() => setNickname(randomNickname())}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-brand/20 hover:bg-brand/30 text-brand transition-all duration-300"
+                  aria-label="Generate random nickname"
                   title="Random nickname"
                 >
                   <Shuffle className="w-4 h-4" />
@@ -411,6 +413,8 @@ export default function JoinGame() {
                       key={emoji}
                       type="button"
                       onClick={() => setAvatar(emoji)}
+                      aria-pressed={avatar === emoji}
+                      aria-label={`Avatar ${emoji}`}
                       className={`text-2xl p-2.5 rounded-xl border select-none touch-manipulation transition-all duration-200 ${
                         avatar === emoji
                           ? 'border-brand bg-brand/20 ring-2 ring-brand/40 scale-110'
