@@ -719,7 +719,6 @@ export default function PlayGame() {
   if (session.questionState === 'reveal') {
     return (
       <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
-        <Confetti active={feedback?.correct === true} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-8 sm:py-12">
           {feedback && (
