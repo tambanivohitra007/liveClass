@@ -403,27 +403,20 @@ export default function QuizLibrary() {
           {collections.length > 0 && (
             <>
               <hr className="my-1.5 border-gray-200 dark:border-white/10" />
-              <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider">Move to</p>
-              {quiz.collectionId && (
-                <button
-                  onClick={() => { handleQuizCollectionChange(quiz.id, ''); setMenuOpenId(null); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+              <div className="px-4 py-2">
+                <p className="text-[10px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1.5">Move to</p>
+                <select
+                  value={quiz.collectionId || ''}
+                  onChange={(e) => { handleQuizCollectionChange(quiz.id, e.target.value); setMenuOpenId(null); }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-white/80 bg-gray-50 dark:bg-slate-800 outline-none"
                 >
-                  <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-white/30" /> Uncategorized
-                </button>
-              )}
-              {collections.filter((c) => c.id !== quiz.collectionId).map((c) => {
-                const cm = COLLECTION_COLORS.find((cc) => cc.key === c.color);
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => { handleQuizCollectionChange(quiz.id, c.id); setMenuOpenId(null); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                  >
-                    <span className={`w-2 h-2 rounded-full ${cm?.bg || 'bg-gray-300'}`} /> {c.name}
-                  </button>
-                );
-              })}
+                  <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Uncategorized</option>
+                  {collections.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
+                  ))}
+                </select>
+              </div>
             </>
           )}
           <hr className="my-1.5 border-gray-200 dark:border-white/10" />
