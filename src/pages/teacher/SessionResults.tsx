@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, collection, getDocs, writeBatch } from 'firebase/firestore';
@@ -71,6 +71,11 @@ export default function SessionResults() {
   const [sortBy, setSortBy] = useState<'accuracy' | 'name' | 'score'>('accuracy');
   const [sortAsc, setSortAsc] = useState(false);
   const { addToast } = useToastStore();
+
+  // Print dropdown state
+  const [printMenuOpen, setPrintMenuOpen] = useState(false);
+  const [printMode, setPrintMode] = useState<'questions' | 'participants' | 'all-reports' | null>(null);
+  const printMenuRef = useRef<HTMLDivElement>(null);
 
   // Evaluation panel state
   const [panelOpen, setPanelOpen] = useState(false);
@@ -161,6 +166,17 @@ export default function SessionResults() {
       setEvaluating(false);
     }
   }, [sessionId, addToast]);
+
+  // Close print dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (printMenuRef.current && !printMenuRef.current.contains(e.target as Node)) {
+        setPrintMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // Update tabs with violation count
   const tabs = useMemo(() => TABS.map(t => 
@@ -286,6 +302,15 @@ export default function SessionResults() {
     }
   };
 
+  const handlePrint = useCallback((mode: 'questions' | 'participants' | 'all-reports') => {
+    setPrintMenuOpen(false);
+    setPrintMode(mode);
+    requestAnimationFrame(() => {
+      window.print();
+      setPrintMode(null);
+    });
+  }, []);
+
   if (!sessionId) return null;
 
   if (loading) {
@@ -305,7 +330,8 @@ export default function SessionResults() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark min-h-screen  dark:text-white">
+    <>
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark min-h-screen  dark:text-white print:hidden">
       <div className="mb-6">
         <BackButton to="/history" label="Back to History" />
       </div>
@@ -375,9 +401,42 @@ export default function SessionResults() {
              <button onClick={handleDeleteSession} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Delete">
                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
              </button>
-             <button onClick={() => window.print()} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Print">
-               <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-             </button>
+             <div ref={printMenuRef} className="relative">
+               <button
+                 onClick={() => setPrintMenuOpen(prev => !prev)}
+                 className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md"
+                 title="Print"
+               >
+                 <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+               </button>
+               {printMenuOpen && (
+                 <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#162033] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down z-50">
+                   <div className="p-1.5">
+                     <button
+                       onClick={() => handlePrint('questions')}
+                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                     >
+                       <HelpCircle className="w-4 h-4 text-gray-400 dark:text-white/40" />
+                       Questions Summary
+                     </button>
+                     <button
+                       onClick={() => handlePrint('participants')}
+                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                     >
+                       <Users className="w-4 h-4 text-gray-400 dark:text-white/40" />
+                       Participant Summary
+                     </button>
+                     <button
+                       onClick={() => handlePrint('all-reports')}
+                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                     >
+                       <ListOrdered className="w-4 h-4 text-gray-400 dark:text-white/40" />
+                       All Participants Reports
+                     </button>
+                   </div>
+                 </div>
+               )}
+             </div>
              <button onClick={handleExportCsv} disabled={exporting} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download CSV">
                {exporting ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
              </button>
@@ -1012,5 +1071,156 @@ export default function SessionResults() {
         ) : null}
       </SlidePanel>
     </div>
+
+    {/* ══════════════════ PRINT CONTENT (hidden on screen, visible when printing) ══════════════════ */}
+    {printMode && (
+      <div className="hidden print:block p-8 text-black bg-white">
+        {/* Shared Header */}
+        <div className="mb-6 pb-4 border-b-2 border-gray-300">
+          <h1 className="text-2xl font-bold text-black">{quizTitle}</h1>
+          <div className="flex gap-4 text-sm text-gray-600 mt-1">
+            <span>PIN: {sessionPin}</span>
+            <span>{playerCount} participants</span>
+            <span>{analytics.length} questions</span>
+            <span>Avg. Accuracy: {Math.round(Number(avgAccuracy))}%</span>
+            <span>Completion: {completionRate}%</span>
+          </div>
+        </div>
+
+        {/* Questions Summary */}
+        {printMode === 'questions' && (
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-black">Questions Summary</h2>
+            {analytics.map((q, idx) => {
+              const dist = answerDistributions.find(d => d.questionIndex === idx);
+              const pct = playerCount > 0 ? (q.correctCount / playerCount) * 100 : 0;
+              return (
+                <div key={idx} className="break-inside-avoid mb-6 border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-black">Q{idx + 1}: {dist?.questionText || 'N/A'}</h3>
+                    <div className="text-sm text-gray-600">
+                      {Math.round(pct)}% correct &middot; Avg: {(q.avgTimeMs / 1000).toFixed(1)}s
+                    </div>
+                  </div>
+                  {dist?.distribution.map((opt, optIdx) => (
+                    <div key={optIdx} className="flex items-center gap-2 py-1 text-sm">
+                      <span className="w-6 font-bold text-gray-700">{String.fromCharCode(65 + optIdx)}</span>
+                      <span className="flex-1 text-gray-800">{opt.label}</span>
+                      <span className="text-gray-600">
+                        {opt.count} ({playerCount > 0 ? Math.round((opt.count / playerCount) * 100) : 0}%)
+                      </span>
+                      {opt.isCorrect && <span className="font-bold text-green-700">&check;</span>}
+                    </div>
+                  ))}
+                  <div className="mt-2 text-xs text-gray-500">
+                    Correct: {q.correctCount} | Incorrect: {q.totalAnswers - q.correctCount} | Unanswered: {playerCount - q.totalAnswers}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Participant Summary */}
+        {printMode === 'participants' && (
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-black">Participant Summary</h2>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b-2 border-gray-400">
+                  <th className="text-left py-2 px-2 text-gray-700">#</th>
+                  <th className="text-left py-2 px-2 text-gray-700">Name</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Score</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Correct</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Answered</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Accuracy</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPlayerStats.map((player, idx) => (
+                  <tr key={player.playerId} className="border-b border-gray-200">
+                    <td className="py-1.5 px-2 text-gray-600">{idx + 1}</td>
+                    <td className="py-1.5 px-2 font-medium text-black">{player.nickname}</td>
+                    <td className="py-1.5 px-2 text-right text-gray-800">{player.totalPoints.toLocaleString()}</td>
+                    <td className="py-1.5 px-2 text-right text-gray-800">{player.correctAnswers}</td>
+                    <td className="py-1.5 px-2 text-right text-gray-800">{player.totalAnswers}/{analytics.length}</td>
+                    <td className="py-1.5 px-2 text-right font-bold text-black">{player.accuracyPercent}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* All Participants Reports */}
+        {printMode === 'all-reports' && (
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-black">Individual Participant Reports</h2>
+            {sortedPlayerStats.map((player, playerIdx) => {
+              const breakdown = answerDistributions.map((dist, idx) => {
+                const questionId = analytics[idx]?.questionId;
+                const answer = allAnswers.find(a => a.playerId === player.playerId && a.questionId === questionId);
+                return {
+                  questionIndex: idx,
+                  questionText: dist.questionText,
+                  status: answer ? (answer.correct ? 'correct' : 'incorrect') : 'unattempted',
+                  studentAnswer: answer ? String(answer.selection) : null,
+                  correctAnswer: dist.correctAnswers.join(', '),
+                  points: answer?.pointsAwarded ?? 0,
+                  timeMs: answer?.timeMs ?? 0,
+                };
+              });
+              const correctCount = breakdown.filter(q => q.status === 'correct').length;
+
+              return (
+                <div key={player.playerId} className={playerIdx > 0 ? 'break-before-page' : ''}>
+                  <div className="border-b-2 border-gray-300 pb-2 mb-3">
+                    <h3 className="text-lg font-bold text-black">{player.nickname}</h3>
+                    <p className="text-sm text-gray-600">
+                      Score: {player.totalPoints} | Accuracy: {player.accuracyPercent}% | {correctCount}/{analytics.length} correct
+                    </p>
+                  </div>
+                  <table className="w-full border-collapse text-xs mb-4">
+                    <thead>
+                      <tr className="border-b border-gray-300">
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-8">Q#</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700">Question</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-20">Result</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-28">Answer</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-28">Correct</th>
+                        <th className="text-right py-1 px-1.5 text-gray-700 w-12">Pts</th>
+                        <th className="text-right py-1 px-1.5 text-gray-700 w-12">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {breakdown.map((q) => (
+                        <tr key={q.questionIndex} className="border-b border-gray-100">
+                          <td className="py-1 px-1.5 font-medium text-gray-800">{q.questionIndex + 1}</td>
+                          <td className="py-1 px-1.5 text-gray-800">
+                            {q.questionText.length > 50 ? q.questionText.slice(0, 47) + '...' : q.questionText}
+                          </td>
+                          <td className="py-1 px-1.5">
+                            {q.status === 'correct' && <span className="text-green-700 font-bold">&#10003; Correct</span>}
+                            {q.status === 'incorrect' && <span className="text-red-700 font-bold">&#10007; Wrong</span>}
+                            {q.status === 'unattempted' && <span className="text-gray-400">&mdash; Skipped</span>}
+                          </td>
+                          <td className="py-1 px-1.5 text-gray-700">{q.studentAnswer || '\u2014'}</td>
+                          <td className="py-1 px-1.5 text-gray-700">{q.correctAnswer}</td>
+                          <td className="py-1 px-1.5 text-right text-gray-700">{q.points}</td>
+                          <td className="py-1 px-1.5 text-right text-gray-700">
+                            {q.status !== 'unattempted' ? `${(q.timeMs / 1000).toFixed(1)}s` : '\u2014'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    )}
+    </>
   );
 }
