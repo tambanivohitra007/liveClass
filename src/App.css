@@ -848,13 +848,33 @@
   }
 
   @page {
-    margin: 1cm 1.5cm;
+    margin: 1cm 1.5cm 1.8cm;
     size: A4;
   }
 
   img {
     max-width: 100%;
     break-inside: avoid;
+  }
+
+  /* Fixed footer with page numbers — repeats on every printed page */
+  .print-page-footer {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 6px 1.5cm;
+    font-size: 9px;
+    color: #9ca3af;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+  }
+
+  .print-page-footer .page-num::after {
+    content: "Page " counter(page) " of " counter(pages);
   }
 }
 

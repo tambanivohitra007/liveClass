@@ -1075,8 +1075,19 @@ export default function SessionResults() {
     {/* ══════════════════ PRINT CONTENT (hidden on screen, visible when printing) ══════════════════ */}
     {printMode && (
       <div className="hidden print:block p-8 text-black bg-white">
-        {/* Shared Header */}
+        {/* Print Header — App branding + session info */}
         <div className="mb-6 pb-4 border-b-2 border-gray-300">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#009EE2] rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">LC</span>
+              </div>
+              <span className="text-lg font-bold text-gray-800 tracking-tight">LiveClass</span>
+            </div>
+            <div className="text-xs text-gray-400">
+              Printed {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
           <h1 className="text-2xl font-bold text-black">{quizTitle}</h1>
           <div className="flex gap-4 text-sm text-gray-600 mt-1">
             <span>PIN: {sessionPin}</span>
@@ -1219,6 +1230,12 @@ export default function SessionResults() {
             })}
           </div>
         )}
+
+        {/* Fixed print footer — repeats on every printed page */}
+        <div className="hidden print-page-footer">
+          <span>LiveClass &mdash; {quizTitle} &mdash; Session {sessionPin}</span>
+          <span className="page-num" />
+        </div>
       </div>
     )}
     </>
