@@ -723,7 +723,17 @@ export default function HostSession() {
                           <div className="flex flex-wrap gap-2">
                             {teamPlayers.map((p, i) => {
                               const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                              return (
+                              return players.length <= 20 ? (
+                                <div
+                                  key={p.id}
+                                  className={`flex items-center gap-1.5 pl-1 pr-2.5 py-0.5 rounded-full ${color.bg} border ${color.border} animate-fade-in cursor-default`}
+                                >
+                                  <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                                    {p.avatar ? <span className="text-base leading-none">{p.avatar}</span> : <span className={`text-[10px] font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
+                                  </div>
+                                  <span className={`text-xs font-semibold ${color.text} truncate max-w-20`}>{p.nickname}</span>
+                                </div>
+                              ) : (
                                 <div
                                   key={p.id}
                                   title={p.nickname}
@@ -744,7 +754,17 @@ export default function HostSession() {
                       <div className="flex flex-wrap gap-2 sm:gap-2.5 content-start">
                         {players.map((p, i) => {
                           const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
-                          return (
+                          return players.length <= 20 ? (
+                            <div
+                              key={p.id}
+                              className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full ${color.bg} border ${color.border} animate-fade-in cursor-default hover:scale-105 transition-transform`}
+                            >
+                              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                                {p.avatar ? <span className="text-lg leading-none">{p.avatar}</span> : <span className={`text-xs font-bold ${color.text}`}>{p.nickname.charAt(0).toUpperCase()}</span>}
+                              </div>
+                              <span className={`text-sm font-semibold ${color.text} truncate max-w-24`}>{p.nickname}</span>
+                            </div>
+                          ) : (
                             <div
                               key={p.id}
                               title={p.nickname}
