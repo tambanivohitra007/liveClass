@@ -544,9 +544,9 @@ export default function SessionResults() {
              </button>
           </div>
 
-          <button onClick={handleOpenEmailPanel} className="btn-3d-ghost text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2" title="Email all parents">
+          <button onClick={handleOpenEmailPanel} className="btn-3d-ghost text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2" title="Email results">
             <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Email all parents</span>
+            <span className="hidden sm:inline">Email results</span>
           </button>
 
           <button className="btn-3d-cyan text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2" title="Share report">
@@ -1239,7 +1239,7 @@ export default function SessionResults() {
                   </div>
                   <input
                     type="email"
-                    placeholder="parent@email.com"
+                    placeholder="email@example.com"
                     value={emailMap[player.playerId] || ''}
                     onChange={(e) => setEmailMap(prev => ({ ...prev, [player.playerId]: e.target.value }))}
                     className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/20 bg-white dark:bg-surface text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none"
