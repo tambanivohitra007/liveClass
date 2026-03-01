@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useToastStore } from '../../stores/toastStore';
 import { CheckCircle, XCircle, Clock, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -26,9 +26,25 @@ export default function AdminDashboard() {
     return unsub;
   }, []);
 
+  const endActiveSessions = async (userId: string) => {
+    const q = query(collection(db, 'sessions'), where('hostId', '==', userId));
+    const snap = await getDocs(q);
+    const updates: Promise<void>[] = [];
+    for (const d of snap.docs) {
+      const status = d.data().status;
+      if (status === 'lobby' || status === 'live') {
+        updates.push(updateDoc(doc(db, 'sessions', d.id), { status: 'ended', endedAt: Date.now() }));
+      }
+    }
+    return Promise.all(updates);
+  };
+
   const updateStatus = async (userId: string, status: 'approved' | 'rejected' | 'pending') => {
     try {
       await updateDoc(doc(db, 'users', userId), { approvalStatus: status });
+      if (status === 'rejected' || status === 'pending') {
+        await endActiveSessions(userId);
+      }
       addToast('success', `Teacher ${status} successfully.`);
     } catch {
       addToast('error', 'Failed to update teacher status.');
