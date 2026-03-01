@@ -70,6 +70,7 @@ export default function HostSession() {
   const [answeredPlayerIds, setAnsweredPlayerIds] = useState<Set<string>>(new Set());
   const [studentProgress, setStudentProgress] = useState<Record<string, { answered: number; finished: boolean }>>({});
   const [endingSession, setEndingSession] = useState(false);
+  const [preReveal, setPreReveal] = useState(false);
   const [qrZoomed, setQrZoomed] = useState(false);
   const prevPlayerCountRef = useRef(0);
   const lobbyGridRef = useRef<HTMLDivElement>(null);
@@ -158,6 +159,7 @@ export default function HostSession() {
     // Reset for new question — prevent stale data from triggering auto-end
     timerTickedRef.current = false;
     autoEndCalledRef.current = false;
+    setPreReveal(false);
     // currentQuestionId reset removed — now derived from session props
     setAnsweredCount(0);
     const qIdx = session.questionOrder
@@ -187,6 +189,24 @@ export default function HostSession() {
   const autoEndCalledRef = useRef(false);
   const timerTickedRef = useRef(false);
 
+  // Clear pre-reveal when CF completes and questionState transitions to 'reveal'
+  useEffect(() => {
+    if (session?.questionState === 'reveal') {
+      setPreReveal(false);
+    }
+  }, [session?.questionState]);
+
+  // Safety timeout — reset preReveal if CF doesn't complete in 10s
+  useEffect(() => {
+    if (!preReveal) return;
+    const timeout = setTimeout(() => {
+      setPreReveal(false);
+      autoEndCalledRef.current = false;
+      addToast('error', 'Score finalization timed out. Try ending the question again.');
+    }, 10000);
+    return () => clearTimeout(timeout);
+  }, [preReveal]);
+
   // Timer countdown
   useEffect(() => {
     if (!session || session.questionState !== 'live') {
@@ -208,6 +228,7 @@ export default function HostSession() {
     if (!timerTickedRef.current) return;
     if (timeLeft <= 0 && currentTimeLimitSec > 0 && !autoEndCalledRef.current) {
       autoEndCalledRef.current = true;
+      setPreReveal(true);
       httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
     }
   }, [timeLeft, session?.questionState, currentTimeLimitSec, session?.timerPaused]);
@@ -234,6 +255,7 @@ export default function HostSession() {
       if (count > 0 && count >= players.length && !autoEndCalledRef.current) {
         autoEndCalledRef.current = true;
         setTimeLeft(0);
+        setPreReveal(true);
         httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
       }
     };
@@ -342,7 +364,14 @@ export default function HostSession() {
   const endQuestion = async () => {
     if (!session || autoEndCalledRef.current) return;
     autoEndCalledRef.current = true;
-    await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+    setPreReveal(true);
+    try {
+      await httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+    } catch {
+      setPreReveal(false);
+      autoEndCalledRef.current = false;
+      addToast('error', 'Failed to end question');
+    }
   };
 
   const togglePause = async () => {
@@ -516,7 +545,7 @@ export default function HostSession() {
         );
         if (isConfirmed) actions.endStudentPacedSessionFn();
       } else if (s.questionState === 'live') {
-        actions.endQuestion();
+        actions.endQuestion(); // endQuestion() sets preReveal internally
       } else if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
         actions.nextQuestion();
       } else if (s.questionState === 'reveal' && s.currentQuestionIndex >= tQ - 1) {
@@ -1008,7 +1037,7 @@ export default function HostSession() {
       )}
 
       {/* ══════════════════ LIVE QUESTION ══════════════════ */}
-      {session.questionState === 'live' && (
+      {session.questionState === 'live' && !preReveal && (
         <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto w-full">
           {/* Left: Question + Timer + Controls */}
           <div className="grow flex flex-col items-center justify-center">
@@ -1147,6 +1176,24 @@ export default function HostSession() {
                   );
                 })}
             </div>
+          </div>
+        </main>
+      )}
+
+      {/* ══════════════════ PRE-REVEAL (provisional leaderboard while CF processes) ══════════════════ */}
+      {preReveal && session.questionState === 'live' && (
+        <main className="grow flex flex-col px-4 sm:px-8 py-4 sm:py-8 max-w-4xl mx-auto w-full">
+          <div className="flex items-center justify-center gap-3 mb-6 animate-fade-in">
+            <div className="w-5 h-5 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
+            <span className="text-white/50 text-sm font-medium">Finalizing scores...</span>
+          </div>
+
+          <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 animate-slide-up">
+            <Leaderboard
+              sessionId={session.id}
+              currentQuestion={session.currentQuestionIndex + 1}
+              totalQuestions={totalQuestions}
+            />
           </div>
         </main>
       )}
