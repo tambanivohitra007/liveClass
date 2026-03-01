@@ -71,6 +71,7 @@ export default function PlayGame() {
   const [submitted, setSubmitted] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
+  const sawPreRevealRef = useRef(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [myTeam, setMyTeam] = useState<{ name: string; color: string } | null>(null);
@@ -218,6 +219,7 @@ export default function PlayGame() {
     setFillAnswers([]);
     setOrderingItems([]);
     setFeedback(null);
+    sawPreRevealRef.current = false;
 
     const qIdx = session.questionOrder
       ? session.questionOrder[session.currentQuestionIndex]
@@ -717,12 +719,14 @@ export default function PlayGame() {
 
   // Reveal
   if (session.questionState === 'reveal') {
+    const alreadySawFeedback = sawPreRevealRef.current;
     return (
       <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
+        {!alreadySawFeedback && <Confetti active={feedback?.correct === true} />}
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-8 sm:py-12">
           {feedback && (
-            <div className="animate-bounce-in">
+            <div className={alreadySawFeedback ? '' : 'animate-bounce-in'}>
               <div className="flex justify-center mb-4">
                 {feedback.correct
                   ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
@@ -742,7 +746,7 @@ export default function PlayGame() {
             </div>
           )}
           {sessionId && (
-            <div className="card-night p-4 sm:p-6 animate-slide-up">
+            <div className={`card-night p-4 sm:p-6 ${alreadySawFeedback ? '' : 'animate-slide-up'}`}>
               <Leaderboard sessionId={sessionId} compact currentQuestion={(session.currentQuestionIndex || 0) + 1} totalQuestions={totalQuestions} />
             </div>
           )}
@@ -754,6 +758,7 @@ export default function PlayGame() {
 
   // Submitted with feedback during live — show result + provisional leaderboard instantly
   if (session.questionState === 'live' && submitted && feedback && !isStudentPaced) {
+    sawPreRevealRef.current = true;
     return (
       <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
         <Confetti active={feedback.correct} />
