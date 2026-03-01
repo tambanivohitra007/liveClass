@@ -64,36 +64,54 @@ service cloud.firestore {
       match /players/{playerId} {
         allow read: if true;
         allow create: if true;
+        allow delete: if request.auth != null
+          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
+            || request.auth.token.email == 'rindra.it@gmail.com');
       }
 
       // Answers: write only during live question, via Cloud Functions
       match /answers/{answerId} {
         allow read: if true;
-        allow write: if false; // Only via Cloud Functions
+        allow create, update: if false; // Only via Cloud Functions
+        allow delete: if request.auth != null
+          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
+            || request.auth.token.email == 'rindra.it@gmail.com');
       }
 
       // Leaderboard shards: read-only for clients
       match /leaderboard_shards/{shardId} {
         allow read: if true;
-        allow write: if false; // Only via Cloud Functions
+        allow create, update: if false; // Only via Cloud Functions
+        allow delete: if request.auth != null
+          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
+            || request.auth.token.email == 'rindra.it@gmail.com');
       }
 
       // Analytics: read by host
       match /analytics/{questionId} {
         allow read: if true;
-        allow write: if false; // Only via Cloud Functions
+        allow create, update: if false; // Only via Cloud Functions
+        allow delete: if request.auth != null
+          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
+            || request.auth.token.email == 'rindra.it@gmail.com');
       }
 
       // Violations: read-only for clients, write via Cloud Functions only
       match /violations/{playerId} {
         allow read: if true;
-        allow write: if false; // Only via Cloud Functions
+        allow create, update: if false; // Only via Cloud Functions
+        allow delete: if request.auth != null
+          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
+            || request.auth.token.email == 'rindra.it@gmail.com');
       }
 
       // Evaluations: read by authed users, write via Cloud Functions only
       match /evaluations/{evalId} {
         allow read: if request.auth != null;
-        allow write: if false; // Only via Cloud Functions
+        allow create, update: if false; // Only via Cloud Functions
+        allow delete: if request.auth != null
+          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
+            || request.auth.token.email == 'rindra.it@gmail.com');
       }
     }
 

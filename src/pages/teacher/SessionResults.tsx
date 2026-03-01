@@ -1,7 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../lib/firebase';
+import { doc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { db, functions } from '../../lib/firebase';
+import { confirmDelete } from '../../lib/swal';
 import { useToastStore } from '../../stores/toastStore';
 import { useSessionAnalytics } from '../../hooks/useSessionAnalytics';
 import { exportSessionExcel } from '../../lib/excelExport';
@@ -264,6 +266,26 @@ export default function SessionResults() {
     }
   };
 
+  const handleDeleteSession = async () => {
+    if (!sessionId) return;
+    const { isConfirmed } = await confirmDelete(quizTitle || 'Session');
+    if (!isConfirmed) return;
+    try {
+      const subcollections = ['players', 'answers', 'analytics', 'violations', 'leaderboard_shards', 'evaluations'];
+      const batch = writeBatch(db);
+      for (const sub of subcollections) {
+        const snap = await getDocs(collection(db, `sessions/${sessionId}/${sub}`));
+        snap.docs.forEach((d) => batch.delete(d.ref));
+      }
+      batch.delete(doc(db, 'sessions', sessionId));
+      await batch.commit();
+      addToast('success', 'Session deleted.');
+      navigate('/history');
+    } catch {
+      addToast('error', 'Failed to delete session.');
+    }
+  };
+
   if (!sessionId) return null;
 
   if (loading) {
@@ -350,7 +372,7 @@ export default function SessionResults() {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           <div className="flex bg-white dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-0.5 sm:p-1">
-             <button onClick={() => addToast('info', 'Delete feature coming soon')} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Delete">
+             <button onClick={handleDeleteSession} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Delete">
                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
              </button>
              <button onClick={() => window.print()} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Print">
