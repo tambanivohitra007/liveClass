@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
 import { useNotificationListener } from './hooks/useNotificationListener';
@@ -20,45 +20,47 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ChooseRole from './pages/ChooseRole';
 import PendingApproval from './pages/PendingApproval';
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminQuizzes from './pages/admin/AdminQuizzes';
-import AdminClasses from './pages/admin/AdminClasses';
-import AdminOverview from './pages/admin/AdminOverview';
-import AdminSessions from './pages/admin/AdminSessions';
-import AdminAssignments from './pages/admin/AdminAssignments';
-import Dashboard from './pages/teacher/Dashboard';
-import QuizLibrary from './pages/teacher/QuizLibrary';
-import QuizEditor from './pages/teacher/QuizEditor';
-import HostSession from './pages/teacher/HostSession';
-import SessionResults from './pages/teacher/SessionResults';
-import SessionHistory from './pages/teacher/SessionHistory';
-import AssignmentCreate from './pages/teacher/AssignmentCreate';
 import JoinGame from './pages/student/JoinGame';
-import PlayGame from './pages/student/PlayGame';
-import PlayAssignment from './pages/student/PlayAssignment';
-import StudentDashboard from './pages/student/StudentDashboard';
-import Profile from './pages/Profile';
-import QuizPreview from './pages/teacher/QuizPreview';
-import CollectionView from './pages/teacher/CollectionView';
-import ClassList from './pages/teacher/ClassList';
-import ClassDetail from './pages/teacher/ClassDetail';
-import JoinClass from './pages/student/JoinClass';
-import StudentClasses from './pages/student/StudentClasses';
-import StudentClassDetail from './pages/student/StudentClassDetail';
-import Discover from './pages/Discover';
-import Flashcards from './pages/Flashcards';
-import Worksheet from './pages/teacher/Worksheet';
-import RubricList from './pages/teacher/RubricList';
-import RubricEditor from './pages/teacher/RubricEditor';
-import RosterList from './pages/teacher/RosterList';
-import RosterEditor from './pages/teacher/RosterEditor';
-import GradingSessionCreate from './pages/teacher/GradingSessionCreate';
-import GradingInterface from './pages/teacher/GradingInterface';
-import GradingResults from './pages/teacher/GradingResults';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsAndConditions from './pages/TermsAndConditions';
 import './App.css';
+
+// Lazy-loaded pages — only loaded when the route is visited
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminQuizzes = lazy(() => import('./pages/admin/AdminQuizzes'));
+const AdminClasses = lazy(() => import('./pages/admin/AdminClasses'));
+const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
+const AdminSessions = lazy(() => import('./pages/admin/AdminSessions'));
+const AdminAssignments = lazy(() => import('./pages/admin/AdminAssignments'));
+const Dashboard = lazy(() => import('./pages/teacher/Dashboard'));
+const QuizLibrary = lazy(() => import('./pages/teacher/QuizLibrary'));
+const QuizEditor = lazy(() => import('./pages/teacher/QuizEditor'));
+const HostSession = lazy(() => import('./pages/teacher/HostSession'));
+const SessionResults = lazy(() => import('./pages/teacher/SessionResults'));
+const SessionHistory = lazy(() => import('./pages/teacher/SessionHistory'));
+const AssignmentCreate = lazy(() => import('./pages/teacher/AssignmentCreate'));
+const PlayGame = lazy(() => import('./pages/student/PlayGame'));
+const PlayAssignment = lazy(() => import('./pages/student/PlayAssignment'));
+const StudentDashboard = lazy(() => import('./pages/student/StudentDashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
+const QuizPreview = lazy(() => import('./pages/teacher/QuizPreview'));
+const CollectionView = lazy(() => import('./pages/teacher/CollectionView'));
+const ClassList = lazy(() => import('./pages/teacher/ClassList'));
+const ClassDetail = lazy(() => import('./pages/teacher/ClassDetail'));
+const JoinClass = lazy(() => import('./pages/student/JoinClass'));
+const StudentClasses = lazy(() => import('./pages/student/StudentClasses'));
+const StudentClassDetail = lazy(() => import('./pages/student/StudentClassDetail'));
+const Discover = lazy(() => import('./pages/Discover'));
+const Flashcards = lazy(() => import('./pages/Flashcards'));
+const Worksheet = lazy(() => import('./pages/teacher/Worksheet'));
+const RubricList = lazy(() => import('./pages/teacher/RubricList'));
+const RubricEditor = lazy(() => import('./pages/teacher/RubricEditor'));
+const RosterList = lazy(() => import('./pages/teacher/RosterList'));
+const RosterEditor = lazy(() => import('./pages/teacher/RosterEditor'));
+const GradingSessionCreate = lazy(() => import('./pages/teacher/GradingSessionCreate'));
+const GradingInterface = lazy(() => import('./pages/teacher/GradingInterface'));
+const GradingResults = lazy(() => import('./pages/teacher/GradingResults'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 
 function TeacherRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, user, loading } = useAuthStore();
@@ -154,6 +156,11 @@ function AppContent() {
         {showSidebar && <TopBar />}
         <ToastContainer />
         <main className={`flex-1 pattern-dots ${!hideNavbar && firebaseUser ? 'pb-20 md:pb-0' : ''}`}>
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
+          </div>
+        }>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -203,6 +210,7 @@ function AppContent() {
           <Route path="/student/classroom/:classroomId" element={<StudentRoute><StudentClassDetail /></StudentRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         </Routes>
+        </Suspense>
         </main>
         {!hideNavbar && (
           <div className={firebaseUser ? 'hidden md:block' : undefined}>

@@ -9,8 +9,11 @@ export default defineConfig({
       output: {
         manualChunks: {
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage'],
+          'firebase-db': ['firebase/database'],
           vendor: ['react', 'react-dom', 'react-router-dom', 'zustand'],
           three: ['three', '@react-three/fiber', '@react-three/drei'],
+          gsap: ['gsap', 'gsap/all', '@gsap/react'],
+          ui: ['sweetalert2', 'qrcode.react', 'lucide-react'],
         },
       },
     },
