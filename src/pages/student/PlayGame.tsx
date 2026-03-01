@@ -16,6 +16,8 @@ import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
 import { playCorrect, playWrong, playTick, playUrgentTick, playSubmit, playPodium, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
 import { hapticLight, hapticMedium, hapticSuccess, hapticError } from '../../lib/haptics';
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import OfflineBanner from '../../components/OfflineBanner';
 import type { Session, Question } from '../../types/models';
 
 function ordinal(n: number): string {
@@ -96,6 +98,7 @@ export default function PlayGame() {
   const spQuestionStartRef = useRef(0);
   const isStudentPaced = session?.paceMode === 'student' && session?.questionState === 'student_paced';
   const spTotalQuestions = questionSubset ? questionSubset.length : totalQuestions;
+  const isOnline = useNetworkStatus();
   const { showWarning, dismissWarning } = useAntiCheat({
     sessionId,
     playerId,
@@ -810,6 +813,7 @@ export default function PlayGame() {
   // Live question
   return (
     <div className="min-h-dvh flex flex-col" style={GAME_BG}>
+      {!isOnline && <OfflineBanner />}
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">

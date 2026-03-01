@@ -12,6 +12,8 @@ import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, Skip
 import { QRCodeSVG } from 'qrcode.react';
 import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
 import CodeBlock from '../../components/CodeBlock';
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
+import OfflineBanner from '../../components/OfflineBanner';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
 
@@ -75,6 +77,7 @@ export default function HostSession() {
   const prevPlayerCountRef = useRef(0);
   const lobbyGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const isOnline = useNetworkStatus();
   const addToast = useToastStore((s) => s.addToast);
 
   // Refs for listener cleanup and unmount logic
@@ -599,6 +602,7 @@ export default function HostSession() {
 
   return (
     <div className={`text-white flex flex-col ${session?.status === 'lobby' ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`} style={MESH_BG}>
+      {!isOnline && <OfflineBanner />}
 
       {/* QR Code Zoom Modal */}
       {qrZoomed && session?.pinCode && (

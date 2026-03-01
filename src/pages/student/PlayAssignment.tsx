@@ -6,6 +6,8 @@ import { db, functions } from '../../lib/firebase';
 import { queueAnswer, syncPendingAnswers } from '../../lib/offlineQueue';
 import { Clock, Ban, CircleCheckBig, Check } from 'lucide-react';
 import CodeBlock from '../../components/CodeBlock';
+import OfflineBanner from '../../components/OfflineBanner';
+import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import type { Assignment, Question } from '../../types/models';
 
 const answerColors = [
@@ -37,24 +39,14 @@ export default function PlayAssignment() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [loadError, setLoadError] = useState('');
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isOnline = useNetworkStatus();
 
   useEffect(() => {
     const doSync = () => syncPendingAnswers(async (answer) => {
       await httpsCallable(functions, 'scoreAnswer')(answer);
     });
-    // Sync any pending answers from previous sessions on mount
-    if (navigator.onLine) doSync();
-
-    const handleOnline = () => { setIsOnline(true); doSync(); };
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+    if (isOnline) doSync();
+  }, [isOnline]);
 
   useEffect(() => {
     if (!assignmentId) return;
@@ -206,12 +198,7 @@ export default function PlayAssignment() {
 
   return (
     <div className="min-h-dvh bg-surface-dark flex flex-col">
-      {/* Offline banner */}
-      {!isOnline && (
-        <div className="bg-warning/20 text-warning text-center text-sm py-2 font-medium">
-          You're offline — answers will sync when you reconnect
-        </div>
-      )}
+      {!isOnline && <OfflineBanner />}
 
       {/* Progress */}
       <div className="px-4 pt-4 pb-2">
