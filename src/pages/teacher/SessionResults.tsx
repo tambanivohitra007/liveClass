@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
-import { doc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
 import { confirmDelete } from '../../lib/swal';
 import { useToastStore } from '../../stores/toastStore';
@@ -76,6 +76,17 @@ export default function SessionResults() {
   const [printMenuOpen, setPrintMenuOpen] = useState(false);
   const [printMode, setPrintMode] = useState<'questions' | 'participants' | 'all-reports' | null>(null);
   const printMenuRef = useRef<HTMLDivElement>(null);
+
+  // Email panel state
+  const [emailPanelOpen, setEmailPanelOpen] = useState(false);
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({});
+  const [emailsLoading, setEmailsLoading] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<{
+    totalSent: number;
+    totalFailed: number;
+    failures: { playerId: string; email: string; error: string }[];
+  } | null>(null);
 
   // Evaluation panel state
   const [panelOpen, setPanelOpen] = useState(false);
@@ -311,6 +322,94 @@ export default function SessionResults() {
     });
   }, []);
 
+  const handleOpenEmailPanel = useCallback(async () => {
+    setEmailPanelOpen(true);
+    setEmailResult(null);
+    setEmailsLoading(true);
+    try {
+      const playersSnap = await getDocs(collection(db, `sessions/${sessionId}/players`));
+      const playerUserIds = new Map<string, string>();
+      playersSnap.docs.forEach((d) => {
+        const userId = d.data().userId;
+        if (userId) playerUserIds.set(d.id, userId);
+      });
+
+      const prefilled: Record<string, string> = {};
+
+      // Fetch User docs for linked players (in chunks of 10)
+      const entries = Array.from(playerUserIds.entries());
+      for (let i = 0; i < entries.length; i += 10) {
+        const chunk = entries.slice(i, i + 10);
+        const userDocs = await Promise.all(
+          chunk.map(([, uid]) => getDoc(doc(db, 'users', uid)))
+        );
+        userDocs.forEach((userDoc, idx) => {
+          if (userDoc.exists()) {
+            const email = userDoc.data()?.email;
+            if (email) prefilled[chunk[idx][0]] = email;
+          }
+        });
+      }
+
+      // If session has classroomId, cross-reference classroom member emails
+      const sessionSnap = await getDoc(doc(db, 'sessions', sessionId!));
+      const classroomId = sessionSnap.data()?.classroomId;
+      if (classroomId) {
+        const membersSnap = await getDocs(collection(db, `classrooms/${classroomId}/members`));
+        const memberEmailByUserId = new Map<string, string>();
+        membersSnap.docs.forEach((d) => {
+          const data = d.data();
+          if (data.email && data.userId) memberEmailByUserId.set(data.userId, data.email);
+        });
+        playerUserIds.forEach((userId, playerId) => {
+          if (!prefilled[playerId] && memberEmailByUserId.has(userId)) {
+            prefilled[playerId] = memberEmailByUserId.get(userId)!;
+          }
+        });
+      }
+
+      setEmailMap(prefilled);
+    } catch {
+      addToast('error', 'Failed to load email addresses');
+    } finally {
+      setEmailsLoading(false);
+    }
+  }, [sessionId, addToast]);
+
+  const handleSendEmails = useCallback(async () => {
+    if (!sessionId) return;
+    const recipients = Object.entries(emailMap)
+      .filter(([, email]) => email && email.includes('@'))
+      .map(([playerId, email]) => ({ playerId, email }));
+
+    if (recipients.length === 0) {
+      addToast('error', 'No valid email addresses to send to');
+      return;
+    }
+
+    setEmailSending(true);
+    setEmailResult(null);
+    try {
+      const fn = httpsCallable<
+        { sessionId: string; recipients: { playerId: string; email: string }[] },
+        { totalSent: number; totalFailed: number; failures: { playerId: string; email: string; error: string }[] }
+      >(functions, 'emailSessionResults');
+
+      const result = await fn({ sessionId, recipients });
+      setEmailResult(result.data);
+
+      if (result.data.totalFailed === 0) {
+        addToast('success', `Successfully sent ${result.data.totalSent} email(s)`);
+      } else {
+        addToast('warning', `Sent ${result.data.totalSent}, failed ${result.data.totalFailed}`);
+      }
+    } catch {
+      addToast('error', 'Failed to send emails. Please try again.');
+    } finally {
+      setEmailSending(false);
+    }
+  }, [sessionId, emailMap, addToast]);
+
   if (!sessionId) return null;
 
   if (loading) {
@@ -445,7 +544,7 @@ export default function SessionResults() {
              </button>
           </div>
 
-          <button className="btn-3d-ghost text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2" title="Email all parents">
+          <button onClick={handleOpenEmailPanel} className="btn-3d-ghost text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2" title="Email all parents">
             <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Email all parents</span>
           </button>
@@ -1069,6 +1168,101 @@ export default function SessionResults() {
             )}
           </div>
         ) : null}
+      </SlidePanel>
+
+      {/* Email Results Slide Panel */}
+      <SlidePanel
+        open={emailPanelOpen}
+        onClose={() => setEmailPanelOpen(false)}
+        title="Email Results"
+        subtitle={`${playerStats.length} participants`}
+        icon={<Mail className="w-5 h-5" />}
+        width="max-w-xl"
+      >
+        {emailsLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <Loader2 className="w-8 h-8 text-brand animate-spin" />
+            <p className="text-gray-500 dark:text-white/50 font-medium">Loading email addresses...</p>
+          </div>
+        ) : emailResult ? (
+          <div className="space-y-4">
+            <div className="bg-gray-50 dark:bg-white/10 rounded-xl p-4 border border-gray-100 dark:border-white/10 text-center">
+              <div className="text-3xl font-bold text-success mb-1">{emailResult.totalSent}</div>
+              <div className="text-sm text-gray-500 dark:text-white/50">emails sent successfully</div>
+              {emailResult.totalFailed > 0 && (
+                <div className="mt-2 text-sm text-danger font-medium">{emailResult.totalFailed} failed</div>
+              )}
+            </div>
+            {emailResult.failures.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-danger" /> Failed Deliveries
+                </h3>
+                <div className="space-y-2">
+                  {emailResult.failures.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-danger bg-danger/5 rounded-lg p-2">
+                      <XCircle className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{f.email}</span>
+                      <span className="text-xs text-gray-400 dark:text-white/40 ml-auto shrink-0">{f.error}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setEmailResult(null)}
+              className="btn-3d-ghost w-full py-2 text-sm"
+            >
+              Back to email list
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500 dark:text-white/50">
+                Enter email addresses for each participant.
+              </p>
+              <span className="px-2 py-0.5 bg-brand/10 text-brand rounded-full text-xs font-bold">
+                {Object.values(emailMap).filter(e => e && e.includes('@')).length} / {playerStats.length}
+              </span>
+            </div>
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {sortedPlayerStats.map((player) => (
+                <div key={player.playerId} className="flex items-center gap-3">
+                  <div className="w-32 shrink-0">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">
+                      {player.nickname}
+                    </span>
+                    <div className="text-xs text-gray-400 dark:text-white/40">
+                      {player.accuracyPercent}% accuracy
+                    </div>
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="parent@email.com"
+                    value={emailMap[player.playerId] || ''}
+                    onChange={(e) => setEmailMap(prev => ({ ...prev, [player.playerId]: e.target.value }))}
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/20 bg-white dark:bg-surface text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none"
+                  />
+                  {emailMap[player.playerId]?.includes('@') && (
+                    <Check className="w-4 h-4 text-success shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleSendEmails}
+              disabled={emailSending || Object.values(emailMap).filter(e => e?.includes('@')).length === 0}
+              className="btn-3d-cyan w-full py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {emailSending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Sending emails...</>
+              ) : (
+                <><Mail className="w-4 h-4" /> Send {Object.values(emailMap).filter(e => e?.includes('@')).length} email(s)</>
+              )}
+            </button>
+          </div>
+        )}
       </SlidePanel>
     </div>
 

@@ -1149,6 +1149,258 @@ export const exportCsv = onCall(FUNCTION_CONFIG, async (request) => {
   return { csv: [header, ...rows].join("\n") };
 });
 
+// --- Email Session Results to Parents ---
+
+function buildResultEmail(params: {
+  nickname: string;
+  quizTitle: string;
+  sessionPin: string;
+  totalPoints: number;
+  correctCount: number;
+  totalQuestions: number;
+  accuracyPercent: number;
+  questionBreakdown: {
+    index: number;
+    text: string;
+    correct: boolean;
+    attempted: boolean;
+    points: number;
+  }[];
+  teacherName: string;
+}): string {
+  const {
+    nickname, quizTitle, sessionPin, totalPoints,
+    correctCount, totalQuestions, accuracyPercent,
+    questionBreakdown, teacherName,
+  } = params;
+
+  const rows = questionBreakdown
+    .map(
+      (q) => `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#374151;font-size:13px;">${q.index + 1}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#374151;font-size:13px;">${
+          q.text.length > 60 ? q.text.slice(0, 57) + "..." : q.text
+        }</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:center;font-size:13px;">${
+          q.correct
+            ? '<span style="color:#00C985;font-weight:bold;">&#10003; Correct</span>'
+            : !q.attempted
+              ? '<span style="color:#9ca3af;">&mdash; Skipped</span>'
+              : '<span style="color:#FF3B5C;font-weight:bold;">&#10007; Wrong</span>'
+        }</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;text-align:right;color:#374151;font-size:13px;">${q.points}</td>
+      </tr>`
+    )
+    .join("");
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;">
+  <tr>
+    <td style="background:#009EE2;padding:24px 32px;">
+      <table cellpadding="0" cellspacing="0"><tr>
+        <td style="width:36px;height:36px;background:#ffffff;border-radius:8px;text-align:center;line-height:36px;">
+          <span style="color:#009EE2;font-weight:bold;font-size:16px;">LC</span>
+        </td>
+        <td style="padding-left:12px;color:#ffffff;font-size:20px;font-weight:bold;">LiveClass</td>
+      </tr></table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:32px 32px 16px;">
+      <h1 style="margin:0;font-size:22px;color:#1a1a2e;">Hi ${nickname}!</h1>
+      <p style="margin:8px 0 0;color:#6b7280;font-size:14px;">
+        Here are your results for <strong>${quizTitle}</strong> (Session PIN: ${sessionPin})
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 32px 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9ff;border-radius:12px;border:1px solid #e0f2fe;">
+        <tr>
+          <td style="padding:20px;text-align:center;border-right:1px solid #e0f2fe;width:33%;">
+            <div style="font-size:28px;font-weight:bold;color:#009EE2;">${totalPoints.toLocaleString()}</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:4px;">Points</div>
+          </td>
+          <td style="padding:20px;text-align:center;border-right:1px solid #e0f2fe;width:33%;">
+            <div style="font-size:28px;font-weight:bold;color:#009EE2;">${accuracyPercent}%</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:4px;">Accuracy</div>
+          </td>
+          <td style="padding:20px;text-align:center;width:33%;">
+            <div style="font-size:28px;font-weight:bold;color:#009EE2;">${correctCount}/${totalQuestions}</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:4px;">Correct</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 32px 32px;">
+      <h2 style="margin:0 0 12px;font-size:16px;color:#1a1a2e;">Question Breakdown</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;border-collapse:collapse;">
+        <tr style="background:#f9fafb;">
+          <th style="padding:8px 12px;text-align:left;border-bottom:2px solid #e5e7eb;color:#6b7280;font-weight:600;font-size:12px;">#</th>
+          <th style="padding:8px 12px;text-align:left;border-bottom:2px solid #e5e7eb;color:#6b7280;font-weight:600;font-size:12px;">Question</th>
+          <th style="padding:8px 12px;text-align:center;border-bottom:2px solid #e5e7eb;color:#6b7280;font-weight:600;font-size:12px;">Result</th>
+          <th style="padding:8px 12px;text-align:right;border-bottom:2px solid #e5e7eb;color:#6b7280;font-weight:600;font-size:12px;">Points</th>
+        </tr>
+        ${rows}
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:24px 32px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;">
+        Sent by ${teacherName} via LiveClass.<br>
+        This is an automated email. Please contact your teacher for any questions.
+      </p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`;
+}
+
+export const emailSessionResults = onCall(
+  { ...FUNCTION_CONFIG, memory: "512MiB" as const },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Must be logged in");
+    }
+
+    const { sessionId, recipients } = request.data as {
+      sessionId: string;
+      recipients: { playerId: string; email: string }[];
+    };
+
+    if (
+      !sessionId ||
+      !recipients ||
+      !Array.isArray(recipients) ||
+      recipients.length === 0
+    ) {
+      throw new HttpsError(
+        "invalid-argument",
+        "sessionId and at least one recipient required"
+      );
+    }
+    if (recipients.length > 200) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Maximum 200 recipients per batch"
+      );
+    }
+
+    const sessionDoc = await db.doc(`sessions/${sessionId}`).get();
+    if (!sessionDoc.exists) {
+      throw new HttpsError("not-found", "Session not found");
+    }
+    const session = sessionDoc.data()!;
+    if (
+      session.hostId !== request.auth.uid &&
+      request.auth.token.email !== "rindra.it@gmail.com"
+    ) {
+      throw new HttpsError("permission-denied", "Not the session host");
+    }
+
+    // Fetch all data in parallel
+    const [playersSnap, answersSnap, questionsSnap, quizSnap, teacherDoc] =
+      await Promise.all([
+        db.collection(`sessions/${sessionId}/players`).get(),
+        db.collection(`sessions/${sessionId}/answers`).get(),
+        db.collection("questions").where("quizId", "==", session.quizId).get(),
+        db.doc(`quizzes/${session.quizId}`).get(),
+        db.doc(`users/${request.auth.uid}`).get(),
+      ]);
+
+    const quizTitle = quizSnap.data()?.title || "Untitled Quiz";
+    const teacherName = teacherDoc.data()?.displayName || "Your Teacher";
+
+    // Build player nickname map
+    const playerMap = new Map<string, string>();
+    playersSnap.docs.forEach((d) => {
+      playerMap.set(d.id, d.data().nickname || "Unknown");
+    });
+
+    // Build ordered question list
+    const questionList = questionsSnap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as { id: string; text: string; correctAnswers: string[] }));
+
+    // Group answers by playerId
+    const answersByPlayer = new Map<string, FirebaseFirestore.DocumentData[]>();
+    answersSnap.docs.forEach((d) => {
+      const data = d.data();
+      const arr = answersByPlayer.get(data.playerId) || [];
+      arr.push(data);
+      answersByPlayer.set(data.playerId, arr);
+    });
+
+    // Send emails sequentially
+    const mailer = getMailer();
+    let totalSent = 0;
+    let totalFailed = 0;
+    const failures: { playerId: string; email: string; error: string }[] = [];
+
+    for (const recipient of recipients) {
+      const nickname = playerMap.get(recipient.playerId) || "Student";
+      const playerAnswers = answersByPlayer.get(recipient.playerId) || [];
+
+      const breakdown = questionList.map((q, idx) => {
+        const answer = playerAnswers.find((a) => a.questionId === q.id);
+        return {
+          index: idx,
+          text: q.text || "",
+          correct: answer?.correct ?? false,
+          attempted: !!answer,
+          points: answer?.pointsAwarded ?? 0,
+        };
+      });
+
+      const correctCount = breakdown.filter((q) => q.correct).length;
+      const totalPoints = breakdown.reduce((sum, q) => sum + q.points, 0);
+      const accuracy =
+        questionList.length > 0
+          ? Math.round((correctCount / questionList.length) * 100)
+          : 0;
+
+      const html = buildResultEmail({
+        nickname,
+        quizTitle,
+        sessionPin: session.pinCode || "",
+        totalPoints,
+        correctCount,
+        totalQuestions: questionList.length,
+        accuracyPercent: accuracy,
+        questionBreakdown: breakdown,
+        teacherName,
+      });
+
+      try {
+        if (!mailer) throw new Error("SMTP not configured");
+        await mailer.sendMail({
+          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          to: recipient.email,
+          subject: `${nickname}'s Results — ${quizTitle} | LiveClass`,
+          html,
+        });
+        totalSent++;
+      } catch (err: unknown) {
+        totalFailed++;
+        failures.push({
+          playerId: recipient.playerId,
+          email: recipient.email,
+          error: err instanceof Error ? err.message : "Send failed",
+        });
+      }
+    }
+
+    return { totalSent, totalFailed, failures };
+  }
+);
+
 // --- Report Violation (Anti-Cheat) ---
 export const reportViolation = onCall(FUNCTION_CONFIG, async (request) => {
   const { sessionId, playerId, type } = request.data as {
