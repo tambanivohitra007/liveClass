@@ -138,7 +138,7 @@ export default function PlayAssignment() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
+      <div className="min-h-dvh bg-surface-dark flex items-center justify-center text-white text-center p-6">
         <div>
           <Ban className="w-14 h-14 mx-auto mb-4 text-danger" />
           <h1 className="text-2xl font-bold mb-2">Oops!</h1>
@@ -150,7 +150,7 @@ export default function PlayAssignment() {
 
   if (!assignment) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+      <div className="min-h-dvh bg-surface-dark flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -159,7 +159,7 @@ export default function PlayAssignment() {
   const now = Date.now();
   if (now < assignment.startAt) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
+      <div className="min-h-dvh bg-surface-dark flex items-center justify-center text-white text-center p-6">
         <div>
           <Clock className="w-14 h-14 mx-auto mb-4 text-white/60" />
           <h1 className="text-2xl font-bold mb-2">Not yet available</h1>
@@ -170,7 +170,7 @@ export default function PlayAssignment() {
   }
   if (now > assignment.endAt) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
+      <div className="min-h-dvh bg-surface-dark flex items-center justify-center text-white text-center p-6">
         <div>
           <Ban className="w-14 h-14 mx-auto mb-4 text-danger" />
           <h1 className="text-2xl font-bold mb-2">Assignment Closed</h1>
@@ -182,7 +182,7 @@ export default function PlayAssignment() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center text-white text-center p-6">
+      <div className="min-h-dvh bg-surface-dark flex items-center justify-center text-white text-center p-6">
         <div className="animate-bounce-in">
           <CircleCheckBig className="w-16 h-16 mx-auto mb-4 text-success" />
           <h1 className="text-3xl font-black mb-2">All Done!</h1>
@@ -196,7 +196,7 @@ export default function PlayAssignment() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-surface-dark flex items-center justify-center">
+      <div className="min-h-dvh bg-surface-dark flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -205,7 +205,7 @@ export default function PlayAssignment() {
   const question = questions[currentIndex];
 
   return (
-    <div className="min-h-screen bg-surface-dark flex flex-col">
+    <div className="min-h-dvh bg-surface-dark flex flex-col">
       {/* Offline banner */}
       {!isOnline && (
         <div className="bg-warning/20 text-warning text-center text-sm py-2 font-medium">
@@ -258,7 +258,7 @@ export default function PlayAssignment() {
                         setSelectedAnswer(opt);
                       }
                     }}
-                    className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center transition-all ${
+                    className={`rounded-2xl text-white font-bold text-lg flex items-center justify-center p-4 min-h-14 select-none touch-manipulation transition-all ${
                       answerColors[i % answerColors.length]
                     } ${isSelected ? 'ring-4 ring-white scale-95' : 'active:scale-95'}`}
                   >

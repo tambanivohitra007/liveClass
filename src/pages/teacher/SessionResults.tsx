@@ -816,7 +816,7 @@ export default function SessionResults() {
                    </div>
 
                    {/* Options & Stats */}
-                   <div className="flex gap-8">
+                   <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
                       {/* Options List */}
                       <div className="flex-1 space-y-3">
                          {dist?.distribution.map((option, optIdx) => {
@@ -849,7 +849,7 @@ export default function SessionResults() {
                       </div>
 
                       {/* Right Stats (Correct / Incorrect / Unanswered) */}
-                      <div className="w-64 shrink-0">
+                      <div className="w-full sm:w-64 sm:shrink-0">
                          <div className="space-y-6">
                             <div>
                                <div className="flex justify-between text-sm mb-1">

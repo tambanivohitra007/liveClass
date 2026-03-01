@@ -487,7 +487,7 @@ export default function HostSession() {
   }, [isSessionActive]);
 
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center" style={MESH_BG}>
+    <div className="min-h-dvh flex items-center justify-center" style={MESH_BG}>
       <div className="text-center">
         <p className="text-danger mb-4">{error}</p>
         <button onClick={() => navigate('/dashboard')} className="text-brand underline">Back to Dashboard</button>
@@ -592,13 +592,13 @@ export default function HostSession() {
   };
 
   if (!session) return (
-    <div className="min-h-screen flex items-center justify-center" style={MESH_BG}>
+    <div className="min-h-dvh flex items-center justify-center" style={MESH_BG}>
       <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
     </div>
   );
 
   return (
-    <div className={`text-white flex flex-col ${session?.status === 'lobby' ? 'h-screen overflow-hidden' : 'min-h-screen'}`} style={MESH_BG}>
+    <div className={`text-white flex flex-col ${session?.status === 'lobby' ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`} style={MESH_BG}>
 
       {/* QR Code Zoom Modal */}
       {qrZoomed && session?.pinCode && (
@@ -1092,7 +1092,7 @@ export default function HostSession() {
               <div className="inline-flex items-center gap-1 bg-white/5 rounded-full p-1.5 border border-white/10 backdrop-blur-sm">
                 <button
                   onClick={togglePause}
-                  className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+                  className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white touch-manipulation"
                   title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
                   aria-label={session.timerPaused ? 'Resume timer' : 'Pause timer'}
                 >
@@ -1100,7 +1100,7 @@ export default function HostSession() {
                 </button>
                 <button
                   onClick={extendTimer}
-                  className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold"
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold touch-manipulation"
                   title="Add 30 seconds"
                 >
                   +30s
@@ -1108,7 +1108,7 @@ export default function HostSession() {
                 {!isLastQuestion && (
                   <button
                     onClick={skipQuestion}
-                    className="p-2.5 sm:p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+                    className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white touch-manipulation"
                     title="Skip to next question"
                     aria-label="Skip to next question"
                   >

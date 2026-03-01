@@ -15,6 +15,7 @@ import CodeBlock from '../../components/CodeBlock';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
 import { playCorrect, playWrong, playTick, playUrgentTick, playSubmit, playPodium, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
+import { hapticLight, hapticMedium, hapticSuccess, hapticError } from '../../lib/haptics';
 import type { Session, Question } from '../../types/models';
 
 function ordinal(n: number): string {
@@ -356,8 +357,8 @@ export default function PlayGame() {
 
   useEffect(() => {
     if (!feedback) return;
-    if (feedback.correct) playCorrect();
-    else playWrong();
+    if (feedback.correct) { playCorrect(); hapticSuccess(); }
+    else { playWrong(); hapticError(); }
   }, [feedback]);
 
   useEffect(() => {
@@ -416,6 +417,7 @@ export default function PlayGame() {
     setSubmitted(true);
     setSubmitFailed(false);
     playSubmit();
+    hapticMedium();
     const elapsedMs = isStudentPaced
       ? Date.now() - spQuestionStartRef.current
       : (currentQuestion.timeLimitSec - timeLeft) * 1000;
@@ -503,7 +505,7 @@ export default function PlayGame() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={GAME_BG}>
+      <div className="min-h-dvh flex items-center justify-center" style={GAME_BG}>
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -512,7 +514,7 @@ export default function PlayGame() {
   // Lobby
   if (session.status === 'lobby') {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white" style={GAME_BG}>
+      <div className="min-h-dvh flex items-center justify-center text-white" style={GAME_BG}>
         <div className="text-center animate-fade-in max-w-sm mx-auto px-4">
           {!editingProfile ? (
             <>
@@ -565,7 +567,7 @@ export default function PlayGame() {
                     key={emoji}
                     type="button"
                     onClick={() => setEditAvatar(emoji)}
-                    className={`text-xl p-1.5 rounded-lg transition-all duration-200 ${
+                    className={`text-xl p-2 rounded-lg select-none touch-manipulation transition-all duration-200 ${
                       editAvatar === emoji
                         ? 'bg-brand/30 ring-2 ring-brand scale-110'
                         : 'bg-white/5 hover:bg-white/10'
@@ -634,7 +636,7 @@ export default function PlayGame() {
   // Student-paced: All done screen
   if (isStudentPaced && spFinished) {
     return (
-      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
+      <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
           <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-success" />
           <h1 className="text-2xl sm:text-3xl mb-2">All Done!</h1>
@@ -652,7 +654,7 @@ export default function PlayGame() {
   // Student-paced: Feedback + Next question
   if (isStudentPaced && feedback && submitted) {
     return (
-      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
+      <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         <Confetti active={feedback.correct} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-8 sm:py-12">
@@ -693,7 +695,7 @@ export default function PlayGame() {
   // Ended
   if (session.status === 'ended') {
     return (
-      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
+      <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
           <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-warning" />
           <h1 className="text-2xl sm:text-3xl mb-2">Game Over!</h1>
@@ -721,7 +723,7 @@ export default function PlayGame() {
   if (session.questionState === 'reveal') {
     const alreadySawFeedback = sawPreRevealRef.current;
     return (
-      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
+      <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         {!alreadySawFeedback && <Confetti active={feedback?.correct === true} />}
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-8 sm:py-12">
@@ -760,7 +762,7 @@ export default function PlayGame() {
   if (session.questionState === 'live' && submitted && feedback && !isStudentPaced) {
     sawPreRevealRef.current = true;
     return (
-      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
+      <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
         <Confetti active={feedback.correct} />
         <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
         <div className="max-w-md mx-auto text-center py-8 sm:py-12">
@@ -799,7 +801,7 @@ export default function PlayGame() {
   // Loading question
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={GAME_BG}>
+      <div className="min-h-dvh flex items-center justify-center" style={GAME_BG}>
         <div className="w-10 h-10 border-4 border-brand/30 border-t-brand rounded-full animate-spin" />
       </div>
     );
@@ -807,15 +809,15 @@ export default function PlayGame() {
 
   // Live question
   return (
-    <div className="min-h-screen flex flex-col" style={GAME_BG}>
+    <div className="min-h-dvh flex flex-col" style={GAME_BG}>
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           {playerAvatar && <span className="text-lg leading-none">{playerAvatar}</span>}
           <div className="flex flex-col">
-            <span className="text-white/70 text-xs font-semibold truncate max-w-20">{playerNickname}</span>
-            <span className="text-white/40 text-[10px] font-medium">Q{isStudentPaced ? localQIndex + 1 : (session.currentQuestionIndex || 0) + 1}{myTeam ? ` · ${myTeam.name.split(' ')[0]}` : ''}</span>
+            <span className="text-white/70 text-xs font-semibold truncate max-w-28 sm:max-w-40">{playerNickname}</span>
+            <span className="text-white/40 text-[11px] font-medium">Q{isStudentPaced ? localQIndex + 1 : (session.currentQuestionIndex || 0) + 1}{myTeam ? ` · ${myTeam.name.split(' ')[0]}` : ''}</span>
           </div>
         </div>
         <div className="flex flex-col items-center">
@@ -851,10 +853,10 @@ export default function PlayGame() {
         <div className="text-center py-3 sm:py-6 animate-fade-in">
           <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">{currentQuestion.text}</h2>
           {currentQuestion.imageUrl && (
-            <img src={currentQuestion.imageUrl} alt="" className="max-h-40 mx-auto mt-4 rounded-xl" />
+            <img src={currentQuestion.imageUrl} alt="" className="max-h-28 sm:max-h-40 mx-auto mt-4 rounded-xl object-contain" />
           )}
           {currentQuestion.videoUrl && getYouTubeId(currentQuestion.videoUrl) && (
-            <div className="mt-4 mx-auto max-w-md aspect-video rounded-xl overflow-hidden">
+            <div className="mt-4 mx-auto w-full max-w-md aspect-video rounded-xl overflow-hidden">
               <iframe
                 src={`https://www.youtube.com/embed/${getYouTubeId(currentQuestion.videoUrl)}?autoplay=0&rel=0`}
                 className="w-full h-full"
@@ -871,7 +873,7 @@ export default function PlayGame() {
             {isMultiAnswer && (
               <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
             )}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-100">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[60dvh] sm:max-h-100">
               {currentQuestion.options.map((opt, i) => {
                 const isSelected = isMultiAnswer
                   ? selectedAnswers.includes(opt)
@@ -881,6 +883,7 @@ export default function PlayGame() {
                     key={i}
                     onClick={() => {
                       if (!submitted) {
+                        hapticLight();
                         if (isMultiAnswer) {
                           setSelectedAnswers((prev) =>
                             prev.includes(opt) ? prev.filter((a) => a !== opt) : [...prev, opt]
@@ -891,7 +894,7 @@ export default function PlayGame() {
                       }
                     }}
                     disabled={submitted}
-                    className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-3 transition-all ${
+                    className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-4 min-h-14 select-none touch-manipulation transition-all ${
                       answerColors[i % answerColors.length]
                     } ${
                       isSelected ? 'ring-4 ring-white scale-95' : ''
@@ -1046,13 +1049,13 @@ export default function PlayGame() {
 
         {/* Poll UI */}
         {currentQuestion.type === 'poll' && (
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-100">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[60dvh] sm:max-h-100">
             {currentQuestion.options.map((opt, i) => (
               <button
                 key={i}
-                onClick={() => { if (!submitted) setSelectedAnswer(opt); }}
+                onClick={() => { if (!submitted) { hapticLight(); setSelectedAnswer(opt); } }}
                 disabled={submitted}
-                className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-3 transition-all ${
+                className={`rounded-2xl text-white font-bold text-base md:text-lg flex items-center justify-center gap-2 p-4 min-h-14 select-none touch-manipulation transition-all ${
                   answerColors[i % answerColors.length]
                 } ${
                   selectedAnswer === opt ? 'ring-4 ring-white scale-95' : ''
@@ -1081,7 +1084,7 @@ export default function PlayGame() {
         {!submitted && canSubmit() && (
           <button
             onClick={submitAnswer}
-            className="mt-4 py-4 btn-3d-cyan text-white font-bold text-lg animate-slide-up w-full"
+            className="mt-4 py-4 btn-3d-cyan text-white font-bold text-lg animate-slide-up w-full select-none touch-manipulation"
           >
             Submit Answer
           </button>

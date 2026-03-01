@@ -25,10 +25,24 @@ export default defineConfig({
         name: 'LiveClass Game',
         short_name: 'LiveClass',
         description: 'Real-time gamified quiz platform',
-        theme_color: '#4CAF50',
-        background_color: '#ffffff',
+        theme_color: '#0F1729',
+        background_color: '#080F1E',
         display: 'standalone',
         start_url: '/',
+        shortcuts: [
+          {
+            name: 'Join Game',
+            short_name: 'Join',
+            url: '/join',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Dashboard',
+            short_name: 'Dashboard',
+            url: '/dashboard',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+        ],
         icons: [
           {
             src: 'pwa-192x192.png',

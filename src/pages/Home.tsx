@@ -45,11 +45,11 @@ export default function Home() {
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center lg:items-start">
           {/* Left - Join Game Card */}
           <div className="relative animate-fade-in">
-            <div className="mx-auto w-64 h-32 sm:w-64 sm:h-32 md:w-64 md:h-32 lg:w-[24rem] lg:h-[12rem] xl:w-[30rem] xl:h-[15rem] overflow-hidden pointer-events-none z-0">
+            <div className="mx-auto w-48 h-24 sm:w-64 sm:h-32 lg:w-[24rem] lg:h-[12rem] xl:w-[30rem] xl:h-[15rem] overflow-hidden pointer-events-none z-0">
               <img
                 src={boy2}
                 alt="Student learning"
-                className="w-64 h-64 sm:w-64 sm:h-64 md:w-64 md:h-64 lg:w-[24rem] lg:h-[24rem] xl:w-[30rem] xl:h-[30rem] object-contain"
+                className="w-48 h-48 sm:w-64 sm:h-64 lg:w-[24rem] lg:h-[24rem] xl:w-[30rem] xl:h-[30rem] object-contain"
               />
             </div>
             <div className="relative z-10 card-night p-8 md:p-12">
@@ -132,7 +132,7 @@ export default function Home() {
             </div>
 
             {/* Inline Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-6 w-full max-w-sm">
+            <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-6 w-full max-w-sm">
               {[
                 { value: '50+', label: 'Quizzes' },
                 { value: '100+', label: 'Students' },

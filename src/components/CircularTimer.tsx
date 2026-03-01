@@ -11,7 +11,7 @@ export default function CircularTimer({ timeLeft, totalTime }: CircularTimerProp
   const isUrgent = timeLeft <= 5;
 
   return (
-    <div className={`relative w-20 h-20 ${isUrgent ? 'animate-timer-pulse' : ''}`}>
+    <div className={`relative w-16 h-16 sm:w-20 sm:h-20 ${isUrgent ? 'animate-timer-pulse' : ''}`}>
       <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
         {/* Background circle */}
         <circle
@@ -33,7 +33,7 @@ export default function CircularTimer({ timeLeft, totalTime }: CircularTimerProp
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`text-2xl font-black ${isUrgent ? 'text-danger' : 'text-white'}`}>
+        <span className={`text-xl sm:text-2xl font-black ${isUrgent ? 'text-danger' : 'text-white'}`}>
           {timeLeft}
         </span>
       </div>

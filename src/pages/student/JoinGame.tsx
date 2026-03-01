@@ -411,7 +411,7 @@ export default function JoinGame() {
                       key={emoji}
                       type="button"
                       onClick={() => setAvatar(emoji)}
-                      className={`text-2xl p-2 rounded-xl border transition-all duration-200 ${
+                      className={`text-2xl p-2.5 rounded-xl border select-none touch-manipulation transition-all duration-200 ${
                         avatar === emoji
                           ? 'border-brand bg-brand/20 ring-2 ring-brand/40 scale-110'
                           : 'border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-100 dark:hover:bg-white/10'
