@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { collection, query, where, onSnapshot, doc, deleteDoc, getDocs, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
@@ -83,7 +83,6 @@ export default function QuizLibrary() {
 
   // View state
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem('quizLibraryView') as ViewMode) || 'card';
   });
@@ -97,9 +96,9 @@ export default function QuizLibrary() {
   useEffect(() => {
     if (!menuOpenId) return;
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpenId(null);
-      }
+      const target = e.target as HTMLElement;
+      if (target.closest(`[data-quiz-menu="${menuOpenId}"]`)) return;
+      setMenuOpenId(null);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -243,6 +242,10 @@ export default function QuizLibrary() {
       await updateDoc(doc(db, 'quizzes', quizId), {
         collectionId: collectionId || null,
       });
+      const collName = collectionId
+        ? collections.find((c) => c.id === collectionId)?.name || 'collection'
+        : 'Uncategorized';
+      addToast('success', `Moved to ${collName}`);
     } catch {
       addToast('error', 'Failed to update quiz collection');
     }
@@ -364,7 +367,7 @@ export default function QuizLibrary() {
   }, [filtered, collections]);
 
   const renderMoreMenu = (quiz: QuizWithMeta) => (
-    <div className="relative" ref={menuOpenId === quiz.id ? menuRef : undefined}>
+    <div className="relative" data-quiz-menu={quiz.id}>
       <button
         onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === quiz.id ? null : quiz.id); }}
         className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/60 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -400,19 +403,27 @@ export default function QuizLibrary() {
           {collections.length > 0 && (
             <>
               <hr className="my-1.5 border-gray-200 dark:border-white/10" />
-              <div className="px-4 py-2">
-                <p className="text-[10px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider mb-1.5">Move to</p>
-                <select
-                  value={quiz.collectionId || ''}
-                  onChange={(e) => { handleQuizCollectionChange(quiz.id, e.target.value); setMenuOpenId(null); }}
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-white/80 bg-gray-50 dark:bg-slate-800 outline-none"
+              <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 dark:text-white/40 uppercase tracking-wider">Move to</p>
+              {quiz.collectionId && (
+                <button
+                  onClick={() => { handleQuizCollectionChange(quiz.id, ''); setMenuOpenId(null); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                 >
-                  <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Uncategorized</option>
-                  {collections.map((c) => (
-                    <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
-                  ))}
-                </select>
-              </div>
+                  <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-white/30" /> Uncategorized
+                </button>
+              )}
+              {collections.filter((c) => c.id !== quiz.collectionId).map((c) => {
+                const cm = COLLECTION_COLORS.find((cc) => cc.key === c.color);
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => { handleQuizCollectionChange(quiz.id, c.id); setMenuOpenId(null); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <span className={`w-2 h-2 rounded-full ${cm?.bg || 'bg-gray-300'}`} /> {c.name}
+                  </button>
+                );
+              })}
             </>
           )}
           <hr className="my-1.5 border-gray-200 dark:border-white/10" />
