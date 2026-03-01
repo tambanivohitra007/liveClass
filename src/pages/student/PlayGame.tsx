@@ -753,6 +753,45 @@ export default function PlayGame() {
     );
   }
 
+  // Submitted with feedback during live — show result + provisional leaderboard instantly
+  if (session.questionState === 'live' && submitted && feedback && !isStudentPaced) {
+    return (
+      <div className="min-h-screen text-white p-4 sm:p-6" style={GAME_BG}>
+        <Confetti active={feedback.correct} />
+        <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
+        <div className="max-w-md mx-auto text-center py-8 sm:py-12">
+          <div className="animate-bounce-in">
+            <div className="flex justify-center mb-4">
+              {feedback.correct
+                ? <PartyPopper className="w-12 h-12 sm:w-16 sm:h-16 text-success" />
+                : <Frown className="w-12 h-12 sm:w-16 sm:h-16 text-danger" />}
+            </div>
+            <h2 className={`text-2xl sm:text-3xl mb-2 ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+              {feedback.correct ? 'Correct!' : 'Wrong!'}
+            </h2>
+            <p className="text-3xl sm:text-4xl font-bold text-white mb-2">+{feedback.points}</p>
+            {feedback.rank > 0 && (
+              <p className="text-white/50 text-sm mb-6">
+                You're in <span className="text-white font-bold">{ordinal(feedback.rank)} place</span>
+                {feedback.behindBy > 0 && <> — <span className="text-warning font-bold">{feedback.behindBy} pts</span> behind</>}
+                {feedback.rank === 1 && <span className="text-warning font-bold"> — You're leading!</span>}
+              </p>
+            )}
+          </div>
+          {sessionId && (
+            <div className="card-night p-4 sm:p-6 animate-slide-up">
+              <Leaderboard sessionId={sessionId} compact currentQuestion={(session.currentQuestionIndex || 0) + 1} totalQuestions={totalQuestions} />
+            </div>
+          )}
+          <div className="flex items-center justify-center gap-2 mt-6 text-white/30 text-sm">
+            <div className="w-4 h-4 border-2 border-white/20 border-t-white/50 rounded-full animate-spin" />
+            Waiting for everyone...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Loading question
   if (!currentQuestion) {
     return (
