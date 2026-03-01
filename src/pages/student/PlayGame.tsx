@@ -805,7 +805,7 @@ export default function PlayGame() {
 
       {/* Question */}
       <div className="flex-1 flex flex-col px-4 pb-4">
-        <div className="text-center py-6 animate-fade-in">
+        <div className="text-center py-3 sm:py-6 animate-fade-in">
           <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">{currentQuestion.text}</h2>
           {currentQuestion.imageUrl && (
             <img src={currentQuestion.imageUrl} alt="" className="max-h-40 mx-auto mt-4 rounded-xl" />
@@ -870,23 +870,21 @@ export default function PlayGame() {
         )}
 
         {currentQuestion.type === 'short' && (
-          <div className="flex-1 flex items-center">
-            <div className="w-full max-w-md mx-auto">
-              <input
-                type="text"
-                value={selectedAnswer}
-                onChange={(e) => setSelectedAnswer(e.target.value)}
-                placeholder="Type your answer..."
-                disabled={submitted}
-                className="w-full text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none backdrop-blur"
-                autoFocus
-              />
-            </div>
+          <div className="w-full max-w-md mx-auto mt-4">
+            <input
+              type="text"
+              value={selectedAnswer}
+              onChange={(e) => setSelectedAnswer(e.target.value)}
+              placeholder="Type your answer..."
+              disabled={submitted}
+              className="w-full text-center text-2xl font-bold px-6 py-5 rounded-2xl border-2 border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none backdrop-blur"
+              autoFocus
+            />
           </div>
         )}
 
         {currentQuestion.type === 'code_output' && (
-          <div className="flex-1 flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4 mt-4">
             {currentQuestion.codeSnippet && (
               <CodeBlock code={currentQuestion.codeSnippet} language={currentQuestion.codeLanguage} className="w-full max-w-lg" />
             )}
@@ -933,7 +931,7 @@ export default function PlayGame() {
 
         {/* Fill in the Blank UI */}
         {currentQuestion.type === 'fill_blank' && (
-          <div className="flex-1 flex items-center">
+          <div className="mt-4">
             <div className="w-full max-w-lg mx-auto space-y-4">
               <div className="text-base sm:text-lg text-white leading-relaxed text-center">
                 {currentQuestion.text.split('___').map((part, i, arr) => (
