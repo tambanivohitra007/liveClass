@@ -99,9 +99,36 @@ export default function KnowledgeBaseFab() {
               {activeArticle.article.title}
             </h3>
             <div className="space-y-3 text-sm text-gray-700 dark:text-white/70 leading-relaxed">
-              {activeArticle.article.body.split('\n\n').map((paragraph, i) => (
-                <p key={i}>{paragraph}</p>
-              ))}
+              {activeArticle.article.body.split('\n\n').map((paragraph, i) => {
+                // Numbered step (e.g., "1. Do something")
+                const stepMatch = paragraph.match(/^(\d+)\.\s(.*)/s);
+                if (stepMatch) {
+                  return (
+                    <p key={i}>
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand/15 text-brand text-xs font-bold mr-1.5 align-text-bottom">
+                        {stepMatch[1]}
+                      </span>
+                      {stepMatch[2]}
+                    </p>
+                  );
+                }
+
+                // Bullet list items separated by \n
+                if (paragraph.startsWith('- ')) {
+                  return (
+                    <ul key={i} className="space-y-1.5">
+                      {paragraph.split('\n').map((line, j) => (
+                        <li key={j} className="flex gap-2">
+                          <span className="text-brand shrink-0 mt-px">•</span>
+                          <span>{line.replace(/^-\s/, '')}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                }
+
+                return <p key={i}>{paragraph}</p>;
+              })}
             </div>
           </div>
         ) : (
