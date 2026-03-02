@@ -7,6 +7,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onValueCreated } from "firebase-functions/v2/database";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { defineSecret } from "firebase-functions/params";
+import { checkCorrectness, getShardId as getShardIdLogic, generatePin as generatePinLogic } from "./logic";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -64,75 +65,10 @@ async function getPlayerCached(sessionId: string, playerId: string): Promise<Fir
   return data;
 }
 
-// --- Correctness checker (extracted for RTDB-only scoring) ---
-function checkCorrectness(selection: string, question: FirebaseFirestore.DocumentData): boolean {
-  const isPoll = question.type === "poll";
-  const isSlide = question.type === "slide";
-
-  if (isSlide) return false;
-  if (isPoll) return true;
-
-  if (question.type === "ordering") {
-    try {
-      const submitted = JSON.parse(selection) as string[];
-      const expected: string[] = question.options || [];
-      return submitted.length === expected.length &&
-        submitted.every((item: string, idx: number) => item === expected[idx]);
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "matching") {
-    try {
-      const pairs = JSON.parse(selection) as Record<string, string>;
-      const options: string[] = question.options || [];
-      const matchOpts: string[] = question.matchOptions || [];
-      return options.length > 0 && options.every((left: string, idx: number) =>
-        pairs[left] === matchOpts[idx]
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "fill_blank") {
-    try {
-      const answers = JSON.parse(selection) as string[];
-      const expected: string[] = question.correctAnswers || [];
-      return answers.length === expected.length && answers.every(
-        (a: string, idx: number) => a.trim().toLowerCase() === expected[idx].trim().toLowerCase()
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "mcq" && question.correctAnswers && question.correctAnswers.length > 1) {
-    try {
-      const chosen = JSON.parse(selection) as string[];
-      const expected: string[] = question.correctAnswers;
-      return chosen.length === expected.length &&
-        chosen.every((c: string) => expected.includes(c)) &&
-        expected.every((e: string) => chosen.includes(e));
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "code_output") {
-    const expected: string[] = question.correctAnswers || [];
-    return expected.some(
-      (a: string) => a.trim().toLowerCase() === selection.trim().toLowerCase()
-    );
-  }
-
-  // Default: mcq, tf
-  return (question.correctAnswers || []).includes(selection);
-}
+// checkCorrectness imported from ./logic
 
 function generatePin(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return generatePinLogic();
 }
 
 function generateToken(): string {
@@ -140,11 +76,7 @@ function generateToken(): string {
 }
 
 function getShardId(playerId: string): number {
-  let hash = 0;
-  for (let i = 0; i < playerId.length; i++) {
-    hash = (hash * 31 + playerId.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash) % NUM_SHARDS;
+  return getShardIdLogic(playerId, NUM_SHARDS);
 }
 
 // --- Email Helper ---
