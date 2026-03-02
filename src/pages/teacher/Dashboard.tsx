@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, orderBy, limit, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
@@ -188,17 +188,25 @@ export default function Dashboard() {
         questionCount: questionCountMap.get(quiz.id) || 0,
       }));
 
-      const sessionsSnap = await getDocs(query(collection(db, 'sessions'), where('hostId', '==', user.id)));
+      // Fetch recent 3 ended sessions (limited query instead of loading all)
+      const recentSessionsQuery = query(
+        collection(db, 'sessions'),
+        where('hostId', '==', user.id),
+        where('status', '==', 'ended'),
+        orderBy('endedAt', 'desc'),
+        limit(3)
+      );
+      const [recentSnap, totalCountSnap] = await Promise.all([
+        getDocs(recentSessionsQuery),
+        getCountFromServer(query(collection(db, 'sessions'), where('hostId', '==', user.id))),
+      ]);
 
       const quizTitleMap = new Map<string, string>();
       enriched.forEach((q) => quizTitleMap.set(q.id, q.title));
 
       type SessionDoc = { id: string; status: string; endedAt: unknown; quizId: string; pinCode: string; top10Snapshot?: unknown[] };
-      const endedSessions = sessionsSnap.docs
+      const endedSessions = recentSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }) as SessionDoc)
-        .filter((s) => s.status === 'ended' && s.endedAt)
-        .sort((a, b) => toMs(b.endedAt) - toMs(a.endedAt))
-        .slice(0, 3)
         .map((s) => ({
           id: s.id,
           quizId: s.quizId,
@@ -213,7 +221,7 @@ export default function Dashboard() {
       setStats({
         totalQuizzes: enriched.length,
         totalQuestions: totalQ,
-        totalSessions: sessionsSnap.size,
+        totalSessions: totalCountSnap.data().count,
       });
       setLoading(false);
     });
