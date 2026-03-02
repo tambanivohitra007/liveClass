@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, getDoc, deleteDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, deleteDoc, orderBy, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
+import type { DocumentData, QueryConstraint } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { SkeletonCard } from '../../components/Skeleton';
-import { Users, Target, Calendar, Hash, SortAsc, Filter, Trash2, Gamepad2, Mic, Award } from 'lucide-react';
+import { Users, Target, Calendar, Hash, SortAsc, Filter, Trash2, Gamepad2, Mic, Award, Loader2 } from 'lucide-react';
 import BackButton from '../../components/BackButton';
 
 interface SessionRecord {
@@ -35,6 +36,8 @@ type Tab = 'quiz' | 'grading';
 type DateFilter = '7d' | '30d' | 'all';
 type SortField = 'date' | 'players' | 'accuracy';
 
+const PAGE_SIZE = 12;
+
 export default function SessionHistory() {
   const { user } = useAuthStore();
   const { addToast } = useToastStore();
@@ -47,13 +50,20 @@ export default function SessionHistory() {
   const [loading, setLoading] = useState(true);
   const [quizFilter, setQuizFilter] = useState<string>('all');
   const [quizOptions, setQuizOptions] = useState<{ id: string; title: string }[]>([]);
+  const sessionsLastDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [sessionsHasMore, setSessionsHasMore] = useState(false);
+  const [sessionsLoadingMore, setSessionsLoadingMore] = useState(false);
+  const quizTitleCacheRef = useRef<Map<string, string>>(new Map());
 
   // Live grading state
   const [gradings, setGradings] = useState<LiveGradingRecord[]>([]);
   const [gradingLoading, setGradingLoading] = useState(false);
-  const [gradingLoaded, setGradingLoaded] = useState(false);
+  const [gradingsInitialized, setGradingsInitialized] = useState(false);
   const [rubricFilter, setRubricFilter] = useState<string>('all');
   const [rubricOptions, setRubricOptions] = useState<{ id: string; name: string }[]>([]);
+  const gradingsLastDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [gradingsHasMore, setGradingsHasMore] = useState(false);
+  const [gradingsLoadingMore, setGradingsLoadingMore] = useState(false);
 
   // Shared state
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
@@ -75,35 +85,52 @@ export default function SessionHistory() {
     return 0;
   };
 
-  // Load quiz sessions
-  useEffect(() => {
+  // ─── Load quiz sessions (paginated) ───
+  const loadSessions = async (isLoadMore: boolean) => {
     if (!user) return;
 
-    const load = async () => {
+    if (isLoadMore) {
+      setSessionsLoadingMore(true);
+    } else {
       setLoading(true);
+      setSessions([]);
+      sessionsLastDocRef.current = null;
+      setSessionsHasMore(false);
+    }
 
-      const sessionsSnap = await getDocs(
-        query(
-          collection(db, 'sessions'),
-          where('hostId', '==', user.id),
-          where('status', '==', 'ended'),
-          orderBy('endedAt', 'desc')
-        )
-      );
+    try {
+      const constraints: QueryConstraint[] = [
+        where('hostId', '==', user.id),
+        where('status', '==', 'ended'),
+      ];
+      if (dateFilter === '7d') constraints.push(where('endedAt', '>', Date.now() - 7 * 86400000));
+      else if (dateFilter === '30d') constraints.push(where('endedAt', '>', Date.now() - 30 * 86400000));
+      constraints.push(orderBy('endedAt', 'desc'));
+      if (isLoadMore && sessionsLastDocRef.current) {
+        constraints.push(startAfter(sessionsLastDocRef.current));
+      }
+      constraints.push(limit(PAGE_SIZE));
 
-      // Collect unique quiz IDs and fetch titles in parallel
-      const quizIds = [...new Set(sessionsSnap.docs.map((d) => d.data().quizId))];
-      const quizTitleCache = new Map<string, string>();
+      const snap = await getDocs(query(collection(db, 'sessions'), ...constraints));
+
+      setSessionsHasMore(snap.docs.length === PAGE_SIZE);
+      if (snap.docs.length > 0) {
+        sessionsLastDocRef.current = snap.docs[snap.docs.length - 1];
+      }
+
+      // Fetch quiz titles for IDs not already cached
+      const newQuizIds = [...new Set(snap.docs.map((d) => d.data().quizId))]
+        .filter((id) => !quizTitleCacheRef.current.has(id));
       await Promise.all(
-        quizIds.map(async (qid) => {
+        newQuizIds.map(async (qid) => {
           const quizSnap = await getDoc(doc(db, 'quizzes', qid));
-          quizTitleCache.set(qid, quizSnap.data()?.title || 'Untitled Quiz');
+          quizTitleCacheRef.current.set(qid, quizSnap.data()?.title || 'Untitled Quiz');
         })
       );
 
-      // Fetch all subcollections in parallel
-      const records = await Promise.all(
-        sessionsSnap.docs.map(async (sDoc) => {
+      // Fetch subcollections in parallel
+      const newRecords = await Promise.all(
+        snap.docs.map(async (sDoc) => {
           const sData = sDoc.data();
           const quizId = sData.quizId;
 
@@ -126,7 +153,7 @@ export default function SessionHistory() {
           return {
             id: sDoc.id,
             quizId,
-            quizTitle: quizTitleCache.get(quizId) || 'Untitled Quiz',
+            quizTitle: quizTitleCacheRef.current.get(quizId) || 'Untitled Quiz',
             pinCode: sData.pinCode || '',
             endedAt: toMillis(sData.endedAt),
             playerCount: playersSnap.size,
@@ -136,35 +163,65 @@ export default function SessionHistory() {
         })
       );
 
-      setSessions(records);
+      if (isLoadMore) {
+        setSessions((prev) => [...prev, ...newRecords]);
+      } else {
+        setSessions(newRecords);
+      }
+
+      // Update quiz filter options from all cached titles
       setQuizOptions(
-        quizIds.map((id) => ({ id, title: quizTitleCache.get(id) || 'Untitled' }))
+        [...quizTitleCacheRef.current.entries()].map(([id, title]) => ({ id, title }))
       );
+    } catch {
+      addToast('error', 'Failed to load sessions');
+    } finally {
       setLoading(false);
-    };
+      setSessionsLoadingMore(false);
+    }
+  };
 
-    load();
-  }, [user]);
-
-  // Load live grading sessions (lazy — only when tab switches)
+  // Initial load + reload on dateFilter change
   useEffect(() => {
-    if (!user || tab !== 'grading' || gradingLoaded) return;
+    loadSessions(false);
+  }, [user, dateFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const load = async () => {
+  // ─── Load live grading sessions (paginated, lazy) ───
+  const loadGradings = async (isLoadMore: boolean) => {
+    if (!user) return;
+
+    if (isLoadMore) {
+      setGradingsLoadingMore(true);
+    } else {
       setGradingLoading(true);
+      setGradings([]);
+      gradingsLastDocRef.current = null;
+      setGradingsHasMore(false);
+    }
 
-      const lgSnap = await getDocs(
-        query(
-          collection(db, 'live_gradings'),
-          where('ownerId', '==', user.id),
-          where('status', '==', 'ended'),
-          orderBy('endedAt', 'desc')
-        )
-      );
+    try {
+      const constraints: QueryConstraint[] = [
+        where('ownerId', '==', user.id),
+        where('status', '==', 'ended'),
+      ];
+      if (dateFilter === '7d') constraints.push(where('endedAt', '>', Date.now() - 7 * 86400000));
+      else if (dateFilter === '30d') constraints.push(where('endedAt', '>', Date.now() - 30 * 86400000));
+      constraints.push(orderBy('endedAt', 'desc'));
+      if (isLoadMore && gradingsLastDocRef.current) {
+        constraints.push(startAfter(gradingsLastDocRef.current));
+      }
+      constraints.push(limit(PAGE_SIZE));
 
-      // Fetch all subcollections in parallel
-      const records = await Promise.all(
-        lgSnap.docs.map(async (lgDoc) => {
+      const snap = await getDocs(query(collection(db, 'live_gradings'), ...constraints));
+
+      setGradingsHasMore(snap.docs.length === PAGE_SIZE);
+      if (snap.docs.length > 0) {
+        gradingsLastDocRef.current = snap.docs[snap.docs.length - 1];
+      }
+
+      // Fetch subcollections in parallel
+      const newRecords = await Promise.all(
+        snap.docs.map(async (lgDoc) => {
           const data = lgDoc.data();
 
           const [playersSnap, evalsSnap] = await Promise.all([
@@ -190,20 +247,42 @@ export default function SessionHistory() {
         })
       );
 
-      const rubricIds = [...new Set(records.map((r) => r.rubricId))];
-      setGradings(records);
+      const allRecords = isLoadMore ? [...gradings, ...newRecords] : newRecords;
+      if (isLoadMore) {
+        setGradings((prev) => [...prev, ...newRecords]);
+      } else {
+        setGradings(newRecords);
+      }
+
+      const rubricIds = [...new Set(allRecords.map((r) => r.rubricId))];
       setRubricOptions(
         rubricIds.map((id) => {
-          const rec = records.find((r) => r.rubricId === id);
+          const rec = allRecords.find((r) => r.rubricId === id);
           return { id, name: rec?.rubricName || 'Untitled' };
         })
       );
+      setGradingsInitialized(true);
+    } catch {
+      addToast('error', 'Failed to load grading sessions');
+    } finally {
       setGradingLoading(false);
-      setGradingLoaded(true);
-    };
+      setGradingsLoadingMore(false);
+    }
+  };
 
-    load();
-  }, [user, tab, gradingLoaded]);
+  // Lazy load on first tab switch
+  useEffect(() => {
+    if (tab === 'grading' && !gradingsInitialized) {
+      loadGradings(false);
+    }
+  }, [tab, gradingsInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset gradings when dateFilter changes
+  useEffect(() => {
+    if (gradingsInitialized) {
+      setGradingsInitialized(false);
+    }
+  }, [dateFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDeleteSession = async (sessionId: string) => {
     setDeleting(true);
@@ -233,12 +312,9 @@ export default function SessionHistory() {
     }
   };
 
-  // Apply filters & sort for quiz sessions
-  const now = Date.now();
+  // Apply client-side filters & sort (date filter is now server-side)
   const filteredSessions = sessions
     .filter((s) => {
-      if (dateFilter === '7d' && now - s.endedAt > 7 * 86400000) return false;
-      if (dateFilter === '30d' && now - s.endedAt > 30 * 86400000) return false;
       if (quizFilter !== 'all' && s.quizId !== quizFilter) return false;
       return true;
     })
@@ -248,11 +324,8 @@ export default function SessionHistory() {
       return b.avgAccuracy - a.avgAccuracy;
     });
 
-  // Apply filters & sort for live gradings
   const filteredGradings = gradings
     .filter((g) => {
-      if (dateFilter === '7d' && now - g.endedAt > 7 * 86400000) return false;
-      if (dateFilter === '30d' && now - g.endedAt > 30 * 86400000) return false;
       if (rubricFilter !== 'all' && g.rubricId !== rubricFilter) return false;
       return true;
     })
@@ -384,92 +457,108 @@ export default function SessionHistory() {
               </p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
-              {filteredSessions.map((s) => (
-                <div key={s.id} className="relative animate-fade-in">
-                  <div
-                    onClick={() => navigate(`/session/${s.id}/results`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/session/${s.id}/results`); }}
-                    className="w-full bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-brand transition-colors mb-1 truncate">
-                        {s.quizTitle}
-                      </h3>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(s.id); }}
-                        className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
-                        title="Delete session"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40 mb-4">
-                      <Calendar className="w-3 h-3" />
-                      {s.endedAt > 0
-                        ? new Date(s.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-                        : 'Unknown date'}
-                      <span className="text-gray-300 dark:text-white/30">|</span>
-                      <Hash className="w-3 h-3" />
-                      {s.pinCode}
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
-                          <Users className="w-3 h-3" />
-                          <span className="text-[10px] uppercase tracking-wider font-medium">Players</span>
-                        </div>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{s.playerCount}</p>
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+                {filteredSessions.map((s) => (
+                  <div key={s.id} className="relative animate-fade-in">
+                    <div
+                      onClick={() => navigate(`/session/${s.id}/results`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/session/${s.id}/results`); }}
+                      className="w-full bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-brand transition-colors mb-1 truncate">
+                          {s.quizTitle}
+                        </h3>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(s.id); }}
+                          className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
+                          title="Delete session"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
-                          <Target className="w-3 h-3" />
-                          <span className="text-[10px] uppercase tracking-wider font-medium">Accuracy</span>
-                        </div>
-                        <p className={`text-lg font-bold ${
-                          s.avgAccuracy >= 70 ? 'text-success' :
-                          s.avgAccuracy >= 40 ? 'text-warning' :
-                          'text-danger'
-                        }`}>
-                          {s.avgAccuracy}%
-                        </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40 mb-4">
+                        <Calendar className="w-3 h-3" />
+                        {s.endedAt > 0
+                          ? new Date(s.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Unknown date'}
+                        <span className="text-gray-300 dark:text-white/30">|</span>
+                        <Hash className="w-3 h-3" />
+                        {s.pinCode}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
-                          <span className="text-[10px] uppercase tracking-wider font-medium">Avg Score</span>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <Users className="w-3 h-3" />
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Players</span>
+                          </div>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">{s.playerCount}</p>
                         </div>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{s.avgScore.toLocaleString()}</p>
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <Target className="w-3 h-3" />
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Accuracy</span>
+                          </div>
+                          <p className={`text-lg font-bold ${
+                            s.avgAccuracy >= 70 ? 'text-success' :
+                            s.avgAccuracy >= 40 ? 'text-warning' :
+                            'text-danger'
+                          }`}>
+                            {s.avgAccuracy}%
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Avg Score</span>
+                          </div>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">{s.avgScore.toLocaleString()}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {confirmDeleteId === s.id && (
-                    <div className="absolute inset-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this session?</p>
-                      <p className="text-xs text-gray-500 dark:text-white/50">This action cannot be undone.</p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          disabled={deleting}
-                          className="px-4 py-1.5 text-xs font-medium text-gray-600 dark:text-white/70 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSession(s.id)}
-                          disabled={deleting}
-                          className="px-4 py-1.5 text-xs font-medium text-white bg-danger hover:bg-danger/90 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          {deleting ? 'Deleting...' : 'Delete'}
-                        </button>
+                    {confirmDeleteId === s.id && (
+                      <div className="absolute inset-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this session?</p>
+                        <p className="text-xs text-gray-500 dark:text-white/50">This action cannot be undone.</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            disabled={deleting}
+                            className="px-4 py-1.5 text-xs font-medium text-gray-600 dark:text-white/70 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSession(s.id)}
+                            disabled={deleting}
+                            className="px-4 py-1.5 text-xs font-medium text-white bg-danger hover:bg-danger/90 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {deleting ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {sessionsHasMore && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => loadSessions(true)}
+                    disabled={sessionsLoadingMore}
+                    className="btn-3d-ghost px-8 py-3 text-sm flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {sessionsLoadingMore ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</>
+                    ) : 'Load More'}
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -492,99 +581,115 @@ export default function SessionHistory() {
               </p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
-              {filteredGradings.map((g) => (
-                <div key={g.id} className="relative animate-fade-in">
-                  <div
-                    onClick={() => navigate(`/live-grading/${g.id}/results`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/live-grading/${g.id}/results`); }}
-                    className="w-full bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:border-emerald-500/20 transition-all p-6 text-left group cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                          <Award className="w-4 h-4 text-emerald-500" />
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+                {filteredGradings.map((g) => (
+                  <div key={g.id} className="relative animate-fade-in">
+                    <div
+                      onClick={() => navigate(`/live-grading/${g.id}/results`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/live-grading/${g.id}/results`); }}
+                      className="w-full bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:border-emerald-500/20 transition-all p-6 text-left group cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                            <Award className="w-4 h-4 text-emerald-500" />
+                          </div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-emerald-500 transition-colors mb-0 truncate">
+                            {g.rubricName}
+                          </h3>
                         </div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-emerald-500 transition-colors mb-0 truncate">
-                          {g.rubricName}
-                        </h3>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(g.id); }}
+                          className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
+                          title="Delete grading session"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(g.id); }}
-                        className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
-                        title="Delete grading session"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40 mt-2 mb-4">
+                        <Calendar className="w-3 h-3" />
+                        {g.endedAt > 0
+                          ? new Date(g.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Unknown date'}
+                        <span className="text-gray-300 dark:text-white/30">|</span>
+                        <Hash className="w-3 h-3" />
+                        {g.pinCode}
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <Users className="w-3 h-3" />
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Students</span>
+                          </div>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">
+                            {g.gradedCount}<span className="text-sm font-normal text-gray-400 dark:text-white/30">/{g.playerCount}</span>
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <Target className="w-3 h-3" />
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Avg %</span>
+                          </div>
+                          <p className={`text-lg font-bold ${
+                            g.avgPercentage >= 70 ? 'text-success' :
+                            g.avgPercentage >= 40 ? 'text-warning' :
+                            'text-danger'
+                          }`}>
+                            {g.avgPercentage}%
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Avg Score</span>
+                          </div>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">{g.avgScore}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40 mt-2 mb-4">
-                      <Calendar className="w-3 h-3" />
-                      {g.endedAt > 0
-                        ? new Date(g.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-                        : 'Unknown date'}
-                      <span className="text-gray-300 dark:text-white/30">|</span>
-                      <Hash className="w-3 h-3" />
-                      {g.pinCode}
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
-                          <Users className="w-3 h-3" />
-                          <span className="text-[10px] uppercase tracking-wider font-medium">Students</span>
-                        </div>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">
-                          {g.gradedCount}<span className="text-sm font-normal text-gray-400 dark:text-white/30">/{g.playerCount}</span>
-                        </p>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
-                          <Target className="w-3 h-3" />
-                          <span className="text-[10px] uppercase tracking-wider font-medium">Avg %</span>
-                        </div>
-                        <p className={`text-lg font-bold ${
-                          g.avgPercentage >= 70 ? 'text-success' :
-                          g.avgPercentage >= 40 ? 'text-warning' :
-                          'text-danger'
-                        }`}>
-                          {g.avgPercentage}%
-                        </p>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
-                          <span className="text-[10px] uppercase tracking-wider font-medium">Avg Score</span>
-                        </div>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{g.avgScore}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {confirmDeleteId === g.id && (
-                    <div className="absolute inset-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this grading session?</p>
-                      <p className="text-xs text-gray-500 dark:text-white/50">This action cannot be undone.</p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          disabled={deleting}
-                          className="px-4 py-1.5 text-xs font-medium text-gray-600 dark:text-white/70 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleDeleteGrading(g.id)}
-                          disabled={deleting}
-                          className="px-4 py-1.5 text-xs font-medium text-white bg-danger hover:bg-danger/90 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          {deleting ? 'Deleting...' : 'Delete'}
-                        </button>
+                    {confirmDeleteId === g.id && (
+                      <div className="absolute inset-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this grading session?</p>
+                        <p className="text-xs text-gray-500 dark:text-white/50">This action cannot be undone.</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            disabled={deleting}
+                            className="px-4 py-1.5 text-xs font-medium text-gray-600 dark:text-white/70 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDeleteGrading(g.id)}
+                            disabled={deleting}
+                            className="px-4 py-1.5 text-xs font-medium text-white bg-danger hover:bg-danger/90 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {deleting ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {gradingsHasMore && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => loadGradings(true)}
+                    disabled={gradingsLoadingMore}
+                    className="btn-3d-ghost px-8 py-3 text-sm flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {gradingsLoadingMore ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</>
+                    ) : 'Load More'}
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </>
       )}
