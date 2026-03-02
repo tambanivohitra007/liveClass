@@ -703,22 +703,28 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
 
   await batch.commit();
 
-  // Compute rank info for personal feedback
+  // Compute rank in O(n) without sorting — count players with higher score
   const newTotalPoints = playerData.totalPoints + pointsAwarded;
   const allShards = await db
     .collection(`sessions/${sessionId}/leaderboard_shards`)
     .get();
-  const ranked: { pid: string; pts: number }[] = [];
+  let rank = 1;
+  let nextHigherPts = 0; // points of the player just above
   allShards.docs.forEach((s) => {
     const pl = s.data().players || {};
     for (const [pid, d] of Object.entries(pl)) {
-      const pd = d as { totalPoints: number };
-      ranked.push({ pid, pts: pid === playerId ? newTotalPoints : pd.totalPoints });
+      if (pid === playerId) continue;
+      const pts = (d as { totalPoints: number }).totalPoints;
+      if (pts > newTotalPoints) {
+        rank++;
+        // Track the lowest score that's still higher (closest above)
+        if (nextHigherPts === 0 || pts < nextHigherPts) {
+          nextHigherPts = pts;
+        }
+      }
     }
   });
-  ranked.sort((a, b) => b.pts - a.pts);
-  const rank = ranked.findIndex((p) => p.pid === playerId) + 1;
-  const behindBy = rank > 1 ? ranked[rank - 2].pts - newTotalPoints : 0;
+  const behindBy = rank > 1 ? nextHigherPts - newTotalPoints : 0;
 
   return { correct, pointsAwarded, rank, totalPoints: newTotalPoints, behindBy };
 }
