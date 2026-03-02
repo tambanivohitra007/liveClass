@@ -73,6 +73,7 @@ export default function PlayGame() {
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
+  const [feedbackTimedOut, setFeedbackTimedOut] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
   const sawPreRevealRef = useRef(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -115,7 +116,9 @@ export default function PlayGame() {
         if (parsed.nickname) setPlayerNickname(parsed.nickname);
         if (parsed.avatar) setPlayerAvatar(parsed.avatar);
       }
-    } catch { /* ignore */ }
+    } catch {
+      // localStorage may be unavailable (private browsing) or corrupt — non-fatal
+    }
   }, [sessionId]);
 
   // Save profile via Cloud Function
@@ -143,7 +146,9 @@ export default function PlayGame() {
           nickname: finalNickname,
           avatar: finalAvatar,
         }));
-      } catch { /* ignore */ }
+      } catch {
+        // localStorage write may fail (quota exceeded) — profile still saved to server
+      }
 
       setEditingProfile(false);
       addToast('success', 'Profile updated!');
@@ -217,6 +222,7 @@ export default function PlayGame() {
     }
     setSubmitted(false);
     setSubmitFailed(false);
+    setFeedbackTimedOut(false);
     setSelectedAnswer('');
     setSelectedAnswers([]);
     setMatchingPairs({});
@@ -265,6 +271,7 @@ export default function PlayGame() {
     }
     setSubmitted(false);
     setSubmitFailed(false);
+    setFeedbackTimedOut(false);
     setSelectedAnswer('');
     setSelectedAnswers([]);
     setMatchingPairs({});
@@ -468,14 +475,13 @@ export default function PlayGame() {
       onValue(resultRef, handler);
       resultUnsubRef.current = unsub;
 
-      // 8-second timeout fallback
+      // 8-second timeout fallback — show "answer received" instead of fake wrong feedback
       setTimeout(() => {
         if (!feedbackReceived) {
           feedbackReceived = true;
           unsub();
           resultUnsubRef.current = null;
-          // Don't show error — answer was submitted, just no feedback yet
-          setFeedback({ correct: false, points: 0, rank: 0, behindBy: 0 });
+          setFeedbackTimedOut(true);
         }
       }, 8000);
     } catch (err: unknown) {
@@ -1099,10 +1105,17 @@ export default function PlayGame() {
           </button>
         )}
 
-        {submitted && !feedback && !submitFailed && (
+        {submitted && !feedback && !submitFailed && !feedbackTimedOut && (
           <div className="mt-4 py-4 text-center text-white/50 animate-fade-in" role="status">
             <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-2" aria-hidden="true" />
             Waiting for results...
+          </div>
+        )}
+
+        {feedbackTimedOut && !feedback && (
+          <div className="mt-4 py-4 text-center animate-fade-in" role="status">
+            <p className="text-white/70 font-semibold mb-1">Answer received</p>
+            <p className="text-white/40 text-sm">Results will show when the question ends</p>
           </div>
         )}
 
