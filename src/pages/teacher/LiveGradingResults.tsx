@@ -42,6 +42,7 @@ export default function LiveGradingResults() {
   const { addToast } = useToastStore();
 
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
@@ -62,8 +63,7 @@ export default function LiveGradingResults() {
       try {
         const lgSnap = await getDoc(doc(db, 'live_gradings', liveGradingId!));
         if (!lgSnap.exists()) {
-          addToast('error', 'Live grading session not found.');
-          navigate('/rubrics');
+          if (!cancelled) setNotFound(true);
           return;
         }
         const lgData = { id: lgSnap.id, ...lgSnap.data() } as LiveGrading;
@@ -234,7 +234,31 @@ export default function LiveGradingResults() {
     );
   }
 
-  if (!liveGrading) return null;
+  if (notFound || !liveGrading) {
+    return (
+      <div className="min-h-screen bg-surface relative">
+        <WaveBackground />
+        <div className="pattern-stars absolute inset-0 pointer-events-none" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center">
+          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+            <Award className="w-8 h-8 text-white/40" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Session Not Found</h2>
+          <p className="text-white/50 text-sm mb-6 max-w-sm">
+            This grading session may have been deleted or the link is invalid.
+          </p>
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/rubrics')} className="btn-3d-ghost px-6 py-2.5 text-sm">
+              <ArrowLeft className="w-4 h-4 inline mr-1.5" />Back to Rubrics
+            </button>
+            <button onClick={() => navigate('/history')} className="btn-3d-ghost px-6 py-2.5 text-sm">
+              Session History
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface relative text-gray-900 dark:text-white">
