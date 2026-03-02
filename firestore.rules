@@ -206,7 +206,10 @@ service cloud.firestore {
       }
 
       match /evaluations/{evalId} {
-        allow read: if true;
+        // Students can read their own evaluation by doc ID; only owner can list all
+        allow get: if true;
+        allow list: if request.auth != null
+          && get(/databases/$(database)/documents/live_gradings/$(lgId)).data.ownerId == request.auth.uid;
         allow create, update: if request.auth != null
           && get(/databases/$(database)/documents/live_gradings/$(lgId)).data.ownerId == request.auth.uid;
         allow delete: if request.auth != null
