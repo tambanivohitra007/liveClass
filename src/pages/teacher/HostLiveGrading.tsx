@@ -5,6 +5,7 @@ import { doc, onSnapshot, collection, updateDoc, setDoc, getDocs, query, orderBy
 import { db, functions } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
+import { confirmAction } from '../../lib/swal';
 import CriterionInput from '../../components/CriterionInput';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -48,6 +49,7 @@ export default function HostLiveGrading() {
   const [qrZoomed, setQrZoomed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [regradeConfirmId, setRegradeConfirmId] = useState<string | null>(null);
+  const [endingSession, setEndingSession] = useState(false);
 
   // Grading form state
   const [currentScores, setCurrentScores] = useState<Record<string, EvaluationScore>>({});
@@ -298,13 +300,26 @@ export default function HostLiveGrading() {
   };
 
   const handleEndSession = async () => {
-    if (!liveGrading) return;
-    await updateDoc(doc(db, 'live_gradings', liveGrading.id), {
-      status: 'ended',
-      currentStudentId: null,
-      endedAt: Date.now(),
-    });
-    addToast('success', 'Session ended.');
+    if (!liveGrading || endingSession) return;
+    const { isConfirmed } = await confirmAction(
+      'End session early?',
+      'This will end the grading session for all students. Evaluations submitted so far are preserved.',
+      'Yes, end session',
+    );
+    if (!isConfirmed) return;
+    setEndingSession(true);
+    try {
+      await updateDoc(doc(db, 'live_gradings', liveGrading.id), {
+        status: 'ended',
+        currentStudentId: null,
+        endedAt: Date.now(),
+      });
+      navigate(`/live-grading/${liveGrading.id}/results`);
+    } catch {
+      addToast('error', 'Failed to end session.');
+    } finally {
+      setEndingSession(false);
+    }
   };
 
   // Keyboard shortcuts
@@ -728,9 +743,10 @@ export default function HostLiveGrading() {
               <div className="flex-1" />
               <button
                 onClick={handleEndSession}
-                className="btn-3d-ghost w-full py-2 text-sm text-danger hover:bg-danger/10 mt-2"
+                disabled={endingSession}
+                className="btn-3d-ghost w-full py-2 text-sm text-danger hover:bg-danger/10 mt-2 disabled:opacity-50"
               >
-                End Session Early
+                {endingSession ? 'Ending...' : 'End Session Early'}
               </button>
             </div>
           </aside>
