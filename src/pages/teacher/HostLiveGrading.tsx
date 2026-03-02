@@ -47,6 +47,7 @@ export default function HostLiveGrading() {
   const [error, setError] = useState('');
   const [qrZoomed, setQrZoomed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [regradeConfirmId, setRegradeConfirmId] = useState<string | null>(null);
 
   // Grading form state
   const [currentScores, setCurrentScores] = useState<Record<string, EvaluationScore>>({});
@@ -166,6 +167,7 @@ export default function HostLiveGrading() {
   // Reset form when current student changes
   useEffect(() => {
     if (!liveGrading || liveGrading.status !== 'live') return;
+    setRegradeConfirmId(null);
     const studentId = liveGrading.currentStudentId;
     if (!studentId) return;
     const existing = evaluations.get(studentId);
@@ -225,9 +227,17 @@ export default function HostLiveGrading() {
 
   const handleSubmitAndNext = async () => {
     if (!liveGrading || !liveGrading.currentStudentId) return;
+    const studentId = liveGrading.currentStudentId;
+
+    // Guard: if already graded, require confirmation first
+    if (evaluations.has(studentId) && regradeConfirmId !== studentId) {
+      setRegradeConfirmId(studentId);
+      return;
+    }
+    setRegradeConfirmId(null);
+
     setSubmitting(true);
     try {
-      const studentId = liveGrading.currentStudentId;
       const student = players.find((p) => p.id === studentId);
 
       // Write evaluation
@@ -606,6 +616,22 @@ export default function HostLiveGrading() {
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 resize-y focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-colors"
               />
             </div>
+
+            {/* Re-grade Confirmation Banner */}
+            {regradeConfirmId && (
+              <div className="max-w-2xl mt-4 bg-warning/10 border border-warning/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-fade-in">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-warning">This student has already been graded</p>
+                  <p className="text-xs text-white/50 mt-0.5">Submitting will overwrite the previous evaluation.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setRegradeConfirmId(null)} className="btn-3d-ghost px-4 py-2 text-xs">Cancel</button>
+                  <button onClick={handleSubmitAndNext} className="btn-3d-gold px-4 py-2 text-xs font-bold flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5" /> Overwrite
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Total Score + Actions */}
             <div className="max-w-2xl mt-4 mb-4">
