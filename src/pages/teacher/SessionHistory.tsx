@@ -91,51 +91,54 @@ export default function SessionHistory() {
         )
       );
 
+      // Collect unique quiz IDs and fetch titles in parallel
+      const quizIds = [...new Set(sessionsSnap.docs.map((d) => d.data().quizId))];
       const quizTitleCache = new Map<string, string>();
-      const quizSet = new Set<string>();
-      const records: SessionRecord[] = [];
+      await Promise.all(
+        quizIds.map(async (qid) => {
+          const quizSnap = await getDoc(doc(db, 'quizzes', qid));
+          quizTitleCache.set(qid, quizSnap.data()?.title || 'Untitled Quiz');
+        })
+      );
 
-      for (const sDoc of sessionsSnap.docs) {
-        const sData = sDoc.data();
-        const quizId = sData.quizId;
-        quizSet.add(quizId);
+      // Fetch all subcollections in parallel
+      const records = await Promise.all(
+        sessionsSnap.docs.map(async (sDoc) => {
+          const sData = sDoc.data();
+          const quizId = sData.quizId;
 
-        if (!quizTitleCache.has(quizId)) {
-          const quizSnap = await getDoc(doc(db, 'quizzes', quizId));
-          quizTitleCache.set(quizId, quizSnap.data()?.title || 'Untitled Quiz');
-        }
+          const [playersSnap, analyticsSnap] = await Promise.all([
+            getDocs(collection(db, `sessions/${sDoc.id}/players`)),
+            getDocs(collection(db, `sessions/${sDoc.id}/analytics`)),
+          ]);
 
-        const [playersSnap, analyticsSnap] = await Promise.all([
-          getDocs(collection(db, `sessions/${sDoc.id}/players`)),
-          getDocs(collection(db, `sessions/${sDoc.id}/analytics`)),
-        ]);
+          const analyticsData = analyticsSnap.docs.map((d) => d.data());
+          const totalCorrectPct = analyticsData.reduce((sum, a) => sum + (a.correctPercent || 0), 0);
+          const avgAccuracy = analyticsData.length > 0
+            ? parseFloat((totalCorrectPct / analyticsData.length).toFixed(1))
+            : 0;
 
-        const analyticsData = analyticsSnap.docs.map((d) => d.data());
-        const totalCorrectPct = analyticsData.reduce((sum, a) => sum + (a.correctPercent || 0), 0);
-        const avgAccuracy = analyticsData.length > 0
-          ? parseFloat((totalCorrectPct / analyticsData.length).toFixed(1))
-          : 0;
+          const top10 = sData.top10Snapshot || [];
+          const avgScore = top10.length > 0
+            ? Math.round(top10.reduce((sum: number, p: { totalPoints: number }) => sum + p.totalPoints, 0) / top10.length)
+            : 0;
 
-        const top10 = sData.top10Snapshot || [];
-        const avgScore = top10.length > 0
-          ? Math.round(top10.reduce((sum: number, p: { totalPoints: number }) => sum + p.totalPoints, 0) / top10.length)
-          : 0;
-
-        records.push({
-          id: sDoc.id,
-          quizId,
-          quizTitle: quizTitleCache.get(quizId) || 'Untitled Quiz',
-          pinCode: sData.pinCode || '',
-          endedAt: toMillis(sData.endedAt),
-          playerCount: playersSnap.size,
-          avgAccuracy,
-          avgScore,
-        });
-      }
+          return {
+            id: sDoc.id,
+            quizId,
+            quizTitle: quizTitleCache.get(quizId) || 'Untitled Quiz',
+            pinCode: sData.pinCode || '',
+            endedAt: toMillis(sData.endedAt),
+            playerCount: playersSnap.size,
+            avgAccuracy,
+            avgScore,
+          };
+        })
+      );
 
       setSessions(records);
       setQuizOptions(
-        Array.from(quizSet).map((id) => ({ id, title: quizTitleCache.get(id) || 'Untitled' }))
+        quizIds.map((id) => ({ id, title: quizTitleCache.get(id) || 'Untitled' }))
       );
       setLoading(false);
     };
@@ -159,38 +162,38 @@ export default function SessionHistory() {
         )
       );
 
-      const rubricSet = new Set<string>();
-      const records: LiveGradingRecord[] = [];
+      // Fetch all subcollections in parallel
+      const records = await Promise.all(
+        lgSnap.docs.map(async (lgDoc) => {
+          const data = lgDoc.data();
 
-      for (const lgDoc of lgSnap.docs) {
-        const data = lgDoc.data();
-        rubricSet.add(data.rubricId);
+          const [playersSnap, evalsSnap] = await Promise.all([
+            getDocs(collection(db, `live_gradings/${lgDoc.id}/players`)),
+            getDocs(collection(db, `live_gradings/${lgDoc.id}/evaluations`)),
+          ]);
 
-        const [playersSnap, evalsSnap] = await Promise.all([
-          getDocs(collection(db, `live_gradings/${lgDoc.id}/players`)),
-          getDocs(collection(db, `live_gradings/${lgDoc.id}/evaluations`)),
-        ]);
+          const evals = evalsSnap.docs.map((d) => d.data());
+          const totalPct = evals.reduce((sum, e) => sum + (e.percentage || 0), 0);
+          const totalScore = evals.reduce((sum, e) => sum + (e.totalScore || 0), 0);
 
-        const evals = evalsSnap.docs.map((d) => d.data());
-        const totalPct = evals.reduce((sum, e) => sum + (e.percentage || 0), 0);
-        const totalScore = evals.reduce((sum, e) => sum + (e.totalScore || 0), 0);
+          return {
+            id: lgDoc.id,
+            rubricId: data.rubricId,
+            rubricName: data.rubricName || 'Untitled Rubric',
+            pinCode: data.pinCode || '',
+            endedAt: toMillis(data.endedAt),
+            playerCount: playersSnap.size,
+            gradedCount: evals.length,
+            avgScore: evals.length > 0 ? parseFloat((totalScore / evals.length).toFixed(1)) : 0,
+            avgPercentage: evals.length > 0 ? parseFloat((totalPct / evals.length).toFixed(1)) : 0,
+          };
+        })
+      );
 
-        records.push({
-          id: lgDoc.id,
-          rubricId: data.rubricId,
-          rubricName: data.rubricName || 'Untitled Rubric',
-          pinCode: data.pinCode || '',
-          endedAt: toMillis(data.endedAt),
-          playerCount: playersSnap.size,
-          gradedCount: evals.length,
-          avgScore: evals.length > 0 ? parseFloat((totalScore / evals.length).toFixed(1)) : 0,
-          avgPercentage: evals.length > 0 ? parseFloat((totalPct / evals.length).toFixed(1)) : 0,
-        });
-      }
-
+      const rubricIds = [...new Set(records.map((r) => r.rubricId))];
       setGradings(records);
       setRubricOptions(
-        Array.from(rubricSet).map((id) => {
+        rubricIds.map((id) => {
           const rec = records.find((r) => r.rubricId === id);
           return { id, name: rec?.rubricName || 'Untitled' };
         })
