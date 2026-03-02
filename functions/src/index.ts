@@ -8,6 +8,7 @@ import { onValueCreated } from "firebase-functions/v2/database";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { defineSecret } from "firebase-functions/params";
 import { checkCorrectness, getShardId as getShardIdLogic, generatePin as generatePinLogic } from "./logic";
+import { checkRateLimit, RATE_LIMITS } from "./rateLimit";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -265,6 +266,12 @@ export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
       "invalid-argument",
       "sessionId and nickname are required"
     );
+  }
+
+  // Rate limit: 5 join attempts per 10 seconds per session
+  const rateLimitKey = `join_${sessionId}_${request.auth?.uid || nickname}`;
+  if (!checkRateLimit(rateLimitKey, RATE_LIMITS.joinSession.maxRequests, RATE_LIMITS.joinSession.windowMs)) {
+    throw new HttpsError("resource-exhausted", "Too many join attempts. Please wait a moment.");
   }
 
   if (nickname.length > 20) {
@@ -727,6 +734,12 @@ export const scoreAnswer = onCall(HOT_PATH_CONFIG, async (request) => {
       timeMs: number;
       activeToken?: string;
     };
+
+  // Rate limit: 2 answer submissions per second per player
+  const rateLimitKey = `score_${sessionId}_${playerId}`;
+  if (!checkRateLimit(rateLimitKey, RATE_LIMITS.scoreAnswer.maxRequests, RATE_LIMITS.scoreAnswer.windowMs)) {
+    throw new HttpsError("resource-exhausted", "Too many answer submissions. Please wait.");
+  }
 
   return computeAndWriteScore({ sessionId, questionId, playerId, selection, timeMs, activeToken });
 });
@@ -1476,6 +1489,11 @@ export const generateQuestions = onCall(
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Must be logged in");
+    }
+
+    // Rate limit: 5 AI generations per minute per user
+    if (!checkRateLimit(`ai_${request.auth.uid}`, RATE_LIMITS.aiGenerate.maxRequests, RATE_LIMITS.aiGenerate.windowMs)) {
+      throw new HttpsError("resource-exhausted", "Too many AI generation requests. Please wait a minute.");
     }
 
     const {
