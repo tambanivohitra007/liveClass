@@ -49,8 +49,13 @@ export default function LiveGradingPlay() {
         // Load criteria once we have rubricId
         if (lg.rubricId && criteria.length === 0) {
           getDocs(query(collection(db, 'rubrics', lg.rubricId, 'criteria'), orderBy('order')))
-            .then((cSnap) => setCriteria(cSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as Criterion[]))
-            .catch(() => {});
+            .then((cSnap) => {
+              if (cSnap.empty) {
+                console.warn('No criteria found for rubric', lg.rubricId);
+              }
+              setCriteria(cSnap.docs.map((d) => ({ id: d.id, ...d.data() })) as Criterion[]);
+            })
+            .catch((err) => console.warn('Failed to load criteria:', err));
         }
       } else {
         setLoading(false);

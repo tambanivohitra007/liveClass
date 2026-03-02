@@ -74,6 +74,9 @@ export default function LiveGradingResults() {
         );
         if (!cancelled) {
           setCriteria(criteriaSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Criterion));
+          if (criteriaSnap.empty) {
+            addToast('warning', 'Rubric criteria not found — the rubric may have been deleted.');
+          }
         }
       } catch {
         if (!cancelled) addToast('error', 'Failed to load session data.');
