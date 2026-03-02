@@ -736,12 +736,21 @@ export default function HostLiveGrading() {
             })}
           </div>
 
-          <button
-            onClick={() => navigate('/rubrics')}
-            className="btn-3d-emerald px-8 py-3 text-base font-bold"
-          >
-            Back to Rubrics
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(`/live-grading/${liveGrading.id}/results`)}
+              className="btn-3d-emerald px-8 py-3 text-base font-bold flex items-center gap-2"
+            >
+              <Award className="w-5 h-5" />
+              View Detailed Results
+            </button>
+            <button
+              onClick={() => navigate('/rubrics')}
+              className="btn-3d-ghost px-6 py-3 text-base"
+            >
+              Back to Rubrics
+            </button>
+          </div>
         </main>
       )}
     </div>

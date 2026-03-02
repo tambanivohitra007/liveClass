@@ -60,6 +60,7 @@ const GradingSessionCreate = lazy(() => import('./pages/teacher/GradingSessionCr
 const GradingInterface = lazy(() => import('./pages/teacher/GradingInterface'));
 const GradingResults = lazy(() => import('./pages/teacher/GradingResults'));
 const HostLiveGrading = lazy(() => import('./pages/teacher/HostLiveGrading'));
+const LiveGradingResults = lazy(() => import('./pages/teacher/LiveGradingResults'));
 const LiveGradingPlay = lazy(() => import('./pages/student/LiveGradingPlay'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
@@ -144,7 +145,7 @@ function AppContent() {
   const isQuizEditor = location.pathname.startsWith('/quiz/') && !location.pathname.endsWith('/host') && !location.pathname.endsWith('/preview') && !location.pathname.endsWith('/worksheet') && !location.pathname.endsWith('/flashcards');
   const isGradingInterface = /^\/grading\/[^/]+$/.test(location.pathname);
   const isRubricEditor = location.pathname.startsWith('/rubric/');
-  const hideNavbar = location.pathname.startsWith('/play/') || location.pathname.startsWith('/live-grading/') || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
+  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
   const showSidebar = !hideNavbar && !!firebaseUser;
 
@@ -199,6 +200,7 @@ function AppContent() {
           <Route path="/assignment/new" element={<TeacherRoute><AssignmentCreate /></TeacherRoute>} />
           <Route path="/rubrics" element={<TeacherRoute><RubricList /></TeacherRoute>} />
           <Route path="/rubric/:rubricId/host" element={<TeacherRoute><HostLiveGrading /></TeacherRoute>} />
+          <Route path="/live-grading/:liveGradingId/results" element={<TeacherRoute><LiveGradingResults /></TeacherRoute>} />
           <Route path="/rubric/:rubricId" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
           <Route path="/rosters" element={<TeacherRoute><RosterList /></TeacherRoute>} />
           <Route path="/roster/:rosterId" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />
