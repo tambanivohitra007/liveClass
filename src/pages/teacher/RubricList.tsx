@@ -133,7 +133,7 @@ export default function RubricList() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         <div className="h-8 w-48 bg-gray-100 dark:bg-white/10 rounded-lg animate-pulse" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -146,7 +146,7 @@ export default function RubricList() {
     <div className="relative min-h-screen bg-surface">
       <WaveBackground variant="dark" position="bottom" />
       <div className="absolute inset-0 pattern-stars pointer-events-none" />
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
@@ -208,7 +208,7 @@ export default function RubricList() {
           </div>
         ) : (
           /* Rubric Grid */
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 stagger-children">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 stagger-children">
             {filtered.map((rubric) => (
               <div
                 key={rubric.id}
@@ -255,38 +255,43 @@ export default function RubricList() {
                   </p>
 
                   {/* Actions */}
-                  <div className="flex gap-1.5 mt-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex flex-col gap-2 mt-auto" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => navigate(`/rubric/${rubric.id}/host`)}
-                      className="btn-3d-cyan btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5"
+                      className="btn-3d-cyan btn-3d-sm w-full text-sm flex items-center justify-center gap-1.5"
                       title="Host live grading session"
                     >
                       <Radio className="w-3.5 h-3.5" />
                       Host Live
                     </button>
-                    <button
-                      onClick={() => navigate(`/rubric/${rubric.id}`)}
-                      className="btn-3d-ghost btn-3d-sm px-2.5 text-sm flex items-center justify-center"
-                      title="Edit rubric"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleClone(rubric)}
-                      disabled={cloning === rubric.id}
-                      className="btn-3d-ghost btn-3d-sm px-2.5 text-sm flex items-center justify-center disabled:opacity-50"
-                      title="Clone rubric"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(rubric)}
-                      disabled={deleting === rubric.id}
-                      className="btn-3d-ghost btn-3d-sm px-2.5 text-sm flex items-center justify-center text-danger hover:bg-danger/10 disabled:opacity-50"
-                      title="Delete rubric"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => navigate(`/rubric/${rubric.id}`)}
+                        className="btn-3d-ghost btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5 min-h-10"
+                        title="Edit rubric"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span className="sm:hidden">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleClone(rubric)}
+                        disabled={cloning === rubric.id}
+                        className="btn-3d-ghost btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5 min-h-10 disabled:opacity-50"
+                        title="Clone rubric"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span className="sm:hidden">Clone</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(rubric)}
+                        disabled={deleting === rubric.id}
+                        className="btn-3d-ghost btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5 min-h-10 text-danger hover:bg-danger/10 disabled:opacity-50"
+                        title="Delete rubric"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span className="sm:hidden">Delete</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
