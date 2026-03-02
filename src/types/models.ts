@@ -300,6 +300,34 @@ export interface Evaluation {
   syncedAt?: number;
 }
 
+// --- Live Grading (Oral Presentations) ---
+
+export type LiveGradingStatus = 'lobby' | 'live' | 'ended';
+
+export interface LiveGrading {
+  id: string;
+  ownerId: string;
+  rubricId: string;
+  rubricName: string;
+  pinCode: string;
+  status: LiveGradingStatus;
+  currentStudentIndex: number;
+  studentOrder: string[];
+  currentStudentId: string | null;
+  joinLocked: boolean;
+  createdAt: number;
+  startedAt: number | null;
+  endedAt: number | null;
+}
+
+export interface LiveGradingPlayer {
+  id: string;
+  nickname: string;
+  avatar?: string;
+  joinedAt: number;
+  userId?: string;
+}
+
 export type NotificationType = 'new_assignment' | 'session_started' | 'class_joined' | 'class_removed';
 
 export interface AppNotification {

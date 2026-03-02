@@ -17,6 +17,14 @@
       ]
     },
     {
+      "collectionGroup": "live_gradings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pinCode", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "sessions",
       "queryScope": "COLLECTION",
       "fields": [

@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateRubric = exports.generateQuestions = exports.reportViolation = exports.emailSessionResults = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
+exports.joinLiveGrading = exports.createLiveGrading = exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateRubric = exports.generateQuestions = exports.reportViolation = exports.emailSessionResults = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const cheerio = __importStar(require("cheerio"));
@@ -258,18 +258,18 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
         throw new https_1.HttpsError("permission-denied", "Not your quiz");
     }
     let pinCode = generatePin();
-    let existing = await db
-        .collection("sessions")
-        .where("pinCode", "==", pinCode)
-        .where("status", "!=", "ended")
-        .get();
-    while (!existing.empty) {
-        pinCode = generatePin();
-        existing = await db
-            .collection("sessions")
-            .where("pinCode", "==", pinCode)
-            .where("status", "!=", "ended")
-            .get();
+    let pinCollision = true;
+    while (pinCollision) {
+        const [sessSnap, lgSnap] = await Promise.all([
+            db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+            db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+        ]);
+        if (sessSnap.empty && lgSnap.empty) {
+            pinCollision = false;
+        }
+        else {
+            pinCode = generatePin();
+        }
     }
     const sessionRef = db.collection("sessions").doc();
     // Initialize 10 leaderboard shards
@@ -2369,5 +2369,112 @@ exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({
         ])));
         console.log(`Cleaned up ${expiredSessions.size} expired sessions`);
     }
+});
+// ===== LIVE GRADING (Oral Presentations) =====
+exports.createLiveGrading = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { rubricId } = request.data;
+    if (!rubricId) {
+        throw new https_1.HttpsError("invalid-argument", "rubricId is required");
+    }
+    const rubricDoc = await db.doc(`rubrics/${rubricId}`).get();
+    if (!rubricDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Rubric not found");
+    }
+    if (rubricDoc.data()?.ownerId !== request.auth.uid) {
+        throw new https_1.HttpsError("permission-denied", "Not your rubric");
+    }
+    // Generate unique PIN across both sessions and live_gradings
+    let pinCode = generatePin();
+    let pinCollision = true;
+    while (pinCollision) {
+        const [sessSnap, lgSnap] = await Promise.all([
+            db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+            db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+        ]);
+        if (sessSnap.empty && lgSnap.empty) {
+            pinCollision = false;
+        }
+        else {
+            pinCode = generatePin();
+        }
+    }
+    const lgRef = db.collection("live_gradings").doc();
+    await lgRef.set({
+        ownerId: request.auth.uid,
+        rubricId,
+        rubricName: rubricDoc.data()?.name || "Untitled Rubric",
+        pinCode,
+        status: "lobby",
+        currentStudentIndex: -1,
+        studentOrder: [],
+        currentStudentId: null,
+        joinLocked: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        startedAt: null,
+        endedAt: null,
+    });
+    return { liveGradingId: lgRef.id };
+});
+exports.joinLiveGrading = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
+    const { liveGradingId, nickname, avatar, playerId: existingPlayerId } = request.data;
+    if (!liveGradingId || !nickname) {
+        throw new https_1.HttpsError("invalid-argument", "liveGradingId and nickname are required");
+    }
+    if (nickname.length > 20) {
+        throw new https_1.HttpsError("invalid-argument", "Nickname too long");
+    }
+    const lgDoc = await db.doc(`live_gradings/${liveGradingId}`).get();
+    if (!lgDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Session not found");
+    }
+    const lg = lgDoc.data();
+    if (lg.status === "ended") {
+        throw new https_1.HttpsError("failed-precondition", "Session has ended");
+    }
+    // Rejoin: authenticated user by userId
+    if (request.auth?.uid) {
+        const existingByUser = await db
+            .collection(`live_gradings/${liveGradingId}/players`)
+            .where("userId", "==", request.auth.uid)
+            .limit(1)
+            .get();
+        if (!existingByUser.empty) {
+            const doc = existingByUser.docs[0];
+            return { playerId: doc.id, nickname: doc.data().nickname, avatar: doc.data().avatar, rejoin: true };
+        }
+    }
+    // Rejoin: unauthenticated user by playerId + nickname match
+    if (existingPlayerId) {
+        const existingDoc = await db
+            .doc(`live_gradings/${liveGradingId}/players/${existingPlayerId}`)
+            .get();
+        if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
+            return { playerId: existingDoc.id, nickname, avatar: existingDoc.data()?.avatar, rejoin: true };
+        }
+    }
+    // Join lock check (after rejoin)
+    if (lg.joinLocked) {
+        throw new https_1.HttpsError("failed-precondition", "Session is locked");
+    }
+    // Nickname uniqueness
+    const dupCheck = await db
+        .collection(`live_gradings/${liveGradingId}/players`)
+        .where("nickname", "==", nickname)
+        .get();
+    if (!dupCheck.empty) {
+        throw new https_1.HttpsError("already-exists", "Nickname already taken");
+    }
+    const playerRef = db.collection(`live_gradings/${liveGradingId}/players`).doc();
+    await playerRef.set({
+        liveGradingId,
+        userId: request.auth?.uid || null,
+        nickname,
+        ...(avatar ? { avatar } : {}),
+        joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { playerId: playerRef.id };
 });
 //# sourceMappingURL=index.js.map

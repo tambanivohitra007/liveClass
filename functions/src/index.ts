@@ -264,18 +264,17 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   }
 
   let pinCode = generatePin();
-  let existing = await db
-    .collection("sessions")
-    .where("pinCode", "==", pinCode)
-    .where("status", "!=", "ended")
-    .get();
-  while (!existing.empty) {
-    pinCode = generatePin();
-    existing = await db
-      .collection("sessions")
-      .where("pinCode", "==", pinCode)
-      .where("status", "!=", "ended")
-      .get();
+  let pinCollision = true;
+  while (pinCollision) {
+    const [sessSnap, lgSnap] = await Promise.all([
+      db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+    ]);
+    if (sessSnap.empty && lgSnap.empty) {
+      pinCollision = false;
+    } else {
+      pinCode = generatePin();
+    }
   }
 
   const sessionRef = db.collection("sessions").doc();
@@ -2899,3 +2898,131 @@ export const cleanupExpiredSessions = onSchedule(
     }
   }
 );
+
+// ===== LIVE GRADING (Oral Presentations) =====
+
+export const createLiveGrading = onCall(FUNCTION_CONFIG, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in");
+  }
+
+  const { rubricId } = request.data as { rubricId: string };
+  if (!rubricId) {
+    throw new HttpsError("invalid-argument", "rubricId is required");
+  }
+
+  const rubricDoc = await db.doc(`rubrics/${rubricId}`).get();
+  if (!rubricDoc.exists) {
+    throw new HttpsError("not-found", "Rubric not found");
+  }
+  if (rubricDoc.data()?.ownerId !== request.auth.uid) {
+    throw new HttpsError("permission-denied", "Not your rubric");
+  }
+
+  // Generate unique PIN across both sessions and live_gradings
+  let pinCode = generatePin();
+  let pinCollision = true;
+  while (pinCollision) {
+    const [sessSnap, lgSnap] = await Promise.all([
+      db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+    ]);
+    if (sessSnap.empty && lgSnap.empty) {
+      pinCollision = false;
+    } else {
+      pinCode = generatePin();
+    }
+  }
+
+  const lgRef = db.collection("live_gradings").doc();
+  await lgRef.set({
+    ownerId: request.auth.uid,
+    rubricId,
+    rubricName: rubricDoc.data()?.name || "Untitled Rubric",
+    pinCode,
+    status: "lobby",
+    currentStudentIndex: -1,
+    studentOrder: [],
+    currentStudentId: null,
+    joinLocked: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    startedAt: null,
+    endedAt: null,
+  });
+
+  return { liveGradingId: lgRef.id };
+});
+
+export const joinLiveGrading = onCall(HOT_PATH_CONFIG, async (request) => {
+  const { liveGradingId, nickname, avatar, playerId: existingPlayerId } = request.data as {
+    liveGradingId: string;
+    nickname: string;
+    avatar?: string;
+    playerId?: string;
+  };
+
+  if (!liveGradingId || !nickname) {
+    throw new HttpsError("invalid-argument", "liveGradingId and nickname are required");
+  }
+  if (nickname.length > 20) {
+    throw new HttpsError("invalid-argument", "Nickname too long");
+  }
+
+  const lgDoc = await db.doc(`live_gradings/${liveGradingId}`).get();
+  if (!lgDoc.exists) {
+    throw new HttpsError("not-found", "Session not found");
+  }
+
+  const lg = lgDoc.data()!;
+  if (lg.status === "ended") {
+    throw new HttpsError("failed-precondition", "Session has ended");
+  }
+
+  // Rejoin: authenticated user by userId
+  if (request.auth?.uid) {
+    const existingByUser = await db
+      .collection(`live_gradings/${liveGradingId}/players`)
+      .where("userId", "==", request.auth.uid)
+      .limit(1)
+      .get();
+    if (!existingByUser.empty) {
+      const doc = existingByUser.docs[0];
+      return { playerId: doc.id, nickname: doc.data().nickname, avatar: doc.data().avatar, rejoin: true };
+    }
+  }
+
+  // Rejoin: unauthenticated user by playerId + nickname match
+  if (existingPlayerId) {
+    const existingDoc = await db
+      .doc(`live_gradings/${liveGradingId}/players/${existingPlayerId}`)
+      .get();
+    if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
+      return { playerId: existingDoc.id, nickname, avatar: existingDoc.data()?.avatar, rejoin: true };
+    }
+  }
+
+  // Join lock check (after rejoin)
+  if (lg.joinLocked) {
+    throw new HttpsError("failed-precondition", "Session is locked");
+  }
+
+  // Nickname uniqueness
+  const dupCheck = await db
+    .collection(`live_gradings/${liveGradingId}/players`)
+    .where("nickname", "==", nickname)
+    .get();
+  if (!dupCheck.empty) {
+    throw new HttpsError("already-exists", "Nickname already taken");
+  }
+
+  const playerRef = db.collection(`live_gradings/${liveGradingId}/players`).doc();
+  await playerRef.set({
+    liveGradingId,
+    userId: request.auth?.uid || null,
+    nickname,
+    ...(avatar ? { avatar } : {}),
+    joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { playerId: playerRef.id };
+});

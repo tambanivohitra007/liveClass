@@ -80,6 +80,7 @@ export default function JoinGame() {
   const [joining, setJoining] = useState(false);
   const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
+  const [sessionType, setSessionType] = useState<'session' | 'live_grading'>('session');
   const [rejoinData, setRejoinData] = useState<{ playerId: string; nickname: string; avatar?: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -92,19 +93,36 @@ export default function JoinGame() {
     if (pinParam && /^\d{4,6}$/.test(pinParam) && step === 'pin') {
       setPin(pinParam);
       (async () => {
-        const sessionsRef = collection(db, 'sessions');
-        const q = query(sessionsRef, where('pinCode', '==', pinParam), where('status', '!=', 'ended'));
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
+        // Check sessions collection first
+        let resolvedSessionId = '';
+        let resolvedType: 'session' | 'live_grading' = 'session';
+        let joinLocked = false;
+
+        const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pinParam), where('status', '!=', 'ended')));
+        if (!sessSnap.empty) {
+          resolvedSessionId = sessSnap.docs[0].id;
+          resolvedType = 'session';
+          joinLocked = sessSnap.docs[0].data().joinLocked;
+        } else {
+          const lgSnap = await getDocs(query(collection(db, 'live_gradings'), where('pinCode', '==', pinParam), where('status', '!=', 'ended')));
+          if (!lgSnap.empty) {
+            resolvedSessionId = lgSnap.docs[0].id;
+            resolvedType = 'live_grading';
+            joinLocked = lgSnap.docs[0].data().joinLocked;
+          }
+        }
+
+        if (!resolvedSessionId) {
           setError('No active game found with that PIN.');
           return;
         }
-        const sessionDoc = snapshot.docs[0];
-        const resolvedSessionId = sessionDoc.id;
+
+        setSessionType(resolvedType);
+        const storageKey = resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
         // Check localStorage for existing join data (rejoin recovery)
         try {
-          const stored = localStorage.getItem(`liveclass_session_${resolvedSessionId}`);
+          const stored = localStorage.getItem(storageKey);
           if (stored) {
             const parsed = JSON.parse(stored) as { playerId: string; nickname: string; avatar?: string };
             if (parsed.playerId && parsed.nickname) {
@@ -115,7 +133,7 @@ export default function JoinGame() {
           }
         } catch { /* ignore malformed localStorage */ }
 
-        if (sessionDoc.data().joinLocked) {
+        if (joinLocked) {
           setError('This game is locked. No more players can join.');
           return;
         }
@@ -139,21 +157,36 @@ export default function JoinGame() {
     e.preventDefault();
     setError('');
 
-    const sessionsRef = collection(db, 'sessions');
-    const q = query(sessionsRef, where('pinCode', '==', pin), where('status', '!=', 'ended'));
-    const snapshot = await getDocs(q);
+    // Check sessions collection first, then live_gradings
+    let resolvedSessionId = '';
+    let resolvedType: 'session' | 'live_grading' = 'session';
+    let joinLocked = false;
 
-    if (snapshot.empty) {
+    const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pin), where('status', '!=', 'ended')));
+    if (!sessSnap.empty) {
+      resolvedSessionId = sessSnap.docs[0].id;
+      resolvedType = 'session';
+      joinLocked = sessSnap.docs[0].data().joinLocked;
+    } else {
+      const lgSnap = await getDocs(query(collection(db, 'live_gradings'), where('pinCode', '==', pin), where('status', '!=', 'ended')));
+      if (!lgSnap.empty) {
+        resolvedSessionId = lgSnap.docs[0].id;
+        resolvedType = 'live_grading';
+        joinLocked = lgSnap.docs[0].data().joinLocked;
+      }
+    }
+
+    if (!resolvedSessionId) {
       setError('No active game found with that PIN.');
       return;
     }
 
-    const sessionDoc = snapshot.docs[0];
-    const resolvedSessionId = sessionDoc.id;
+    setSessionType(resolvedType);
+    const storageKey = resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
     // Check localStorage for existing join data (rejoin recovery)
     try {
-      const stored = localStorage.getItem(`liveclass_session_${resolvedSessionId}`);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored) as { playerId: string; nickname: string; avatar?: string };
         if (parsed.playerId && parsed.nickname) {
@@ -164,7 +197,7 @@ export default function JoinGame() {
       }
     } catch { /* ignore malformed localStorage */ }
 
-    if (sessionDoc.data().joinLocked) {
+    if (joinLocked) {
       setError('This game is locked. No more players can join.');
       return;
     }
@@ -179,30 +212,53 @@ export default function JoinGame() {
     setJoining(true);
 
     try {
-      const joinFn = httpsCallable<
-        { sessionId: string; nickname: string; avatar?: string; playerId?: string },
-        { playerId: string; activeToken: string; nickname?: string; avatar?: string; rejoin?: boolean }
-      >(functions, 'joinSession');
       const joinNickname = existingPlayerId ? rejoinData?.nickname || nickname : nickname;
       const joinAvatar = existingPlayerId ? rejoinData?.avatar || avatar : avatar;
-      const result = await joinFn({
-        sessionId,
-        nickname: joinNickname,
-        avatar: joinAvatar,
-        ...(existingPlayerId ? { playerId: existingPlayerId } : {}),
-      });
 
-      // Store join data in localStorage for future rejoin recovery
-      const finalNickname = result.data.nickname || joinNickname;
-      const finalAvatar = result.data.avatar || joinAvatar;
-      localStorage.setItem(`liveclass_session_${sessionId}`, JSON.stringify({
-        playerId: result.data.playerId,
-        nickname: finalNickname,
-        avatar: finalAvatar,
-      }));
+      if (sessionType === 'live_grading') {
+        // Live grading join
+        const joinFn = httpsCallable<
+          { liveGradingId: string; nickname: string; avatar?: string; playerId?: string },
+          { playerId: string; nickname?: string; avatar?: string; rejoin?: boolean }
+        >(functions, 'joinLiveGrading');
+        const result = await joinFn({
+          liveGradingId: sessionId,
+          nickname: joinNickname,
+          avatar: joinAvatar,
+          ...(existingPlayerId ? { playerId: existingPlayerId } : {}),
+        });
 
-      sessionStorage.setItem(`activeToken_${sessionId}`, result.data.activeToken);
-      navigate(`/play/${sessionId}/${result.data.playerId}`);
+        const finalNickname = result.data.nickname || joinNickname;
+        const finalAvatar = result.data.avatar || joinAvatar;
+        localStorage.setItem(`liveclass_lg_${sessionId}`, JSON.stringify({
+          playerId: result.data.playerId,
+          nickname: finalNickname,
+          avatar: finalAvatar,
+        }));
+        navigate(`/live-grading/${sessionId}/${result.data.playerId}`);
+      } else {
+        // Quiz session join
+        const joinFn = httpsCallable<
+          { sessionId: string; nickname: string; avatar?: string; playerId?: string },
+          { playerId: string; activeToken: string; nickname?: string; avatar?: string; rejoin?: boolean }
+        >(functions, 'joinSession');
+        const result = await joinFn({
+          sessionId,
+          nickname: joinNickname,
+          avatar: joinAvatar,
+          ...(existingPlayerId ? { playerId: existingPlayerId } : {}),
+        });
+
+        const finalNickname = result.data.nickname || joinNickname;
+        const finalAvatar = result.data.avatar || joinAvatar;
+        localStorage.setItem(`liveclass_session_${sessionId}`, JSON.stringify({
+          playerId: result.data.playerId,
+          nickname: finalNickname,
+          avatar: finalAvatar,
+        }));
+        sessionStorage.setItem(`activeToken_${sessionId}`, result.data.activeToken);
+        navigate(`/play/${sessionId}/${result.data.playerId}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join');
     } finally {
@@ -218,7 +274,8 @@ export default function JoinGame() {
   };
 
   const handleDeclineRejoin = () => {
-    localStorage.removeItem(`liveclass_session_${sessionId}`);
+    const storageKey = sessionType === 'live_grading' ? `liveclass_lg_${sessionId}` : `liveclass_session_${sessionId}`;
+    localStorage.removeItem(storageKey);
     setRejoinData(null);
     setStep('verify');
   };

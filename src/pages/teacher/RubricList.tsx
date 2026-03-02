@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../../components/Skeleton';
 import WaveBackground from '../../components/ui/WaveBackground';
 import {
-  Search, Plus, Trash2, Pencil, Copy, FileText, Award, CheckCircle2, X as XIcon,
+  Search, Plus, Trash2, Pencil, Copy, FileText, Award, CheckCircle2, X as XIcon, Radio,
 } from 'lucide-react';
 import type { Rubric, Criterion } from '../../types/models';
 
@@ -257,11 +257,19 @@ export default function RubricList() {
                   {/* Actions */}
                   <div className="flex gap-1.5 mt-auto" onClick={(e) => e.stopPropagation()}>
                     <button
+                      onClick={() => navigate(`/rubric/${rubric.id}/host`)}
+                      className="btn-3d-cyan btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5"
+                      title="Host live grading session"
+                    >
+                      <Radio className="w-3.5 h-3.5" />
+                      Host Live
+                    </button>
+                    <button
                       onClick={() => navigate(`/rubric/${rubric.id}`)}
-                      className="btn-3d-emerald btn-3d-sm flex-1 text-sm flex items-center justify-center gap-1.5"
+                      className="btn-3d-ghost btn-3d-sm px-2.5 text-sm flex items-center justify-center"
+                      title="Edit rubric"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      Edit
                     </button>
                     <button
                       onClick={() => handleClone(rubric)}
