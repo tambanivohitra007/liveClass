@@ -20,6 +20,7 @@
     "firebase": "^12.9.0",
     "gsap": "^3.14.2",
     "idb": "^8.0.3",
+    "jspdf": "^4.2.0",
     "lucide-react": "^0.574.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
