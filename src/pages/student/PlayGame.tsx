@@ -425,7 +425,8 @@ export default function PlayGame() {
       ? Date.now() - spQuestionStartRef.current
       : (currentQuestion.timeLimitSec - timeLeft) * 1000;
     const selection = getSelection();
-    const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || '';
+    const { getActiveToken } = await import('../../lib/tokenStore');
+    const activeToken = getActiveToken(sessionId || '');
 
     try {
       // Write answer to RTDB — instant (~50ms)

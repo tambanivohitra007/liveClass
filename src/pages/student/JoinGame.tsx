@@ -256,7 +256,9 @@ export default function JoinGame() {
           nickname: finalNickname,
           avatar: finalAvatar,
         }));
-        sessionStorage.setItem(`activeToken_${sessionId}`, result.data.activeToken);
+        // Store token in memory only (not sessionStorage) to prevent XSS access
+        const { setActiveToken } = await import('../../lib/tokenStore');
+        setActiveToken(sessionId!, result.data.activeToken);
         navigate(`/play/${sessionId}/${result.data.playerId}`);
       }
     } catch (err) {
