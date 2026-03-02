@@ -287,6 +287,13 @@ export interface EvaluationScore {
   levelLabel?: string;
 }
 
+export interface EvaluationCriterionMeta {
+  name: string;
+  type: CriterionType;
+  maxScore: number;
+  weight: number;
+}
+
 export interface Evaluation {
   id: string;
   studentName: string;
@@ -296,6 +303,7 @@ export interface Evaluation {
   percentage: number;
   comment: string;
   scores: Record<string, EvaluationScore>;
+  criterionMeta?: Record<string, EvaluationCriterionMeta>;
   gradedAt: number;
   syncedAt?: number;
 }

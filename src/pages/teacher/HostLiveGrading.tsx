@@ -241,6 +241,15 @@ export default function HostLiveGrading() {
     setSubmitting(true);
     try {
       const student = players.find((p) => p.id === studentId);
+      const criterionMeta = criteria.reduce<Record<string, { name: string; type: Criterion['type']; maxScore: number; weight: number }>>((acc, criterion) => {
+        acc[criterion.id] = {
+          name: criterion.name,
+          type: criterion.type,
+          maxScore: criterion.maxScore,
+          weight: criterion.weight,
+        };
+        return acc;
+      }, {});
 
       // Write evaluation
       await setDoc(doc(db, 'live_gradings', liveGrading.id, 'evaluations', studentId), {
@@ -250,6 +259,7 @@ export default function HostLiveGrading() {
         percentage,
         comment,
         scores: currentScores,
+        criterionMeta,
         gradedAt: Date.now(),
       });
 

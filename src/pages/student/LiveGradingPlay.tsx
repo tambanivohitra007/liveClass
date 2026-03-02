@@ -105,6 +105,25 @@ export default function LiveGradingPlay() {
   const myQueuePosition = liveGrading.studentOrder.indexOf(playerId!);
   const queueAhead = myQueuePosition >= 0 ? myQueuePosition - liveGrading.currentStudentIndex : -1;
 
+  const rubricCriteriaById = new Map(criteria.map((c) => [c.id, c]));
+  const evaluationCriterionMeta = myEvaluation?.criterionMeta || {};
+  const scoreEntries = myEvaluation ? Object.entries(myEvaluation.scores || {}) : [];
+  const displayCriteria = scoreEntries.map(([criterionId, evaluationScore], index) => {
+    const rubricCriterion = rubricCriteriaById.get(criterionId);
+    const evalCriterion = evaluationCriterionMeta[criterionId];
+    const fallbackName = `Criterion ${index + 1}`;
+
+    return {
+      id: criterionId,
+      name: rubricCriterion?.name || evalCriterion?.name || fallbackName,
+      type: rubricCriterion?.type || evalCriterion?.type || 'numeric',
+      maxScore: rubricCriterion?.maxScore ?? evalCriterion?.maxScore,
+      weight: rubricCriterion?.weight ?? evalCriterion?.weight,
+      score: evaluationScore?.score || 0,
+      levelLabel: evaluationScore?.levelLabel,
+    };
+  });
+
   // ============ LOBBY ============
   if (liveGrading.status === 'lobby') {
     return (
@@ -172,21 +191,28 @@ export default function LiveGradingPlay() {
 
           {/* Criteria Breakdown */}
           <div className="w-full space-y-2 mb-4">
-            {criteria.map((c) => {
-              const score = myEvaluation.scores[c.id];
-              const pts = score?.score || 0;
-              const pct = c.maxScore > 0 ? (pts / c.maxScore) * 100 : 0;
+            {displayCriteria.map((c) => {
+              const pts = c.score;
+              const maxScore = c.maxScore;
+              const weight = c.weight;
+              const hasRubricMeta = typeof maxScore === 'number' && typeof weight === 'number';
+              const weightedPts = hasRubricMeta ? pts * weight : null;
+              const weightedMax = hasRubricMeta ? maxScore * weight : null;
+              const pct = hasRubricMeta && maxScore > 0 ? (pts / maxScore) * 100 : 0;
               return (
                 <div key={c.id} className="bg-white/[0.05] border border-white/10 rounded-xl p-3 animate-fade-in">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm font-medium">{c.name}</span>
                     <span className="text-sm font-bold tabular-nums">
-                      {pts} <span className="text-white/30">/ {c.maxScore}</span>
-                      {c.weight !== 1 && <span className="text-warning text-xs ml-1">x{c.weight}</span>}
+                      {pts} <span className="text-white/30">/ {typeof c.maxScore === 'number' ? c.maxScore : '--'}</span>
+                      {typeof c.weight === 'number' && c.weight !== 1 && <span className="text-warning text-xs ml-1">x{c.weight}</span>}
                     </span>
                   </div>
-                  {score?.levelLabel && (
-                    <span className="text-xs text-brand font-medium">{score.levelLabel}</span>
+                  <div className="text-xs text-white/50 mb-1.5 tabular-nums">
+                    Contribution: {weightedPts !== null && weightedMax !== null ? `${weightedPts.toFixed(1)} / ${weightedMax.toFixed(1)} pts` : '--'}
+                  </div>
+                  {c.levelLabel && (
+                    <span className="text-xs text-brand font-medium">{c.levelLabel}</span>
                   )}
                   <div className="w-full h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden">
                     <div
@@ -199,6 +225,57 @@ export default function LiveGradingPlay() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Weighted Percentage Table */}
+          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 animate-fade-in overflow-x-auto">
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Weighted Percentage Breakdown</p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-white/40 border-b border-white/10">
+                  <th className="py-2 pr-3 font-semibold">Criterion</th>
+                  <th className="py-2 pr-3 font-semibold text-right">Max Share</th>
+                  <th className="py-2 pr-3 font-semibold text-right">Weighted %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayCriteria.map((c) => {
+                  const pts = c.score;
+                  const maxScore = c.maxScore;
+                  const weight = c.weight;
+                  const hasRubricMeta = typeof maxScore === 'number' && typeof weight === 'number';
+                  const weightedPts = hasRubricMeta ? pts * weight : null;
+                  const weightedMax = hasRubricMeta ? maxScore * weight : null;
+                  const maxSharePct = weightedMax !== null && myEvaluation.maxPossibleScore > 0
+                    ? (weightedMax / myEvaluation.maxPossibleScore) * 100
+                    : null;
+                  const weightedPct = weightedPts !== null && myEvaluation.maxPossibleScore > 0
+                    ? (weightedPts / myEvaluation.maxPossibleScore) * 100
+                    : null;
+
+                  return (
+                    <tr key={`weighted-pct-${c.id}`} className="border-b border-white/5 last:border-b-0">
+                      <td className="py-2 pr-3 text-white/85">{c.name}</td>
+                      <td className="py-2 pr-3 text-right font-medium tabular-nums text-white/60">
+                        {maxSharePct !== null ? `${maxSharePct.toFixed(1)}%` : '--'}
+                      </td>
+                      <td className="py-2 pr-3 text-right font-semibold tabular-nums text-white/90">
+                        {weightedPct !== null ? `${weightedPct.toFixed(1)}%` : '--'}
+                      </td>
+                    </tr>
+                  );
+                })}
+                <tr className="border-t border-white/10">
+                  <td className="pt-2.5 pr-3 font-bold text-white">Total</td>
+                  <td className="pt-2.5 pr-3 text-right font-bold tabular-nums text-white">
+                    100.0%
+                  </td>
+                  <td className="pt-2.5 pr-3 text-right font-bold tabular-nums text-brand">
+                    {myEvaluation.percentage.toFixed(1)}%
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           {/* Teacher Comment */}
