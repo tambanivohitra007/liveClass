@@ -2369,6 +2369,24 @@ exports.cleanupExpiredSessions = (0, scheduler_1.onSchedule)({
         ])));
         console.log(`Cleaned up ${expiredSessions.size} expired sessions`);
     }
+    // Clean up stale live_gradings (older than 24h, not ended)
+    const expiredLiveGradings = await db
+        .collection("live_gradings")
+        .where("createdAt", "<", cutoff.getTime())
+        .where("status", "!=", "ended")
+        .limit(100)
+        .get();
+    if (!expiredLiveGradings.empty) {
+        const lgBatch = db.batch();
+        expiredLiveGradings.docs.forEach((d) => {
+            lgBatch.update(d.ref, {
+                status: "ended",
+                endedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+        });
+        await lgBatch.commit();
+        console.log(`Cleaned up ${expiredLiveGradings.size} expired live gradings`);
+    }
 });
 // ===== LIVE GRADING (Oral Presentations) =====
 exports.createLiveGrading = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
