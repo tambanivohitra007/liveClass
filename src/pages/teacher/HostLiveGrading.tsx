@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
-import { doc, onSnapshot, collection, updateDoc, setDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { doc, onSnapshot, collection, updateDoc, setDoc, getDocs, query, orderBy, where, limit } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
@@ -61,22 +61,43 @@ export default function HostLiveGrading() {
     liveGradingRef.current = liveGrading;
   }, [liveGrading]);
 
-  // Create session on mount
+  // Create or rejoin session on mount
   useEffect(() => {
     if (!rubricId || !user) return;
     cancelledRef.current = false;
 
-    const create = async () => {
+    const init = async () => {
       try {
-        const fn = httpsCallable<{ rubricId: string }, { liveGradingId: string }>(functions, 'createLiveGrading');
-        const result = await fn({ rubricId });
-        if (cancelledRef.current) {
-          updateDoc(doc(db, 'live_gradings', result.data.liveGradingId), {
-            status: 'ended', endedAt: Date.now(),
-          }).catch(() => {});
-          return;
+        // Check for existing active session to rejoin
+        const existingSnap = await getDocs(
+          query(
+            collection(db, 'live_gradings'),
+            where('ownerId', '==', user.id),
+            where('rubricId', '==', rubricId),
+            where('status', 'in', ['lobby', 'live']),
+            limit(1)
+          )
+        );
+
+        if (cancelledRef.current) return;
+
+        if (!existingSnap.empty) {
+          // Rejoin existing session
+          const existingId = existingSnap.docs[0].id;
+          subscribe(existingId);
+          addToast('info', 'Rejoined existing session');
+        } else {
+          // Create new session
+          const fn = httpsCallable<{ rubricId: string }, { liveGradingId: string }>(functions, 'createLiveGrading');
+          const result = await fn({ rubricId });
+          if (cancelledRef.current) {
+            updateDoc(doc(db, 'live_gradings', result.data.liveGradingId), {
+              status: 'ended', endedAt: Date.now(),
+            }).catch(() => {});
+            return;
+          }
+          subscribe(result.data.liveGradingId);
         }
-        subscribe(result.data.liveGradingId);
       } catch (err) {
         if (!cancelledRef.current) {
           setError(err instanceof Error ? err.message : 'Failed to create session');
@@ -86,22 +107,28 @@ export default function HostLiveGrading() {
 
     // Load criteria from rubric
     const loadCriteria = async () => {
-      const snap = await getDocs(query(collection(db, 'rubrics', rubricId, 'criteria'), orderBy('order')));
-      setCriteria(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Criterion[]);
+      try {
+        const snap = await getDocs(query(collection(db, 'rubrics', rubricId, 'criteria'), orderBy('order')));
+        if (!cancelledRef.current) {
+          setCriteria(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Criterion[]);
+          if (snap.empty) {
+            addToast('warning', 'No criteria found in this rubric.');
+          }
+        }
+      } catch {
+        if (!cancelledRef.current) {
+          addToast('error', 'Failed to load rubric criteria.');
+        }
+      }
     };
 
-    create();
+    init();
     loadCriteria();
 
     return () => {
       cancelledRef.current = true;
       unsubscribesRef.current.forEach((u) => u());
       unsubscribesRef.current = [];
-      // End session on unmount if still active
-      const lg = liveGradingRef.current;
-      if (lg && lg.status !== 'ended') {
-        updateDoc(doc(db, 'live_gradings', lg.id), { status: 'ended', endedAt: Date.now() }).catch(() => {});
-      }
     };
   }, [rubricId, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
