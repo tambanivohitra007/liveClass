@@ -17,6 +17,7 @@ const storageBucket = admin.storage().bucket();
 
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "rindra.it@gmail.com";
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 const FUNCTION_CONFIG = {
@@ -1251,7 +1252,7 @@ export const emailSessionResults = onCall(
     const session = sessionDoc.data()!;
     if (
       session.hostId !== request.auth.uid &&
-      request.auth.token.email !== "rindra.it@gmail.com"
+      request.auth.token.email !== ADMIN_EMAIL
     ) {
       throw new HttpsError("permission-denied", "Not the session host");
     }

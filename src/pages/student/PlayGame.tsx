@@ -238,8 +238,8 @@ export default function PlayGame() {
     if (current) {
       setCurrentQuestion(current);
       // Calculate remaining time from server timestamp to survive refreshes
-      const startedAt = session.questionStartedAt as any;
-      const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+      const startedAt = session.questionStartedAt as { toMillis?: () => number } | number | null;
+      const startMs = (startedAt && typeof startedAt === 'object' && startedAt.toMillis) ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
       if (startMs > 0) {
         const now = session.timerPaused && session.timerPausedAt
           ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
@@ -321,8 +321,8 @@ export default function PlayGame() {
   useEffect(() => {
     if (!session || session.questionState !== 'live' || !currentQuestion?.timeLimitSec) return;
     if (session.paceMode === 'student') return;
-    const startedAt = session.questionStartedAt as any;
-    const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+    const startedAt = session.questionStartedAt as { toMillis?: () => number } | number | null;
+    const startMs = (startedAt && typeof startedAt === 'object' && startedAt.toMillis) ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
     if (startMs <= 0) return;
     const now = session.timerPaused && session.timerPausedAt
       ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
