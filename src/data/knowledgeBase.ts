@@ -63,8 +63,23 @@ export const knowledgeBase: KBCategory[] = [
       },
       {
         id: 'quiz-preview',
-        title: 'Previewing and sharing quizzes',
-        body: `Before hosting a live session, you can preview your quiz to check how it looks.\n\n1. Open a quiz from your Library.\n2. Click the "Preview" button to see each question as students will see it.\n\nYou can also generate flashcards or a worksheet from any quiz using the toolbar buttons.`,
+        title: 'Previewing a quiz',
+        body: `Before hosting a live session, you can preview your quiz to check how it looks.\n\n1. Open a quiz from your Library.\n2. Click the "Preview" button to see each question as students will see it.\n\nThis lets you verify question content, images, and answer choices before going live.`,
+      },
+      {
+        id: 'quiz-flashcards',
+        title: 'Studying with flashcards',
+        body: `You can turn any quiz into a set of study flashcards.\n\n1. Open a quiz from your Library.\n2. Click the "Flashcards" button in the toolbar.\n3. Flip each card to reveal the answer.\n4. Mark cards as "Known" to track your progress.\n\nSlide and poll questions are automatically excluded — only answerable questions appear as flashcards.`,
+      },
+      {
+        id: 'quiz-worksheet',
+        title: 'Generating a worksheet',
+        body: `Create a printable worksheet from any quiz.\n\n1. Open a quiz from your Library.\n2. Click the "Worksheet" button in the toolbar.\n3. Customize font size and optionally shuffle answer choices.\n4. Print the worksheet or download it as a PDF.\n\nWorksheets are useful for paper-based tests or study handouts.`,
+      },
+      {
+        id: 'quiz-discover',
+        title: 'Discovering public quizzes',
+        body: `The Discover page lets you browse quizzes shared by other teachers.\n\n1. Go to Discover from the sidebar.\n2. Search for quizzes by title or description.\n3. Click "Clone" to copy a public quiz to your own library.\n\nOnce cloned, you can edit the quiz and use it in your own sessions.`,
       },
     ],
   },
@@ -91,6 +106,16 @@ export const knowledgeBase: KBCategory[] = [
         id: 'live-leaderboard',
         title: 'Understanding the leaderboard',
         body: `Points are calculated on the server to prevent cheating:\n\n- Base points: 1000 for a correct answer\n- Speed bonus: Faster answers earn more points (based on time remaining)\n- Streak bonus: +50 points for each consecutive correct answer\n\nThe leaderboard updates after each question. The top 10 players are shown between questions. Final rankings are available in Session Results after the game ends.`,
+      },
+      {
+        id: 'live-results',
+        title: 'Viewing session results',
+        body: `After ending a live session, you're taken to the Session Results page.\n\nThe results include:\n- Final leaderboard with all player rankings\n- Per-question analytics (accuracy rate, average response time)\n- Individual player performance breakdown\n\nYou can export all results as a CSV file for your grade book.`,
+      },
+      {
+        id: 'live-history',
+        title: 'Session history',
+        body: `The Session History page shows all your past sessions in one place.\n\n1. Go to History from the sidebar.\n2. Switch between "Quiz Sessions" and "Live Gradings" tabs.\n3. Filter by date range (last 7 days, 30 days, or all time).\n4. Filter by quiz name, player count, or rubric.\n\nClick any session to view its full results. You can also delete sessions you no longer need. Results load in pages — click "Load More" to see older sessions.`,
       },
     ],
   },
@@ -137,7 +162,22 @@ export const knowledgeBase: KBCategory[] = [
       {
         id: 'rubric-scores',
         title: 'Understanding scores and results',
-        body: `Scores are calculated by adding up the points from each criterion's selected performance level.\n\nThe grading results page shows:\n- Individual student scores with detailed breakdowns\n- Class average and score distribution\n- Per-criteria performance overview\n\nYou can export results as a CSV for your grade book.`,
+        body: `Scores are calculated by adding up the points from each criterion's selected performance level.\n\nThe grading results page shows:\n- Individual student scores with detailed breakdowns\n- Class average and score distribution\n- Per-criteria performance overview\n\nYou can export results to Excel for your grade book.`,
+      },
+      {
+        id: 'rubric-live-grading',
+        title: 'Hosting a live grading session',
+        body: `Live grading lets you grade oral presentations in real time while students watch their turn.\n\n1. Go to the Rubrics page and click "Host Live" on a rubric.\n2. A 6-digit PIN is generated — share it with your students.\n3. Students join using the same Join page as quiz games.\n4. Lock the session when everyone has joined, then start grading.\n5. Students are called up in a random order. Grade each student using the rubric criteria.\n6. Click "Submit & Next" to save the evaluation and move to the next student.\n\nStudents see their queue position and are notified when it's their turn. Once graded, they immediately see their scores and feedback.`,
+      },
+      {
+        id: 'rubric-live-regrade',
+        title: 'Re-grading a student',
+        body: `If you need to change a student's score during a live grading session:\n\n1. Navigate back to the student using the sidebar list.\n2. Adjust the scores on any criterion.\n3. Click "Submit & Next" — you'll see a confirmation asking if you want to overwrite the previous evaluation.\n4. Click "Overwrite" to save the new scores.\n\nThe student's results update immediately on their device.`,
+      },
+      {
+        id: 'rubric-live-results',
+        title: 'Live grading results',
+        body: `After ending a live grading session, view the results page for a complete overview.\n\nThe results include:\n- Overview tab with class average, score distribution, and per-criteria breakdown\n- Individual student tab showing each student's scores with detailed criterion-level results\n- Score highlights for top and lowest performers\n\nYou can export all results to an Excel spreadsheet with individual sheets per student.`,
       },
     ],
   },
@@ -174,7 +214,7 @@ export const knowledgeBase: KBCategory[] = [
       {
         id: 'student-join',
         title: 'Joining a live game',
-        body: `To join a live game:\n\n1. Go to the Join page (tap "Join Game" on mobile or navigate to /join).\n2. Enter the 6-digit PIN your teacher shared.\n3. Choose a nickname.\n4. Wait in the lobby until the teacher starts the game.\n\nMake sure you have a stable internet connection for the best experience.`,
+        body: `To join a live game or grading session:\n\n1. Go to the Join page (tap "Join Game" on mobile or navigate to /join).\n2. Enter the 6-digit PIN your teacher shared.\n3. Choose a nickname and select an avatar.\n4. Complete the shape verification to confirm you're not a bot.\n5. Wait in the lobby until the teacher starts.\n\nThe same Join page works for both quiz games and live grading sessions. Make sure you have a stable internet connection for the best experience.`,
       },
       {
         id: 'student-play',
@@ -187,9 +227,19 @@ export const knowledgeBase: KBCategory[] = [
         body: `After a game ends, you'll see your final score and ranking.\n\nYour results include:\n- Total points earned\n- Number of correct answers\n- Your streak record\n- Final leaderboard position\n\nYou can also view past results from your Student Dashboard.`,
       },
       {
+        id: 'student-live-grading',
+        title: 'Participating in live grading',
+        body: `Live grading sessions are used for oral presentations.\n\n1. Join using the PIN your teacher shared — it works the same as a quiz game.\n2. Wait in the lobby until the teacher starts the session.\n3. You'll see your position in the queue and who is currently presenting.\n4. When it's your turn, your screen will show a "It's Your Turn!" notification — begin your presentation.\n5. After your teacher grades you, your scores and feedback appear immediately on your screen.\n\nYou can review your per-criterion scores and teacher comments while waiting for others to finish.`,
+      },
+      {
+        id: 'student-dashboard',
+        title: 'Using the Student Dashboard',
+        body: `Your Student Dashboard shows an overview of your activity.\n\n- Game Stats: Total games played, total points, best streak, and average accuracy.\n- Recent Games: Expandable cards showing your recent quiz attempts with scores.\n- Available Assignments: Upcoming assignments with due dates and attempt limits.\n\nUse the sidebar to navigate to your classes, join a game, or update your profile.`,
+      },
+      {
         id: 'student-classes',
         title: 'Enrolling in a class',
-        body: `To join a class:\n\n1. Get the join code from your teacher.\n2. Go to Join Class from your dashboard or sidebar.\n3. Enter the join code and click "Join."\n\nOnce enrolled, you'll see class assignments on your dashboard. You can leave a class at any time from the class detail page.`,
+        body: `To join a class:\n\n1. Get the join code from your teacher.\n2. Go to Join Class from your dashboard or sidebar.\n3. Enter the join code and click "Join."\n\nOnce enrolled, you'll see class assignments on your dashboard. You can view class details and leave a class at any time from the class detail page.`,
       },
     ],
   },
