@@ -139,6 +139,12 @@
     border-color: #009EE2;
   }
 
+  /* Global focus-visible ring for keyboard navigation (WCAG 2.1 AA) */
+  :focus-visible {
+    outline: 2px solid #009EE2;
+    outline-offset: 2px;
+  }
+
   /* Dividers */
   hr {
     border-color: var(--border-base);

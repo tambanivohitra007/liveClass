@@ -399,6 +399,7 @@ export default function SessionHistory() {
           <select
             value={quizFilter}
             onChange={(e) => setQuizFilter(e.target.value)}
+            aria-label="Filter by quiz"
             className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="all" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">All Quizzes</option>
@@ -413,6 +414,7 @@ export default function SessionHistory() {
           <select
             value={rubricFilter}
             onChange={(e) => setRubricFilter(e.target.value)}
+            aria-label="Filter by rubric"
             className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="all" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">All Rubrics</option>
@@ -428,6 +430,7 @@ export default function SessionHistory() {
           <select
             value={sortField}
             onChange={(e) => setSortField(e.target.value as SortField)}
+            aria-label="Sort sessions by"
             className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="date" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Sort by Date</option>

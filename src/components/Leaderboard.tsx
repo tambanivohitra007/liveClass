@@ -305,16 +305,15 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
       </div>
 
       {/* Remaining Players */}
-      <div className="space-y-2" role="list" aria-label="Player rankings">
+      <ol className="space-y-2 list-none" aria-label="Player rankings">
         {rest.map((entry) => {
           const didOvertake = overtakers.has(entry.playerId);
           const delta = rankDeltas.get(entry.playerId);
 
           return (
-            <div
+            <li
               key={entry.playerId}
               data-flip-id={entry.playerId}
-              role="listitem"
               aria-label={`${ordinal(entry.rank)}: ${entry.nickname || entry.playerId.slice(0, 8)}, ${entry.totalPoints} points`}
               className={`bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-colors rounded-xl px-4 py-3 flex items-center justify-between${didOvertake ? ' leaderboard-overtake' : ''}`}
             >
@@ -345,10 +344,10 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
                   {entry.streak}
                 </span>
               ) : null}
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </div>
   );
 }
