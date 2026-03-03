@@ -116,8 +116,9 @@ export default function HostSession() {
   const createSession = async () => {
     if (!quizId) return;
     try {
-      const fn = httpsCallable<{ quizId: string }, { sessionId: string }>(functions, 'createSession');
-      const result = await fn({ quizId });
+      const classroomId = searchParams.get('classroomId');
+      const fn = httpsCallable<{ quizId: string; classroomId?: string }, { sessionId: string }>(functions, 'createSession');
+      const result = await fn({ quizId, ...(classroomId ? { classroomId } : {}) });
       if (cancelledRef.current) {
         // Effect was cleaned up while Cloud Function was in-flight — end the orphan session
         updateDoc(doc(db, 'sessions', result.data.sessionId), {

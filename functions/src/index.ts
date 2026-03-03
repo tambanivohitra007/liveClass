@@ -242,12 +242,21 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   // Fire-and-forget: notify classroom students about the live session
   if (classroomId) {
     const quizTitle = quizDoc.data()?.title || "a quiz";
+    // In-app notifications
     createNotificationsForClassroom(classroomId, request.auth!.uid, {
       type: "session_started",
       title: "Live Session Started",
       message: `A live session for "${quizTitle}" has started! Join with PIN: ${pinCode}`,
       metadata: { sessionId: sessionRef.id, pinCode, quizTitle },
     }).catch((err) => console.warn("Notification error (non-fatal):", err));
+    // FCM push notifications
+    sendPushToClassroom(
+      classroomId,
+      request.auth!.uid,
+      "Live Session Started!",
+      `"${quizTitle}" is live! Join with PIN: ${pinCode}`,
+      { pin: pinCode, sessionId: sessionRef.id }
+    ).catch((err) => console.warn("FCM push error (non-fatal):", err));
   }
 
   return { sessionId: sessionRef.id };
@@ -3018,6 +3027,50 @@ export const joinLiveGrading = onCall(HOT_PATH_CONFIG, async (request) => {
 
 // ─── Push Notification: Game Start Alert ───
 
+// Helper: send FCM push to classroom members
+async function sendPushToClassroom(
+  classroomId: string,
+  excludeUserId: string,
+  title: string,
+  body: string,
+  data: Record<string, string>
+): Promise<number> {
+  const membersSnap = await db
+    .collection(`classrooms/${classroomId}/members`)
+    .where("role", "==", "student")
+    .get();
+
+  if (membersSnap.empty) return 0;
+
+  const userIds = membersSnap.docs
+    .map((d) => d.data().userId as string)
+    .filter((id) => id !== excludeUserId);
+
+  if (userIds.length === 0) return 0;
+
+  // Fetch FCM tokens in batches of 10
+  const tokens: string[] = [];
+  for (let i = 0; i < userIds.length; i += 10) {
+    const batch = userIds.slice(i, i + 10);
+    const userDocs = await db.getAll(...batch.map((id) => db.doc(`users/${id}`)));
+    for (const userDoc of userDocs) {
+      const fcmToken = userDoc.data()?.fcmToken;
+      if (fcmToken) tokens.push(fcmToken);
+    }
+  }
+
+  if (tokens.length === 0) return 0;
+
+  const message: admin.messaging.MulticastMessage = {
+    tokens,
+    notification: { title, body },
+    data,
+  };
+
+  const result = await admin.messaging().sendEachForMulticast(message);
+  return result.successCount;
+}
+
 export const sendGameStartNotification = onCall(FUNCTION_CONFIG, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Login required");
 
@@ -3026,39 +3079,16 @@ export const sendGameStartNotification = onCall(FUNCTION_CONFIG, async (request)
     throw new HttpsError("invalid-argument", "classroomId and pinCode required");
   }
 
-  // Get classroom members
   const classDoc = await db.doc(`classrooms/${classroomId}`).get();
   if (!classDoc.exists) throw new HttpsError("not-found", "Classroom not found");
-  const classData = classDoc.data()!;
 
-  const memberIds: string[] = classData.studentIds || [];
-  if (memberIds.length === 0) return { sent: 0 };
+  const sent = await sendPushToClassroom(
+    classroomId,
+    request.auth.uid,
+    title || "Game Starting!",
+    `Join with PIN: ${pinCode}`,
+    { pin: String(pinCode) }
+  );
 
-  // Fetch FCM tokens for all members
-  const tokens: string[] = [];
-  const batchSize = 10;
-  for (let i = 0; i < memberIds.length; i += batchSize) {
-    const batch = memberIds.slice(i, i + batchSize);
-    const userDocs = await db.getAll(...batch.map((id) => db.doc(`users/${id}`)));
-    for (const userDoc of userDocs) {
-      const fcmToken = userDoc.data()?.fcmToken;
-      if (fcmToken) tokens.push(fcmToken);
-    }
-  }
-
-  if (tokens.length === 0) return { sent: 0 };
-
-  const message: admin.messaging.MulticastMessage = {
-    tokens,
-    notification: {
-      title: title || "Game Starting!",
-      body: `Join with PIN: ${pinCode}`,
-    },
-    data: {
-      pin: String(pinCode),
-    },
-  };
-
-  const result = await admin.messaging().sendEachForMulticast(message);
-  return { sent: result.successCount };
+  return { sent };
 });
