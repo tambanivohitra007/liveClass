@@ -283,7 +283,7 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="gradient-hero min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="gradient-hero min-h-[calc(100vh-4rem)] flex items-start justify-center px-4 pt-6 sm:pt-2 relative overflow-hidden">
       <WaveBackground variant="dark" position="both" />
       <div className="absolute inset-0 pattern-stars pointer-events-none" />
 
@@ -293,7 +293,7 @@ export default function JoinGame() {
           <img
             src={boy5}
             alt="Player avatar"
-            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-lg opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen mx-auto mb-4"
+            className="w-32 object-contain mx-auto mb-4"
           />
           <h1 className="text-4xl sm:text-5xl text-gray-900 dark:text-white tracking-tight">Join Game</h1>
           <p className="text-gray-500 dark:text-white/50 mt-2 text-sm font-medium">Enter the PIN your host shared</p>

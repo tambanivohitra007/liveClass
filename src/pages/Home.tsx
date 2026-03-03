@@ -36,13 +36,13 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden gradient-hero">
+      <section className="relative min-h-[calc(100vh-4rem)] flex items-start overflow-hidden gradient-hero">
         {/* Neural network CPPN shader background */}
         <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
           <ShaderBackground />
         </Suspense>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center lg:items-start">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 pb-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center lg:items-start">
           {/* Left - Join Game Card */}
           <div className="relative animate-fade-in">
             <div className="mx-auto w-48 h-24 sm:w-64 sm:h-32 lg:w-[24rem] lg:h-[12rem] xl:w-[30rem] xl:h-[15rem] overflow-hidden pointer-events-none z-0">
