@@ -460,6 +460,9 @@ export default function QuizEditor() {
                 <div className="flex items-center gap-1 mt-1">
                   <Clock className="w-3 h-3 text-gray-400 dark:text-white/40 shrink-0" />
                   <span className="text-[10px] text-gray-400 dark:text-white/40">{q.timeLimitSec}s</span>
+                  {(q.pointMultiplier ?? 1) > 1 && (
+                    <span className="text-[10px] px-1 rounded bg-warning/20 text-warning font-bold">{q.pointMultiplier}x</span>
+                  )}
                 </div>
               </div>
               <button
@@ -663,6 +666,15 @@ export default function QuizEditor() {
                   {[5, 10, 15, 20, 30, 45, 60, 90, 120].map((s) => (
                     <option key={s} value={s} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{s}s</option>
                   ))}
+                </select>
+                <select
+                  value={activeQ.pointMultiplier ?? 1}
+                  onChange={(e) => updateQuestion(activeIndex, { pointMultiplier: parseInt(e.target.value) })}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-xs font-medium text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white dark:bg-slate-800"
+                >
+                  <option value={1} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">1x</option>
+                  <option value={2} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">2x</option>
+                  <option value={3} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">3x</option>
                 </select>
                 <div className="flex items-center border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-white/5 ml-auto">
                   <button

@@ -61,6 +61,7 @@ export interface Question {
   codeLanguage?: string;
   correctAnswers: string[];
   timeLimitSec: number;
+  pointMultiplier?: number;
 }
 
 export type SessionStatus = 'lobby' | 'live' | 'ended';

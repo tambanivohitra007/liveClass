@@ -824,6 +824,11 @@ export const processAnswer = onValueCreated(
         }
         newStreak = currentScore.streak + 1;
         pointsAwarded += newStreak * 50;
+        // Apply per-question point multiplier
+        const multiplier = question.pointMultiplier ?? 1;
+        if (multiplier > 1) {
+          pointsAwarded *= multiplier;
+        }
       } else if (correct) {
         // Poll: correct but 0 points
         newStreak = currentScore.streak;

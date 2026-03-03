@@ -875,7 +875,14 @@ export default function PlayGame() {
       {/* Question */}
       <div className="flex-1 flex flex-col px-4 pb-4">
         <div className="text-center py-3 sm:py-6 animate-fade-in">
-          <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">{currentQuestion.text}</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">
+            {currentQuestion.text}
+            {(currentQuestion.pointMultiplier ?? 1) > 1 && (
+              <span className="ml-2 inline-block px-2 py-0.5 text-sm font-bold rounded-full bg-warning/20 text-warning align-middle">
+                {currentQuestion.pointMultiplier}x
+              </span>
+            )}
+          </h2>
           {currentQuestion.imageUrl && (
             <img src={currentQuestion.imageUrl} alt="Question image" className="max-h-28 sm:max-h-40 mx-auto mt-4 rounded-xl object-contain" />
           )}
