@@ -175,24 +175,6 @@ export interface ClassroomMember {
 }
 
 // --- AI Evaluation Types ---
-export interface ParticipantEvaluation {
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-  overallRating: 'excellent' | 'good' | 'average' | 'needs_improvement';
-  topicMastery: { topic: string; level: 'strong' | 'moderate' | 'weak' }[];
-  questionBreakdown?: {
-    questionIndex: number;
-    questionText: string;
-    status: 'correct' | 'incorrect' | 'unattempted';
-    studentAnswer: string | null;
-    correctAnswer: string;
-    points: number;
-    explanation: string;
-  }[];
-}
-
 export interface QuestionEvaluation {
   summary: string;
   difficultyRating: 'too_easy' | 'appropriate' | 'too_hard';

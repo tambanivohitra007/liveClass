@@ -38,7 +38,7 @@ export async function queueAnswer(answer: Omit<PendingAnswer, 'id' | 'createdAt'
   await db.add(STORE_NAME, { ...answer, createdAt: Date.now() });
 }
 
-export async function getPendingAnswers(): Promise<PendingAnswer[]> {
+async function getPendingAnswers(): Promise<PendingAnswer[]> {
   const db = await getDb();
   return db.getAll(STORE_NAME);
 }
@@ -48,7 +48,7 @@ export async function getPendingCount(): Promise<number> {
   return db.count(STORE_NAME);
 }
 
-export async function removePendingAnswer(id: number) {
+async function removePendingAnswer(id: number) {
   const db = await getDb();
   await db.delete(STORE_NAME, id);
 }

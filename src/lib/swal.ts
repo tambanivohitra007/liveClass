@@ -15,8 +15,6 @@ const swal = Swal.mixin({
   reverseButtons: true,
 });
 
-export default swal;
-
 /** Destructive confirmation (delete actions) */
 export function confirmDelete(itemName: string) {
   return swal.fire({
@@ -42,23 +40,3 @@ export function confirmAction(title: string, text: string, confirmText = 'Yes, c
   });
 }
 
-/** Success alert (auto-closes) */
-export function alertSuccess(title: string, text?: string) {
-  return swal.fire({
-    title,
-    text,
-    icon: 'success',
-    timer: 2000,
-    showConfirmButton: false,
-  });
-}
-
-/** Error alert */
-export function alertError(title: string, text?: string) {
-  return swal.fire({
-    title,
-    text,
-    icon: 'error',
-    confirmButtonText: 'OK',
-  });
-}

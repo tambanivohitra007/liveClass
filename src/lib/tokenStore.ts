@@ -16,6 +16,3 @@ export function getActiveToken(sessionId: string): string {
   return tokens.get(`activeToken_${sessionId}`) || '';
 }
 
-export function clearActiveToken(sessionId: string): void {
-  tokens.delete(`activeToken_${sessionId}`);
-}

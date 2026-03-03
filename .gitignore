@@ -40,3 +40,4 @@ android/.gradle
 ios/App/App/public
 ios/App/App/capacitor.config.json
 ios/DerivedData
+SKILL.md
