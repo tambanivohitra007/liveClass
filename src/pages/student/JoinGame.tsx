@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -7,6 +7,8 @@ import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, Shield
 import WaveBackground from '../../components/ui/WaveBackground';
 import { AVATARS } from '../../lib/avatars';
 import boy5 from '../../assets/optimized/boy_5.png';
+
+const ShaderBackground = lazy(() => import('../../components/ui/ShaderBackground'));
 
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
@@ -284,6 +286,9 @@ export default function JoinGame() {
 
   return (
     <div className="gradient-hero min-h-[calc(100vh-4rem)] flex items-start justify-center px-4 pt-6 sm:pt-2 relative overflow-hidden">
+      <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
+        <ShaderBackground />
+      </Suspense>
       <WaveBackground variant="dark" position="both" />
       <div className="absolute inset-0 pattern-stars pointer-events-none" />
 
