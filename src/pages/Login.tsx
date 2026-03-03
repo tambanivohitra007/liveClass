@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { signInWithGoogle } from '../lib/googleAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import ValidatedInput from '../components/ValidatedInput';
@@ -51,7 +52,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await signInWithGoogle();
       setWaitingForAuth(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google login failed');

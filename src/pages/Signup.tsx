@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { signInWithGoogle } from '../lib/googleAuth';
 import { useNavigate, Link } from 'react-router-dom';
 import ValidatedInput from '../components/ValidatedInput';
 import WaveBackground from '../components/ui/WaveBackground';
@@ -46,7 +47,7 @@ export default function Signup() {
     setError('');
     setLoading(true);
     try {
-      const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+      const cred = await signInWithGoogle();
       await createUserDoc(
         cred.user.uid,
         cred.user.email || '',

@@ -3003,3 +3003,50 @@ export const joinLiveGrading = onCall(HOT_PATH_CONFIG, async (request) => {
 
   return { playerId: playerRef.id };
 });
+
+// ─── Push Notification: Game Start Alert ───
+
+export const sendGameStartNotification = onCall(FUNCTION_CONFIG, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Login required");
+
+  const { classroomId, pinCode, title } = request.data;
+  if (!classroomId || !pinCode) {
+    throw new HttpsError("invalid-argument", "classroomId and pinCode required");
+  }
+
+  // Get classroom members
+  const classDoc = await db.doc(`classrooms/${classroomId}`).get();
+  if (!classDoc.exists) throw new HttpsError("not-found", "Classroom not found");
+  const classData = classDoc.data()!;
+
+  const memberIds: string[] = classData.studentIds || [];
+  if (memberIds.length === 0) return { sent: 0 };
+
+  // Fetch FCM tokens for all members
+  const tokens: string[] = [];
+  const batchSize = 10;
+  for (let i = 0; i < memberIds.length; i += batchSize) {
+    const batch = memberIds.slice(i, i + batchSize);
+    const userDocs = await db.getAll(...batch.map((id) => db.doc(`users/${id}`)));
+    for (const userDoc of userDocs) {
+      const fcmToken = userDoc.data()?.fcmToken;
+      if (fcmToken) tokens.push(fcmToken);
+    }
+  }
+
+  if (tokens.length === 0) return { sent: 0 };
+
+  const message: admin.messaging.MulticastMessage = {
+    tokens,
+    notification: {
+      title: title || "Game Starting!",
+      body: `Join with PIN: ${pinCode}`,
+    },
+    data: {
+      pin: String(pinCode),
+    },
+  };
+
+  const result = await admin.messaging().sendEachForMulticast(message);
+  return { sent: result.successCount };
+});

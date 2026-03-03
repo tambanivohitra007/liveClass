@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.joinLiveGrading = exports.createLiveGrading = exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateRubric = exports.generateQuestions = exports.reportViolation = exports.emailSessionResults = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
+exports.sendGameStartNotification = exports.joinLiveGrading = exports.createLiveGrading = exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateRubric = exports.generateQuestions = exports.reportViolation = exports.emailSessionResults = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const cheerio = __importStar(require("cheerio"));
@@ -43,12 +43,15 @@ const scheduler_1 = require("firebase-functions/v2/scheduler");
 const database_1 = require("firebase-functions/v2/database");
 const firestore_1 = require("firebase-functions/v2/firestore");
 const params_1 = require("firebase-functions/params");
+const logic_1 = require("./logic");
+const rateLimit_1 = require("./rateLimit");
 admin.initializeApp();
 const db = admin.firestore();
 const rtdb = admin.database();
 const storageBucket = admin.storage().bucket();
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "rindra.it@gmail.com";
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 const FUNCTION_CONFIG = {
     region: REGION,
@@ -97,77 +100,15 @@ async function getPlayerCached(sessionId, playerId) {
     playerDataCache.set(key, data);
     return data;
 }
-// --- Correctness checker (extracted for RTDB-only scoring) ---
-function checkCorrectness(selection, question) {
-    const isPoll = question.type === "poll";
-    const isSlide = question.type === "slide";
-    if (isSlide)
-        return false;
-    if (isPoll)
-        return true;
-    if (question.type === "ordering") {
-        try {
-            const submitted = JSON.parse(selection);
-            const expected = question.options || [];
-            return submitted.length === expected.length &&
-                submitted.every((item, idx) => item === expected[idx]);
-        }
-        catch {
-            return false;
-        }
-    }
-    if (question.type === "matching") {
-        try {
-            const pairs = JSON.parse(selection);
-            const options = question.options || [];
-            const matchOpts = question.matchOptions || [];
-            return options.length > 0 && options.every((left, idx) => pairs[left] === matchOpts[idx]);
-        }
-        catch {
-            return false;
-        }
-    }
-    if (question.type === "fill_blank") {
-        try {
-            const answers = JSON.parse(selection);
-            const expected = question.correctAnswers || [];
-            return answers.length === expected.length && answers.every((a, idx) => a.trim().toLowerCase() === expected[idx].trim().toLowerCase());
-        }
-        catch {
-            return false;
-        }
-    }
-    if (question.type === "mcq" && question.correctAnswers && question.correctAnswers.length > 1) {
-        try {
-            const chosen = JSON.parse(selection);
-            const expected = question.correctAnswers;
-            return chosen.length === expected.length &&
-                chosen.every((c) => expected.includes(c)) &&
-                expected.every((e) => chosen.includes(e));
-        }
-        catch {
-            return false;
-        }
-    }
-    if (question.type === "code_output") {
-        const expected = question.correctAnswers || [];
-        return expected.some((a) => a.trim().toLowerCase() === selection.trim().toLowerCase());
-    }
-    // Default: mcq, tf
-    return (question.correctAnswers || []).includes(selection);
-}
+// checkCorrectness imported from ./logic
 function generatePin() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return (0, logic_1.generatePin)();
 }
 function generateToken() {
     return crypto.randomBytes(32).toString("hex");
 }
 function getShardId(playerId) {
-    let hash = 0;
-    for (let i = 0; i < playerId.length; i++) {
-        hash = (hash * 31 + playerId.charCodeAt(i)) | 0;
-    }
-    return Math.abs(hash) % NUM_SHARDS;
+    return (0, logic_1.getShardId)(playerId, NUM_SHARDS);
 }
 // --- Email Helper ---
 function getMailer() {
@@ -310,6 +251,11 @@ exports.joinSession = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
     const { sessionId, nickname, avatar, playerId: existingPlayerId } = request.data;
     if (!sessionId || !nickname) {
         throw new https_1.HttpsError("invalid-argument", "sessionId and nickname are required");
+    }
+    // Rate limit: 5 join attempts per 10 seconds per session
+    const rateLimitKey = `join_${sessionId}_${request.auth?.uid || nickname}`;
+    if (!(0, rateLimit_1.checkRateLimit)(rateLimitKey, rateLimit_1.RATE_LIMITS.joinSession.maxRequests, rateLimit_1.RATE_LIMITS.joinSession.windowMs)) {
+        throw new https_1.HttpsError("resource-exhausted", "Too many join attempts. Please wait a moment.");
     }
     if (nickname.length > 20) {
         throw new https_1.HttpsError("invalid-argument", "Nickname too long");
@@ -656,27 +602,39 @@ async function computeAndWriteScore(input) {
         },
     }, { merge: true });
     await batch.commit();
-    // Compute rank info for personal feedback
+    // Compute rank in O(n) without sorting — count players with higher score
     const newTotalPoints = playerData.totalPoints + pointsAwarded;
     const allShards = await db
         .collection(`sessions/${sessionId}/leaderboard_shards`)
         .get();
-    const ranked = [];
+    let rank = 1;
+    let nextHigherPts = 0; // points of the player just above
     allShards.docs.forEach((s) => {
         const pl = s.data().players || {};
         for (const [pid, d] of Object.entries(pl)) {
-            const pd = d;
-            ranked.push({ pid, pts: pid === playerId ? newTotalPoints : pd.totalPoints });
+            if (pid === playerId)
+                continue;
+            const pts = d.totalPoints;
+            if (pts > newTotalPoints) {
+                rank++;
+                // Track the lowest score that's still higher (closest above)
+                if (nextHigherPts === 0 || pts < nextHigherPts) {
+                    nextHigherPts = pts;
+                }
+            }
         }
     });
-    ranked.sort((a, b) => b.pts - a.pts);
-    const rank = ranked.findIndex((p) => p.pid === playerId) + 1;
-    const behindBy = rank > 1 ? ranked[rank - 2].pts - newTotalPoints : 0;
+    const behindBy = rank > 1 ? nextHigherPts - newTotalPoints : 0;
     return { correct, pointsAwarded, rank, totalPoints: newTotalPoints, behindBy };
 }
 // --- Score Answer (callable — used by PlayAssignment) ---
 exports.scoreAnswer = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
     const { sessionId, questionId, playerId, selection, timeMs, activeToken } = request.data;
+    // Rate limit: 2 answer submissions per second per player
+    const rateLimitKey = `score_${sessionId}_${playerId}`;
+    if (!(0, rateLimit_1.checkRateLimit)(rateLimitKey, rateLimit_1.RATE_LIMITS.scoreAnswer.maxRequests, rateLimit_1.RATE_LIMITS.scoreAnswer.windowMs)) {
+        throw new https_1.HttpsError("resource-exhausted", "Too many answer submissions. Please wait.");
+    }
     return computeAndWriteScore({ sessionId, questionId, playerId, selection, timeMs, activeToken });
 });
 // --- Process Answer (RTDB trigger — used by PlayGame live mode) ---
@@ -721,7 +679,7 @@ exports.processAnswer = (0, database_1.onValueCreated)({
             return;
         }
         // Check correctness using extracted helper
-        const correct = checkCorrectness(data.selection, question);
+        const correct = (0, logic_1.checkCorrectness)(data.selection, question);
         const isPoll = question.type === "poll";
         // Read current score from RTDB
         const scoreRef = rtdb.ref(`scores/${sessionId}/${playerId}`);
@@ -1079,7 +1037,7 @@ exports.emailSessionResults = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: 
     }
     const session = sessionDoc.data();
     if (session.hostId !== request.auth.uid &&
-        request.auth.token.email !== "rindra.it@gmail.com") {
+        request.auth.token.email !== ADMIN_EMAIL) {
         throw new https_1.HttpsError("permission-denied", "Not the session host");
     }
     // Fetch all data in parallel
@@ -1279,6 +1237,10 @@ async function extractUrlContent(targetUrl) {
 exports.generateQuestions = (0, https_1.onCall)({ ...FUNCTION_CONFIG, memory: "1GiB", secrets: [geminiApiKey] }, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    // Rate limit: 5 AI generations per minute per user
+    if (!(0, rateLimit_1.checkRateLimit)(`ai_${request.auth.uid}`, rateLimit_1.RATE_LIMITS.aiGenerate.maxRequests, rateLimit_1.RATE_LIMITS.aiGenerate.windowMs)) {
+        throw new https_1.HttpsError("resource-exhausted", "Too many AI generation requests. Please wait a minute.");
     }
     const { source = "topic", topic = "", count = 5, questionType = "mcq", description = "", difficulty = "mixed", generateMeta = false, pdfStoragePath, url, additionalContext = "", } = request.data;
     // Source-specific validation
@@ -2494,5 +2456,48 @@ exports.joinLiveGrading = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) =
         joinedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     return { playerId: playerRef.id };
+});
+// ─── Push Notification: Game Start Alert ───
+exports.sendGameStartNotification = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth)
+        throw new https_1.HttpsError("unauthenticated", "Login required");
+    const { classroomId, pinCode, title } = request.data;
+    if (!classroomId || !pinCode) {
+        throw new https_1.HttpsError("invalid-argument", "classroomId and pinCode required");
+    }
+    // Get classroom members
+    const classDoc = await db.doc(`classrooms/${classroomId}`).get();
+    if (!classDoc.exists)
+        throw new https_1.HttpsError("not-found", "Classroom not found");
+    const classData = classDoc.data();
+    const memberIds = classData.studentIds || [];
+    if (memberIds.length === 0)
+        return { sent: 0 };
+    // Fetch FCM tokens for all members
+    const tokens = [];
+    const batchSize = 10;
+    for (let i = 0; i < memberIds.length; i += batchSize) {
+        const batch = memberIds.slice(i, i + batchSize);
+        const userDocs = await db.getAll(...batch.map((id) => db.doc(`users/${id}`)));
+        for (const userDoc of userDocs) {
+            const fcmToken = userDoc.data()?.fcmToken;
+            if (fcmToken)
+                tokens.push(fcmToken);
+        }
+    }
+    if (tokens.length === 0)
+        return { sent: 0 };
+    const message = {
+        tokens,
+        notification: {
+            title: title || "Game Starting!",
+            body: `Join with PIN: ${pinCode}`,
+        },
+        data: {
+            pin: String(pinCode),
+        },
+    };
+    const result = await admin.messaging().sendEachForMulticast(message);
+    return { sent: result.successCount };
 });
 //# sourceMappingURL=index.js.map

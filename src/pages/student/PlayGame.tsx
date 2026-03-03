@@ -819,7 +819,7 @@ export default function PlayGame() {
 
   // Live question
   return (
-    <div className="min-h-dvh flex flex-col" style={GAME_BG}>
+    <div className="min-h-dvh flex flex-col pt-safe" style={GAME_BG}>
       {!isOnline && <OfflineBanner />}
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}

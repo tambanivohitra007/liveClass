@@ -4,6 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { ref, onValue, off } from 'firebase/database';
 import { db, functions, rtdb } from '../../lib/firebase';
+import { APP_URL } from '../../lib/config';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
@@ -601,7 +602,7 @@ export default function HostSession() {
   );
 
   return (
-    <div className={`text-white flex flex-col ${session?.status === 'lobby' ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`} style={MESH_BG}>
+    <div className={`text-white flex flex-col pt-safe ${session?.status === 'lobby' ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`} style={MESH_BG}>
       {!isOnline && <OfflineBanner />}
 
       {/* QR Code Zoom Modal */}
@@ -615,7 +616,7 @@ export default function HostSession() {
             onClick={(e) => e.stopPropagation()}
           >
             <QRCodeSVG
-              value={`${window.location.origin}/join?pin=${session.pinCode}`}
+              value={`${APP_URL}/join?pin=${session.pinCode}`}
               size={Math.min(window.innerWidth - 80, window.innerHeight - 200, 400)}
               level="M"
             />
@@ -715,7 +716,7 @@ export default function HostSession() {
                       title="Click to enlarge"
                     >
                       <QRCodeSVG
-                        value={`${window.location.origin}/join?pin=${session.pinCode}`}
+                        value={`${APP_URL}/join?pin=${session.pinCode}`}
                         size={100}
                         level="M"
                         className="sm:w-32 sm:h-32"

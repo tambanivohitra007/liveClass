@@ -21,6 +21,8 @@ import Signup from './pages/Signup';
 import ChooseRole from './pages/ChooseRole';
 import PendingApproval from './pages/PendingApproval';
 import JoinGame from './pages/student/JoinGame';
+import { useDeepLinks } from './hooks/useDeepLinks';
+import { usePushNotifications } from './hooks/usePushNotifications';
 import './App.css';
 
 // Lazy-loaded pages — only loaded when the route is visited
@@ -135,6 +137,7 @@ function AppContent() {
   const { firebaseUser, needsRoleSelection } = useAuthStore();
   const { collapsed } = useSidebarStore();
   const location = useLocation();
+  useDeepLinks();
 
   // Redirect new Google users to role selection
   if (firebaseUser && needsRoleSelection && location.pathname !== '/choose-role') {
@@ -150,7 +153,7 @@ function AppContent() {
   const showSidebar = !hideNavbar && !!firebaseUser;
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh px-safe">
       {showSidebar && <Sidebar />}
       <div className={`flex flex-col flex-1 min-w-0 min-h-dvh overflow-x-hidden transition-[margin-left] duration-300 ${
         showSidebar ? (collapsed ? 'md:ml-[68px]' : 'md:ml-64') : ''
@@ -233,6 +236,7 @@ function AppContent() {
 function App() {
   useAuthListener();
   useNotificationListener();
+  usePushNotifications();
   const { theme, setTheme } = useThemeStore();
   const { firebaseUser, loading } = useAuthStore();
 

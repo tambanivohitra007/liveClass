@@ -29,6 +29,7 @@ export interface User {
   gender?: 'male' | 'female' | 'other' | '';
   phone?: string;
   address?: string;
+  fcmToken?: string;
   createdAt: number;
 }
 

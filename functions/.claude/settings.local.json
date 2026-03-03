@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx vitest:*)",
+      "Bash(if not exist \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\functions\\\\src\\\\__tests__\" mkdir \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\functions\\\\src\\\\__tests__\")",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\ntest: add unit tests for Cloud Function core logic\n\nExtract checkCorrectness, getShardId, calculatePoints, generatePin,\nvalidateNickname into logic.ts for testability. Add 39 vitest tests\ncovering all question types \\(MCQ, TF, poll, ordering, matching,\nfill_blank, code_output\\), edge cases, and scoring calculations.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(npx cap init:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx cap:*)"
+    ]
+  }
+}

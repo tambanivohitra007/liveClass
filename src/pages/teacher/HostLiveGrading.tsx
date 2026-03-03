@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, updateDoc, setDoc, getDocs, query, orderBy, where, limit } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
+import { APP_URL } from '../../lib/config';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
@@ -383,7 +384,7 @@ export default function HostLiveGrading() {
       {qrZoomed && (
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setQrZoomed(false)}>
           <div className="bg-white p-6 rounded-3xl" onClick={(e) => e.stopPropagation()}>
-            <QRCodeSVG value={`${window.location.origin}/join?pin=${liveGrading.pinCode}`} size={300} level="M" />
+            <QRCodeSVG value={`${APP_URL}/join?pin=${liveGrading.pinCode}`} size={300} level="M" />
           </div>
           <button onClick={() => setQrZoomed(false)} className="absolute top-4 right-4 p-2 text-white/60 hover:text-white">
             <XIcon className="w-8 h-8" />
@@ -461,7 +462,7 @@ export default function HostLiveGrading() {
                       style={{ boxShadow: '0 0 40px rgba(16, 185, 129, 0.2)' }}
                       title="Click to enlarge"
                     >
-                      <QRCodeSVG value={`${window.location.origin}/join?pin=${liveGrading.pinCode}`} size={100} level="M" className="sm:w-32 sm:h-32" />
+                      <QRCodeSVG value={`${APP_URL}/join?pin=${liveGrading.pinCode}`} size={100} level="M" className="sm:w-32 sm:h-32" />
                       <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                         <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                       </div>
