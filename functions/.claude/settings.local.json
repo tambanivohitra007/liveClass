@@ -12,7 +12,8 @@
       "Bash(npx cap init:*)",
       "Bash(npm run build:*)",
       "Bash(npx cap:*)",
-      "Bash(npx @capacitor/assets generate:*)"
+      "Bash(npx @capacitor/assets generate:*)",
+      "WebSearch"
     ]
   }
 }
