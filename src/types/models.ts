@@ -99,6 +99,7 @@ export interface Session {
   teamCount?: number;
   teams?: TeamConfig[];
   shuffleQuestions?: boolean;
+  shuffleAnswers?: boolean;
   questionOrder?: number[];
   timerPaused?: boolean;
   timerPausedAt?: number | null;

@@ -913,17 +913,31 @@ export default function HostSession() {
                     </div>
                   </div>
 
-                  {/* Shuffle */}
+                  {/* Shuffle Questions */}
                   <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
                       <Shuffle className={`w-5 h-5 ${session.shuffleQuestions ? 'text-warning' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
-                      <span className="text-sm font-medium">Shuffle</span>
+                      <span className="text-sm font-medium">Shuffle Questions</span>
                     </div>
                     <button
                       onClick={() => safeUpdateSession({ shuffleQuestions: !session.shuffleQuestions })}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleQuestions ? 'bg-warning' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleQuestions ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+
+                  {/* Shuffle Answers */}
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <Shuffle className={`w-5 h-5 ${session.shuffleAnswers ? 'text-warning' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
+                      <span className="text-sm font-medium">Shuffle Answers</span>
+                    </div>
+                    <button
+                      onClick={() => safeUpdateSession({ shuffleAnswers: !session.shuffleAnswers })}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleAnswers ? 'bg-warning' : 'bg-white/20'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleAnswers ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
                   </div>
 

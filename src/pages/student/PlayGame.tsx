@@ -71,6 +71,7 @@ export default function PlayGame() {
   const [fillAnswers, setFillAnswers] = useState<string[]>([]);
   const [orderingItems, setOrderingItems] = useState<string[]>([]);
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
+  const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
   const [feedbackTimedOut, setFeedbackTimedOut] = useState(false);
@@ -237,6 +238,12 @@ export default function PlayGame() {
     const current = allQuestions[qIdx];
     if (current) {
       setCurrentQuestion(current);
+      // Shuffle answer options if enabled
+      if (session.shuffleAnswers && (current.type === 'mcq' || current.type === 'tf' || current.type === 'poll')) {
+        setShuffledOptions([...current.options].sort(() => Math.random() - 0.5));
+      } else {
+        setShuffledOptions(current.options);
+      }
       // Calculate remaining time from server timestamp to survive refreshes
       const startedAt = session.questionStartedAt as { toMillis?: () => number } | number | null;
       const startMs = (startedAt && typeof startedAt === 'object' && startedAt.toMillis) ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
@@ -287,6 +294,12 @@ export default function PlayGame() {
     const current = allQuestions[qIdx];
     if (current) {
       setCurrentQuestion(current);
+      // Shuffle answer options if enabled
+      if (session?.shuffleAnswers && (current.type === 'mcq' || current.type === 'tf' || current.type === 'poll')) {
+        setShuffledOptions([...current.options].sort(() => Math.random() - 0.5));
+      } else {
+        setShuffledOptions(current.options);
+      }
       spQuestionStartRef.current = Date.now();
       if (current.type === 'ordering') {
         setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
@@ -342,8 +355,8 @@ export default function PlayGame() {
       }
       if ((currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && /^[1-6]$/.test(e.key)) {
         const idx = parseInt(e.key) - 1;
-        if (idx < currentQuestion.options.length) {
-          const opt = currentQuestion.options[idx];
+        if (idx < shuffledOptions.length) {
+          const opt = shuffledOptions[idx];
           if (currentQuestion.type === 'mcq' && currentQuestion.correctAnswers.length > 1) {
             setSelectedAnswers((prev) =>
               prev.includes(opt) ? prev.filter((a) => a !== opt) : [...prev, opt]
@@ -885,13 +898,13 @@ export default function PlayGame() {
               <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
             )}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[60dvh] sm:max-h-100">
-              {currentQuestion.options.map((opt, i) => {
+              {shuffledOptions.map((opt, i) => {
                 const isSelected = isMultiAnswer
                   ? selectedAnswers.includes(opt)
                   : selectedAnswer === opt;
                 return (
                   <button
-                    key={i}
+                    key={opt}
                     onClick={() => {
                       if (!submitted) {
                         hapticLight();
@@ -1063,9 +1076,9 @@ export default function PlayGame() {
         {/* Poll UI */}
         {currentQuestion.type === 'poll' && (
           <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[60dvh] sm:max-h-100">
-            {currentQuestion.options.map((opt, i) => (
+            {shuffledOptions.map((opt, i) => (
               <button
-                key={i}
+                key={opt}
                 onClick={() => { if (!submitted) { hapticLight(); setSelectedAnswer(opt); } }}
                 disabled={submitted}
                 aria-pressed={selectedAnswer === opt}
