@@ -9,7 +9,13 @@ import { registerSW } from 'virtual:pwa-register'
 initNativePlugins();
 
 if (isWeb) {
-  registerSW({ immediate: true });
+  registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      // New version available — auto-reload
+      window.location.reload();
+    },
+  });
 }
 
 createRoot(document.getElementById('root')!).render(
