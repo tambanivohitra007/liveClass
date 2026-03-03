@@ -11,7 +11,8 @@
       "Bash(grep:*)",
       "Bash(npx cap init:*)",
       "Bash(npm run build:*)",
-      "Bash(npx cap:*)"
+      "Bash(npx cap:*)",
+      "Bash(npx @capacitor/assets generate:*)"
     ]
   }
 }
