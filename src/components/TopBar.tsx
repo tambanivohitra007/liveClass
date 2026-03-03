@@ -17,6 +17,7 @@ function getPageTitle(pathname: string): string {
     '/rubrics': 'Rubrics',
     '/rosters': 'Rosters',
     '/history': 'Session History',
+    '/analytics': 'Analytics',
     '/discover': 'Discover',
     '/join': 'Join Game',
     '/profile': 'Profile Settings',

@@ -39,6 +39,7 @@ const QuizEditor = lazy(() => import('./pages/teacher/QuizEditor'));
 const HostSession = lazy(() => import('./pages/teacher/HostSession'));
 const SessionResults = lazy(() => import('./pages/teacher/SessionResults'));
 const SessionHistory = lazy(() => import('./pages/teacher/SessionHistory'));
+const Analytics = lazy(() => import('./pages/teacher/Analytics'));
 const AssignmentCreate = lazy(() => import('./pages/teacher/AssignmentCreate'));
 const PlayGame = lazy(() => import('./pages/student/PlayGame'));
 const PlayAssignment = lazy(() => import('./pages/student/PlayAssignment'));
@@ -199,6 +200,7 @@ function AppContent() {
           <Route path="/quiz/:quizId/worksheet" element={<TeacherRoute><Worksheet /></TeacherRoute>} />
           <Route path="/session/:sessionId/results" element={<TeacherRoute><SessionResults /></TeacherRoute>} />
           <Route path="/history" element={<TeacherRoute><SessionHistory /></TeacherRoute>} />
+          <Route path="/analytics" element={<TeacherRoute><Analytics /></TeacherRoute>} />
           <Route path="/collection/:collectionId" element={<TeacherRoute><CollectionView /></TeacherRoute>} />
           <Route path="/assignment/new" element={<TeacherRoute><AssignmentCreate /></TeacherRoute>} />
           <Route path="/rubrics" element={<TeacherRoute><RubricList /></TeacherRoute>} />
