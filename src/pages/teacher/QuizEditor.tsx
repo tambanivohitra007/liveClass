@@ -10,7 +10,7 @@ import CodeBlock from '../../components/CodeBlock';
 import { confirmAction } from '../../lib/swal';
 import {
   GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
-  Sparkles, X as XIcon, ArrowLeft,
+  Sparkles, X as XIcon, ArrowLeft, Upload, Download,
   Clock, Image as ImageIcon, Type, FileText,
   List, Pencil, Settings,
 } from 'lucide-react';
@@ -409,13 +409,129 @@ export default function QuizEditor() {
     setMobilePanel('editor');
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { current += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ',') { result.push(current.trim()); current = ''; }
+        else { current += ch; }
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      if (!text) return;
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 2) { addToast('error', 'CSV must have a header row and at least one question'); return; }
+
+      // Detect header
+      const header = parseCSVLine(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z_]/g, ''));
+      const colMap = {
+        question: header.findIndex((h) => h.includes('question') || h === 'text'),
+        type: header.findIndex((h) => h === 'type'),
+        options: header.findIndex((h) => h.includes('option') || h.includes('choice')),
+        correct: header.findIndex((h) => h.includes('correct') || h.includes('answer')),
+        time: header.findIndex((h) => h.includes('time') || h.includes('timer') || h.includes('limit')),
+        multiplier: header.findIndex((h) => h.includes('multiplier') || h.includes('points')),
+      };
+
+      if (colMap.question === -1) { addToast('error', 'CSV must have a "question" column'); return; }
+
+      const imported: (Omit<Question, 'id'> & { id?: string })[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        const questionText = cols[colMap.question] || '';
+        if (!questionText) continue;
+
+        const rawType = (colMap.type >= 0 ? cols[colMap.type] : '').toLowerCase();
+        let type: QuestionType = 'mcq';
+        if (rawType === 'tf' || rawType === 'true/false' || rawType === 'truefalse') type = 'tf';
+        else if (rawType === 'short' || rawType === 'short answer') type = 'short';
+        else if (rawType === 'poll') type = 'poll';
+        else if (rawType === 'fill_blank' || rawType === 'fill blank') type = 'fill_blank';
+        else if (rawType === 'ordering') type = 'ordering';
+        else if (rawType === 'matching') type = 'matching';
+
+        const optionsStr = colMap.options >= 0 ? cols[colMap.options] || '' : '';
+        let options = optionsStr.split('|').map((o) => o.trim()).filter(Boolean);
+        if (type === 'tf') options = ['True', 'False'];
+        else if (options.length === 0 && type === 'mcq') options = ['', '', '', ''];
+
+        const correctStr = colMap.correct >= 0 ? cols[colMap.correct] || '' : '';
+        const correctAnswers = correctStr.split('|').map((a) => a.trim()).filter(Boolean);
+
+        const timeLimitSec = colMap.time >= 0 ? parseInt(cols[colMap.time]) || 20 : 20;
+        const pointMultiplier = colMap.multiplier >= 0 ? parseInt(cols[colMap.multiplier]) || 1 : 1;
+
+        imported.push({
+          quizId: quizId || '',
+          type,
+          text: questionText,
+          options,
+          correctAnswers,
+          timeLimitSec,
+          pointMultiplier: pointMultiplier > 1 ? pointMultiplier : undefined,
+        });
+      }
+
+      if (imported.length === 0) { addToast('error', 'No valid questions found in CSV'); return; }
+      setQuestions([...questions, ...imported]);
+      setActiveIndex(questions.length);
+      addToast('success', `Imported ${imported.length} question${imported.length > 1 ? 's' : ''}`);
+    };
+    reader.readAsText(file);
+    // Reset input so same file can be re-imported
+    e.target.value = '';
+  };
+
+  const exportCSV = () => {
+    if (questions.length === 0) { addToast('error', 'No questions to export'); return; }
+    const header = 'question,type,options,correct_answers,time_limit,multiplier';
+    const rows = questions.map((q) => {
+      const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+      return [
+        esc(q.text),
+        q.type,
+        esc(q.options.join('|')),
+        esc(q.correctAnswers.join('|')),
+        q.timeLimitSec,
+        q.pointMultiplier ?? 1,
+      ].join(',');
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'quiz'}-questions.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const renderQuestionList = (opts?: { onSelect?: (i: number) => void; onAdd?: () => void }) => {
     const handleSelect = opts?.onSelect || setActiveIndex;
     const handleAdd = opts?.onAdd || addQuestion;
     return (
       <>
-        {/* Add Question Button */}
-        <div className="p-3 border-b border-gray-100 dark:border-white/10">
+        {/* Add Question + Import/Export */}
+        <div className="p-3 border-b border-gray-100 dark:border-white/10 space-y-2">
           <button
             onClick={handleAdd}
             className="w-full py-2.5 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl text-gray-400 dark:text-white/40 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
@@ -423,6 +539,23 @@ export default function QuizEditor() {
             <Plus className="w-4 h-4" />
             Add Question
           </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 py-1.5 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50 text-xs font-medium hover:bg-brand/10 hover:text-brand transition-colors flex items-center justify-center gap-1"
+            >
+              <Upload className="w-3 h-3" />
+              Import CSV
+            </button>
+            <button
+              onClick={exportCSV}
+              className="flex-1 py-1.5 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50 text-xs font-medium hover:bg-brand/10 hover:text-brand transition-colors flex items-center justify-center gap-1"
+            >
+              <Download className="w-3 h-3" />
+              Export CSV
+            </button>
+          </div>
+          <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" onChange={handleImportCSV} className="hidden" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
