@@ -606,7 +606,7 @@ export default function QuizLibrary() {
                             onClick={() => navigate(`/quiz/${quiz.id}`)}
                           >
                             {quiz.coverImageUrl ? (
-                              <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                              <img src={quiz.coverImageUrl} alt="Quiz cover" className="w-full h-full object-cover" />
                             ) : (
                               <>
                                 <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
@@ -668,7 +668,7 @@ export default function QuizLibrary() {
                         >
                           <div className={`w-12 h-12 rounded-lg ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} shrink-0 overflow-hidden relative`}>
                             {quiz.coverImageUrl ? (
-                              <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                              <img src={quiz.coverImageUrl} alt="Quiz cover" className="w-full h-full object-cover" />
                             ) : (
                               <div className="absolute -right-2 -top-2 w-8 h-8 rounded-full bg-white/10" />
                             )}
@@ -727,7 +727,7 @@ export default function QuizLibrary() {
                                 <div className="flex items-center gap-3">
                                   <div className={`w-8 h-8 rounded-md ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} shrink-0 overflow-hidden relative`}>
                                     {quiz.coverImageUrl ? (
-                                      <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                                      <img src={quiz.coverImageUrl} alt="Quiz cover" className="w-full h-full object-cover" />
                                     ) : (
                                       <div className="absolute -right-1.5 -top-1.5 w-5 h-5 rounded-full bg-white/10" />
                                     )}
@@ -771,7 +771,7 @@ export default function QuizLibrary() {
                         className={`flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 active:bg-gray-100 dark:active:bg-white/10 cursor-pointer ${menuOpenId === quiz.id ? 'z-50 relative' : 'z-0 relative'}`}
                       >
                         <div className={`w-10 h-10 rounded-lg ${quiz.coverImageUrl ? '' : getCardGradient(quiz)} shrink-0 overflow-hidden`}>
-                          {quiz.coverImageUrl && <img src={quiz.coverImageUrl} alt="" className="w-full h-full object-cover" />}
+                          {quiz.coverImageUrl && <img src={quiz.coverImageUrl} alt="Quiz cover" className="w-full h-full object-cover" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">

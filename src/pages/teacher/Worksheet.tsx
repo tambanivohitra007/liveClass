@@ -372,7 +372,7 @@ export default function Worksheet() {
                   </p>
                 )}
                 {q.imageUrl && (
-                  <img src={q.imageUrl} alt="" className="max-h-36 mt-2 mb-1 rounded print:max-h-28" />
+                  <img src={q.imageUrl} alt="Question image" className="max-h-36 mt-2 mb-1 rounded print:max-h-28" />
                 )}
                 <QuestionBody question={q} showAnswer={showAnswerKey} />
               </div>

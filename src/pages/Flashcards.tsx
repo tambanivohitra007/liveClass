@@ -131,7 +131,7 @@ export default function Flashcards() {
                 {q.text}
               </h2>
               {q.imageUrl && (
-                <img src={q.imageUrl} alt="" className="max-h-32 rounded-xl mt-4" />
+                <img src={q.imageUrl} alt="Question image" className="max-h-32 rounded-xl mt-4" />
               )}
               <p className="text-gray-300 dark:text-white/30 text-sm mt-6">Tap to reveal answer</p>
             </div>

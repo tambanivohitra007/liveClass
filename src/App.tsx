@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, matchPath } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
 import { useNotificationListener } from './hooks/useNotificationListener';
 import { useThemeStore } from './stores/themeStore';
@@ -18,6 +18,7 @@ import KnowledgeBaseFab from './components/KnowledgeBaseFab';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import NotFound from './pages/NotFound';
 import ChooseRole from './pages/ChooseRole';
 import PendingApproval from './pages/PendingApproval';
 import JoinGame from './pages/student/JoinGame';
@@ -140,6 +141,40 @@ function AppContent() {
   const location = useLocation();
   useDeepLinks();
 
+  // Dynamic page title
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      '/': 'LiveClass',
+      '/login': 'Sign In',
+      '/signup': 'Sign Up',
+      '/join': 'Join Game',
+      '/dashboard': 'Dashboard',
+      '/library': 'Quiz Library',
+      '/history': 'Session History',
+      '/analytics': 'Analytics',
+      '/classes': 'Classrooms',
+      '/rubrics': 'Rubrics',
+      '/rosters': 'Rosters',
+      '/discover': 'Discover',
+      '/profile': 'Profile',
+      '/assignment/new': 'New Assignment',
+      '/grading/new': 'New Grading',
+      '/student/dashboard': 'Dashboard',
+      '/student/classes': 'My Classes',
+    };
+    const path = location.pathname;
+    let title = titles[path];
+    if (!title) {
+      if (matchPath('/quiz/:id', path)) title = 'Quiz Editor';
+      else if (matchPath('/quiz/:id/host', path)) title = 'Host Session';
+      else if (matchPath('/quiz/:id/preview', path)) title = 'Quiz Preview';
+      else if (matchPath('/session/:id/results', path)) title = 'Session Results';
+      else if (matchPath('/classroom/:id', path)) title = 'Classroom';
+      else if (matchPath('/play/:sid/:pid', path)) title = 'Playing';
+    }
+    document.title = title ? `${title} - LiveClass` : 'LiveClass';
+  }, [location.pathname]);
+
   // Redirect new Google users to role selection
   if (firebaseUser && needsRoleSelection && location.pathname !== '/choose-role') {
     return <Navigate to="/choose-role" replace />;
@@ -220,6 +255,7 @@ function AppContent() {
           <Route path="/student/classes" element={<StudentRoute><StudentClasses /></StudentRoute>} />
           <Route path="/student/classroom/:classroomId" element={<StudentRoute><StudentClassDetail /></StudentRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
         </main>

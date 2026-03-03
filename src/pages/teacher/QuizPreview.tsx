@@ -312,7 +312,7 @@ export default function QuizPreview() {
         <div className="text-center py-6 animate-fade-in">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">{question.text}</h2>
           {question.imageUrl && (
-            <img src={question.imageUrl} alt="" className="max-h-48 mx-auto mt-4 rounded-xl" />
+            <img src={question.imageUrl} alt="Question image" className="max-h-48 mx-auto mt-4 rounded-xl" />
           )}
         </div>
 
