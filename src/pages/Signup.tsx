@@ -3,6 +3,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { signInWithGoogle } from '../lib/googleAuth';
+import { getAuthErrorMessage } from '../lib/authErrors';
 import { useNavigate, Link } from 'react-router-dom';
 import ValidatedInput from '../components/ValidatedInput';
 import WaveBackground from '../components/ui/WaveBackground';
@@ -37,7 +38,7 @@ export default function Signup() {
       await createUserDoc(cred.user.uid, email, displayName);
       navigate(role === 'teacher' ? '/pending-approval' : '/student/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Signup failed');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,7 @@ export default function Signup() {
       );
       navigate(role === 'teacher' ? '/pending-approval' : '/student/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google signup failed');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
