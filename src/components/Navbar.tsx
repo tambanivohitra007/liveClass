@@ -86,7 +86,7 @@ export default function Navbar() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#162033] rounded-xl shadow-lg border border-white/10 overflow-hidden animate-slide-down">
+                <div className="absolute right-0 top-full mt-2 w-56 sm:w-64 max-w-[calc(100vw-1rem)] bg-[#162033] rounded-xl shadow-lg border border-white/10 overflow-hidden animate-slide-down">
                   <div className="px-4 py-3 bg-white/5 border-b border-white/10">
                     <p className="font-semibold text-white text-sm truncate">{user?.displayName || 'User'}</p>
                     <p className="text-xs text-white/40 truncate">{firebaseUser.email}</p>

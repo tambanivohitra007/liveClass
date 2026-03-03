@@ -52,7 +52,7 @@ export default function Home() {
                 className="w-48 h-48 sm:w-64 sm:h-64 lg:w-[24rem] lg:h-[24rem] xl:w-[30rem] xl:h-[30rem] object-contain"
               />
             </div>
-            <div className="relative z-10 card-night p-8 md:p-12">
+            <div className="relative z-10 card-night p-5 sm:p-8 md:p-12">
             <div className="mb-8">
               <h2 className="text-3xl md:text-4xl text-gray-900 dark:text-white mb-2">Join a Game</h2>
               <p className="text-gray-500 dark:text-white/60">Enter the Game PIN provided by your host to start competing!</p>

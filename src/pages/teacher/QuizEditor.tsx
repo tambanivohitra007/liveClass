@@ -781,7 +781,7 @@ export default function QuizEditor() {
                 Q {activeIndex + 1} of {questions.length}
               </p>
               {/* Inline toolbar: type + time + actions */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <select
                   value={activeQ.type}
                   onChange={(e) => updateQuestionType(activeIndex, e.target.value as QuestionType)}
@@ -887,14 +887,14 @@ export default function QuizEditor() {
 
               {/* MCQ / TF / Poll — Colored 2×2 Cards */}
               {(activeQ.type === 'mcq' || activeQ.type === 'tf' || activeQ.type === 'poll') && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {activeQ.options.map((opt, oi) => {
                     const card = ANSWER_CARDS[oi % ANSWER_CARDS.length];
                     const isCorrect = activeQ.type !== 'poll' && activeQ.correctAnswers.includes(opt) && opt !== '';
                     return (
                       <div
                         key={oi}
-                        className={`relative ${card.bg} rounded-2xl p-4 min-h-20 flex items-start gap-3 shadow-sm transition-all ${
+                        className={`relative ${card.bg} rounded-2xl p-3 sm:p-4 min-h-16 sm:min-h-20 flex items-start gap-3 shadow-sm transition-all ${
                           isCorrect ? 'ring-3 ring-white/60' : ''
                         }`}
                       >
