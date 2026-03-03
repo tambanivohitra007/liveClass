@@ -12,6 +12,7 @@ import { Trophy, PartyPopper, Frown, Volume2, VolumeX, AudioLines, ChevronUp, Ch
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import CodeBlock from '../../components/CodeBlock';
+import Podium from '../../components/Podium';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
 import { playCorrect, playWrong, playTick, playUrgentTick, playSubmit, playPodium, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
@@ -82,6 +83,7 @@ export default function PlayGame() {
   const [myTeam, setMyTeam] = useState<{ name: string; color: string } | null>(null);
   const [muted, setMutedState] = useState(isMuted());
   const [redirectCountdown, setRedirectCountdown] = useState(15);
+  const [showPodium, setShowPodium] = useState(true);
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
   const [isSpeaking, setIsSpeaking] = useState(false);
   const readAloud = (text: string) => {
@@ -733,25 +735,43 @@ export default function PlayGame() {
   // Ended
   if (session.status === 'ended') {
     return (
-      <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
-        <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
-          <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-warning" />
-          <h1 className="text-2xl sm:text-3xl mb-2">Game Over!</h1>
-          <p className="text-white/50 mb-6 sm:mb-8">Thanks for playing!</p>
-          {sessionId && (
-            <div className="card-night p-4 sm:p-6">
-              <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
+      <div className="min-h-dvh text-white p-4 sm:p-6 overflow-y-auto" style={GAME_BG}>
+        <div className="max-w-lg mx-auto py-6 sm:py-10">
+          {showPodium && sessionId ? (
+            <Podium sessionId={sessionId} onComplete={() => setShowPodium(false)} />
+          ) : (
+            <div className="animate-fade-in">
+              <div className="text-center mb-6">
+                <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 text-warning" />
+                <h1 className="text-2xl sm:text-3xl font-bold mb-1">Game Over!</h1>
+                <p className="text-white/50">Thanks for playing!</p>
+              </div>
+              {sessionId && (
+                <div className="card-night p-4 sm:p-6">
+                  <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
+                </div>
+              )}
+              <div className="text-center">
+                <button
+                  onClick={() => navigate('/')}
+                  className="mt-6 px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-full transition-all"
+                >
+                  Back to Home
+                </button>
+                <p className="text-white/30 text-sm mt-3">
+                  Redirecting in {redirectCountdown}s...
+                </p>
+              </div>
             </div>
           )}
-          <button
-            onClick={() => navigate('/')}
-            className="mt-6 px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-full transition-all"
-          >
-            Back to Home
-          </button>
-          <p className="text-white/30 text-sm mt-3">
-            Redirecting in {redirectCountdown}s...
-          </p>
+          {showPodium && (
+            <button
+              onClick={() => setShowPodium(false)}
+              className="block mx-auto mt-6 text-white/30 hover:text-white/60 text-sm transition-colors"
+            >
+              Skip to results
+            </button>
+          )}
         </div>
       </div>
     );
