@@ -135,7 +135,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { firebaseUser, needsRoleSelection } = useAuthStore();
+  const { firebaseUser, user, needsRoleSelection } = useAuthStore();
   const { collapsed } = useSidebarStore();
   const location = useLocation();
   useDeepLinks();
@@ -169,7 +169,7 @@ function AppContent() {
           </div>
         }>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={user ? <Navigate to={user.role === 'student' ? '/student/dashboard' : '/dashboard'} replace /> : <Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/join" element={<JoinGame />} />
