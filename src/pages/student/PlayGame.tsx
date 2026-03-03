@@ -8,7 +8,7 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
 import { AVATARS } from '../../lib/avatars';
-import { Trophy, PartyPopper, Frown, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check, Pencil, Dices, Shuffle } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Volume2, VolumeX, AudioLines, ChevronUp, ChevronDown, BookOpen, Play, Check, Pencil, Dices, Shuffle } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import CodeBlock from '../../components/CodeBlock';
@@ -83,6 +83,17 @@ export default function PlayGame() {
   const [muted, setMutedState] = useState(isMuted());
   const [redirectCountdown, setRedirectCountdown] = useState(15);
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const readAloud = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.9;
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    speechSynthesis.speak(utter);
+  };
   const resultUnsubRef = useRef<(() => void) | null>(null);
 
   // Player profile state
@@ -216,6 +227,8 @@ export default function PlayGame() {
   useEffect(() => {
     if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
     if (session.paceMode === 'student') return;
+    // Stop TTS on question change
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); }
     // Clean up previous result listener
     if (resultUnsubRef.current) {
       resultUnsubRef.current();
@@ -272,6 +285,8 @@ export default function PlayGame() {
   // Student-paced: pick question from local index
   useEffect(() => {
     if (!isStudentPaced || allQuestions.length === 0 || spFinished) return;
+    // Stop TTS on question change
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); }
     if (resultUnsubRef.current) {
       resultUnsubRef.current();
       resultUnsubRef.current = null;
@@ -867,9 +882,18 @@ export default function PlayGame() {
             </>
           )}
         </div>
-        <button onClick={toggleMute} className="w-20 flex justify-end" aria-label={muted ? 'Unmute' : 'Mute'}>
-          {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
-        </button>
+        <div className="w-20 flex justify-end gap-2">
+          <button
+            onClick={() => currentQuestion && readAloud(currentQuestion.text)}
+            className={`${isSpeaking ? 'text-brand animate-pulse' : 'text-white/50'}`}
+            aria-label={isSpeaking ? 'Stop reading' : 'Read aloud'}
+          >
+            <AudioLines className="w-5 h-5" />
+          </button>
+          <button onClick={toggleMute} aria-label={muted ? 'Unmute' : 'Mute'}>
+            {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
+          </button>
+        </div>
       </div>
 
       {/* Question */}
