@@ -146,7 +146,7 @@ function AppContent() {
 
   // Hide navbar on full-screen game pages
   const isQuizEditor = location.pathname.startsWith('/quiz/') && !location.pathname.endsWith('/host') && !location.pathname.endsWith('/preview') && !location.pathname.endsWith('/worksheet') && !location.pathname.endsWith('/flashcards');
-  const isGradingInterface = /^\/grading\/[^/]+$/.test(location.pathname);
+  const isGradingInterface = /^\/grading\/(?!new$)[^/]+$/.test(location.pathname);
   const isRubricEditor = location.pathname.startsWith('/rubric/');
   const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
