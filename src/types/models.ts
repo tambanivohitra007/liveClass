@@ -100,6 +100,7 @@ export interface Session {
   teams?: TeamConfig[];
   shuffleQuestions?: boolean;
   shuffleAnswers?: boolean;
+  scoringMode?: 'speed' | 'accuracy';
   questionOrder?: number[];
   timerPaused?: boolean;
   timerPausedAt?: number | null;

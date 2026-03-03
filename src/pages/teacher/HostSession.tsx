@@ -848,6 +848,38 @@ export default function HostSession() {
                     </button>
                   </div>
 
+                  {/* Scoring Mode */}
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <Zap className={`w-5 h-5 ${session.scoringMode === 'accuracy' ? 'text-success' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
+                      <span className="text-sm font-medium">Scoring</span>
+                    </div>
+                    <div className="flex items-center bg-white/10 rounded-full p-0.5 gap-0.5">
+                      <button
+                        onClick={() => safeUpdateSession({ scoringMode: 'speed' })}
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          session.scoringMode !== 'accuracy'
+                            ? 'bg-brand text-white shadow'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        <Zap className="w-3 h-3 inline mr-1" />
+                        Speed
+                      </button>
+                      <button
+                        onClick={() => safeUpdateSession({ scoringMode: 'accuracy' })}
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          session.scoringMode === 'accuracy'
+                            ? 'bg-success text-white shadow'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                        Accuracy
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Pace Mode */}
                   <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">

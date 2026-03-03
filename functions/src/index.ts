@@ -806,15 +806,22 @@ export const processAnswer = onValueCreated(
       const currentScoreSnap = await scoreRef.get();
       const currentScore = currentScoreSnap.val() || { totalPoints: 0, streak: 0 };
 
-      // Calculate points: base(1000) * timeRemaining% + streak bonus
+      // Calculate points based on scoring mode
+      const isAccuracyMode = session.scoringMode === "accuracy";
       let pointsAwarded = 0;
       let newStreak = 0;
       if (correct && !isPoll) {
-        const timeFactor = Math.max(
-          0,
-          (question.timeLimitSec * 1000 - data.timeMs) / (question.timeLimitSec * 1000)
-        );
-        pointsAwarded = Math.round(1000 * timeFactor);
+        if (isAccuracyMode) {
+          // Accuracy mode: flat 1000 points for correct, no speed bonus
+          pointsAwarded = 1000;
+        } else {
+          // Speed mode: base(1000) * timeRemaining%
+          const timeFactor = Math.max(
+            0,
+            (question.timeLimitSec * 1000 - data.timeMs) / (question.timeLimitSec * 1000)
+          );
+          pointsAwarded = Math.round(1000 * timeFactor);
+        }
         newStreak = currentScore.streak + 1;
         pointsAwarded += newStreak * 50;
       } else if (correct) {
