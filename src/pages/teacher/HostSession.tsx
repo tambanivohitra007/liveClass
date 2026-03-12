@@ -60,6 +60,7 @@ export default function HostSession() {
   }, []);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
   const [currentCodeSnippet, setCurrentCodeSnippet] = useState('');
   const [currentCodeLanguage, setCurrentCodeLanguage] = useState('');
   const [currentTimeLimitSec, setCurrentTimeLimitSec] = useState(0);
@@ -172,6 +173,7 @@ export default function HostSession() {
       : session.currentQuestionIndex;
     const current = allQuestions[qIdx];
     setCurrentQuestionText(current?.text || '');
+    setCurrentImageUrl(current?.imageUrl || '');
     setCurrentCodeSnippet(current?.codeSnippet || '');
     setCurrentCodeLanguage(current?.codeLanguage || '');
     // question ID now derived from session props in the subscription effect
@@ -1106,6 +1108,10 @@ export default function HostSession() {
             <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in wrap-break-word">
               {currentQuestionText}
             </h2>
+
+            {currentImageUrl && (
+              <img src={currentImageUrl} alt="Question image" className="max-h-40 sm:max-h-56 mx-auto mb-6 sm:mb-10 rounded-xl object-contain animate-fade-in" />
+            )}
 
             {currentCodeSnippet && (
               <CodeBlock code={currentCodeSnippet} language={currentCodeLanguage} className="w-full max-w-2xl mb-6 sm:mb-10 animate-fade-in" />
