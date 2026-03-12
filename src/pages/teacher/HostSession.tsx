@@ -82,6 +82,7 @@ export default function HostSession() {
   const [studentProgress, setStudentProgress] = useState<Record<string, { answered: number; finished: boolean }>>({});
   const [endingSession, setEndingSession] = useState(false);
   const [preReveal, setPreReveal] = useState(false);
+  const [questionStats, setQuestionStats] = useState<{ correctPercent: number; totalAnswers: number; correctCount: number; avgTimeMs: number } | null>(null);
   const [qrZoomed, setQrZoomed] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const prevPlayerCountRef = useRef(0);
@@ -211,11 +212,26 @@ export default function HostSession() {
   const timerTickedRef = useRef(false);
 
   // Clear pre-reveal when CF completes and questionState transitions to 'reveal'
+  // Also fetch question analytics for the reveal stats card
   useEffect(() => {
     if (session?.questionState === 'reveal') {
       setPreReveal(false);
+      // Fetch analytics for current question
+      const qIdx = session.questionOrder
+        ? session.questionOrder[session.currentQuestionIndex]
+        : session.currentQuestionIndex;
+      const qId = allQuestions[qIdx]?.id;
+      if (qId && session.id) {
+        const analyticsRef = doc(db, `sessions/${session.id}/analytics/${qId}`);
+        const unsub = onSnapshot(analyticsRef, (snap) => {
+          if (snap.exists()) setQuestionStats(snap.data() as typeof questionStats);
+        });
+        return () => unsub();
+      }
+    } else {
+      setQuestionStats(null);
     }
-  }, [session?.questionState]);
+  }, [session?.questionState, session?.currentQuestionIndex]);
 
   // Safety timeout — reset preReveal if CF doesn't complete in 10s
   useEffect(() => {
@@ -1471,6 +1487,35 @@ export default function HostSession() {
                     <span className="text-xs text-white/40">avg pts</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {questionStats && (
+            <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-5 mb-4 animate-fade-in">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-brand" />
+                <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider">Question {session.currentQuestionIndex + 1} Stats</h3>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex flex-col items-center px-4 py-2 bg-white/5 rounded-xl min-w-[80px]">
+                  <span className={`text-2xl font-black tabular-nums ${questionStats.correctPercent >= 70 ? 'text-success' : questionStats.correctPercent >= 40 ? 'text-warning' : 'text-danger'}`}>
+                    {Math.round(questionStats.correctPercent)}%
+                  </span>
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Correct</span>
+                </div>
+                <div className="flex flex-col items-center px-4 py-2 bg-white/5 rounded-xl min-w-[80px]">
+                  <span className="text-2xl font-black tabular-nums text-white/80">
+                    {questionStats.correctCount}/{questionStats.totalAnswers}
+                  </span>
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Answered</span>
+                </div>
+                <div className="flex flex-col items-center px-4 py-2 bg-white/5 rounded-xl min-w-[80px]">
+                  <span className="text-2xl font-black tabular-nums text-white/80">
+                    {(questionStats.avgTimeMs / 1000).toFixed(1)}s
+                  </span>
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Avg Time</span>
+                </div>
               </div>
             </div>
           )}
