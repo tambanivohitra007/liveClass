@@ -1280,7 +1280,7 @@ export default function HostSession() {
           </div>
 
           {/* Right: Participants panel */}
-          <div className="w-full lg:w-72 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 animate-slide-up self-start lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
+          <div className="w-full lg:w-72 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 animate-slide-up self-start md:sticky md:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
                 <Users className="w-4 h-4" />
