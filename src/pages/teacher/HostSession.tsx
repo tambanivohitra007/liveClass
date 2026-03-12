@@ -18,6 +18,11 @@ import OfflineBanner from '../../components/OfflineBanner';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
 
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([^?&/]+)/);
+  return match?.[1] || null;
+}
+
 const AVATAR_COLORS = [
   { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-400' },
   { bg: 'bg-purple-500/20', border: 'border-purple-500/40', text: 'text-purple-400' },
@@ -61,6 +66,7 @@ export default function HostSession() {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
   const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [currentVideoUrl, setCurrentVideoUrl] = useState('');
   const [currentCodeSnippet, setCurrentCodeSnippet] = useState('');
   const [currentCodeLanguage, setCurrentCodeLanguage] = useState('');
   const [currentTimeLimitSec, setCurrentTimeLimitSec] = useState(0);
@@ -180,6 +186,7 @@ export default function HostSession() {
     const current = allQuestions[qIdx];
     setCurrentQuestionText(current?.text || '');
     setCurrentImageUrl(current?.imageUrl || '');
+    setCurrentVideoUrl(current?.videoUrl || '');
     setCurrentCodeSnippet(current?.codeSnippet || '');
     setCurrentCodeLanguage(current?.codeLanguage || '');
     // question ID now derived from session props in the subscription effect
@@ -1190,6 +1197,17 @@ export default function HostSession() {
 
             {currentImageUrl && (
               <img src={currentImageUrl} alt="Question image" className="max-h-40 sm:max-h-56 mx-auto mb-6 sm:mb-10 rounded-xl object-contain animate-fade-in" />
+            )}
+
+            {currentVideoUrl && getYouTubeId(currentVideoUrl) && (
+              <div className="w-full max-w-xl aspect-video rounded-xl overflow-hidden mb-6 sm:mb-10 animate-fade-in">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYouTubeId(currentVideoUrl)}?autoplay=0&rel=0`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             )}
 
             {currentCodeSnippet && (
