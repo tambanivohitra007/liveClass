@@ -1178,7 +1178,7 @@ export default function HostSession() {
 
       {/* ══════════════════ LIVE QUESTION ══════════════════ */}
       {session.questionState === 'live' && !preReveal && (
-        <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto w-full">
+        <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 pb-36 sm:pb-8 max-w-7xl mx-auto w-full">
           {/* Left: Question + Timer + Controls */}
           <div className="grow flex flex-col items-center justify-center">
             {/* Question counter */}
@@ -1242,8 +1242,8 @@ export default function HostSession() {
               </div>
             </div>
 
-            {/* Control Toolbar */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-10">
+            {/* Control Toolbar — fixed bottom on mobile */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl border-t border-white/10 p-3 flex flex-col items-center gap-2 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:p-0 sm:flex-row sm:gap-3 sm:mt-10">
               <div className="inline-flex items-center gap-1 bg-white/5 rounded-full p-1.5 border border-white/10 backdrop-blur-sm">
                 <button
                   onClick={togglePause}
