@@ -1309,33 +1309,40 @@ export default function HostSession() {
               </span>
             </div>
             <div className="overflow-y-auto flex-1 space-y-1 min-h-0">
-              {[...players]
-                .sort((a, b) => {
-                  const aAnswered = answeredPlayerIds.has(a.id) ? 1 : 0;
-                  const bAnswered = answeredPlayerIds.has(b.id) ? 1 : 0;
-                  return aAnswered - bAnswered;
-                })
-                .map((p) => {
-                  const hasAnswered = answeredPlayerIds.has(p.id);
-                  return (
-                    <div
-                      key={p.id}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 ${
-                        hasAnswered ? 'bg-success/10' : 'bg-white/5'
-                      }`}
-                    >
-                      {p.avatar ? (
-                        <span className="text-base leading-none shrink-0">{p.avatar}</span>
-                      ) : (
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${hasAnswered ? 'bg-success' : 'bg-white/20 animate-pulse'}`} />
-                      )}
-                      <span className={`text-sm font-medium truncate ${hasAnswered ? 'text-success' : 'text-white/50'}`}>
-                        {p.nickname}
-                      </span>
-                      {hasAnswered && <CheckCircle2 className="w-3.5 h-3.5 text-success ml-auto shrink-0" />}
-                    </div>
-                  );
-                })}
+              {(() => {
+                const timeElapsedPct = currentTimeLimitSec > 0 ? 1 - timeLeft / currentTimeLimitSec : 0;
+                const showStillThinking = timeElapsedPct >= 0.7;
+                return [...players]
+                  .sort((a, b) => {
+                    const aAnswered = answeredPlayerIds.has(a.id) ? 1 : 0;
+                    const bAnswered = answeredPlayerIds.has(b.id) ? 1 : 0;
+                    return aAnswered - bAnswered;
+                  })
+                  .map((p) => {
+                    const hasAnswered = answeredPlayerIds.has(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 ${
+                          hasAnswered ? 'bg-success/10' : showStillThinking && !hasAnswered ? 'bg-warning/5 border border-warning/10' : 'bg-white/5'
+                        }`}
+                      >
+                        {p.avatar ? (
+                          <span className="text-base leading-none shrink-0">{p.avatar}</span>
+                        ) : (
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${hasAnswered ? 'bg-success' : 'bg-white/20 animate-pulse'}`} />
+                        )}
+                        <span className={`text-sm font-medium truncate ${hasAnswered ? 'text-success' : 'text-white/50'}`}>
+                          {p.nickname}
+                        </span>
+                        {hasAnswered && <CheckCircle2 className="w-3.5 h-3.5 text-success ml-auto shrink-0" />}
+                        {!hasAnswered && showStillThinking && (
+                          <span className="text-[10px] text-warning/70 ml-auto shrink-0 animate-pulse">thinking...</span>
+                        )}
+                      </div>
+                    );
+                  });
+              })()}
             </div>
           </div>
         </main>
