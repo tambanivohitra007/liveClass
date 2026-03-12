@@ -133,3 +133,111 @@ export function startLobbyMusic() {
 export function stopLobbyMusic() {
   if (lobbyTimer) { clearInterval(lobbyTimer); lobbyTimer = null; }
 }
+
+// --- Countdown music: background pulse during live questions ---
+let countdownNodes: { osc: OscillatorNode; gain: GainNode }[] = [];
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+let countdownBeat = 0;
+
+// Ambient pad that plays throughout the question
+function startCountdownPad() {
+  if (_muted) return;
+  const c = getCtx();
+  const now = c.currentTime;
+
+  // Low drone pad
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, now);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.04, now + 1);
+  osc.connect(g).connect(c.destination);
+  osc.start(now);
+  countdownNodes.push({ osc, gain: g });
+
+  // Higher shimmer
+  const osc2 = c.createOscillator();
+  const g2 = c.createGain();
+  osc2.type = 'triangle';
+  osc2.frequency.setValueAtTime(220, now);
+  g2.gain.setValueAtTime(0, now);
+  g2.gain.linearRampToValueAtTime(0.02, now + 1);
+  osc2.connect(g2).connect(c.destination);
+  osc2.start(now);
+  countdownNodes.push({ osc: osc2, gain: g2 });
+}
+
+// Rhythmic tick that plays each second
+function countdownTick(timeLeft: number, total: number) {
+  if (_muted) return;
+  const c = getCtx();
+  const now = c.currentTime;
+  const progress = 1 - timeLeft / total; // 0→1 as time runs out
+  const urgent = timeLeft <= 5;
+  const final3 = timeLeft <= 3;
+
+  // Tick sound — pitch rises as time runs out
+  const tickFreq = urgent ? (final3 ? 1400 : 1100) : 600 + progress * 400;
+  const tickVol = urgent ? 0.15 : 0.06 + progress * 0.04;
+  const tickDur = urgent ? 0.1 : 0.06;
+  tone(tickFreq, tickDur, 'square', tickVol);
+
+  // Urgent: add a second beat for double-time feel
+  if (urgent) {
+    tone(tickFreq * 0.75, tickDur, 'square', tickVol * 0.6, 0.25);
+  }
+
+  // Heartbeat bass in last 5 seconds
+  if (urgent) {
+    tone(80, 0.15, 'sine', 0.12);
+    tone(80, 0.1, 'sine', 0.08, 0.2);
+  }
+
+  // Ramp up drone intensity as time progresses
+  countdownNodes.forEach(({ gain }) => {
+    const targetVol = urgent ? 0.07 : 0.03 + progress * 0.02;
+    gain.gain.linearRampToValueAtTime(targetVol, now + 0.5);
+  });
+
+  countdownBeat++;
+}
+
+// Time's up fanfare
+function playTimesUp() {
+  if (_muted) return;
+  tone(800, 0.15, 'square', 0.12);
+  tone(600, 0.2, 'square', 0.12, 0.12);
+  tone(400, 0.3, 'sawtooth', 0.08, 0.25);
+}
+
+export function startCountdownMusic(totalSeconds: number) {
+  stopCountdownMusic();
+  countdownBeat = 0;
+  startCountdownPad();
+  // Tick immediately for the first second
+  countdownTick(totalSeconds, totalSeconds);
+}
+
+export function updateCountdownTick(timeLeft: number, totalSeconds: number) {
+  if (timeLeft <= 0) {
+    playTimesUp();
+    stopCountdownMusic();
+    return;
+  }
+  countdownTick(timeLeft, totalSeconds);
+}
+
+export function stopCountdownMusic() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  const c = ctx;
+  if (c) {
+    const now = c.currentTime;
+    countdownNodes.forEach(({ osc, gain }) => {
+      gain.gain.linearRampToValueAtTime(0, now + 0.3);
+      osc.stop(now + 0.4);
+    });
+  }
+  countdownNodes = [];
+  countdownBeat = 0;
+}

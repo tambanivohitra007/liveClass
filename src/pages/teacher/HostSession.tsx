@@ -11,7 +11,7 @@ import { confirmAction } from '../../lib/swal';
 import Leaderboard from '../../components/Leaderboard';
 import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices, AlertTriangle, X, Maximize2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
+import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack, startCountdownMusic, updateCountdownTick, stopCountdownMusic } from '../../lib/sounds';
 import CodeBlock from '../../components/CodeBlock';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import OfflineBanner from '../../components/OfflineBanner';
@@ -68,6 +68,7 @@ export default function HostSession() {
   const [error, setError] = useState('');
   const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
   const [muted, setMutedState] = useState(isMuted());
+  const _mutedRef = useRef(isMuted());
   const [lobbyTrack, setLobbyTrackState] = useState(getLobbyTrack());
 
   const [answeredCount, setAnsweredCount] = useState(0);
@@ -195,6 +196,7 @@ export default function HostSession() {
       } else {
         setTimeLeft(current.timeLimitSec);
       }
+      if (!_mutedRef.current) startCountdownMusic(current.timeLimitSec);
     }
   }, [session?.currentQuestionIndex, session?.questionState, allQuestions]);
 
@@ -224,15 +226,23 @@ export default function HostSession() {
     if (!session || session.questionState !== 'live') {
       autoEndCalledRef.current = false;
       timerTickedRef.current = false;
+      stopCountdownMusic();
       return;
     }
-    if (timeLeft <= 0 || session.timerPaused) return;
+    if (timeLeft <= 0 || session.timerPaused) {
+      if (session.timerPaused) stopCountdownMusic();
+      return;
+    }
     const timer = setInterval(() => {
       timerTickedRef.current = true;
-      setTimeLeft((t) => Math.max(0, t - 1));
+      setTimeLeft((t) => {
+        const next = Math.max(0, t - 1);
+        if (!_mutedRef.current) updateCountdownTick(next, currentTimeLimitSec);
+        return next;
+      });
     }, 1000);
     return () => clearInterval(timer);
-  }, [session?.questionState, timeLeft, session?.timerPaused]);
+  }, [session?.questionState, timeLeft, session?.timerPaused, currentTimeLimitSec]);
 
   // Timer auto-end — only after the countdown has actually ticked
   useEffect(() => {
@@ -629,7 +639,7 @@ export default function HostSession() {
   useEffect(() => {
     if (session?.status === 'lobby' && !muted) startLobbyMusic();
     else stopLobbyMusic();
-    return () => stopLobbyMusic();
+    return () => { stopLobbyMusic(); stopCountdownMusic(); };
   }, [session?.status, muted]);
 
   useEffect(() => {
@@ -645,6 +655,8 @@ export default function HostSession() {
     const next = !muted;
     setSoundMuted(next);
     setMutedState(next);
+    _mutedRef.current = next;
+    if (next) stopCountdownMusic();
   };
 
   const safeUpdateSession = async (data: Record<string, unknown>) => {
