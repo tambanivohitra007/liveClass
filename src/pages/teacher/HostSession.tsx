@@ -659,10 +659,11 @@ export default function HostSession() {
     if (next) stopCountdownMusic();
   };
 
-  const safeUpdateSession = async (data: Record<string, unknown>) => {
+  const safeUpdateSession = async (data: Record<string, unknown>, label?: string) => {
     if (!session) return;
     try {
       await updateDoc(doc(db, 'sessions', session.id), data);
+      if (label) addToast('success', label);
     } catch {
       addToast('error', 'Failed to update session setting');
     }
@@ -922,7 +923,7 @@ export default function HostSession() {
                       <span className="text-sm font-medium">Anti-Cheat</span>
                     </div>
                     <button
-                      onClick={() => safeUpdateSession({ antiCheatEnabled: session.antiCheatEnabled === false })}
+                      onClick={() => safeUpdateSession({ antiCheatEnabled: session.antiCheatEnabled === false }, `Anti-Cheat ${session.antiCheatEnabled === false ? 'enabled' : 'disabled'}`)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.antiCheatEnabled !== false ? 'bg-success' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.antiCheatEnabled !== false ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -937,7 +938,7 @@ export default function HostSession() {
                     </div>
                     <div className="flex items-center bg-white/10 rounded-full p-0.5 gap-0.5">
                       <button
-                        onClick={() => safeUpdateSession({ scoringMode: 'speed' })}
+                        onClick={() => safeUpdateSession({ scoringMode: 'speed' }, 'Scoring: Speed')}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.scoringMode !== 'accuracy'
                             ? 'bg-brand text-white shadow'
@@ -948,7 +949,7 @@ export default function HostSession() {
                         Speed
                       </button>
                       <button
-                        onClick={() => safeUpdateSession({ scoringMode: 'accuracy' })}
+                        onClick={() => safeUpdateSession({ scoringMode: 'accuracy' }, 'Scoring: Accuracy')}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.scoringMode === 'accuracy'
                             ? 'bg-success text-white shadow'
@@ -969,7 +970,7 @@ export default function HostSession() {
                     </div>
                     <div className="flex items-center bg-white/10 rounded-full p-0.5 gap-0.5">
                       <button
-                        onClick={() => safeUpdateSession({ paceMode: 'teacher' })}
+                        onClick={() => safeUpdateSession({ paceMode: 'teacher' }, 'Pace: Teacher-led')}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.paceMode !== 'student'
                             ? 'bg-brand text-white shadow'
@@ -980,7 +981,7 @@ export default function HostSession() {
                         Led
                       </button>
                       <button
-                        onClick={() => safeUpdateSession({ paceMode: 'student' })}
+                        onClick={() => safeUpdateSession({ paceMode: 'student' }, 'Pace: Self-paced')}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.paceMode === 'student'
                             ? 'bg-info text-white shadow'
@@ -1017,7 +1018,7 @@ export default function HostSession() {
                       <button
                         onClick={() => {
                           const teamCount = session.teamCount || 2;
-                          safeUpdateSession({ teamMode: !session.teamMode, teamCount, teams: TEAM_PRESETS.slice(0, teamCount) });
+                          safeUpdateSession({ teamMode: !session.teamMode, teamCount, teams: TEAM_PRESETS.slice(0, teamCount) }, `Teams ${session.teamMode ? 'disabled' : 'enabled'}`);
                         }}
                         className={`relative w-11 h-6 rounded-full transition-colors ${session.teamMode ? 'bg-info' : 'bg-white/20'}`}
                       >
@@ -1033,7 +1034,7 @@ export default function HostSession() {
                       <span className="text-sm font-medium">Shuffle Questions</span>
                     </div>
                     <button
-                      onClick={() => safeUpdateSession({ shuffleQuestions: !session.shuffleQuestions })}
+                      onClick={() => safeUpdateSession({ shuffleQuestions: !session.shuffleQuestions }, `Shuffle Questions ${session.shuffleQuestions ? 'off' : 'on'}`)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleQuestions ? 'bg-warning' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleQuestions ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -1047,7 +1048,7 @@ export default function HostSession() {
                       <span className="text-sm font-medium">Shuffle Answers</span>
                     </div>
                     <button
-                      onClick={() => safeUpdateSession({ shuffleAnswers: !session.shuffleAnswers })}
+                      onClick={() => safeUpdateSession({ shuffleAnswers: !session.shuffleAnswers }, `Shuffle Answers ${session.shuffleAnswers ? 'off' : 'on'}`)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleAnswers ? 'bg-warning' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleAnswers ? 'translate-x-5' : 'translate-x-0'}`} />
