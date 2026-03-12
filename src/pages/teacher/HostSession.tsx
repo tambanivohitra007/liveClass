@@ -1161,15 +1161,35 @@ export default function HostSession() {
                   </div>
                 </div>
 
-                {/* Bottom: Game Info + Start */}
+                {/* Bottom: Pre-game Checklist + Start */}
                 <div className="mt-auto flex flex-col gap-3">
-                  <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-brand font-bold uppercase mb-0.5">
-                      {players.length > 0 ? 'Game Ready' : 'Waiting for Players'}
-                    </p>
-                    <p className="text-sm text-white/50">
-                      {totalQuestions} Question{totalQuestions !== 1 && 's'} loaded
-                    </p>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${players.length > 0 ? 'bg-success/20 text-success' : 'bg-white/10 text-white/30'}`}>
+                        {players.length > 0 ? '✓' : '○'}
+                      </span>
+                      <span className={players.length > 0 ? 'text-white/70' : 'text-white/40'}>
+                        {players.length > 0 ? `${players.length} player${players.length !== 1 ? 's' : ''} joined` : 'Waiting for players'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${session.antiCheatEnabled !== false ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
+                        {session.antiCheatEnabled !== false ? '✓' : '!'}
+                      </span>
+                      <span className={session.antiCheatEnabled !== false ? 'text-white/70' : 'text-warning/70'}>
+                        Anti-Cheat {session.antiCheatEnabled !== false ? 'enabled' : 'disabled'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] bg-success/20 text-success">✓</span>
+                      <span className="text-white/70">
+                        {session.scoringMode === 'accuracy' ? 'Accuracy' : 'Speed'} scoring · {session.paceMode === 'student' ? 'Self-paced' : 'Teacher-led'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] bg-success/20 text-success">✓</span>
+                      <span className="text-white/70">{totalQuestions} question{totalQuestions !== 1 ? 's' : ''} loaded</span>
+                    </div>
                   </div>
                   <button
                     onClick={startQuestion}
