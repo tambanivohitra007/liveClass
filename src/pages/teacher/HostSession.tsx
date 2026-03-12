@@ -1588,12 +1588,38 @@ export default function HostSession() {
                 <ShieldAlert className="w-4 h-4 text-danger" />
                 <h3 className="text-sm font-bold text-danger">Flagged Activity</h3>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {Array.from(violations.entries()).map(([pid, v]) => (
-                  <span key={pid} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white/80">
-                    {v.nickname}: {v.totalViolations} violation{v.totalViolations !== 1 ? 's' : ''}
-                  </span>
-                ))}
+              <div className="space-y-2">
+                {Array.from(violations.entries()).map(([pid, v]) => {
+                  const player = players.find((p) => p.id === pid);
+                  const isDisqualified = (player as any)?.disqualified;
+                  return (
+                    <div key={pid} className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg">
+                      <span className="text-xs text-white/80 flex-1">
+                        {v.nickname}: {v.totalViolations} violation{v.totalViolations !== 1 ? 's' : ''}
+                      </span>
+                      {isDisqualified ? (
+                        <span className="text-[10px] text-danger font-bold uppercase">Disqualified</span>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const { isConfirmed } = await confirmAction(
+                              'Disqualify player?',
+                              `Remove ${v.nickname} from the leaderboard?`,
+                              'Yes, disqualify',
+                            );
+                            if (isConfirmed) {
+                              await updateDoc(doc(db, `sessions/${session.id}/players/${pid}`), { disqualified: true });
+                              addToast('success', `${v.nickname} has been disqualified`);
+                            }
+                          }}
+                          className="px-2.5 py-1 bg-danger/20 hover:bg-danger/30 text-danger text-[10px] font-bold rounded-lg transition-colors uppercase"
+                        >
+                          Disqualify
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
