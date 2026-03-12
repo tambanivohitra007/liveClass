@@ -82,6 +82,7 @@ export default function HostSession() {
   const [studentProgress, setStudentProgress] = useState<Record<string, { answered: number; finished: boolean }>>({});
   const [endingSession, setEndingSession] = useState(false);
   const [preReveal, setPreReveal] = useState(false);
+  const [allAnswered, setAllAnswered] = useState(false);
   const [questionStats, setQuestionStats] = useState<{ correctPercent: number; totalAnswers: number; correctCount: number; avgTimeMs: number } | null>(null);
   const [qrZoomed, setQrZoomed] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -179,6 +180,7 @@ export default function HostSession() {
     timerTickedRef.current = false;
     autoEndCalledRef.current = false;
     setPreReveal(false);
+    setAllAnswered(false);
     // currentQuestionId reset removed — now derived from session props
     setAnsweredCount(0);
     const qIdx = session.questionOrder
@@ -299,9 +301,13 @@ export default function HostSession() {
       setAnsweredCount(count);
       if (count > 0 && count >= players.length && !autoEndCalledRef.current) {
         autoEndCalledRef.current = true;
-        setTimeLeft(0);
-        setPreReveal(true);
-        httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+        setAllAnswered(true);
+        setTimeout(() => {
+          setAllAnswered(false);
+          setTimeLeft(0);
+          setPreReveal(true);
+          httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+        }, 1500);
       }
     };
     onValue(countRef, handler);
@@ -1235,7 +1241,18 @@ export default function HostSession() {
 
       {/* ══════════════════ LIVE QUESTION ══════════════════ */}
       {session.questionState === 'live' && !preReveal && (
-        <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 pb-36 sm:pb-8 max-w-7xl mx-auto w-full">
+        <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 pb-36 sm:pb-8 max-w-7xl mx-auto w-full relative">
+          {/* All Answered celebration overlay */}
+          {allAnswered && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+              <div className="bg-success/20 backdrop-blur-md border border-success/30 rounded-2xl px-8 py-5 animate-bounce-in text-center">
+                <CheckCircle2 className="w-10 h-10 text-success mx-auto mb-2" />
+                <p className="text-xl font-bold text-success">All Answered!</p>
+                <p className="text-sm text-white/50 mt-1">Calculating scores...</p>
+              </div>
+            </div>
+          )}
+
           {/* Left: Question + Timer + Controls */}
           <div className="grow flex flex-col items-center justify-center">
             {/* Question counter */}
