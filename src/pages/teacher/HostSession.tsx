@@ -1229,26 +1229,32 @@ export default function HostSession() {
                 <button
                   onClick={togglePause}
                   className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white touch-manipulation"
-                  title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
+                  title={session.timerPaused ? 'Resume timer [P]' : 'Pause timer [P]'}
                   aria-label={session.timerPaused ? 'Resume timer' : 'Pause timer'}
                 >
-                  {session.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                  <span className="flex items-center gap-1.5">
+                    {session.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                    <kbd className="hidden sm:inline text-[10px] text-white/25 font-mono">P</kbd>
+                  </span>
                 </button>
                 <button
                   onClick={extendTimer}
                   className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold touch-manipulation"
-                  title="Add 30 seconds"
+                  title="Add 30 seconds [T]"
                 >
-                  +30s
+                  +30s <kbd className="hidden sm:inline text-[10px] text-white/25 font-mono ml-1">T</kbd>
                 </button>
                 {!isLastQuestion && (
                   <button
                     onClick={skipQuestion}
                     className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white touch-manipulation"
-                    title="Skip to next question"
+                    title="Skip to next question [S]"
                     aria-label="Skip to next question"
                   >
-                    <SkipForward className="w-4 h-4" />
+                    <span className="flex items-center gap-1.5">
+                      <SkipForward className="w-4 h-4" />
+                      <kbd className="hidden sm:inline text-[10px] text-white/25 font-mono">S</kbd>
+                    </span>
                   </button>
                 )}
               </div>
@@ -1256,19 +1262,19 @@ export default function HostSession() {
                 onClick={endQuestion}
                 className="px-6 sm:px-8 py-3 sm:py-3.5 btn-3d-danger text-white font-bold rounded-full transition-all w-full sm:w-auto"
               >
-                End Question
+                End Question <kbd className="hidden sm:inline text-[10px] opacity-50 font-mono ml-1">Space</kbd>
               </button>
               <button
                 onClick={endSessionEarly}
                 disabled={endingSession}
                 className="px-5 sm:px-6 py-3 sm:py-3.5 btn-3d-ghost text-white/60 font-semibold rounded-full transition-all w-full sm:w-auto text-sm"
               >
-                {endingSession ? 'Ending...' : 'End Session'}
+                {endingSession ? 'Ending...' : <>End Session <kbd className="hidden sm:inline text-[10px] opacity-50 font-mono ml-1">Esc</kbd></>}
               </button>
             </div>
 
             <p className="hidden sm:block text-white/15 text-xs mt-10">
-              Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to advance
+              Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">?</kbd> for all shortcuts
             </p>
           </div>
 
