@@ -665,6 +665,16 @@ export default function HostSession() {
     return () => { stopLobbyMusic(); stopCountdownMusic(); };
   }, [session?.status, muted]);
 
+  // Auto-pause timer when network drops during live question
+  const wasOnlineRef = useRef(true);
+  useEffect(() => {
+    if (!isOnline && wasOnlineRef.current && session?.questionState === 'live' && !session.timerPaused) {
+      togglePause();
+      addToast('error', 'Connection lost — timer paused');
+    }
+    wasOnlineRef.current = isOnline;
+  }, [isOnline]);
+
   useEffect(() => {
     if (players.length > prevPlayerCountRef.current && prevPlayerCountRef.current > 0) playJoin();
     prevPlayerCountRef.current = players.length;
@@ -700,7 +710,18 @@ export default function HostSession() {
 
   return (
     <div className={`text-white flex flex-col pt-safe ${session?.status === 'lobby' ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`} style={MESH_BG}>
-      {!isOnline && <OfflineBanner />}
+      {!isOnline && session?.questionState === 'live' ? (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface-card border border-danger/20 rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 text-center shadow-2xl animate-bounce-in">
+            <div className="w-10 h-10 border-4 border-danger/30 border-t-danger rounded-full animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-danger mb-2">Connection Lost</h3>
+            <p className="text-sm text-white/60 mb-1">Timer has been paused automatically.</p>
+            <p className="text-xs text-white/40">Reconnecting...</p>
+          </div>
+        </div>
+      ) : !isOnline ? (
+        <OfflineBanner />
+      ) : null}
 
       {/* QR Code Zoom Modal */}
       {qrZoomed && session?.pinCode && (
