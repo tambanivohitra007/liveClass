@@ -76,6 +76,7 @@ export default function HostSession() {
   const [endingSession, setEndingSession] = useState(false);
   const [preReveal, setPreReveal] = useState(false);
   const [qrZoomed, setQrZoomed] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const prevPlayerCountRef = useRef(0);
   const lobbyGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -95,6 +96,10 @@ export default function HostSession() {
     nextQuestion: () => void;
     endStudentPacedSessionFn: () => void;
     endSessionEarly: () => void;
+    togglePause: () => void;
+    extendTimer: () => void;
+    skipQuestion: () => void;
+    toggleMute: () => void;
     navigate: ReturnType<typeof useNavigate>;
   } | null>(null);
 
@@ -527,40 +532,93 @@ export default function HostSession() {
   useEffect(() => { playersLengthRef.current = players.length; });
   useEffect(() => { totalQuestionsRef.current = totalQuestions; });
   useEffect(() => {
-    keyboardActionsRef.current = { startQuestion, endQuestion, nextQuestion, endStudentPacedSessionFn, endSessionEarly, navigate };
+    keyboardActionsRef.current = { startQuestion, endQuestion, nextQuestion, endStudentPacedSessionFn, endSessionEarly, togglePause, extendTimer, skipQuestion, toggleMute, navigate };
   });
 
   // Keyboard handler — registers ONCE via [] deps, reads live state from refs
+  // Space: advance (start/end/next), P: pause/resume, T: +30s, S: skip, M: mute, Esc: end session, ?: show help
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
+      // Ignore if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+
       const s = sessionRef.current;
       if (!s) return;
-      e.preventDefault();
       const actions = keyboardActionsRef.current;
       if (!actions) return;
       const pLen = playersLengthRef.current;
       const tQ = totalQuestionsRef.current;
 
-      if (s.status === 'lobby' && pLen > 0) {
-        actions.startQuestion();
-      } else if (s.questionState === 'student_paced') {
-        const { isConfirmed } = await confirmAction(
-          'End session?',
-          'End the session for all students?',
-          'Yes, end session',
-        );
-        if (isConfirmed) actions.endStudentPacedSessionFn();
-      } else if (s.questionState === 'live') {
-        actions.endQuestion(); // endQuestion() sets preReveal internally
-      } else if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
-        actions.nextQuestion();
-      } else if (s.questionState === 'reveal' && s.currentQuestionIndex >= tQ - 1) {
-        try {
-          await updateDoc(doc(db, 'sessions', s.id), { status: 'ended', endedAt: Date.now() });
-          actions.navigate(`/session/${s.id}/results`);
-        } catch {
-          useToastStore.getState().addToast('error', 'Failed to end session');
+      switch (e.code) {
+        case 'Space': {
+          e.preventDefault();
+          if (s.status === 'lobby' && pLen > 0) {
+            actions.startQuestion();
+          } else if (s.questionState === 'student_paced') {
+            const { isConfirmed } = await confirmAction(
+              'End session?',
+              'End the session for all students?',
+              'Yes, end session',
+            );
+            if (isConfirmed) actions.endStudentPacedSessionFn();
+          } else if (s.questionState === 'live') {
+            actions.endQuestion();
+          } else if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
+            actions.nextQuestion();
+          } else if (s.questionState === 'reveal' && s.currentQuestionIndex >= tQ - 1) {
+            try {
+              await updateDoc(doc(db, 'sessions', s.id), { status: 'ended', endedAt: Date.now() });
+              actions.navigate(`/session/${s.id}/results`);
+            } catch {
+              useToastStore.getState().addToast('error', 'Failed to end session');
+            }
+          }
+          break;
+        }
+        case 'KeyP': {
+          if (s.questionState === 'live') {
+            e.preventDefault();
+            actions.togglePause();
+          }
+          break;
+        }
+        case 'KeyT': {
+          if (s.questionState === 'live') {
+            e.preventDefault();
+            actions.extendTimer();
+          }
+          break;
+        }
+        case 'KeyS': {
+          if (s.questionState === 'live') {
+            e.preventDefault();
+            actions.skipQuestion();
+          }
+          break;
+        }
+        case 'KeyM': {
+          e.preventDefault();
+          actions.toggleMute();
+          break;
+        }
+        case 'Escape': {
+          e.preventDefault();
+          actions.endSessionEarly();
+          break;
+        }
+        case 'ArrowRight': {
+          if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
+            e.preventDefault();
+            actions.nextQuestion();
+          }
+          break;
+        }
+        case 'Slash': {
+          if (e.shiftKey) {
+            e.preventDefault();
+            setShowShortcuts((v) => !v);
+          }
+          break;
         }
       }
     };
@@ -659,6 +717,14 @@ export default function HostSession() {
             aria-label={muted ? 'Unmute' : 'Mute'}
           >
             {muted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+          </button>
+          <button
+            onClick={() => setShowShortcuts(true)}
+            className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-white"
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (?)"
+          >
+            <span className="w-4 h-4 sm:w-5 sm:h-5 inline-flex items-center justify-center text-xs font-bold border border-current rounded">?</span>
           </button>
         </div>
       </header>
@@ -1455,6 +1521,35 @@ export default function HostSession() {
               >
                 Leave &amp; End
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard shortcuts overlay */}
+      {showShortcuts && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowShortcuts(false)}>
+          <div className="bg-surface-card border border-white/10 rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 shadow-2xl animate-bounce-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-white">Keyboard Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-white/40 hover:text-white transition-colors text-xl leading-none">&times;</button>
+            </div>
+            <div className="space-y-2.5 text-sm">
+              {[
+                ['Space', 'Advance (start / end / next)'],
+                ['→', 'Next question'],
+                ['P', 'Pause / Resume timer'],
+                ['T', '+30 seconds'],
+                ['S', 'Skip question'],
+                ['M', 'Mute / Unmute'],
+                ['Esc', 'End session early'],
+                ['?', 'Toggle this help'],
+              ].map(([key, desc]) => (
+                <div key={key} className="flex items-center gap-3">
+                  <kbd className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 bg-white/10 border border-white/15 rounded-lg text-xs font-mono font-bold text-white/80">{key}</kbd>
+                  <span className="text-white/60">{desc}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
