@@ -2,9 +2,9 @@
   "rules": {
     "liveAnswers": {
       "$sessionId": {
+        ".read": "auth != null",
         "$questionId": {
           "$playerId": {
-            ".read": false,
             ".write": "!data.exists() && newData.hasChildren(['selection', 'timeMs', 'activeToken', 'ts']) && newData.child('ts').val() === now",
             ".validate": "newData.child('selection').isString() && newData.child('timeMs').isNumber() && newData.child('activeToken').isString()"
           }
