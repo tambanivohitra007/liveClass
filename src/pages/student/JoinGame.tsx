@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -7,6 +7,8 @@ import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, Shield
 import WaveBackground from '../../components/ui/WaveBackground';
 import { AVATARS } from '../../lib/avatars';
 import boy5 from '../../assets/optimized/boy_5.png';
+
+const ShaderBackground = lazy(() => import('../../components/ui/ShaderBackground'));
 
 const ADJECTIVES = [
   'Swift', 'Brave', 'Clever', 'Mighty', 'Cosmic', 'Lucky', 'Epic', 'Jolly',
@@ -80,7 +82,7 @@ export default function JoinGame() {
   const [joining, setJoining] = useState(false);
   const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
-  const [sessionType, setSessionType] = useState<'session' | 'live_grading'>('session');
+  const [sessionType, setSessionType] = useState<'session' | 'live_grading' | 'mini_game'>('session');
   const [rejoinData, setRejoinData] = useState<{ playerId: string; nickname: string; avatar?: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -95,7 +97,7 @@ export default function JoinGame() {
       (async () => {
         // Check sessions collection first
         let resolvedSessionId = '';
-        let resolvedType: 'session' | 'live_grading' = 'session';
+        let resolvedType: 'session' | 'live_grading' | 'mini_game' = 'session';
         let joinLocked = false;
 
         const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pinParam), where('status', '!=', 'ended')));
@@ -109,6 +111,13 @@ export default function JoinGame() {
             resolvedSessionId = lgSnap.docs[0].id;
             resolvedType = 'live_grading';
             joinLocked = lgSnap.docs[0].data().joinLocked;
+          } else {
+            const bgSnap = await getDocs(query(collection(db, 'mini_games'), where('pinCode', '==', pinParam), where('status', 'in', ['lobby', 'live'])));
+            if (!bgSnap.empty) {
+              resolvedSessionId = bgSnap.docs[0].id;
+              resolvedType = 'mini_game';
+              joinLocked = bgSnap.docs[0].data().joinLocked;
+            }
           }
         }
 
@@ -118,7 +127,7 @@ export default function JoinGame() {
         }
 
         setSessionType(resolvedType);
-        const storageKey = resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
+        const storageKey = resolvedType === 'mini_game' ? `liveclass_mg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
         // Check localStorage for existing join data (rejoin recovery)
         try {
@@ -159,7 +168,7 @@ export default function JoinGame() {
 
     // Check sessions collection first, then live_gradings
     let resolvedSessionId = '';
-    let resolvedType: 'session' | 'live_grading' = 'session';
+    let resolvedType: 'session' | 'live_grading' | 'mini_game' = 'session';
     let joinLocked = false;
 
     const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pin), where('status', '!=', 'ended')));
@@ -173,6 +182,13 @@ export default function JoinGame() {
         resolvedSessionId = lgSnap.docs[0].id;
         resolvedType = 'live_grading';
         joinLocked = lgSnap.docs[0].data().joinLocked;
+      } else {
+        const bgSnap = await getDocs(query(collection(db, 'mini_games'), where('pinCode', '==', pin), where('status', 'in', ['lobby', 'live'])));
+        if (!bgSnap.empty) {
+          resolvedSessionId = bgSnap.docs[0].id;
+          resolvedType = 'mini_game';
+          joinLocked = bgSnap.docs[0].data().joinLocked;
+        }
       }
     }
 
@@ -182,7 +198,7 @@ export default function JoinGame() {
     }
 
     setSessionType(resolvedType);
-    const storageKey = resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
+    const storageKey = resolvedType === 'mini_game' ? `liveclass_mg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
     // Check localStorage for existing join data (rejoin recovery)
     try {
@@ -215,7 +231,28 @@ export default function JoinGame() {
       const joinNickname = existingPlayerId ? rejoinData?.nickname || nickname : nickname;
       const joinAvatar = existingPlayerId ? rejoinData?.avatar || avatar : avatar;
 
-      if (sessionType === 'live_grading') {
+      if (sessionType === 'mini_game') {
+        // Mini game join
+        const joinFn = httpsCallable<
+          { miniGameId: string; nickname: string; avatar?: string; playerId?: string },
+          { playerId: string; nickname?: string; avatar?: string; rejoin?: boolean }
+        >(functions, 'joinMiniGame');
+        const result = await joinFn({
+          miniGameId: sessionId,
+          nickname: joinNickname,
+          avatar: joinAvatar,
+          ...(existingPlayerId ? { playerId: existingPlayerId } : {}),
+        });
+
+        const finalNickname = result.data.nickname || joinNickname;
+        const finalAvatar = result.data.avatar || joinAvatar;
+        localStorage.setItem(`liveclass_mg_${sessionId}`, JSON.stringify({
+          playerId: result.data.playerId,
+          nickname: finalNickname,
+          avatar: finalAvatar,
+        }));
+        navigate(`/mini-game/${sessionId}/${result.data.playerId}`);
+      } else if (sessionType === 'live_grading') {
         // Live grading join
         const joinFn = httpsCallable<
           { liveGradingId: string; nickname: string; avatar?: string; playerId?: string },
@@ -256,7 +293,9 @@ export default function JoinGame() {
           nickname: finalNickname,
           avatar: finalAvatar,
         }));
-        sessionStorage.setItem(`activeToken_${sessionId}`, result.data.activeToken);
+        // Store token in memory only (not sessionStorage) to prevent XSS access
+        const { setActiveToken } = await import('../../lib/tokenStore');
+        setActiveToken(sessionId!, result.data.activeToken);
         navigate(`/play/${sessionId}/${result.data.playerId}`);
       }
     } catch (err) {
@@ -274,14 +313,17 @@ export default function JoinGame() {
   };
 
   const handleDeclineRejoin = () => {
-    const storageKey = sessionType === 'live_grading' ? `liveclass_lg_${sessionId}` : `liveclass_session_${sessionId}`;
+    const storageKey = sessionType === 'mini_game' ? `liveclass_mg_${sessionId}` : sessionType === 'live_grading' ? `liveclass_lg_${sessionId}` : `liveclass_session_${sessionId}`;
     localStorage.removeItem(storageKey);
     setRejoinData(null);
     setStep('verify');
   };
 
   return (
-    <div className="gradient-hero min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="gradient-hero min-h-[calc(100vh-4rem)] flex items-start justify-center px-4 pt-6 sm:pt-2 relative overflow-hidden">
+      <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
+        <ShaderBackground />
+      </Suspense>
       <WaveBackground variant="dark" position="both" />
       <div className="absolute inset-0 pattern-stars pointer-events-none" />
 
@@ -291,7 +333,7 @@ export default function JoinGame() {
           <img
             src={boy5}
             alt="Player avatar"
-            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/20 shadow-lg opacity-75 dark:opacity-60 mix-blend-multiply dark:mix-blend-screen mx-auto mb-4"
+            className="w-32 object-contain mx-auto mb-4"
           />
           <h1 className="text-4xl sm:text-5xl text-gray-900 dark:text-white tracking-tight">Join Game</h1>
           <p className="text-gray-500 dark:text-white/50 mt-2 text-sm font-medium">Enter the PIN your host shared</p>
@@ -464,7 +506,7 @@ export default function JoinGame() {
                     <Dices className="w-3.5 h-3.5" /> Shuffle
                   </button>
                 </div>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                   {AVATARS.map((emoji) => (
                     <button
                       key={emoji}
@@ -472,7 +514,7 @@ export default function JoinGame() {
                       onClick={() => setAvatar(emoji)}
                       aria-pressed={avatar === emoji}
                       aria-label={`Avatar ${emoji}`}
-                      className={`text-2xl p-2.5 rounded-xl border select-none touch-manipulation transition-all duration-200 ${
+                      className={`text-2xl p-3 sm:p-2.5 rounded-xl border select-none touch-manipulation transition-all duration-200 ${
                         avatar === emoji
                           ? 'border-brand bg-brand/20 ring-2 ring-brand/40 scale-110'
                           : 'border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-100 dark:hover:bg-white/10'

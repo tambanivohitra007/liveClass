@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, orderBy, limit, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
@@ -12,7 +12,7 @@ import AiGenerateModal from '../../components/AiGenerateModal';
 import WaveBackground from '../../components/ui/WaveBackground';
 import {
   FileText, Users, HelpCircle, Play, Plus, ClipboardList, ClipboardCheck,
-  Sparkles, BarChart3, Clock, ArrowRight, BookOpen,
+  Sparkles, BarChart3, Clock, ArrowRight, BookOpen, Gamepad2,
 } from 'lucide-react';
 import { addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Quiz, Collection } from '../../types/models';
@@ -75,26 +75,10 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ totalQuizzes: 0, totalQuestions: 0, totalSessions: 0 });
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const navigate = useNavigate();
-  const { activeSession, endActiveSession } = useActiveSession();
+  const { activeSession, activeSessions, endActiveSession, endSession } = useActiveSession();
 
   // AI Quiz modal state
   const [showAiQuizModal, setShowAiQuizModal] = useState(false);
-
-  const handleEndActiveSession = async () => {
-    if (!activeSession) return;
-    const { isConfirmed } = await confirmAction(
-      'End active session?',
-      `This will end the session for "${activeSession.quizTitle}" (PIN: ${activeSession.pinCode}). All players will be disconnected.`,
-      'End session',
-    );
-    if (!isConfirmed) return;
-    try {
-      await endActiveSession();
-      addToast('success', 'Session ended successfully');
-    } catch {
-      addToast('error', 'Failed to end session. Please try again.');
-    }
-  };
 
   const handleHostLive = async (quizId: string) => {
     if (!activeSession) {
@@ -114,7 +98,7 @@ export default function Dashboard() {
     } else {
       const { isConfirmed } = await confirmAction(
         'End current session?',
-        `You have an active session for "${activeSession.quizTitle}". It must be ended before starting a new one.`,
+        `You have an active session for "${activeSession.title}". It must be ended before starting a new one.`,
         'End & start new',
       );
       if (isConfirmed) {
@@ -188,17 +172,25 @@ export default function Dashboard() {
         questionCount: questionCountMap.get(quiz.id) || 0,
       }));
 
-      const sessionsSnap = await getDocs(query(collection(db, 'sessions'), where('hostId', '==', user.id)));
+      // Fetch recent 3 ended sessions (limited query instead of loading all)
+      const recentSessionsQuery = query(
+        collection(db, 'sessions'),
+        where('hostId', '==', user.id),
+        where('status', '==', 'ended'),
+        orderBy('endedAt', 'desc'),
+        limit(3)
+      );
+      const [recentSnap, totalCountSnap] = await Promise.all([
+        getDocs(recentSessionsQuery),
+        getCountFromServer(query(collection(db, 'sessions'), where('hostId', '==', user.id))),
+      ]);
 
       const quizTitleMap = new Map<string, string>();
       enriched.forEach((q) => quizTitleMap.set(q.id, q.title));
 
       type SessionDoc = { id: string; status: string; endedAt: unknown; quizId: string; pinCode: string; top10Snapshot?: unknown[] };
-      const endedSessions = sessionsSnap.docs
+      const endedSessions = recentSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }) as SessionDoc)
-        .filter((s) => s.status === 'ended' && s.endedAt)
-        .sort((a, b) => toMs(b.endedAt) - toMs(a.endedAt))
-        .slice(0, 3)
         .map((s) => ({
           id: s.id,
           quizId: s.quizId,
@@ -213,7 +205,7 @@ export default function Dashboard() {
       setStats({
         totalQuizzes: enriched.length,
         totalQuestions: totalQ,
-        totalSessions: sessionsSnap.size,
+        totalSessions: totalCountSnap.data().count,
       });
       setLoading(false);
     });
@@ -351,9 +343,30 @@ export default function Dashboard() {
       </div>
 
       {/* Active Session Banner */}
-      {activeSession && (
-        <ActiveSessionBanner session={activeSession} onEnd={handleEndActiveSession} />
-      )}
+      {activeSessions.map((s) => (
+        <ActiveSessionBanner key={s.id} session={s} onEnd={() => endSession(s.id)} />
+      ))}
+
+      {/* Binary Challenge Card */}
+      <div className="mb-8 animate-fade-in">
+        <button
+          onClick={() => navigate('/mini-games')}
+          className="card-night card-night-hover p-4 flex items-center gap-3 w-full text-left group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+            <Gamepad2 className="w-5 h-5 text-brand" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-brand transition-colors">
+              Mini Games
+            </p>
+            <p className="text-[11px] text-gray-400 dark:text-white/40">
+              12 educational games: Binary, Subnet, Code Output &amp; more
+            </p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-white/40 group-hover:text-brand transition-colors" />
+        </button>
+      </div>
 
       {/* Quick Start */}
       {showQuickStart && (

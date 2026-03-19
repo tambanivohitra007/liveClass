@@ -10,7 +10,7 @@ import CodeBlock from '../../components/CodeBlock';
 import { confirmAction } from '../../lib/swal';
 import {
   GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
-  Sparkles, X as XIcon, ArrowLeft,
+  Sparkles, X as XIcon, ArrowLeft, Upload, Download,
   Clock, Image as ImageIcon, Type, FileText,
   List, Pencil, Settings,
 } from 'lucide-react';
@@ -409,13 +409,129 @@ export default function QuizEditor() {
     setMobilePanel('editor');
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { current += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ',') { result.push(current.trim()); current = ''; }
+        else { current += ch; }
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      if (!text) return;
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 2) { addToast('error', 'CSV must have a header row and at least one question'); return; }
+
+      // Detect header
+      const header = parseCSVLine(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z_]/g, ''));
+      const colMap = {
+        question: header.findIndex((h) => h.includes('question') || h === 'text'),
+        type: header.findIndex((h) => h === 'type'),
+        options: header.findIndex((h) => h.includes('option') || h.includes('choice')),
+        correct: header.findIndex((h) => h.includes('correct') || h.includes('answer')),
+        time: header.findIndex((h) => h.includes('time') || h.includes('timer') || h.includes('limit')),
+        multiplier: header.findIndex((h) => h.includes('multiplier') || h.includes('points')),
+      };
+
+      if (colMap.question === -1) { addToast('error', 'CSV must have a "question" column'); return; }
+
+      const imported: (Omit<Question, 'id'> & { id?: string })[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        const questionText = cols[colMap.question] || '';
+        if (!questionText) continue;
+
+        const rawType = (colMap.type >= 0 ? cols[colMap.type] : '').toLowerCase();
+        let type: QuestionType = 'mcq';
+        if (rawType === 'tf' || rawType === 'true/false' || rawType === 'truefalse') type = 'tf';
+        else if (rawType === 'short' || rawType === 'short answer') type = 'short';
+        else if (rawType === 'poll') type = 'poll';
+        else if (rawType === 'fill_blank' || rawType === 'fill blank') type = 'fill_blank';
+        else if (rawType === 'ordering') type = 'ordering';
+        else if (rawType === 'matching') type = 'matching';
+
+        const optionsStr = colMap.options >= 0 ? cols[colMap.options] || '' : '';
+        let options = optionsStr.split('|').map((o) => o.trim()).filter(Boolean);
+        if (type === 'tf') options = ['True', 'False'];
+        else if (options.length === 0 && type === 'mcq') options = ['', '', '', ''];
+
+        const correctStr = colMap.correct >= 0 ? cols[colMap.correct] || '' : '';
+        const correctAnswers = correctStr.split('|').map((a) => a.trim()).filter(Boolean);
+
+        const timeLimitSec = colMap.time >= 0 ? parseInt(cols[colMap.time]) || 20 : 20;
+        const pointMultiplier = colMap.multiplier >= 0 ? parseInt(cols[colMap.multiplier]) || 1 : 1;
+
+        imported.push({
+          quizId: quizId || '',
+          type,
+          text: questionText,
+          options,
+          correctAnswers,
+          timeLimitSec,
+          pointMultiplier: pointMultiplier > 1 ? pointMultiplier : undefined,
+        });
+      }
+
+      if (imported.length === 0) { addToast('error', 'No valid questions found in CSV'); return; }
+      setQuestions([...questions, ...imported]);
+      setActiveIndex(questions.length);
+      addToast('success', `Imported ${imported.length} question${imported.length > 1 ? 's' : ''}`);
+    };
+    reader.readAsText(file);
+    // Reset input so same file can be re-imported
+    e.target.value = '';
+  };
+
+  const exportCSV = () => {
+    if (questions.length === 0) { addToast('error', 'No questions to export'); return; }
+    const header = 'question,type,options,correct_answers,time_limit,multiplier';
+    const rows = questions.map((q) => {
+      const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+      return [
+        esc(q.text),
+        q.type,
+        esc(q.options.join('|')),
+        esc(q.correctAnswers.join('|')),
+        q.timeLimitSec,
+        q.pointMultiplier ?? 1,
+      ].join(',');
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'quiz'}-questions.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const renderQuestionList = (opts?: { onSelect?: (i: number) => void; onAdd?: () => void }) => {
     const handleSelect = opts?.onSelect || setActiveIndex;
     const handleAdd = opts?.onAdd || addQuestion;
     return (
       <>
-        {/* Add Question Button */}
-        <div className="p-3 border-b border-gray-100 dark:border-white/10">
+        {/* Add Question + Import/Export */}
+        <div className="p-3 border-b border-gray-100 dark:border-white/10 space-y-2">
           <button
             onClick={handleAdd}
             className="w-full py-2.5 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl text-gray-400 dark:text-white/40 text-sm font-medium hover:border-brand hover:text-brand hover:bg-brand/5 transition-colors flex items-center justify-center gap-1.5"
@@ -423,6 +539,23 @@ export default function QuizEditor() {
             <Plus className="w-4 h-4" />
             Add Question
           </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 py-1.5 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50 text-xs font-medium hover:bg-brand/10 hover:text-brand transition-colors flex items-center justify-center gap-1"
+            >
+              <Upload className="w-3 h-3" />
+              Import CSV
+            </button>
+            <button
+              onClick={exportCSV}
+              className="flex-1 py-1.5 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50 text-xs font-medium hover:bg-brand/10 hover:text-brand transition-colors flex items-center justify-center gap-1"
+            >
+              <Download className="w-3 h-3" />
+              Export CSV
+            </button>
+          </div>
+          <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" onChange={handleImportCSV} className="hidden" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
@@ -460,6 +593,9 @@ export default function QuizEditor() {
                 <div className="flex items-center gap-1 mt-1">
                   <Clock className="w-3 h-3 text-gray-400 dark:text-white/40 shrink-0" />
                   <span className="text-[10px] text-gray-400 dark:text-white/40">{q.timeLimitSec}s</span>
+                  {(q.pointMultiplier ?? 1) > 1 && (
+                    <span className="text-[10px] px-1 rounded bg-warning/20 text-warning font-bold">{q.pointMultiplier}x</span>
+                  )}
                 </div>
               </div>
               <button
@@ -645,7 +781,7 @@ export default function QuizEditor() {
                 Q {activeIndex + 1} of {questions.length}
               </p>
               {/* Inline toolbar: type + time + actions */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <select
                   value={activeQ.type}
                   onChange={(e) => updateQuestionType(activeIndex, e.target.value as QuestionType)}
@@ -663,6 +799,15 @@ export default function QuizEditor() {
                   {[5, 10, 15, 20, 30, 45, 60, 90, 120].map((s) => (
                     <option key={s} value={s} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{s}s</option>
                   ))}
+                </select>
+                <select
+                  value={activeQ.pointMultiplier ?? 1}
+                  onChange={(e) => updateQuestion(activeIndex, { pointMultiplier: parseInt(e.target.value) })}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/20 text-xs font-medium text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white dark:bg-slate-800"
+                >
+                  <option value={1} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">1x</option>
+                  <option value={2} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">2x</option>
+                  <option value={3} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">3x</option>
                 </select>
                 <div className="flex items-center border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-white/5 ml-auto">
                   <button
@@ -742,14 +887,14 @@ export default function QuizEditor() {
 
               {/* MCQ / TF / Poll — Colored 2×2 Cards */}
               {(activeQ.type === 'mcq' || activeQ.type === 'tf' || activeQ.type === 'poll') && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {activeQ.options.map((opt, oi) => {
                     const card = ANSWER_CARDS[oi % ANSWER_CARDS.length];
                     const isCorrect = activeQ.type !== 'poll' && activeQ.correctAnswers.includes(opt) && opt !== '';
                     return (
                       <div
                         key={oi}
-                        className={`relative ${card.bg} rounded-2xl p-4 min-h-20 flex items-start gap-3 shadow-sm transition-all ${
+                        className={`relative ${card.bg} rounded-2xl p-3 sm:p-4 min-h-16 sm:min-h-20 flex items-start gap-3 shadow-sm transition-all ${
                           isCorrect ? 'ring-3 ring-white/60' : ''
                         }`}
                       >

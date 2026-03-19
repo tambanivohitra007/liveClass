@@ -53,12 +53,3 @@ export default function Confetti({ active }: { active: boolean }) {
   );
 }
 
-export function StreakFire({ streak }: { streak: number }) {
-  if (streak < 2) return null;
-  return (
-    <div className="flex items-center gap-1 animate-bounce-in">
-      <span className="text-2xl animate-fire-flicker">🔥</span>
-      <span className="text-white font-black text-lg">{streak} streak!</span>
-    </div>
-  );
-}

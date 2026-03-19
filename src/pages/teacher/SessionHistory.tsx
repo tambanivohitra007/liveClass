@@ -6,7 +6,7 @@ import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { SkeletonCard } from '../../components/Skeleton';
-import { Users, Target, Calendar, Hash, SortAsc, Filter, Trash2, Gamepad2, Mic, Award, Loader2 } from 'lucide-react';
+import { Users, Target, Calendar, Hash, SortAsc, Filter, Trash2, Gamepad2, Mic, Award, Loader2, Binary } from 'lucide-react';
 import BackButton from '../../components/BackButton';
 
 interface SessionRecord {
@@ -32,7 +32,19 @@ interface LiveGradingRecord {
   avgPercentage: number;
 }
 
-type Tab = 'quiz' | 'grading';
+interface BinaryGameRecord {
+  id: string;
+  title: string;
+  pinCode: string;
+  difficulty: string;
+  roundCount: number;
+  endedAt: number;
+  playerCount: number;
+  avgPoints: number;
+  avgCorrect: number;
+}
+
+type Tab = 'quiz' | 'grading' | 'binary';
 type DateFilter = '7d' | '30d' | 'all';
 type SortField = 'date' | 'players' | 'accuracy';
 
@@ -64,6 +76,14 @@ export default function SessionHistory() {
   const gradingsLastDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [gradingsHasMore, setGradingsHasMore] = useState(false);
   const [gradingsLoadingMore, setGradingsLoadingMore] = useState(false);
+
+  // Binary games state
+  const [binaryGames, setBinaryGames] = useState<BinaryGameRecord[]>([]);
+  const [binaryLoading, setBinaryLoading] = useState(false);
+  const [binaryInitialized, setBinaryInitialized] = useState(false);
+  const binaryLastDocRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [binaryHasMore, setBinaryHasMore] = useState(false);
+  const [binaryLoadingMore, setBinaryLoadingMore] = useState(false);
 
   // Shared state
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
@@ -270,17 +290,94 @@ export default function SessionHistory() {
     }
   };
 
+  // ─── Load binary games (paginated) ───
+  const loadBinaryGames = async (isLoadMore: boolean) => {
+    if (!user) return;
+
+    if (isLoadMore) {
+      setBinaryLoadingMore(true);
+    } else {
+      setBinaryLoading(true);
+      setBinaryGames([]);
+      binaryLastDocRef.current = null;
+      setBinaryHasMore(false);
+    }
+
+    try {
+      const constraints: QueryConstraint[] = [
+        where('ownerId', '==', user.id),
+        where('status', '==', 'ended'),
+      ];
+      if (dateFilter === '7d') constraints.push(where('endedAt', '>', Date.now() - 7 * 86400000));
+      else if (dateFilter === '30d') constraints.push(where('endedAt', '>', Date.now() - 30 * 86400000));
+      constraints.push(orderBy('endedAt', 'desc'));
+      if (isLoadMore && binaryLastDocRef.current) {
+        constraints.push(startAfter(binaryLastDocRef.current));
+      }
+      constraints.push(limit(PAGE_SIZE));
+
+      const snap = await getDocs(query(collection(db, 'mini_games'), ...constraints));
+
+      setBinaryHasMore(snap.docs.length === PAGE_SIZE);
+      if (snap.docs.length > 0) {
+        binaryLastDocRef.current = snap.docs[snap.docs.length - 1];
+      }
+
+      const newRecords = await Promise.all(
+        snap.docs.map(async (bgDoc) => {
+          const data = bgDoc.data();
+          const playersSnap = await getDocs(collection(db, `mini_games/${bgDoc.id}/players`));
+          const players = playersSnap.docs.map((d) => d.data());
+
+          const totalPoints = players.reduce((sum, p) => sum + (p.totalPoints || 0), 0);
+          const totalCorrect = players.reduce((sum, p) => sum + (p.correctCount || 0), 0);
+          const totalAnswered = players.reduce((sum, p) => sum + (p.answeredCount || 0), 0);
+
+          return {
+            id: bgDoc.id,
+            title: data.title || 'Binary Challenge',
+            pinCode: data.pinCode || '',
+            difficulty: data.difficulty || '8bit',
+            roundCount: data.roundCount || 0,
+            endedAt: toMillis(data.endedAt),
+            playerCount: players.length,
+            avgPoints: players.length > 0 ? parseFloat((totalPoints / players.length).toFixed(0)) : 0,
+            avgCorrect: totalAnswered > 0 ? parseFloat(((totalCorrect / totalAnswered) * 100).toFixed(1)) : 0,
+          };
+        })
+      );
+
+      if (isLoadMore) {
+        setBinaryGames((prev) => [...prev, ...newRecords]);
+      } else {
+        setBinaryGames(newRecords);
+      }
+      setBinaryInitialized(true);
+    } catch {
+      addToast('error', 'Failed to load binary games');
+    } finally {
+      setBinaryLoading(false);
+      setBinaryLoadingMore(false);
+    }
+  };
+
   // Lazy load on first tab switch
   useEffect(() => {
     if (tab === 'grading' && !gradingsInitialized) {
       loadGradings(false);
     }
-  }, [tab, gradingsInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (tab === 'binary' && !binaryInitialized) {
+      loadBinaryGames(false);
+    }
+  }, [tab, gradingsInitialized, binaryInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset gradings when dateFilter changes
+  // Reset gradings/binary when dateFilter changes
   useEffect(() => {
     if (gradingsInitialized) {
       setGradingsInitialized(false);
+    }
+    if (binaryInitialized) {
+      setBinaryInitialized(false);
     }
   }, [dateFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -312,6 +409,20 @@ export default function SessionHistory() {
     }
   };
 
+  const handleDeleteBinaryGame = async (gameId: string) => {
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'mini_games', gameId));
+      setBinaryGames((prev) => prev.filter((g) => g.id !== gameId));
+      addToast('success', 'Binary game deleted');
+    } catch {
+      addToast('error', 'Failed to delete binary game');
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteId(null);
+    }
+  };
+
   // Apply client-side filters & sort (date filter is now server-side)
   const filteredSessions = sessions
     .filter((s) => {
@@ -335,7 +446,14 @@ export default function SessionHistory() {
       return b.avgPercentage - a.avgPercentage;
     });
 
-  const isLoading = tab === 'quiz' ? loading : gradingLoading;
+  const sortedBinaryGames = binaryGames
+    .sort((a, b) => {
+      if (sortField === 'date') return b.endedAt - a.endedAt;
+      if (sortField === 'players') return b.playerCount - a.playerCount;
+      return b.avgCorrect - a.avgCorrect;
+    });
+
+  const isLoading = tab === 'quiz' ? loading : tab === 'grading' ? gradingLoading : binaryLoading;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 text-gray-900 dark:text-white">
@@ -370,6 +488,17 @@ export default function SessionHistory() {
           <Mic className="w-4 h-4" />
           Live Gradings
         </button>
+        <button
+          onClick={() => setTab('binary')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            tab === 'binary'
+              ? 'bg-brand text-white shadow-sm'
+              : 'text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
+          }`}
+        >
+          <Gamepad2 className="w-4 h-4" />
+          Mini Games
+        </button>
       </div>
 
       {/* Filters */}
@@ -399,6 +528,7 @@ export default function SessionHistory() {
           <select
             value={quizFilter}
             onChange={(e) => setQuizFilter(e.target.value)}
+            aria-label="Filter by quiz"
             className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="all" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">All Quizzes</option>
@@ -413,6 +543,7 @@ export default function SessionHistory() {
           <select
             value={rubricFilter}
             onChange={(e) => setRubricFilter(e.target.value)}
+            aria-label="Filter by rubric"
             className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="all" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">All Rubrics</option>
@@ -428,6 +559,7 @@ export default function SessionHistory() {
           <select
             value={sortField}
             onChange={(e) => setSortField(e.target.value as SortField)}
+            aria-label="Sort sessions by"
             className="text-xs px-3 py-1.5 border border-gray-200 dark:border-white/20 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white/80 focus:ring-2 focus:ring-brand/20 focus:border-brand"
           >
             <option value="date" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Sort by Date</option>
@@ -684,6 +816,137 @@ export default function SessionHistory() {
                     className="btn-3d-ghost px-8 py-3 text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     {gradingsLoadingMore ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</>
+                    ) : 'Load More'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      {/* ═══════════ BINARY GAMES TAB ═══════════ */}
+      {tab === 'binary' && (
+        <>
+          {binaryLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : sortedBinaryGames.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-gray-100 dark:bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                <Binary className="w-10 h-10 text-gray-300 dark:text-white/30" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No mini games found</h3>
+              <p className="text-gray-500 dark:text-white/50">
+                {binaryGames.length === 0 ? 'Host a mini game to see results here' : 'Try adjusting your filters'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+                {sortedBinaryGames.map((g) => (
+                  <div key={g.id} className="relative animate-fade-in">
+                    <div
+                      onClick={() => navigate(`/mini-game/${g.id}/results`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/mini-game/${g.id}/results`); }}
+                      className="w-full bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+                            <Binary className="w-4 h-4 text-brand" />
+                          </div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-brand transition-colors mb-0 truncate">
+                            {g.title}
+                          </h3>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(g.id); }}
+                          className="p-1.5 rounded-lg text-gray-300 dark:text-white/30 hover:text-danger hover:bg-danger/10 transition-colors shrink-0"
+                          title="Delete binary game"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-white/40 mt-2 mb-4">
+                        <Calendar className="w-3 h-3" />
+                        {g.endedAt > 0
+                          ? new Date(g.endedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Unknown date'}
+                        <span className="text-gray-300 dark:text-white/30">|</span>
+                        <Hash className="w-3 h-3" />
+                        {g.pinCode}
+                        <span className="text-gray-300 dark:text-white/30">|</span>
+                        <span>{g.difficulty} &middot; {g.roundCount} rounds</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <Users className="w-3 h-3" />
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Players</span>
+                          </div>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">{g.playerCount}</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <Target className="w-3 h-3" />
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Accuracy</span>
+                          </div>
+                          <p className={`text-lg font-bold ${
+                            g.avgCorrect >= 70 ? 'text-success' :
+                            g.avgCorrect >= 40 ? 'text-warning' :
+                            'text-danger'
+                          }`}>
+                            {g.avgCorrect}%
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-gray-400 dark:text-white/40 mb-1">
+                            <span className="text-[10px] uppercase tracking-wider font-medium">Avg Pts</span>
+                          </div>
+                          <p className="text-lg font-bold text-gray-900 dark:text-white">{g.avgPoints}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {confirmDeleteId === g.id && (
+                      <div className="absolute inset-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this game?</p>
+                        <p className="text-xs text-gray-500 dark:text-white/50">This action cannot be undone.</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            disabled={deleting}
+                            className="px-4 py-1.5 text-xs font-medium text-gray-600 dark:text-white/70 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBinaryGame(g.id)}
+                            disabled={deleting}
+                            className="px-4 py-1.5 text-xs font-medium text-white bg-danger hover:bg-danger/90 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {deleting ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {binaryHasMore && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => loadBinaryGames(true)}
+                    disabled={binaryLoadingMore}
+                    className="btn-3d-ghost px-8 py-3 text-sm flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {binaryLoadingMore ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Loading...</>
                     ) : 'Load More'}
                   </button>

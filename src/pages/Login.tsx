@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { signInWithGoogle } from '../lib/googleAuth';
+import { getAuthErrorMessage } from '../lib/authErrors';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import ValidatedInput from '../components/ValidatedInput';
@@ -34,14 +36,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       setWaitingForAuth(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('invalid-credential') || msg.includes('wrong-password') || msg.includes('user-not-found')) {
-        setError('Incorrect email or password.');
-      } else if (msg.includes('too-many-requests')) {
-        setError('Too many attempts. Please try again later.');
-      } else {
-        setError('Login failed. Please try again.');
-      }
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -51,10 +46,10 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await signInWithGoogle();
       setWaitingForAuth(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google login failed');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, collection, updateDoc, deleteDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
+import { APP_URL } from '../../lib/config';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmDelete } from '../../lib/swal';
@@ -123,7 +124,7 @@ export default function ClassDetail() {
 
   const handleCopyLink = () => {
     if (!classroom) return;
-    const url = `${window.location.origin}/join-class?code=${classroom.joinCode}`;
+    const url = `${APP_URL}/join-class?code=${classroom.joinCode}`;
     navigator.clipboard.writeText(url);
     addToast('success', 'Join link copied!');
   };

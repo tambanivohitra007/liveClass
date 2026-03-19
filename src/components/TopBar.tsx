@@ -17,6 +17,7 @@ function getPageTitle(pathname: string): string {
     '/rubrics': 'Rubrics',
     '/rosters': 'Rosters',
     '/history': 'Session History',
+    '/analytics': 'Analytics',
     '/discover': 'Discover',
     '/join': 'Join Game',
     '/profile': 'Profile Settings',
@@ -75,7 +76,7 @@ export default function TopBar() {
   if (!firebaseUser) return null;
 
   return (
-    <header className="hidden md:flex sticky top-0 z-40 h-14 items-center justify-between px-6 bg-white/80 dark:bg-[#0F1729]/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10">
+    <header className="hidden md:flex sticky top-0 z-40 h-14 items-center justify-between px-6 bg-white/80 dark:bg-[#0F1729]/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10 pt-safe">
       {/* Left: Page title */}
       <div>
         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{pageTitle}</h1>

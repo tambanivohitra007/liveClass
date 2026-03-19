@@ -301,6 +301,7 @@ export default function AdminClasses() {
             <select
               value={transferTargetId}
               onChange={(e) => setTransferTargetId(e.target.value)}
+              aria-label="Select new classroom owner"
               className="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/30 mb-4 [&>option]:bg-white [&>option]:dark:bg-[#162033] [&>option]:text-gray-900 [&>option]:dark:text-white"
             >
               <option value="">Select a teacher...</option>

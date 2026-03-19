@@ -29,6 +29,7 @@ export interface User {
   gender?: 'male' | 'female' | 'other' | '';
   phone?: string;
   address?: string;
+  fcmToken?: string;
   createdAt: number;
 }
 
@@ -60,6 +61,7 @@ export interface Question {
   codeLanguage?: string;
   correctAnswers: string[];
   timeLimitSec: number;
+  pointMultiplier?: number;
 }
 
 export type SessionStatus = 'lobby' | 'live' | 'ended';
@@ -98,6 +100,8 @@ export interface Session {
   teamCount?: number;
   teams?: TeamConfig[];
   shuffleQuestions?: boolean;
+  shuffleAnswers?: boolean;
+  scoringMode?: 'speed' | 'accuracy';
   questionOrder?: number[];
   timerPaused?: boolean;
   timerPausedAt?: number | null;
@@ -174,24 +178,6 @@ export interface ClassroomMember {
 }
 
 // --- AI Evaluation Types ---
-export interface ParticipantEvaluation {
-  summary: string;
-  strengths: string[];
-  weaknesses: string[];
-  recommendations: string[];
-  overallRating: 'excellent' | 'good' | 'average' | 'needs_improvement';
-  topicMastery: { topic: string; level: 'strong' | 'moderate' | 'weak' }[];
-  questionBreakdown?: {
-    questionIndex: number;
-    questionText: string;
-    status: 'correct' | 'incorrect' | 'unattempted';
-    studentAnswer: string | null;
-    correctAnswer: string;
-    points: number;
-    explanation: string;
-  }[];
-}
-
 export interface QuestionEvaluation {
   summary: string;
   difficultyRating: 'too_easy' | 'appropriate' | 'too_hard';
@@ -335,6 +321,66 @@ export interface LiveGradingPlayer {
   joinedAt: number;
   userId?: string;
 }
+
+// --- Mini Game Engine (modular game types) ---
+
+export type MiniGameStatus = 'lobby' | 'live' | 'ended';
+
+export interface MiniGameRound {
+  type: string;          // Game-specific sub-type (e.g. 'dec2bin', 'addition')
+  prompt: string;        // What to display
+  answer: string;        // Correct answer (normalized)
+  timeLimitSec: number;
+  meta?: Record<string, unknown>; // Game-specific data (e.g. { bits: 8 }, { options: [...] })
+}
+
+export interface MiniGame {
+  id: string;
+  gameType: string;      // Module key (e.g. 'binary', 'subnet', 'port_blitz')
+  ownerId: string;
+  pinCode: string;
+  title: string;
+  status: MiniGameStatus;
+  config: Record<string, unknown>; // Game-specific config (e.g. { difficulty: '8bit', conversionTypes: [...] })
+  roundCount: number;
+  timeLimitSec: number;
+  rounds: MiniGameRound[];
+  currentRoundIndex: number;
+  roundState: 'waiting' | 'live' | 'reveal';
+  roundStartedAt: number | null;
+  timerPaused?: boolean;
+  timerPausedAt?: number | null;
+  timerExtendedBy?: number;
+  joinLocked: boolean;
+  createdAt: number;
+  startedAt: number | null;
+  endedAt: number | null;
+  top10Snapshot?: { playerId: string; nickname: string; totalPoints: number; rank: number }[];
+}
+
+export interface MiniGamePlayer {
+  id: string;
+  nickname: string;
+  avatar?: string;
+  userId?: string;
+  totalPoints: number;
+  streak: number;
+  answeredCount: number;
+  correctCount: number;
+  joinedAt: number;
+}
+
+export interface MiniGameAnswer {
+  playerId: string;
+  nickname: string;
+  roundIndex: number;
+  submission: string;
+  correct: boolean;
+  timeMs: number;
+  pointsAwarded: number;
+  submittedAt: number;
+}
+
 
 export type NotificationType = 'new_assignment' | 'session_started' | 'class_joined' | 'class_removed';
 

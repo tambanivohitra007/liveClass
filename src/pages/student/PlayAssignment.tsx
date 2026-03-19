@@ -3,8 +3,9 @@ import { useParams } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebase';
-import { queueAnswer, syncPendingAnswers } from '../../lib/offlineQueue';
-import { Clock, Ban, CircleCheckBig, Check } from 'lucide-react';
+import { queueAnswer, syncPendingAnswers, getPendingCount } from '../../lib/offlineQueue';
+import type { SyncResult } from '../../lib/offlineQueue';
+import { Clock, Ban, CircleCheckBig, Check, CloudOff, CloudUpload } from 'lucide-react';
 import CodeBlock from '../../components/CodeBlock';
 import OfflineBanner from '../../components/OfflineBanner';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
@@ -39,13 +40,30 @@ export default function PlayAssignment() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [pendingCount, setPendingCount] = useState(0);
+  const [syncStatus, setSyncStatus] = useState<SyncResult | null>(null);
   const isOnline = useNetworkStatus();
 
+  // Check pending count on mount
   useEffect(() => {
-    const doSync = () => syncPendingAnswers(async (answer) => {
-      await httpsCallable(functions, 'scoreAnswer')(answer);
-    });
-    if (isOnline) doSync();
+    getPendingCount().then(setPendingCount).catch(() => {});
+  }, []);
+
+  // Sync when coming back online
+  useEffect(() => {
+    if (!isOnline) return;
+    const doSync = async () => {
+      const result = await syncPendingAnswers(async (answer) => {
+        await httpsCallable(functions, 'scoreAnswer')(answer);
+      });
+      setSyncStatus(result);
+      setPendingCount(result.remaining);
+      // Clear status after 5 seconds
+      if (result.synced > 0 || result.staleRemoved > 0) {
+        setTimeout(() => setSyncStatus(null), 5000);
+      }
+    };
+    doSync();
   }, [isOnline]);
 
   useEffect(() => {
@@ -116,9 +134,13 @@ export default function PlayAssignment() {
 
     if (isOnline) {
       try { await httpsCallable(functions, 'scoreAnswer')(answerData); }
-      catch { await queueAnswer(answerData); }
+      catch {
+        await queueAnswer(answerData);
+        setPendingCount((c) => c + 1);
+      }
     } else {
       await queueAnswer(answerData);
+      setPendingCount((c) => c + 1);
     }
 
     if (currentIndex < questions.length - 1) {
@@ -199,6 +221,20 @@ export default function PlayAssignment() {
   return (
     <div className="min-h-dvh bg-surface-dark flex flex-col">
       {!isOnline && <OfflineBanner />}
+
+      {/* Offline sync status */}
+      {!isOnline && pendingCount > 0 && (
+        <div className="mx-4 mt-2 px-3 py-2 bg-warning/10 border border-warning/20 rounded-lg flex items-center gap-2 text-sm" role="status">
+          <CloudOff className="w-4 h-4 text-warning shrink-0" />
+          <span className="text-warning">{pendingCount} answer{pendingCount !== 1 ? 's' : ''} queued (pending network)</span>
+        </div>
+      )}
+      {syncStatus && syncStatus.synced > 0 && (
+        <div className="mx-4 mt-2 px-3 py-2 bg-success/10 border border-success/20 rounded-lg flex items-center gap-2 text-sm animate-fade-in" role="status">
+          <CloudUpload className="w-4 h-4 text-success shrink-0" />
+          <span className="text-success">Synced {syncStatus.synced} answer{syncStatus.synced !== 1 ? 's' : ''}</span>
+        </div>
+      )}
 
       {/* Progress */}
       <div className="px-4 pt-4 pb-2">

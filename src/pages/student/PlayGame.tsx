@@ -8,10 +8,11 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import Leaderboard from '../../components/Leaderboard';
 import { AVATARS } from '../../lib/avatars';
-import { Trophy, PartyPopper, Frown, Volume2, VolumeX, ChevronUp, ChevronDown, BookOpen, Play, Check, Pencil, Dices, Shuffle } from 'lucide-react';
+import { Trophy, PartyPopper, Frown, Volume2, VolumeX, AudioLines, ChevronUp, ChevronDown, BookOpen, Play, Check, Pencil, Dices, Shuffle } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import CircularTimer from '../../components/CircularTimer';
 import CodeBlock from '../../components/CodeBlock';
+import Podium from '../../components/Podium';
 import { useAntiCheat } from '../../hooks/useAntiCheat';
 import ViolationWarning from '../../components/ViolationWarning';
 import { playCorrect, playWrong, playTick, playUrgentTick, playSubmit, playPodium, isMuted, setMuted as setSoundMuted } from '../../lib/sounds';
@@ -71,8 +72,10 @@ export default function PlayGame() {
   const [fillAnswers, setFillAnswers] = useState<string[]>([]);
   const [orderingItems, setOrderingItems] = useState<string[]>([]);
   const [shuffledMatchOptions, setShuffledMatchOptions] = useState<string[]>([]);
+  const [shuffledOptions, setShuffledOptions] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submitFailed, setSubmitFailed] = useState(false);
+  const [feedbackTimedOut, setFeedbackTimedOut] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; points: number; rank: number; behindBy: number } | null>(null);
   const sawPreRevealRef = useRef(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -80,7 +83,19 @@ export default function PlayGame() {
   const [myTeam, setMyTeam] = useState<{ name: string; color: string } | null>(null);
   const [muted, setMutedState] = useState(isMuted());
   const [redirectCountdown, setRedirectCountdown] = useState(15);
+  const [showPodium, setShowPodium] = useState(true);
   const toggleMute = () => { const next = !muted; setSoundMuted(next); setMutedState(next); };
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const readAloud = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.9;
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    speechSynthesis.speak(utter);
+  };
   const resultUnsubRef = useRef<(() => void) | null>(null);
 
   // Player profile state
@@ -115,7 +130,9 @@ export default function PlayGame() {
         if (parsed.nickname) setPlayerNickname(parsed.nickname);
         if (parsed.avatar) setPlayerAvatar(parsed.avatar);
       }
-    } catch { /* ignore */ }
+    } catch {
+      // localStorage may be unavailable (private browsing) or corrupt — non-fatal
+    }
   }, [sessionId]);
 
   // Save profile via Cloud Function
@@ -143,7 +160,9 @@ export default function PlayGame() {
           nickname: finalNickname,
           avatar: finalAvatar,
         }));
-      } catch { /* ignore */ }
+      } catch {
+        // localStorage write may fail (quota exceeded) — profile still saved to server
+      }
 
       setEditingProfile(false);
       addToast('success', 'Profile updated!');
@@ -210,6 +229,8 @@ export default function PlayGame() {
   useEffect(() => {
     if (!session || session.questionState !== 'live' || allQuestions.length === 0) return;
     if (session.paceMode === 'student') return;
+    // Stop TTS on question change
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); }
     // Clean up previous result listener
     if (resultUnsubRef.current) {
       resultUnsubRef.current();
@@ -217,6 +238,7 @@ export default function PlayGame() {
     }
     setSubmitted(false);
     setSubmitFailed(false);
+    setFeedbackTimedOut(false);
     setSelectedAnswer('');
     setSelectedAnswers([]);
     setMatchingPairs({});
@@ -231,9 +253,15 @@ export default function PlayGame() {
     const current = allQuestions[qIdx];
     if (current) {
       setCurrentQuestion(current);
+      // Shuffle answer options if enabled
+      if (session.shuffleAnswers && (current.type === 'mcq' || current.type === 'tf' || current.type === 'poll')) {
+        setShuffledOptions([...current.options].sort(() => Math.random() - 0.5));
+      } else {
+        setShuffledOptions(current.options);
+      }
       // Calculate remaining time from server timestamp to survive refreshes
-      const startedAt = session.questionStartedAt as any;
-      const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+      const startedAt = session.questionStartedAt as { toMillis?: () => number } | number | null;
+      const startMs = (startedAt && typeof startedAt === 'object' && startedAt.toMillis) ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
       if (startMs > 0) {
         const now = session.timerPaused && session.timerPausedAt
           ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
@@ -259,12 +287,15 @@ export default function PlayGame() {
   // Student-paced: pick question from local index
   useEffect(() => {
     if (!isStudentPaced || allQuestions.length === 0 || spFinished) return;
+    // Stop TTS on question change
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); setIsSpeaking(false); }
     if (resultUnsubRef.current) {
       resultUnsubRef.current();
       resultUnsubRef.current = null;
     }
     setSubmitted(false);
     setSubmitFailed(false);
+    setFeedbackTimedOut(false);
     setSelectedAnswer('');
     setSelectedAnswers([]);
     setMatchingPairs({});
@@ -280,6 +311,12 @@ export default function PlayGame() {
     const current = allQuestions[qIdx];
     if (current) {
       setCurrentQuestion(current);
+      // Shuffle answer options if enabled
+      if (session?.shuffleAnswers && (current.type === 'mcq' || current.type === 'tf' || current.type === 'poll')) {
+        setShuffledOptions([...current.options].sort(() => Math.random() - 0.5));
+      } else {
+        setShuffledOptions(current.options);
+      }
       spQuestionStartRef.current = Date.now();
       if (current.type === 'ordering') {
         setOrderingItems([...current.options].sort(() => Math.random() - 0.5));
@@ -314,8 +351,8 @@ export default function PlayGame() {
   useEffect(() => {
     if (!session || session.questionState !== 'live' || !currentQuestion?.timeLimitSec) return;
     if (session.paceMode === 'student') return;
-    const startedAt = session.questionStartedAt as any;
-    const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+    const startedAt = session.questionStartedAt as { toMillis?: () => number } | number | null;
+    const startMs = (startedAt && typeof startedAt === 'object' && startedAt.toMillis) ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
     if (startMs <= 0) return;
     const now = session.timerPaused && session.timerPausedAt
       ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
@@ -335,8 +372,8 @@ export default function PlayGame() {
       }
       if ((currentQuestion.type === 'mcq' || currentQuestion.type === 'tf') && /^[1-6]$/.test(e.key)) {
         const idx = parseInt(e.key) - 1;
-        if (idx < currentQuestion.options.length) {
-          const opt = currentQuestion.options[idx];
+        if (idx < shuffledOptions.length) {
+          const opt = shuffledOptions[idx];
           if (currentQuestion.type === 'mcq' && currentQuestion.correctAnswers.length > 1) {
             setSelectedAnswers((prev) =>
               prev.includes(opt) ? prev.filter((a) => a !== opt) : [...prev, opt]
@@ -425,7 +462,8 @@ export default function PlayGame() {
       ? Date.now() - spQuestionStartRef.current
       : (currentQuestion.timeLimitSec - timeLeft) * 1000;
     const selection = getSelection();
-    const activeToken = sessionStorage.getItem(`activeToken_${sessionId}`) || '';
+    const { getActiveToken } = await import('../../lib/tokenStore');
+    const activeToken = getActiveToken(sessionId || '');
 
     try {
       // Write answer to RTDB — instant (~50ms)
@@ -467,14 +505,13 @@ export default function PlayGame() {
       onValue(resultRef, handler);
       resultUnsubRef.current = unsub;
 
-      // 8-second timeout fallback
+      // 8-second timeout fallback — show "answer received" instead of fake wrong feedback
       setTimeout(() => {
         if (!feedbackReceived) {
           feedbackReceived = true;
           unsub();
           resultUnsubRef.current = null;
-          // Don't show error — answer was submitted, just no feedback yet
-          setFeedback({ correct: false, points: 0, rank: 0, behindBy: 0 });
+          setFeedbackTimedOut(true);
         }
       }, 8000);
     } catch (err: unknown) {
@@ -698,25 +735,43 @@ export default function PlayGame() {
   // Ended
   if (session.status === 'ended') {
     return (
-      <div className="min-h-dvh text-white p-4 sm:p-6" style={GAME_BG}>
-        <div className="max-w-md mx-auto text-center py-8 sm:py-12 animate-bounce-in">
-          <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-warning" />
-          <h1 className="text-2xl sm:text-3xl mb-2">Game Over!</h1>
-          <p className="text-white/50 mb-6 sm:mb-8">Thanks for playing!</p>
-          {sessionId && (
-            <div className="card-night p-4 sm:p-6">
-              <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
+      <div className="min-h-dvh text-white p-4 sm:p-6 overflow-y-auto" style={GAME_BG}>
+        <div className="max-w-lg mx-auto py-6 sm:py-10">
+          {showPodium && sessionId ? (
+            <Podium sessionId={sessionId} onComplete={() => setShowPodium(false)} />
+          ) : (
+            <div className="animate-fade-in">
+              <div className="text-center mb-6">
+                <Trophy className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 text-warning" />
+                <h1 className="text-2xl sm:text-3xl font-bold mb-1">Game Over!</h1>
+                <p className="text-white/50">Thanks for playing!</p>
+              </div>
+              {sessionId && (
+                <div className="card-night p-4 sm:p-6">
+                  <Leaderboard sessionId={sessionId} currentQuestion={totalQuestions} totalQuestions={totalQuestions} />
+                </div>
+              )}
+              <div className="text-center">
+                <button
+                  onClick={() => navigate('/')}
+                  className="mt-6 px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-full transition-all"
+                >
+                  Back to Home
+                </button>
+                <p className="text-white/30 text-sm mt-3">
+                  Redirecting in {redirectCountdown}s...
+                </p>
+              </div>
             </div>
           )}
-          <button
-            onClick={() => navigate('/')}
-            className="mt-6 px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-full transition-all"
-          >
-            Back to Home
-          </button>
-          <p className="text-white/30 text-sm mt-3">
-            Redirecting in {redirectCountdown}s...
-          </p>
+          {showPodium && (
+            <button
+              onClick={() => setShowPodium(false)}
+              className="block mx-auto mt-6 text-white/30 hover:text-white/60 text-sm transition-colors"
+            >
+              Skip to results
+            </button>
+          )}
         </div>
       </div>
     );
@@ -812,7 +867,7 @@ export default function PlayGame() {
 
   // Live question
   return (
-    <div className="min-h-dvh flex flex-col" style={GAME_BG}>
+    <div className="min-h-dvh flex flex-col pt-safe" style={GAME_BG}>
       {!isOnline && <OfflineBanner />}
       <ViolationWarning visible={showWarning} onDismiss={dismissWarning} />
       {/* Top bar */}
@@ -847,15 +902,31 @@ export default function PlayGame() {
             </>
           )}
         </div>
-        <button onClick={toggleMute} className="w-20 flex justify-end" aria-label={muted ? 'Unmute' : 'Mute'}>
-          {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
-        </button>
+        <div className="w-20 flex justify-end gap-2">
+          <button
+            onClick={() => currentQuestion && readAloud(currentQuestion.text)}
+            className={`${isSpeaking ? 'text-brand animate-pulse' : 'text-white/50'}`}
+            aria-label={isSpeaking ? 'Stop reading' : 'Read aloud'}
+          >
+            <AudioLines className="w-5 h-5" />
+          </button>
+          <button onClick={toggleMute} aria-label={muted ? 'Unmute' : 'Mute'}>
+            {muted ? <VolumeX className="w-5 h-5 text-white/30" /> : <Volume2 className="w-5 h-5 text-white/50" />}
+          </button>
+        </div>
       </div>
 
       {/* Question */}
       <div className="flex-1 flex flex-col px-4 pb-4">
         <div className="text-center py-3 sm:py-6 animate-fade-in">
-          <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">{currentQuestion.text}</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-white wrap-break-word">
+            {currentQuestion.text}
+            {(currentQuestion.pointMultiplier ?? 1) > 1 && (
+              <span className="ml-2 inline-block px-2 py-0.5 text-sm font-bold rounded-full bg-warning/20 text-warning align-middle">
+                {currentQuestion.pointMultiplier}x
+              </span>
+            )}
+          </h2>
           {currentQuestion.imageUrl && (
             <img src={currentQuestion.imageUrl} alt="Question image" className="max-h-28 sm:max-h-40 mx-auto mt-4 rounded-xl object-contain" />
           )}
@@ -878,13 +949,13 @@ export default function PlayGame() {
               <p className="text-center text-white/50 text-sm mb-2 animate-fade-in">Select all that apply</p>
             )}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[60dvh] sm:max-h-100">
-              {currentQuestion.options.map((opt, i) => {
+              {shuffledOptions.map((opt, i) => {
                 const isSelected = isMultiAnswer
                   ? selectedAnswers.includes(opt)
                   : selectedAnswer === opt;
                 return (
                   <button
-                    key={i}
+                    key={opt}
                     onClick={() => {
                       if (!submitted) {
                         hapticLight();
@@ -1056,9 +1127,9 @@ export default function PlayGame() {
         {/* Poll UI */}
         {currentQuestion.type === 'poll' && (
           <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 max-h-[60dvh] sm:max-h-100">
-            {currentQuestion.options.map((opt, i) => (
+            {shuffledOptions.map((opt, i) => (
               <button
-                key={i}
+                key={opt}
                 onClick={() => { if (!submitted) { hapticLight(); setSelectedAnswer(opt); } }}
                 disabled={submitted}
                 aria-pressed={selectedAnswer === opt}
@@ -1098,10 +1169,17 @@ export default function PlayGame() {
           </button>
         )}
 
-        {submitted && !feedback && !submitFailed && (
+        {submitted && !feedback && !submitFailed && !feedbackTimedOut && (
           <div className="mt-4 py-4 text-center text-white/50 animate-fade-in" role="status">
             <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-2" aria-hidden="true" />
             Waiting for results...
+          </div>
+        )}
+
+        {feedbackTimedOut && !feedback && (
+          <div className="mt-4 py-4 text-center animate-fade-in" role="status">
+            <p className="text-white/70 font-semibold mb-1">Answer received</p>
+            <p className="text-white/40 text-sm">Results will show when the question ends</p>
           </div>
         )}
 

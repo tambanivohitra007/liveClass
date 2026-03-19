@@ -4,18 +4,24 @@ import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { ref, onValue, off } from 'firebase/database';
 import { db, functions, rtdb } from '../../lib/firebase';
+import { APP_URL } from '../../lib/config';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
 import Leaderboard from '../../components/Leaderboard';
 import { ShieldAlert, Users, Shuffle, Music, Volume2, VolumeX, Pause, Play, SkipForward, SlidersHorizontal, Zap, Sparkles, GraduationCap, Presentation, CheckCircle2, Dices, AlertTriangle, X, Maximize2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack } from '../../lib/sounds';
+import { startLobbyMusic, stopLobbyMusic, playJoin, isMuted, setMuted as setSoundMuted, MUSIC_TRACKS, setLobbyTrack, getLobbyTrack, startCountdownMusic, updateCountdownTick, stopCountdownMusic } from '../../lib/sounds';
 import CodeBlock from '../../components/CodeBlock';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import OfflineBanner from '../../components/OfflineBanner';
 import type { Session, SessionPlayer, Question, ViolationDoc } from '../../types/models';
 import { TEAM_PRESETS } from '../../types/models';
+
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([^?&/]+)/);
+  return match?.[1] || null;
+}
 
 const AVATAR_COLORS = [
   { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-400' },
@@ -59,6 +65,8 @@ export default function HostSession() {
   }, []);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [currentVideoUrl, setCurrentVideoUrl] = useState('');
   const [currentCodeSnippet, setCurrentCodeSnippet] = useState('');
   const [currentCodeLanguage, setCurrentCodeLanguage] = useState('');
   const [currentTimeLimitSec, setCurrentTimeLimitSec] = useState(0);
@@ -66,6 +74,7 @@ export default function HostSession() {
   const [error, setError] = useState('');
   const [violations, setViolations] = useState<Map<string, ViolationDoc>>(new Map());
   const [muted, setMutedState] = useState(isMuted());
+  const _mutedRef = useRef(isMuted());
   const [lobbyTrack, setLobbyTrackState] = useState(getLobbyTrack());
 
   const [answeredCount, setAnsweredCount] = useState(0);
@@ -73,7 +82,10 @@ export default function HostSession() {
   const [studentProgress, setStudentProgress] = useState<Record<string, { answered: number; finished: boolean }>>({});
   const [endingSession, setEndingSession] = useState(false);
   const [preReveal, setPreReveal] = useState(false);
+  const [allAnswered, setAllAnswered] = useState(false);
+  const [questionStats, setQuestionStats] = useState<{ correctPercent: number; totalAnswers: number; correctCount: number; avgTimeMs: number } | null>(null);
   const [qrZoomed, setQrZoomed] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const prevPlayerCountRef = useRef(0);
   const lobbyGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -93,6 +105,10 @@ export default function HostSession() {
     nextQuestion: () => void;
     endStudentPacedSessionFn: () => void;
     endSessionEarly: () => void;
+    togglePause: () => void;
+    extendTimer: () => void;
+    skipQuestion: () => void;
+    toggleMute: () => void;
     navigate: ReturnType<typeof useNavigate>;
   } | null>(null);
 
@@ -115,8 +131,9 @@ export default function HostSession() {
   const createSession = async () => {
     if (!quizId) return;
     try {
-      const fn = httpsCallable<{ quizId: string }, { sessionId: string }>(functions, 'createSession');
-      const result = await fn({ quizId });
+      const classroomId = searchParams.get('classroomId');
+      const fn = httpsCallable<{ quizId: string; classroomId?: string }, { sessionId: string }>(functions, 'createSession');
+      const result = await fn({ quizId, ...(classroomId ? { classroomId } : {}) });
       if (cancelledRef.current) {
         // Effect was cleaned up while Cloud Function was in-flight — end the orphan session
         updateDoc(doc(db, 'sessions', result.data.sessionId), {
@@ -163,6 +180,7 @@ export default function HostSession() {
     timerTickedRef.current = false;
     autoEndCalledRef.current = false;
     setPreReveal(false);
+    setAllAnswered(false);
     // currentQuestionId reset removed — now derived from session props
     setAnsweredCount(0);
     const qIdx = session.questionOrder
@@ -170,6 +188,8 @@ export default function HostSession() {
       : session.currentQuestionIndex;
     const current = allQuestions[qIdx];
     setCurrentQuestionText(current?.text || '');
+    setCurrentImageUrl(current?.imageUrl || '');
+    setCurrentVideoUrl(current?.videoUrl || '');
     setCurrentCodeSnippet(current?.codeSnippet || '');
     setCurrentCodeLanguage(current?.codeLanguage || '');
     // question ID now derived from session props in the subscription effect
@@ -186,6 +206,7 @@ export default function HostSession() {
       } else {
         setTimeLeft(current.timeLimitSec);
       }
+      if (!_mutedRef.current) startCountdownMusic(current.timeLimitSec);
     }
   }, [session?.currentQuestionIndex, session?.questionState, allQuestions]);
 
@@ -193,11 +214,26 @@ export default function HostSession() {
   const timerTickedRef = useRef(false);
 
   // Clear pre-reveal when CF completes and questionState transitions to 'reveal'
+  // Also fetch question analytics for the reveal stats card
   useEffect(() => {
     if (session?.questionState === 'reveal') {
       setPreReveal(false);
+      // Fetch analytics for current question
+      const qIdx = session.questionOrder
+        ? session.questionOrder[session.currentQuestionIndex]
+        : session.currentQuestionIndex;
+      const qId = allQuestions[qIdx]?.id;
+      if (qId && session.id) {
+        const analyticsRef = doc(db, `sessions/${session.id}/analytics/${qId}`);
+        const unsub = onSnapshot(analyticsRef, (snap) => {
+          if (snap.exists()) setQuestionStats(snap.data() as typeof questionStats);
+        });
+        return () => unsub();
+      }
+    } else {
+      setQuestionStats(null);
     }
-  }, [session?.questionState]);
+  }, [session?.questionState, session?.currentQuestionIndex]);
 
   // Safety timeout — reset preReveal if CF doesn't complete in 10s
   useEffect(() => {
@@ -215,15 +251,23 @@ export default function HostSession() {
     if (!session || session.questionState !== 'live') {
       autoEndCalledRef.current = false;
       timerTickedRef.current = false;
+      stopCountdownMusic();
       return;
     }
-    if (timeLeft <= 0 || session.timerPaused) return;
+    if (timeLeft <= 0 || session.timerPaused) {
+      if (session.timerPaused) stopCountdownMusic();
+      return;
+    }
     const timer = setInterval(() => {
       timerTickedRef.current = true;
-      setTimeLeft((t) => Math.max(0, t - 1));
+      setTimeLeft((t) => {
+        const next = Math.max(0, t - 1);
+        if (!_mutedRef.current) updateCountdownTick(next, currentTimeLimitSec);
+        return next;
+      });
     }, 1000);
     return () => clearInterval(timer);
-  }, [session?.questionState, timeLeft, session?.timerPaused]);
+  }, [session?.questionState, timeLeft, session?.timerPaused, currentTimeLimitSec]);
 
   // Timer auto-end — only after the countdown has actually ticked
   useEffect(() => {
@@ -257,9 +301,13 @@ export default function HostSession() {
       setAnsweredCount(count);
       if (count > 0 && count >= players.length && !autoEndCalledRef.current) {
         autoEndCalledRef.current = true;
-        setTimeLeft(0);
-        setPreReveal(true);
-        httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+        setAllAnswered(true);
+        setTimeout(() => {
+          setAllAnswered(false);
+          setTimeLeft(0);
+          setPreReveal(true);
+          httpsCallable(functions, 'endQuestion')({ sessionId: session.id });
+        }, 1500);
       }
     };
     onValue(countRef, handler);
@@ -523,40 +571,93 @@ export default function HostSession() {
   useEffect(() => { playersLengthRef.current = players.length; });
   useEffect(() => { totalQuestionsRef.current = totalQuestions; });
   useEffect(() => {
-    keyboardActionsRef.current = { startQuestion, endQuestion, nextQuestion, endStudentPacedSessionFn, endSessionEarly, navigate };
+    keyboardActionsRef.current = { startQuestion, endQuestion, nextQuestion, endStudentPacedSessionFn, endSessionEarly, togglePause, extendTimer, skipQuestion, toggleMute, navigate };
   });
 
   // Keyboard handler — registers ONCE via [] deps, reads live state from refs
+  // Space: advance (start/end/next), P: pause/resume, T: +30s, S: skip, M: mute, Esc: end session, ?: show help
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
-      if (e.code !== 'Space') return;
+      // Ignore if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+
       const s = sessionRef.current;
       if (!s) return;
-      e.preventDefault();
       const actions = keyboardActionsRef.current;
       if (!actions) return;
       const pLen = playersLengthRef.current;
       const tQ = totalQuestionsRef.current;
 
-      if (s.status === 'lobby' && pLen > 0) {
-        actions.startQuestion();
-      } else if (s.questionState === 'student_paced') {
-        const { isConfirmed } = await confirmAction(
-          'End session?',
-          'End the session for all students?',
-          'Yes, end session',
-        );
-        if (isConfirmed) actions.endStudentPacedSessionFn();
-      } else if (s.questionState === 'live') {
-        actions.endQuestion(); // endQuestion() sets preReveal internally
-      } else if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
-        actions.nextQuestion();
-      } else if (s.questionState === 'reveal' && s.currentQuestionIndex >= tQ - 1) {
-        try {
-          await updateDoc(doc(db, 'sessions', s.id), { status: 'ended', endedAt: Date.now() });
-          actions.navigate(`/session/${s.id}/results`);
-        } catch {
-          useToastStore.getState().addToast('error', 'Failed to end session');
+      switch (e.code) {
+        case 'Space': {
+          e.preventDefault();
+          if (s.status === 'lobby' && pLen > 0) {
+            actions.startQuestion();
+          } else if (s.questionState === 'student_paced') {
+            const { isConfirmed } = await confirmAction(
+              'End session?',
+              'End the session for all students?',
+              'Yes, end session',
+            );
+            if (isConfirmed) actions.endStudentPacedSessionFn();
+          } else if (s.questionState === 'live') {
+            actions.endQuestion();
+          } else if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
+            actions.nextQuestion();
+          } else if (s.questionState === 'reveal' && s.currentQuestionIndex >= tQ - 1) {
+            try {
+              await updateDoc(doc(db, 'sessions', s.id), { status: 'ended', endedAt: Date.now() });
+              actions.navigate(`/session/${s.id}/results`);
+            } catch {
+              useToastStore.getState().addToast('error', 'Failed to end session');
+            }
+          }
+          break;
+        }
+        case 'KeyP': {
+          if (s.questionState === 'live') {
+            e.preventDefault();
+            actions.togglePause();
+          }
+          break;
+        }
+        case 'KeyT': {
+          if (s.questionState === 'live') {
+            e.preventDefault();
+            actions.extendTimer();
+          }
+          break;
+        }
+        case 'KeyS': {
+          if (s.questionState === 'live') {
+            e.preventDefault();
+            actions.skipQuestion();
+          }
+          break;
+        }
+        case 'KeyM': {
+          e.preventDefault();
+          actions.toggleMute();
+          break;
+        }
+        case 'Escape': {
+          e.preventDefault();
+          actions.endSessionEarly();
+          break;
+        }
+        case 'ArrowRight': {
+          if (s.questionState === 'reveal' && s.currentQuestionIndex < tQ - 1) {
+            e.preventDefault();
+            actions.nextQuestion();
+          }
+          break;
+        }
+        case 'Slash': {
+          if (e.shiftKey) {
+            e.preventDefault();
+            setShowShortcuts((v) => !v);
+          }
+          break;
         }
       }
     };
@@ -567,8 +668,18 @@ export default function HostSession() {
   useEffect(() => {
     if (session?.status === 'lobby' && !muted) startLobbyMusic();
     else stopLobbyMusic();
-    return () => stopLobbyMusic();
+    return () => { stopLobbyMusic(); stopCountdownMusic(); };
   }, [session?.status, muted]);
+
+  // Auto-pause timer when network drops during live question
+  const wasOnlineRef = useRef(true);
+  useEffect(() => {
+    if (!isOnline && wasOnlineRef.current && session?.questionState === 'live' && !session.timerPaused) {
+      togglePause();
+      addToast('error', 'Connection lost — timer paused');
+    }
+    wasOnlineRef.current = isOnline;
+  }, [isOnline]);
 
   useEffect(() => {
     if (players.length > prevPlayerCountRef.current && prevPlayerCountRef.current > 0) playJoin();
@@ -583,12 +694,15 @@ export default function HostSession() {
     const next = !muted;
     setSoundMuted(next);
     setMutedState(next);
+    _mutedRef.current = next;
+    if (next) stopCountdownMusic();
   };
 
-  const safeUpdateSession = async (data: Record<string, unknown>) => {
+  const safeUpdateSession = async (data: Record<string, unknown>, label?: string) => {
     if (!session) return;
     try {
       await updateDoc(doc(db, 'sessions', session.id), data);
+      if (label) addToast('success', label);
     } catch {
       addToast('error', 'Failed to update session setting');
     }
@@ -601,8 +715,19 @@ export default function HostSession() {
   );
 
   return (
-    <div className={`text-white flex flex-col ${session?.status === 'lobby' ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`} style={MESH_BG}>
-      {!isOnline && <OfflineBanner />}
+    <div className={`text-white flex flex-col pt-safe ${session?.status === 'lobby' ? 'h-dvh overflow-hidden' : 'min-h-dvh'}`} style={MESH_BG}>
+      {!isOnline && session?.questionState === 'live' ? (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface-card border border-danger/20 rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 text-center shadow-2xl animate-bounce-in">
+            <div className="w-10 h-10 border-4 border-danger/30 border-t-danger rounded-full animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-danger mb-2">Connection Lost</h3>
+            <p className="text-sm text-white/60 mb-1">Timer has been paused automatically.</p>
+            <p className="text-xs text-white/40">Reconnecting...</p>
+          </div>
+        </div>
+      ) : !isOnline ? (
+        <OfflineBanner />
+      ) : null}
 
       {/* QR Code Zoom Modal */}
       {qrZoomed && session?.pinCode && (
@@ -615,7 +740,7 @@ export default function HostSession() {
             onClick={(e) => e.stopPropagation()}
           >
             <QRCodeSVG
-              value={`${window.location.origin}/join?pin=${session.pinCode}`}
+              value={`${APP_URL}/join?pin=${session.pinCode}`}
               size={Math.min(window.innerWidth - 80, window.innerHeight - 200, 400)}
               level="M"
             />
@@ -655,6 +780,14 @@ export default function HostSession() {
             aria-label={muted ? 'Unmute' : 'Mute'}
           >
             {muted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+          </button>
+          <button
+            onClick={() => setShowShortcuts(true)}
+            className="p-2 sm:p-2.5 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-white"
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (?)"
+          >
+            <span className="w-4 h-4 sm:w-5 sm:h-5 inline-flex items-center justify-center text-xs font-bold border border-current rounded">?</span>
           </button>
         </div>
       </header>
@@ -715,7 +848,7 @@ export default function HostSession() {
                       title="Click to enlarge"
                     >
                       <QRCodeSVG
-                        value={`${window.location.origin}/join?pin=${session.pinCode}`}
+                        value={`${APP_URL}/join?pin=${session.pinCode}`}
                         size={100}
                         level="M"
                         className="sm:w-32 sm:h-32"
@@ -840,11 +973,43 @@ export default function HostSession() {
                       <span className="text-sm font-medium">Anti-Cheat</span>
                     </div>
                     <button
-                      onClick={() => safeUpdateSession({ antiCheatEnabled: session.antiCheatEnabled === false })}
+                      onClick={() => safeUpdateSession({ antiCheatEnabled: session.antiCheatEnabled === false }, `Anti-Cheat ${session.antiCheatEnabled === false ? 'enabled' : 'disabled'}`)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.antiCheatEnabled !== false ? 'bg-success' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.antiCheatEnabled !== false ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
+                  </div>
+
+                  {/* Scoring Mode */}
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <Zap className={`w-5 h-5 ${session.scoringMode === 'accuracy' ? 'text-success' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
+                      <span className="text-sm font-medium">Scoring</span>
+                    </div>
+                    <div className="flex items-center bg-white/10 rounded-full p-0.5 gap-0.5">
+                      <button
+                        onClick={() => safeUpdateSession({ scoringMode: 'speed' }, 'Scoring: Speed')}
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          session.scoringMode !== 'accuracy'
+                            ? 'bg-brand text-white shadow'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        <Zap className="w-3 h-3 inline mr-1" />
+                        Speed
+                      </button>
+                      <button
+                        onClick={() => safeUpdateSession({ scoringMode: 'accuracy' }, 'Scoring: Accuracy')}
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                          session.scoringMode === 'accuracy'
+                            ? 'bg-success text-white shadow'
+                            : 'text-white/50 hover:text-white'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                        Accuracy
+                      </button>
+                    </div>
                   </div>
 
                   {/* Pace Mode */}
@@ -855,7 +1020,7 @@ export default function HostSession() {
                     </div>
                     <div className="flex items-center bg-white/10 rounded-full p-0.5 gap-0.5">
                       <button
-                        onClick={() => safeUpdateSession({ paceMode: 'teacher' })}
+                        onClick={() => safeUpdateSession({ paceMode: 'teacher' }, 'Pace: Teacher-led')}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.paceMode !== 'student'
                             ? 'bg-brand text-white shadow'
@@ -866,7 +1031,7 @@ export default function HostSession() {
                         Led
                       </button>
                       <button
-                        onClick={() => safeUpdateSession({ paceMode: 'student' })}
+                        onClick={() => safeUpdateSession({ paceMode: 'student' }, 'Pace: Self-paced')}
                         className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
                           session.paceMode === 'student'
                             ? 'bg-info text-white shadow'
@@ -903,7 +1068,7 @@ export default function HostSession() {
                       <button
                         onClick={() => {
                           const teamCount = session.teamCount || 2;
-                          safeUpdateSession({ teamMode: !session.teamMode, teamCount, teams: TEAM_PRESETS.slice(0, teamCount) });
+                          safeUpdateSession({ teamMode: !session.teamMode, teamCount, teams: TEAM_PRESETS.slice(0, teamCount) }, `Teams ${session.teamMode ? 'disabled' : 'enabled'}`);
                         }}
                         className={`relative w-11 h-6 rounded-full transition-colors ${session.teamMode ? 'bg-info' : 'bg-white/20'}`}
                       >
@@ -912,17 +1077,31 @@ export default function HostSession() {
                     </div>
                   </div>
 
-                  {/* Shuffle */}
+                  {/* Shuffle Questions */}
                   <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="flex items-center gap-3">
                       <Shuffle className={`w-5 h-5 ${session.shuffleQuestions ? 'text-warning' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
-                      <span className="text-sm font-medium">Shuffle</span>
+                      <span className="text-sm font-medium">Shuffle Questions</span>
                     </div>
                     <button
-                      onClick={() => safeUpdateSession({ shuffleQuestions: !session.shuffleQuestions })}
+                      onClick={() => safeUpdateSession({ shuffleQuestions: !session.shuffleQuestions }, `Shuffle Questions ${session.shuffleQuestions ? 'off' : 'on'}`)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleQuestions ? 'bg-warning' : 'bg-white/20'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleQuestions ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+
+                  {/* Shuffle Answers */}
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <Shuffle className={`w-5 h-5 ${session.shuffleAnswers ? 'text-warning' : 'text-white/50 group-hover:text-brand'} transition-colors`} />
+                      <span className="text-sm font-medium">Shuffle Answers</span>
+                    </div>
+                    <button
+                      onClick={() => safeUpdateSession({ shuffleAnswers: !session.shuffleAnswers }, `Shuffle Answers ${session.shuffleAnswers ? 'off' : 'on'}`)}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${session.shuffleAnswers ? 'bg-warning' : 'bg-white/20'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${session.shuffleAnswers ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
                   </div>
 
@@ -988,15 +1167,35 @@ export default function HostSession() {
                   </div>
                 </div>
 
-                {/* Bottom: Game Info + Start */}
+                {/* Bottom: Pre-game Checklist + Start */}
                 <div className="mt-auto flex flex-col gap-3">
-                  <div className="bg-brand/10 border border-brand/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-brand font-bold uppercase mb-0.5">
-                      {players.length > 0 ? 'Game Ready' : 'Waiting for Players'}
-                    </p>
-                    <p className="text-sm text-white/50">
-                      {totalQuestions} Question{totalQuestions !== 1 && 's'} loaded
-                    </p>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${players.length > 0 ? 'bg-success/20 text-success' : 'bg-white/10 text-white/30'}`}>
+                        {players.length > 0 ? '✓' : '○'}
+                      </span>
+                      <span className={players.length > 0 ? 'text-white/70' : 'text-white/40'}>
+                        {players.length > 0 ? `${players.length} player${players.length !== 1 ? 's' : ''} joined` : 'Waiting for players'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${session.antiCheatEnabled !== false ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}`}>
+                        {session.antiCheatEnabled !== false ? '✓' : '!'}
+                      </span>
+                      <span className={session.antiCheatEnabled !== false ? 'text-white/70' : 'text-warning/70'}>
+                        Anti-Cheat {session.antiCheatEnabled !== false ? 'enabled' : 'disabled'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] bg-success/20 text-success">✓</span>
+                      <span className="text-white/70">
+                        {session.scoringMode === 'accuracy' ? 'Accuracy' : 'Speed'} scoring · {session.paceMode === 'student' ? 'Self-paced' : 'Teacher-led'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] bg-success/20 text-success">✓</span>
+                      <span className="text-white/70">{totalQuestions} question{totalQuestions !== 1 ? 's' : ''} loaded</span>
+                    </div>
                   </div>
                   <button
                     onClick={startQuestion}
@@ -1042,7 +1241,18 @@ export default function HostSession() {
 
       {/* ══════════════════ LIVE QUESTION ══════════════════ */}
       {session.questionState === 'live' && !preReveal && (
-        <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto w-full">
+        <main className="grow flex flex-col lg:flex-row gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 pb-36 sm:pb-8 max-w-7xl mx-auto w-full relative">
+          {/* All Answered celebration overlay */}
+          {allAnswered && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+              <div className="bg-success/20 backdrop-blur-md border border-success/30 rounded-2xl px-8 py-5 animate-bounce-in text-center">
+                <CheckCircle2 className="w-10 h-10 text-success mx-auto mb-2" />
+                <p className="text-xl font-bold text-success">All Answered!</p>
+                <p className="text-sm text-white/50 mt-1">Calculating scores...</p>
+              </div>
+            </div>
+          )}
+
           {/* Left: Question + Timer + Controls */}
           <div className="grow flex flex-col items-center justify-center">
             {/* Question counter */}
@@ -1058,6 +1268,21 @@ export default function HostSession() {
             <h2 className="text-xl sm:text-2xl md:text-5xl font-bold text-center mb-6 sm:mb-10 max-w-3xl leading-tight animate-fade-in wrap-break-word">
               {currentQuestionText}
             </h2>
+
+            {currentImageUrl && (
+              <img src={currentImageUrl} alt="Question image" className="max-h-40 sm:max-h-56 mx-auto mb-6 sm:mb-10 rounded-xl object-contain animate-fade-in" />
+            )}
+
+            {currentVideoUrl && getYouTubeId(currentVideoUrl) && (
+              <div className="w-full max-w-xl aspect-video rounded-xl overflow-hidden mb-6 sm:mb-10 animate-fade-in">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYouTubeId(currentVideoUrl)}?autoplay=0&rel=0`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            )}
 
             {currentCodeSnippet && (
               <CodeBlock code={currentCodeSnippet} language={currentCodeLanguage} className="w-full max-w-2xl mb-6 sm:mb-10 animate-fade-in" />
@@ -1091,32 +1316,38 @@ export default function HostSession() {
               </div>
             </div>
 
-            {/* Control Toolbar */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 sm:mt-10">
+            {/* Control Toolbar — fixed bottom on mobile */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl border-t border-white/10 p-3 flex flex-col items-center gap-2 sm:static sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:p-0 sm:flex-row sm:gap-3 sm:mt-10">
               <div className="inline-flex items-center gap-1 bg-white/5 rounded-full p-1.5 border border-white/10 backdrop-blur-sm">
                 <button
                   onClick={togglePause}
                   className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white touch-manipulation"
-                  title={session.timerPaused ? 'Resume timer' : 'Pause timer'}
+                  title={session.timerPaused ? 'Resume timer [P]' : 'Pause timer [P]'}
                   aria-label={session.timerPaused ? 'Resume timer' : 'Pause timer'}
                 >
-                  {session.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                  <span className="flex items-center gap-1.5">
+                    {session.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                    <kbd className="hidden sm:inline text-[10px] text-white/25 font-mono">P</kbd>
+                  </span>
                 </button>
                 <button
                   onClick={extendTimer}
                   className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white text-sm font-bold touch-manipulation"
-                  title="Add 30 seconds"
+                  title="Add 30 seconds [T]"
                 >
-                  +30s
+                  +30s <kbd className="hidden sm:inline text-[10px] text-white/25 font-mono ml-1">T</kbd>
                 </button>
                 {!isLastQuestion && (
                   <button
                     onClick={skipQuestion}
                     className="p-3 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white touch-manipulation"
-                    title="Skip to next question"
+                    title="Skip to next question [S]"
                     aria-label="Skip to next question"
                   >
-                    <SkipForward className="w-4 h-4" />
+                    <span className="flex items-center gap-1.5">
+                      <SkipForward className="w-4 h-4" />
+                      <kbd className="hidden sm:inline text-[10px] text-white/25 font-mono">S</kbd>
+                    </span>
                   </button>
                 )}
               </div>
@@ -1124,24 +1355,24 @@ export default function HostSession() {
                 onClick={endQuestion}
                 className="px-6 sm:px-8 py-3 sm:py-3.5 btn-3d-danger text-white font-bold rounded-full transition-all w-full sm:w-auto"
               >
-                End Question
+                End Question <kbd className="hidden sm:inline text-[10px] opacity-50 font-mono ml-1">Space</kbd>
               </button>
               <button
                 onClick={endSessionEarly}
                 disabled={endingSession}
                 className="px-5 sm:px-6 py-3 sm:py-3.5 btn-3d-ghost text-white/60 font-semibold rounded-full transition-all w-full sm:w-auto text-sm"
               >
-                {endingSession ? 'Ending...' : 'End Session'}
+                {endingSession ? 'Ending...' : <>End Session <kbd className="hidden sm:inline text-[10px] opacity-50 font-mono ml-1">Esc</kbd></>}
               </button>
             </div>
 
             <p className="hidden sm:block text-white/15 text-xs mt-10">
-              Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">Space</kbd> to advance
+              Press <kbd className="px-1.5 py-0.5 bg-white/5 rounded text-white/25 text-[10px]">?</kbd> for all shortcuts
             </p>
           </div>
 
           {/* Right: Participants panel */}
-          <div className="w-full lg:w-72 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 animate-slide-up self-start lg:sticky lg:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
+          <div className="w-full lg:w-72 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 animate-slide-up self-start md:sticky md:top-4 max-h-[calc(100vh-8rem)] flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -1152,33 +1383,40 @@ export default function HostSession() {
               </span>
             </div>
             <div className="overflow-y-auto flex-1 space-y-1 min-h-0">
-              {[...players]
-                .sort((a, b) => {
-                  const aAnswered = answeredPlayerIds.has(a.id) ? 1 : 0;
-                  const bAnswered = answeredPlayerIds.has(b.id) ? 1 : 0;
-                  return aAnswered - bAnswered;
-                })
-                .map((p) => {
-                  const hasAnswered = answeredPlayerIds.has(p.id);
-                  return (
-                    <div
-                      key={p.id}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 ${
-                        hasAnswered ? 'bg-success/10' : 'bg-white/5'
-                      }`}
-                    >
-                      {p.avatar ? (
-                        <span className="text-base leading-none shrink-0">{p.avatar}</span>
-                      ) : (
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${hasAnswered ? 'bg-success' : 'bg-white/20 animate-pulse'}`} />
-                      )}
-                      <span className={`text-sm font-medium truncate ${hasAnswered ? 'text-success' : 'text-white/50'}`}>
-                        {p.nickname}
-                      </span>
-                      {hasAnswered && <CheckCircle2 className="w-3.5 h-3.5 text-success ml-auto shrink-0" />}
-                    </div>
-                  );
-                })}
+              {(() => {
+                const timeElapsedPct = currentTimeLimitSec > 0 ? 1 - timeLeft / currentTimeLimitSec : 0;
+                const showStillThinking = timeElapsedPct >= 0.7;
+                return [...players]
+                  .sort((a, b) => {
+                    const aAnswered = answeredPlayerIds.has(a.id) ? 1 : 0;
+                    const bAnswered = answeredPlayerIds.has(b.id) ? 1 : 0;
+                    return aAnswered - bAnswered;
+                  })
+                  .map((p) => {
+                    const hasAnswered = answeredPlayerIds.has(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 ${
+                          hasAnswered ? 'bg-success/10' : showStillThinking && !hasAnswered ? 'bg-warning/5 border border-warning/10' : 'bg-white/5'
+                        }`}
+                      >
+                        {p.avatar ? (
+                          <span className="text-base leading-none shrink-0">{p.avatar}</span>
+                        ) : (
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${hasAnswered ? 'bg-success' : 'bg-white/20 animate-pulse'}`} />
+                        )}
+                        <span className={`text-sm font-medium truncate ${hasAnswered ? 'text-success' : 'text-white/50'}`}>
+                          {p.nickname}
+                        </span>
+                        {hasAnswered && <CheckCircle2 className="w-3.5 h-3.5 text-success ml-auto shrink-0" />}
+                        {!hasAnswered && showStillThinking && (
+                          <span className="text-[10px] text-warning/70 ml-auto shrink-0 animate-pulse">thinking...</span>
+                        )}
+                      </div>
+                    );
+                  });
+              })()}
             </div>
           </div>
         </main>
@@ -1311,6 +1549,35 @@ export default function HostSession() {
             </div>
           )}
 
+          {questionStats && (
+            <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-5 mb-4 animate-fade-in">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-brand" />
+                <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider">Question {session.currentQuestionIndex + 1} Stats</h3>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex flex-col items-center px-4 py-2 bg-white/5 rounded-xl min-w-[80px]">
+                  <span className={`text-2xl font-black tabular-nums ${questionStats.correctPercent >= 70 ? 'text-success' : questionStats.correctPercent >= 40 ? 'text-warning' : 'text-danger'}`}>
+                    {Math.round(questionStats.correctPercent)}%
+                  </span>
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Correct</span>
+                </div>
+                <div className="flex flex-col items-center px-4 py-2 bg-white/5 rounded-xl min-w-[80px]">
+                  <span className="text-2xl font-black tabular-nums text-white/80">
+                    {questionStats.correctCount}/{questionStats.totalAnswers}
+                  </span>
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Answered</span>
+                </div>
+                <div className="flex flex-col items-center px-4 py-2 bg-white/5 rounded-xl min-w-[80px]">
+                  <span className="text-2xl font-black tabular-nums text-white/80">
+                    {(questionStats.avgTimeMs / 1000).toFixed(1)}s
+                  </span>
+                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Avg Time</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white/[0.07] backdrop-blur-xl border border-white/12 rounded-2xl shadow-lg shadow-black/10 p-4 sm:p-6 mb-4 animate-slide-up">
             <Leaderboard sessionId={session.id} top10Snapshot={session.top10Snapshot} currentQuestion={session.currentQuestionIndex + 1} totalQuestions={totalQuestions} />
           </div>
@@ -1321,12 +1588,38 @@ export default function HostSession() {
                 <ShieldAlert className="w-4 h-4 text-danger" />
                 <h3 className="text-sm font-bold text-danger">Flagged Activity</h3>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {Array.from(violations.entries()).map(([pid, v]) => (
-                  <span key={pid} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white/80">
-                    {v.nickname}: {v.totalViolations} violation{v.totalViolations !== 1 ? 's' : ''}
-                  </span>
-                ))}
+              <div className="space-y-2">
+                {Array.from(violations.entries()).map(([pid, v]) => {
+                  const player = players.find((p) => p.id === pid);
+                  const isDisqualified = (player as any)?.disqualified;
+                  return (
+                    <div key={pid} className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg">
+                      <span className="text-xs text-white/80 flex-1">
+                        {v.nickname}: {v.totalViolations} violation{v.totalViolations !== 1 ? 's' : ''}
+                      </span>
+                      {isDisqualified ? (
+                        <span className="text-[10px] text-danger font-bold uppercase">Disqualified</span>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            const { isConfirmed } = await confirmAction(
+                              'Disqualify player?',
+                              `Remove ${v.nickname} from the leaderboard?`,
+                              'Yes, disqualify',
+                            );
+                            if (isConfirmed) {
+                              await updateDoc(doc(db, `sessions/${session.id}/players/${pid}`), { disqualified: true });
+                              addToast('success', `${v.nickname} has been disqualified`);
+                            }
+                          }}
+                          className="px-2.5 py-1 bg-danger/20 hover:bg-danger/30 text-danger text-[10px] font-bold rounded-lg transition-colors uppercase"
+                        >
+                          Disqualify
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1401,6 +1694,35 @@ export default function HostSession() {
               >
                 Leave &amp; End
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard shortcuts overlay */}
+      {showShortcuts && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowShortcuts(false)}>
+          <div className="bg-surface-card border border-white/10 rounded-2xl p-6 sm:p-8 max-w-sm w-full mx-4 shadow-2xl animate-bounce-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-white">Keyboard Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-white/40 hover:text-white transition-colors text-xl leading-none">&times;</button>
+            </div>
+            <div className="space-y-2.5 text-sm">
+              {[
+                ['Space', 'Advance (start / end / next)'],
+                ['→', 'Next question'],
+                ['P', 'Pause / Resume timer'],
+                ['T', '+30 seconds'],
+                ['S', 'Skip question'],
+                ['M', 'Mute / Unmute'],
+                ['Esc', 'End session early'],
+                ['?', 'Toggle this help'],
+              ].map(([key, desc]) => (
+                <div key={key} className="flex items-center gap-3">
+                  <kbd className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 bg-white/10 border border-white/15 rounded-lg text-xs font-mono font-bold text-white/80">{key}</kbd>
+                  <span className="text-white/60">{desc}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

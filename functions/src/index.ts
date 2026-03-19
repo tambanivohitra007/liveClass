@@ -7,6 +7,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onValueCreated } from "firebase-functions/v2/database";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { defineSecret } from "firebase-functions/params";
+import { checkCorrectness, getShardId as getShardIdLogic, generatePin as generatePinLogic } from "./logic";
+import { checkRateLimit, RATE_LIMITS } from "./rateLimit";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -15,6 +17,7 @@ const storageBucket = admin.storage().bucket();
 
 const REGION = "asia-southeast1";
 const NUM_SHARDS = 10;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "rindra.it@gmail.com";
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 const FUNCTION_CONFIG = {
@@ -64,75 +67,10 @@ async function getPlayerCached(sessionId: string, playerId: string): Promise<Fir
   return data;
 }
 
-// --- Correctness checker (extracted for RTDB-only scoring) ---
-function checkCorrectness(selection: string, question: FirebaseFirestore.DocumentData): boolean {
-  const isPoll = question.type === "poll";
-  const isSlide = question.type === "slide";
-
-  if (isSlide) return false;
-  if (isPoll) return true;
-
-  if (question.type === "ordering") {
-    try {
-      const submitted = JSON.parse(selection) as string[];
-      const expected: string[] = question.options || [];
-      return submitted.length === expected.length &&
-        submitted.every((item: string, idx: number) => item === expected[idx]);
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "matching") {
-    try {
-      const pairs = JSON.parse(selection) as Record<string, string>;
-      const options: string[] = question.options || [];
-      const matchOpts: string[] = question.matchOptions || [];
-      return options.length > 0 && options.every((left: string, idx: number) =>
-        pairs[left] === matchOpts[idx]
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "fill_blank") {
-    try {
-      const answers = JSON.parse(selection) as string[];
-      const expected: string[] = question.correctAnswers || [];
-      return answers.length === expected.length && answers.every(
-        (a: string, idx: number) => a.trim().toLowerCase() === expected[idx].trim().toLowerCase()
-      );
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "mcq" && question.correctAnswers && question.correctAnswers.length > 1) {
-    try {
-      const chosen = JSON.parse(selection) as string[];
-      const expected: string[] = question.correctAnswers;
-      return chosen.length === expected.length &&
-        chosen.every((c: string) => expected.includes(c)) &&
-        expected.every((e: string) => chosen.includes(e));
-    } catch {
-      return false;
-    }
-  }
-
-  if (question.type === "code_output") {
-    const expected: string[] = question.correctAnswers || [];
-    return expected.some(
-      (a: string) => a.trim().toLowerCase() === selection.trim().toLowerCase()
-    );
-  }
-
-  // Default: mcq, tf
-  return (question.correctAnswers || []).includes(selection);
-}
+// checkCorrectness imported from ./logic
 
 function generatePin(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return generatePinLogic();
 }
 
 function generateToken(): string {
@@ -140,11 +78,7 @@ function generateToken(): string {
 }
 
 function getShardId(playerId: string): number {
-  let hash = 0;
-  for (let i = 0; i < playerId.length; i++) {
-    hash = (hash * 31 + playerId.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash) % NUM_SHARDS;
+  return getShardIdLogic(playerId, NUM_SHARDS);
 }
 
 // --- Email Helper ---
@@ -266,11 +200,12 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   let pinCode = generatePin();
   let pinCollision = true;
   while (pinCollision) {
-    const [sessSnap, lgSnap] = await Promise.all([
+    const [sessSnap, lgSnap, bgSnap] = await Promise.all([
       db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
       db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("mini_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
     ]);
-    if (sessSnap.empty && lgSnap.empty) {
+    if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
       pinCollision = false;
     } else {
       pinCode = generatePin();
@@ -308,12 +243,21 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   // Fire-and-forget: notify classroom students about the live session
   if (classroomId) {
     const quizTitle = quizDoc.data()?.title || "a quiz";
+    // In-app notifications
     createNotificationsForClassroom(classroomId, request.auth!.uid, {
       type: "session_started",
       title: "Live Session Started",
       message: `A live session for "${quizTitle}" has started! Join with PIN: ${pinCode}`,
       metadata: { sessionId: sessionRef.id, pinCode, quizTitle },
     }).catch((err) => console.warn("Notification error (non-fatal):", err));
+    // FCM push notifications
+    sendPushToClassroom(
+      classroomId,
+      request.auth!.uid,
+      "Live Session Started!",
+      `"${quizTitle}" is live! Join with PIN: ${pinCode}`,
+      { pin: pinCode, sessionId: sessionRef.id }
+    ).catch((err) => console.warn("FCM push error (non-fatal):", err));
   }
 
   return { sessionId: sessionRef.id };
@@ -333,6 +277,12 @@ export const joinSession = onCall(HOT_PATH_CONFIG, async (request) => {
       "invalid-argument",
       "sessionId and nickname are required"
     );
+  }
+
+  // Rate limit: 5 join attempts per 10 seconds per session
+  const rateLimitKey = `join_${sessionId}_${request.auth?.uid || nickname}`;
+  if (!checkRateLimit(rateLimitKey, RATE_LIMITS.joinSession.maxRequests, RATE_LIMITS.joinSession.windowMs)) {
+    throw new HttpsError("resource-exhausted", "Too many join attempts. Please wait a moment.");
   }
 
   if (nickname.length > 20) {
@@ -764,22 +714,28 @@ async function computeAndWriteScore(input: ScoreInput): Promise<ScoreResult> {
 
   await batch.commit();
 
-  // Compute rank info for personal feedback
+  // Compute rank in O(n) without sorting — count players with higher score
   const newTotalPoints = playerData.totalPoints + pointsAwarded;
   const allShards = await db
     .collection(`sessions/${sessionId}/leaderboard_shards`)
     .get();
-  const ranked: { pid: string; pts: number }[] = [];
+  let rank = 1;
+  let nextHigherPts = 0; // points of the player just above
   allShards.docs.forEach((s) => {
     const pl = s.data().players || {};
     for (const [pid, d] of Object.entries(pl)) {
-      const pd = d as { totalPoints: number };
-      ranked.push({ pid, pts: pid === playerId ? newTotalPoints : pd.totalPoints });
+      if (pid === playerId) continue;
+      const pts = (d as { totalPoints: number }).totalPoints;
+      if (pts > newTotalPoints) {
+        rank++;
+        // Track the lowest score that's still higher (closest above)
+        if (nextHigherPts === 0 || pts < nextHigherPts) {
+          nextHigherPts = pts;
+        }
+      }
     }
   });
-  ranked.sort((a, b) => b.pts - a.pts);
-  const rank = ranked.findIndex((p) => p.pid === playerId) + 1;
-  const behindBy = rank > 1 ? ranked[rank - 2].pts - newTotalPoints : 0;
+  const behindBy = rank > 1 ? nextHigherPts - newTotalPoints : 0;
 
   return { correct, pointsAwarded, rank, totalPoints: newTotalPoints, behindBy };
 }
@@ -795,6 +751,12 @@ export const scoreAnswer = onCall(HOT_PATH_CONFIG, async (request) => {
       timeMs: number;
       activeToken?: string;
     };
+
+  // Rate limit: 2 answer submissions per second per player
+  const rateLimitKey = `score_${sessionId}_${playerId}`;
+  if (!checkRateLimit(rateLimitKey, RATE_LIMITS.scoreAnswer.maxRequests, RATE_LIMITS.scoreAnswer.windowMs)) {
+    throw new HttpsError("resource-exhausted", "Too many answer submissions. Please wait.");
+  }
 
   return computeAndWriteScore({ sessionId, questionId, playerId, selection, timeMs, activeToken });
 });
@@ -854,17 +816,29 @@ export const processAnswer = onValueCreated(
       const currentScoreSnap = await scoreRef.get();
       const currentScore = currentScoreSnap.val() || { totalPoints: 0, streak: 0 };
 
-      // Calculate points: base(1000) * timeRemaining% + streak bonus
+      // Calculate points based on scoring mode
+      const isAccuracyMode = session.scoringMode === "accuracy";
       let pointsAwarded = 0;
       let newStreak = 0;
       if (correct && !isPoll) {
-        const timeFactor = Math.max(
-          0,
-          (question.timeLimitSec * 1000 - data.timeMs) / (question.timeLimitSec * 1000)
-        );
-        pointsAwarded = Math.round(1000 * timeFactor);
+        if (isAccuracyMode) {
+          // Accuracy mode: flat 1000 points for correct, no speed bonus
+          pointsAwarded = 1000;
+        } else {
+          // Speed mode: base(1000) * timeRemaining%
+          const timeFactor = Math.max(
+            0,
+            (question.timeLimitSec * 1000 - data.timeMs) / (question.timeLimitSec * 1000)
+          );
+          pointsAwarded = Math.round(1000 * timeFactor);
+        }
         newStreak = currentScore.streak + 1;
         pointsAwarded += newStreak * 50;
+        // Apply per-question point multiplier
+        const multiplier = question.pointMultiplier ?? 1;
+        if (multiplier > 1) {
+          pointsAwarded *= multiplier;
+        }
       } else if (correct) {
         // Poll: correct but 0 points
         newStreak = currentScore.streak;
@@ -1300,7 +1274,7 @@ export const emailSessionResults = onCall(
     const session = sessionDoc.data()!;
     if (
       session.hostId !== request.auth.uid &&
-      request.auth.token.email !== "rindra.it@gmail.com"
+      request.auth.token.email !== ADMIN_EMAIL
     ) {
       throw new HttpsError("permission-denied", "Not the session host");
     }
@@ -1544,6 +1518,11 @@ export const generateQuestions = onCall(
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Must be logged in");
+    }
+
+    // Rate limit: 5 AI generations per minute per user
+    if (!checkRateLimit(`ai_${request.auth.uid}`, RATE_LIMITS.aiGenerate.maxRequests, RATE_LIMITS.aiGenerate.windowMs)) {
+      throw new HttpsError("resource-exhausted", "Too many AI generation requests. Please wait a minute.");
     }
 
     const {
@@ -2943,11 +2922,12 @@ export const createLiveGrading = onCall(FUNCTION_CONFIG, async (request) => {
   let pinCode = generatePin();
   let pinCollision = true;
   while (pinCollision) {
-    const [sessSnap, lgSnap] = await Promise.all([
+    const [sessSnap, lgSnap, bgSnap] = await Promise.all([
       db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
       db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("mini_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
     ]);
-    if (sessSnap.empty && lgSnap.empty) {
+    if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
       pinCollision = false;
     } else {
       pinCode = generatePin();
@@ -3045,4 +3025,314 @@ export const joinLiveGrading = onCall(HOT_PATH_CONFIG, async (request) => {
   });
 
   return { playerId: playerRef.id };
+});
+
+// ─── Push Notification: Game Start Alert ───
+
+// Helper: send FCM push to classroom members
+async function sendPushToClassroom(
+  classroomId: string,
+  excludeUserId: string,
+  title: string,
+  body: string,
+  data: Record<string, string>
+): Promise<number> {
+  const membersSnap = await db
+    .collection(`classrooms/${classroomId}/members`)
+    .where("role", "==", "student")
+    .get();
+
+  if (membersSnap.empty) return 0;
+
+  const userIds = membersSnap.docs
+    .map((d) => d.data().userId as string)
+    .filter((id) => id !== excludeUserId);
+
+  if (userIds.length === 0) return 0;
+
+  // Fetch FCM tokens in batches of 10
+  const tokens: string[] = [];
+  for (let i = 0; i < userIds.length; i += 10) {
+    const batch = userIds.slice(i, i + 10);
+    const userDocs = await db.getAll(...batch.map((id) => db.doc(`users/${id}`)));
+    for (const userDoc of userDocs) {
+      const fcmToken = userDoc.data()?.fcmToken;
+      if (fcmToken) tokens.push(fcmToken);
+    }
+  }
+
+  if (tokens.length === 0) return 0;
+
+  const message: admin.messaging.MulticastMessage = {
+    tokens,
+    notification: { title, body },
+    data,
+  };
+
+  const result = await admin.messaging().sendEachForMulticast(message);
+  return result.successCount;
+}
+
+export const sendGameStartNotification = onCall(FUNCTION_CONFIG, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Login required");
+
+  const { classroomId, pinCode, title } = request.data;
+  if (!classroomId || !pinCode) {
+    throw new HttpsError("invalid-argument", "classroomId and pinCode required");
+  }
+
+  const classDoc = await db.doc(`classrooms/${classroomId}`).get();
+  if (!classDoc.exists) throw new HttpsError("not-found", "Classroom not found");
+
+  const sent = await sendPushToClassroom(
+    classroomId,
+    request.auth.uid,
+    title || "Game Starting!",
+    `Join with PIN: ${pinCode}`,
+    { pin: String(pinCode) }
+  );
+
+  return { sent };
+});
+
+// ═══════════════════════════════════════════════════════
+// ─── Mini Game Engine (modular game types) ────────────
+// ═══════════════════════════════════════════════════════
+
+import { getGameModule } from "./games/registry";
+import { GameRound } from "./games/types";
+
+export const createMiniGame = onCall({ ...FUNCTION_CONFIG, secrets: [geminiApiKey] }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in");
+  }
+
+  const { gameType, title, config, roundCount, timeLimitSec } = request.data as {
+    gameType: string;
+    title?: string;
+    config: Record<string, unknown>;
+    roundCount: number;
+    timeLimitSec: number;
+  };
+
+  if (!gameType) throw new HttpsError("invalid-argument", "gameType is required");
+  const gameModule = getGameModule(gameType);
+  if (!gameModule) throw new HttpsError("invalid-argument", `Unknown game type: ${gameType}`);
+
+  if (!roundCount || roundCount < 1 || roundCount > 30) {
+    throw new HttpsError("invalid-argument", "roundCount must be 1-30");
+  }
+  if (!timeLimitSec || timeLimitSec < 5 || timeLimitSec > 120) {
+    throw new HttpsError("invalid-argument", "timeLimitSec must be 5-120");
+  }
+
+  if (gameModule.validateConfig) {
+    try { gameModule.validateConfig(config); }
+    catch (err) { throw new HttpsError("invalid-argument", (err as Error).message); }
+  }
+
+  // Try AI generation first, fallback to static/procedural
+  let rounds: GameRound[];
+  if (gameModule.generateRoundsAI) {
+    const apiKey = geminiApiKey.value();
+    const aiRounds = apiKey ? await gameModule.generateRoundsAI(config, roundCount, timeLimitSec, apiKey) : null;
+    rounds = aiRounds || gameModule.generateRounds(config, roundCount, timeLimitSec);
+  } else {
+    rounds = gameModule.generateRounds(config, roundCount, timeLimitSec);
+  }
+
+  // Generate unique PIN across sessions, live_gradings, and mini_games
+  let pinCode = generatePin();
+  let pinCollision = true;
+  while (pinCollision) {
+    const [sessSnap, lgSnap, mgSnap] = await Promise.all([
+      db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("mini_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+    ]);
+    if (sessSnap.empty && lgSnap.empty && mgSnap.empty) {
+      pinCollision = false;
+    } else {
+      pinCode = generatePin();
+    }
+  }
+
+  const mgRef = db.collection("mini_games").doc();
+  await mgRef.set({
+    gameType,
+    ownerId: request.auth.uid,
+    pinCode,
+    title: title || gameModule.generateRounds.name || "Mini Game",
+    status: "lobby",
+    config,
+    roundCount,
+    timeLimitSec,
+    rounds,
+    currentRoundIndex: -1,
+    roundState: "waiting",
+    roundStartedAt: null,
+    joinLocked: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    startedAt: null,
+    endedAt: null,
+    top10Snapshot: [],
+  });
+
+  return { miniGameId: mgRef.id };
+});
+
+export const joinMiniGame = onCall(HOT_PATH_CONFIG, async (request) => {
+  const { miniGameId, nickname, avatar, playerId: existingPlayerId } = request.data as {
+    miniGameId: string;
+    nickname: string;
+    avatar?: string;
+    playerId?: string;
+  };
+
+  if (!miniGameId || !nickname) {
+    throw new HttpsError("invalid-argument", "miniGameId and nickname are required");
+  }
+  if (nickname.length > 20) {
+    throw new HttpsError("invalid-argument", "Nickname too long");
+  }
+
+  const mgDoc = await db.doc(`mini_games/${miniGameId}`).get();
+  if (!mgDoc.exists) {
+    throw new HttpsError("not-found", "Game not found");
+  }
+
+  const mg = mgDoc.data()!;
+  if (mg.status === "ended") {
+    throw new HttpsError("failed-precondition", "Game has ended");
+  }
+
+  // Rejoin: authenticated user by userId
+  if (request.auth?.uid) {
+    const existingByUser = await db
+      .collection(`mini_games/${miniGameId}/players`)
+      .where("userId", "==", request.auth.uid)
+      .limit(1)
+      .get();
+    if (!existingByUser.empty) {
+      const doc = existingByUser.docs[0];
+      return { playerId: doc.id, nickname: doc.data().nickname, avatar: doc.data().avatar, rejoin: true };
+    }
+  }
+
+  // Rejoin: unauthenticated user by playerId + nickname
+  if (existingPlayerId) {
+    const existingDoc = await db
+      .doc(`mini_games/${miniGameId}/players/${existingPlayerId}`)
+      .get();
+    if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
+      return { playerId: existingDoc.id, nickname, avatar: existingDoc.data()?.avatar, rejoin: true };
+    }
+  }
+
+  // Join lock
+  if (mg.joinLocked) {
+    throw new HttpsError("failed-precondition", "Game is locked");
+  }
+
+  // Nickname uniqueness
+  const dupCheck = await db
+    .collection(`mini_games/${miniGameId}/players`)
+    .where("nickname", "==", nickname)
+    .get();
+  if (!dupCheck.empty) {
+    throw new HttpsError("already-exists", "Nickname already taken");
+  }
+
+  const playerRef = db.collection(`mini_games/${miniGameId}/players`).doc();
+  await playerRef.set({
+    miniGameId,
+    userId: request.auth?.uid || null,
+    nickname,
+    ...(avatar ? { avatar } : {}),
+    totalPoints: 0,
+    streak: 0,
+    answeredCount: 0,
+    correctCount: 0,
+    joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { playerId: playerRef.id };
+});
+
+export const submitMiniGameAnswer = onCall(HOT_PATH_CONFIG, async (request) => {
+  const { miniGameId, playerId, roundIndex, submission, timeMs } = request.data as {
+    miniGameId: string;
+    playerId: string;
+    roundIndex: number;
+    submission: string;
+    timeMs: number;
+  };
+
+  if (!miniGameId || !playerId || roundIndex === undefined || !submission) {
+    throw new HttpsError("invalid-argument", "Missing required fields");
+  }
+
+  const mgDoc = await db.doc(`mini_games/${miniGameId}`).get();
+  if (!mgDoc.exists) throw new HttpsError("not-found", "Game not found");
+  const mg = mgDoc.data()!;
+
+  if (mg.status !== "live" || mg.roundState !== "live" || mg.currentRoundIndex !== roundIndex) {
+    throw new HttpsError("failed-precondition", "Round is not active");
+  }
+
+  // Prevent duplicate answers
+  const answerId = `${roundIndex}_${playerId}`;
+  const existingAnswer = await db.doc(`mini_games/${miniGameId}/answers/${answerId}`).get();
+  if (existingAnswer.exists) {
+    throw new HttpsError("already-exists", "Already answered this round");
+  }
+
+  const playerDoc = await db.doc(`mini_games/${miniGameId}/players/${playerId}`).get();
+  if (!playerDoc.exists) throw new HttpsError("not-found", "Player not found");
+  const player = playerDoc.data()!;
+
+  const round = mg.rounds[roundIndex] as GameRound;
+
+  // Delegate answer checking to game module
+  const gameModule = getGameModule(mg.gameType);
+  const correct = gameModule ? gameModule.checkAnswer(submission, round) : submission === round.answer;
+
+  let pointsAwarded = 0;
+  let newStreak = correct ? (player.streak || 0) + 1 : 0;
+
+  if (correct) {
+    const timeFactor = Math.max(0, (round.timeLimitSec * 1000 - timeMs) / (round.timeLimitSec * 1000));
+    pointsAwarded = Math.round(1000 * timeFactor);
+    pointsAwarded += newStreak * 50; // streak bonus
+  }
+
+  const batch = db.batch();
+
+  batch.set(db.doc(`mini_games/${miniGameId}/answers/${answerId}`), {
+    playerId,
+    nickname: player.nickname,
+    roundIndex,
+    submission,
+    correct,
+    timeMs,
+    pointsAwarded,
+    submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  batch.update(db.doc(`mini_games/${miniGameId}/players/${playerId}`), {
+    totalPoints: admin.firestore.FieldValue.increment(pointsAwarded),
+    streak: newStreak,
+    answeredCount: admin.firestore.FieldValue.increment(1),
+    ...(correct ? { correctCount: admin.firestore.FieldValue.increment(1) } : {}),
+  });
+
+  await batch.commit();
+
+  return {
+    correct,
+    pointsAwarded,
+    correctAnswer: round.answer,
+    totalPoints: (player.totalPoints || 0) + pointsAwarded,
+    streak: newStreak,
+  };
 });

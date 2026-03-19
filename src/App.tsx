@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, matchPath } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
 import { useNotificationListener } from './hooks/useNotificationListener';
 import { useThemeStore } from './stores/themeStore';
@@ -18,9 +18,12 @@ import KnowledgeBaseFab from './components/KnowledgeBaseFab';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import NotFound from './pages/NotFound';
 import ChooseRole from './pages/ChooseRole';
 import PendingApproval from './pages/PendingApproval';
 import JoinGame from './pages/student/JoinGame';
+import { useDeepLinks } from './hooks/useDeepLinks';
+import { usePushNotifications } from './hooks/usePushNotifications';
 import './App.css';
 
 // Lazy-loaded pages — only loaded when the route is visited
@@ -37,6 +40,7 @@ const QuizEditor = lazy(() => import('./pages/teacher/QuizEditor'));
 const HostSession = lazy(() => import('./pages/teacher/HostSession'));
 const SessionResults = lazy(() => import('./pages/teacher/SessionResults'));
 const SessionHistory = lazy(() => import('./pages/teacher/SessionHistory'));
+const Analytics = lazy(() => import('./pages/teacher/Analytics'));
 const AssignmentCreate = lazy(() => import('./pages/teacher/AssignmentCreate'));
 const PlayGame = lazy(() => import('./pages/student/PlayGame'));
 const PlayAssignment = lazy(() => import('./pages/student/PlayAssignment'));
@@ -62,6 +66,10 @@ const GradingResults = lazy(() => import('./pages/teacher/GradingResults'));
 const HostLiveGrading = lazy(() => import('./pages/teacher/HostLiveGrading'));
 const LiveGradingResults = lazy(() => import('./pages/teacher/LiveGradingResults'));
 const LiveGradingPlay = lazy(() => import('./pages/student/LiveGradingPlay'));
+const MiniGamePicker = lazy(() => import('./pages/teacher/MiniGamePicker'));
+const HostMiniGame = lazy(() => import('./pages/teacher/HostMiniGame'));
+const MiniGameResults = lazy(() => import('./pages/teacher/MiniGameResults'));
+const PlayMiniGame = lazy(() => import('./pages/student/PlayMiniGame'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 
@@ -132,9 +140,47 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { firebaseUser, needsRoleSelection } = useAuthStore();
+  const { firebaseUser, user, needsRoleSelection } = useAuthStore();
   const { collapsed } = useSidebarStore();
   const location = useLocation();
+  useDeepLinks();
+
+  // Dynamic page title
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      '/': 'LiveClass',
+      '/login': 'Sign In',
+      '/signup': 'Sign Up',
+      '/join': 'Join Game',
+      '/dashboard': 'Dashboard',
+      '/library': 'Quiz Library',
+      '/history': 'Session History',
+      '/analytics': 'Analytics',
+      '/classes': 'Classrooms',
+      '/rubrics': 'Rubrics',
+      '/rosters': 'Rosters',
+      '/discover': 'Discover',
+      '/profile': 'Profile',
+      '/assignment/new': 'New Assignment',
+      '/grading/new': 'New Grading',
+      '/student/dashboard': 'Dashboard',
+      '/student/classes': 'My Classes',
+    };
+    const path = location.pathname;
+    let title = titles[path];
+    if (!title) {
+      if (matchPath('/quiz/:id', path)) title = 'Quiz Editor';
+      else if (matchPath('/quiz/:id/host', path)) title = 'Host Session';
+      else if (matchPath('/quiz/:id/preview', path)) title = 'Quiz Preview';
+      else if (matchPath('/session/:id/results', path)) title = 'Session Results';
+      else if (matchPath('/classroom/:id', path)) title = 'Classroom';
+      else if (matchPath('/play/:sid/:pid', path)) title = 'Playing';
+      else if (matchPath('/mini-game/:type/host', path)) title = 'Mini Game';
+      else if (matchPath('/mini-game/:id/results', path)) title = 'Game Results';
+      else if (matchPath('/mini-game/:id/:pid', path)) title = 'Mini Game';
+    }
+    document.title = title ? `${title} - LiveClass` : 'LiveClass';
+  }, [location.pathname]);
 
   // Redirect new Google users to role selection
   if (firebaseUser && needsRoleSelection && location.pathname !== '/choose-role') {
@@ -143,14 +189,14 @@ function AppContent() {
 
   // Hide navbar on full-screen game pages
   const isQuizEditor = location.pathname.startsWith('/quiz/') && !location.pathname.endsWith('/host') && !location.pathname.endsWith('/preview') && !location.pathname.endsWith('/worksheet') && !location.pathname.endsWith('/flashcards');
-  const isGradingInterface = /^\/grading\/[^/]+$/.test(location.pathname);
+  const isGradingInterface = /^\/grading\/(?!new$)[^/]+$/.test(location.pathname);
   const isRubricEditor = location.pathname.startsWith('/rubric/');
-  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
+  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || location.pathname.startsWith('/mini-game/') || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
   const showSidebar = !hideNavbar && !!firebaseUser;
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-dvh px-safe">
       {showSidebar && <Sidebar />}
       <div className={`flex flex-col flex-1 min-w-0 min-h-dvh overflow-x-hidden transition-[margin-left] duration-300 ${
         showSidebar ? (collapsed ? 'md:ml-[68px]' : 'md:ml-64') : ''
@@ -165,12 +211,13 @@ function AppContent() {
           </div>
         }>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={user ? <Navigate to={user.role === 'student' ? '/student/dashboard' : '/dashboard'} replace /> : <Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/join" element={<JoinGame />} />
           <Route path="/play/:sessionId/:playerId" element={<PlayGame />} />
           <Route path="/live-grading/:liveGradingId/:playerId" element={<LiveGradingPlay />} />
+          <Route path="/mini-game/:miniGameId/:playerId" element={<PlayMiniGame />} />
           <Route path="/assignment/:assignmentId" element={<PlayAssignment />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -196,11 +243,15 @@ function AppContent() {
           <Route path="/quiz/:quizId/worksheet" element={<TeacherRoute><Worksheet /></TeacherRoute>} />
           <Route path="/session/:sessionId/results" element={<TeacherRoute><SessionResults /></TeacherRoute>} />
           <Route path="/history" element={<TeacherRoute><SessionHistory /></TeacherRoute>} />
+          <Route path="/analytics" element={<TeacherRoute><Analytics /></TeacherRoute>} />
           <Route path="/collection/:collectionId" element={<TeacherRoute><CollectionView /></TeacherRoute>} />
           <Route path="/assignment/new" element={<TeacherRoute><AssignmentCreate /></TeacherRoute>} />
           <Route path="/rubrics" element={<TeacherRoute><RubricList /></TeacherRoute>} />
           <Route path="/rubric/:rubricId/host" element={<TeacherRoute><HostLiveGrading /></TeacherRoute>} />
           <Route path="/live-grading/:liveGradingId/results" element={<TeacherRoute><LiveGradingResults /></TeacherRoute>} />
+          <Route path="/mini-games" element={<TeacherRoute><MiniGamePicker /></TeacherRoute>} />
+          <Route path="/mini-game/:gameType/host" element={<TeacherRoute><HostMiniGame /></TeacherRoute>} />
+          <Route path="/mini-game/:miniGameId/results" element={<TeacherRoute><MiniGameResults /></TeacherRoute>} />
           <Route path="/rubric/:rubricId" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
           <Route path="/rosters" element={<TeacherRoute><RosterList /></TeacherRoute>} />
           <Route path="/roster/:rosterId" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />
@@ -215,6 +266,7 @@ function AppContent() {
           <Route path="/student/classes" element={<StudentRoute><StudentClasses /></StudentRoute>} />
           <Route path="/student/classroom/:classroomId" element={<StudentRoute><StudentClassDetail /></StudentRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
         </main>
@@ -233,6 +285,7 @@ function AppContent() {
 function App() {
   useAuthListener();
   useNotificationListener();
+  usePushNotifications();
   const { theme, setTheme } = useThemeStore();
   const { firebaseUser, loading } = useAuthStore();
 

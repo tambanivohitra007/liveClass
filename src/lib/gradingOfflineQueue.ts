@@ -4,7 +4,7 @@ const DB_NAME = 'liveclass-offline';
 const STORE_NAME = 'pending-evaluations';
 const DB_VERSION = 2;
 
-export interface PendingEvaluation {
+interface PendingEvaluation {
   id?: number;
   gradingSessionId: string;
   studentId: string;
@@ -30,12 +30,12 @@ export async function queueEvaluation(evaluation: Omit<PendingEvaluation, 'id' |
   await db.add(STORE_NAME, { ...evaluation, createdAt: Date.now() });
 }
 
-export async function getPendingEvaluations(): Promise<PendingEvaluation[]> {
+async function getPendingEvaluations(): Promise<PendingEvaluation[]> {
   const db = await getDb();
   return db.getAll(STORE_NAME);
 }
 
-export async function removePendingEvaluation(id: number) {
+async function removePendingEvaluation(id: number) {
   const db = await getDb();
   await db.delete(STORE_NAME, id);
 }

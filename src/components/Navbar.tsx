@@ -56,7 +56,7 @@ export default function Navbar() {
   // Logged-in: mobile-only simplified bar
   if (firebaseUser) {
     return (
-      <nav className="bg-[#0F1729]/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg md:hidden">
+      <nav className="bg-[#0F1729]/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg md:hidden pt-safe">
         <div className="px-4 h-14 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 no-underline group">
@@ -86,7 +86,7 @@ export default function Navbar() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#162033] rounded-xl shadow-lg border border-white/10 overflow-hidden animate-slide-down">
+                <div className="absolute right-0 top-full mt-2 w-56 sm:w-64 max-w-[calc(100vw-1rem)] bg-[#162033] rounded-xl shadow-lg border border-white/10 overflow-hidden animate-slide-down">
                   <div className="px-4 py-3 bg-white/5 border-b border-white/10">
                     <p className="font-semibold text-white text-sm truncate">{user?.displayName || 'User'}</p>
                     <p className="text-xs text-white/40 truncate">{firebaseUser.email}</p>
@@ -131,7 +131,7 @@ export default function Navbar() {
 
   // Logged-out: full bar on all breakpoints
   return (
-    <nav className="bg-[#0F1729]/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg">
+    <nav className="bg-[#0F1729]/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg pt-safe">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 no-underline group">

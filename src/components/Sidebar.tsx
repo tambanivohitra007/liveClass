@@ -12,6 +12,7 @@ import {
   ListChecks,
   UserCheck,
   History,
+  BarChart3,
   Compass,
   Gamepad2,
   Shield,
@@ -108,6 +109,12 @@ const teacherSections: NavSection[] = [
     ],
   },
   {
+    title: 'Mini Games',
+    items: [
+      { label: 'All Games', icon: Gamepad2, path: '/mini-games', exact: true, color: 'blue' },
+    ],
+  },
+  {
     title: 'Grading',
     items: [
       { label: 'Grade', icon: ClipboardCheck, path: '/grading/new', matchPrefix: '/grading', color: 'emerald' },
@@ -120,6 +127,7 @@ const teacherSections: NavSection[] = [
     items: [
       { label: 'Discover', icon: Compass, path: '/discover', exact: true, color: 'amber' },
       { label: 'History', icon: History, path: '/history', exact: true, color: 'amber' },
+      { label: 'Analytics', icon: BarChart3, path: '/analytics', exact: true, color: 'cyan' },
       { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true, color: 'blue' },
     ],
   },

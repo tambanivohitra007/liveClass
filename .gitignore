@@ -31,3 +31,13 @@ functions/.env
 CLAUDE.md
 
 nul
+
+# Capacitor — keep android/ and ios/ in repo, but ignore build artifacts
+android/app/src/main/assets/public
+android/app/src/main/assets/capacitor.config.json
+android/app/build
+android/.gradle
+ios/App/App/public
+ios/App/App/capacitor.config.json
+ios/DerivedData
+SKILL.md

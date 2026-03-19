@@ -23,4 +23,3 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app, 'asia-southeast1');
 export const storage = getStorage(app);
 export const rtdb = getDatabase(app);
-export default app;

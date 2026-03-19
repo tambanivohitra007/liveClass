@@ -51,7 +51,15 @@
       "Bash(git stash:*)",
       "Bash(git status:*)",
       "Bash(sort:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(npx knip --reporter compact)",
+      "Bash(npx depcheck:*)",
+      "Bash(del \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\src\\\\hooks\\\\useKeyboardHeight.ts\")",
+      "Bash(npm uninstall:*)",
+      "WebFetch(domain:learningnetwork.cisco.com)",
+      "Bash(gcloud firestore:*)",
+      "Bash(cd:*)"
     ]
   }
 }

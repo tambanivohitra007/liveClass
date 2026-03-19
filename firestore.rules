@@ -3,16 +3,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- Helper: check if caller is admin ---
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'rindra.it@gmail.com';
+    }
+
+    // --- Helper: check if caller is session host ---
+    function isSessionHost(sessionId) {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid;
+    }
+
+    // --- Helper: check if caller is live grading owner ---
+    function isLiveGradingOwner(lgId) {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/live_gradings/$(lgId)).data.ownerId == request.auth.uid;
+    }
+
     // Users: read own doc or admin reads all; write own doc (cannot self-approve) or admin updates any
     match /users/{userId} {
       allow read: if request.auth != null && (
-        request.auth.uid == userId ||
-        request.auth.token.email == 'rindra.it@gmail.com'
+        request.auth.uid == userId || isAdmin()
       );
 
       allow create: if request.auth != null && request.auth.uid == userId
         && (request.resource.data.get('approvalStatus', 'none') != 'approved'
-          || request.auth.token.email == 'rindra.it@gmail.com');
+          || isAdmin());
 
       allow update: if request.auth != null && (
         (request.auth.uid == userId
@@ -21,7 +37,7 @@ service cloud.firestore {
           // Block role change while approval is pending
           && (resource.data.get('approvalStatus', 'none') != 'pending'
             || request.resource.data.role == resource.data.role))
-        || request.auth.token.email == 'rindra.it@gmail.com'
+        || isAdmin()
       );
     }
 
@@ -31,19 +47,17 @@ service cloud.firestore {
       allow create: if request.auth != null
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending';
       allow update, delete: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
-    // Quizzes: owner can CRUD, anyone can read public quizzes, authed users can read all (pending teachers cannot create, admin always can)
+    // Quizzes: owner can CRUD, anyone can read public quizzes, authed users can read all
     match /quizzes/{quizId} {
       allow read: if request.auth != null || resource.data.visibility == 'public';
       allow create: if request.auth != null
-        && (request.auth.token.email == 'rindra.it@gmail.com'
+        && (isAdmin()
           || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvalStatus', 'none') != 'pending');
       allow update, delete: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // Questions: readable by anyone (students play without auth), writable by authed users
@@ -52,66 +66,57 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
-    // Sessions: host or admin can write, players can read
+    // Sessions: readable by anyone (students join via PIN without auth)
+    // Subcollections tightened: analytics/violations/evaluations require host or admin
     match /sessions/{sessionId} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null
-        && (resource.data.hostId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.hostId == request.auth.uid || isAdmin());
 
-      // Players subcollection
+      // Players: anyone can read (leaderboard); anyone can create (join game)
+      // Only host/admin can delete (kick player)
       match /players/{playerId} {
         allow read: if true;
         allow create: if true;
-        allow delete: if request.auth != null
-          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
-            || request.auth.token.email == 'rindra.it@gmail.com');
+        allow delete: if isSessionHost(sessionId) || isAdmin();
       }
 
-      // Answers: write only during live question, via Cloud Functions
+      // Answers: read by anyone in session; write only via Cloud Functions
       match /answers/{answerId} {
         allow read: if true;
-        allow create, update: if false; // Only via Cloud Functions
-        allow delete: if request.auth != null
-          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
-            || request.auth.token.email == 'rindra.it@gmail.com');
+        allow create, update: if false;
+        allow delete: if isSessionHost(sessionId) || isAdmin();
       }
 
-      // Leaderboard shards: read-only for clients
+      // Leaderboard shards: read by anyone (live leaderboard); write via Cloud Functions
       match /leaderboard_shards/{shardId} {
         allow read: if true;
-        allow create, update: if false; // Only via Cloud Functions
-        allow delete: if request.auth != null
-          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
-            || request.auth.token.email == 'rindra.it@gmail.com');
+        allow create, update: if false;
+        allow delete: if isSessionHost(sessionId) || isAdmin();
       }
 
-      // Analytics: read by host
+      // Analytics: read by host or admin only
       match /analytics/{questionId} {
-        allow read: if true;
-        allow create, update: if false; // Only via Cloud Functions
-        allow delete: if request.auth != null
-          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
-            || request.auth.token.email == 'rindra.it@gmail.com');
+        allow read: if request.auth != null
+          && (isSessionHost(sessionId) || isAdmin());
+        allow create, update: if false;
+        allow delete: if isSessionHost(sessionId) || isAdmin();
       }
 
-      // Violations: read-only for clients, write via Cloud Functions only
+      // Violations: read by host or admin only (sensitive anti-cheat data)
       match /violations/{playerId} {
-        allow read: if true;
-        allow create, update: if false; // Only via Cloud Functions
-        allow delete: if request.auth != null
-          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
-            || request.auth.token.email == 'rindra.it@gmail.com');
+        allow read: if request.auth != null
+          && (isSessionHost(sessionId) || isAdmin());
+        allow create, update: if false;
+        allow delete: if isSessionHost(sessionId) || isAdmin();
       }
 
       // Evaluations: read by authed users, write via Cloud Functions only
       match /evaluations/{evalId} {
         allow read: if request.auth != null;
-        allow create, update: if false; // Only via Cloud Functions
-        allow delete: if request.auth != null
-          && (get(/databases/$(database)/documents/sessions/$(sessionId)).data.hostId == request.auth.uid
-            || request.auth.token.email == 'rindra.it@gmail.com');
+        allow create, update: if false;
+        allow delete: if isSessionHost(sessionId) || isAdmin();
       }
     }
 
@@ -121,8 +126,7 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     // Collection group: members (required for collectionGroup queries across classrooms)
@@ -144,8 +148,7 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
 
       match /criteria/{criterionId} {
         allow read: if request.auth != null;
@@ -157,13 +160,11 @@ service cloud.firestore {
     // Rosters: read/CRUD by owner + admin
     match /rosters/{rosterId} {
       allow read: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
       allow create: if request.auth != null
         && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
 
       match /students/{studentId} {
         allow read: if request.auth != null;
@@ -175,13 +176,11 @@ service cloud.firestore {
     // Grading Sessions: read/CRUD by owner + admin
     match /grading_sessions/{gsId} {
       allow read: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
       allow create: if request.auth != null
         && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
 
       match /evaluations/{evalId} {
         allow read: if request.auth != null;
@@ -191,30 +190,49 @@ service cloud.firestore {
     }
 
     // Live Grading Sessions (oral presentations)
+    // Readable by anyone (students join via PIN without auth)
     match /live_gradings/{lgId} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-          || request.auth.token.email == 'rindra.it@gmail.com');
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
 
       match /players/{playerId} {
         allow read: if true;
         allow create: if true;
-        allow update, delete: if request.auth != null
-          && get(/databases/$(database)/documents/live_gradings/$(lgId)).data.ownerId == request.auth.uid;
+        allow update, delete: if isLiveGradingOwner(lgId);
       }
 
       match /evaluations/{evalId} {
         // Students can read their own evaluation by doc ID; only owner can list all
         allow get: if true;
-        allow list: if request.auth != null
-          && get(/databases/$(database)/documents/live_gradings/$(lgId)).data.ownerId == request.auth.uid;
-        allow create, update: if request.auth != null
-          && get(/databases/$(database)/documents/live_gradings/$(lgId)).data.ownerId == request.auth.uid;
+        allow list: if isLiveGradingOwner(lgId);
+        allow create, update: if isLiveGradingOwner(lgId);
+        allow delete: if isLiveGradingOwner(lgId) || isAdmin();
+      }
+    }
+
+    // Mini Games (modular game engine)
+    // Readable by anyone (students join via PIN without auth)
+    match /mini_games/{bgId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
+
+      match /players/{playerId} {
+        allow read: if true;
+        allow create: if true;
+        allow update: if false; // Cloud Functions only
         allow delete: if request.auth != null
-          && (get(/databases/$(database)/documents/live_gradings/$(lgId)).data.ownerId == request.auth.uid
-            || request.auth.token.email == 'rindra.it@gmail.com');
+          && get(/databases/$(database)/documents/mini_games/$(bgId)).data.ownerId == request.auth.uid;
+      }
+
+      match /answers/{answerId} {
+        allow read: if true;
+        allow create, update: if false; // Cloud Functions only
+        allow delete: if request.auth != null
+          && get(/databases/$(database)/documents/mini_games/$(bgId)).data.ownerId == request.auth.uid;
       }
     }
 
@@ -229,17 +247,15 @@ service cloud.firestore {
           && !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['ownerId', 'joinCode', 'joinCodeExpiresAt', 'studentCount', 'coTeacherCount'])
         )
-        || request.auth.token.email == 'rindra.it@gmail.com'
+        || isAdmin()
       );
       allow delete: if request.auth != null && (
-        resource.data.ownerId == request.auth.uid
-        || request.auth.token.email == 'rindra.it@gmail.com'
+        resource.data.ownerId == request.auth.uid || isAdmin()
       );
 
       match /members/{memberId} {
         allow read: if request.auth != null;
-        allow delete: if request.auth != null
-          && request.auth.token.email == 'rindra.it@gmail.com';
+        allow delete: if isAdmin();
         allow create, update: if false; // Cloud Functions only
       }
     }
