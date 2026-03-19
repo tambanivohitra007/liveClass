@@ -212,6 +212,30 @@ service cloud.firestore {
       }
     }
 
+    // Binary Challenge Games
+    // Readable by anyone (students join via PIN without auth)
+    match /binary_games/{bgId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && (resource.data.ownerId == request.auth.uid || isAdmin());
+
+      match /players/{playerId} {
+        allow read: if true;
+        allow create: if true;
+        allow update: if false; // Cloud Functions only
+        allow delete: if request.auth != null
+          && get(/databases/$(database)/documents/binary_games/$(bgId)).data.ownerId == request.auth.uid;
+      }
+
+      match /answers/{answerId} {
+        allow read: if true;
+        allow create, update: if false; // Cloud Functions only
+        allow delete: if request.auth != null
+          && get(/databases/$(database)/documents/binary_games/$(bgId)).data.ownerId == request.auth.uid;
+      }
+    }
+
     // Classrooms
     match /classrooms/{classroomId} {
       allow read: if request.auth != null;
