@@ -112,7 +112,7 @@ export default function JoinGame() {
             resolvedType = 'live_grading';
             joinLocked = lgSnap.docs[0].data().joinLocked;
           } else {
-            const bgSnap = await getDocs(query(collection(db, 'binary_games'), where('pinCode', '==', pinParam), where('status', '!=', 'ended')));
+            const bgSnap = await getDocs(query(collection(db, 'binary_games'), where('pinCode', '==', pinParam), where('status', 'in', ['lobby', 'live'])));
             if (!bgSnap.empty) {
               resolvedSessionId = bgSnap.docs[0].id;
               resolvedType = 'binary_game';
@@ -183,7 +183,7 @@ export default function JoinGame() {
         resolvedType = 'live_grading';
         joinLocked = lgSnap.docs[0].data().joinLocked;
       } else {
-        const bgSnap = await getDocs(query(collection(db, 'binary_games'), where('pinCode', '==', pin), where('status', '!=', 'ended')));
+        const bgSnap = await getDocs(query(collection(db, 'binary_games'), where('pinCode', '==', pin), where('status', 'in', ['lobby', 'live'])));
         if (!bgSnap.empty) {
           resolvedSessionId = bgSnap.docs[0].id;
           resolvedType = 'binary_game';
