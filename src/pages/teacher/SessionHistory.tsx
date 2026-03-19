@@ -316,7 +316,7 @@ export default function SessionHistory() {
       }
       constraints.push(limit(PAGE_SIZE));
 
-      const snap = await getDocs(query(collection(db, 'binary_games'), ...constraints));
+      const snap = await getDocs(query(collection(db, 'mini_games'), ...constraints));
 
       setBinaryHasMore(snap.docs.length === PAGE_SIZE);
       if (snap.docs.length > 0) {
@@ -326,7 +326,7 @@ export default function SessionHistory() {
       const newRecords = await Promise.all(
         snap.docs.map(async (bgDoc) => {
           const data = bgDoc.data();
-          const playersSnap = await getDocs(collection(db, `binary_games/${bgDoc.id}/players`));
+          const playersSnap = await getDocs(collection(db, `mini_games/${bgDoc.id}/players`));
           const players = playersSnap.docs.map((d) => d.data());
 
           const totalPoints = players.reduce((sum, p) => sum + (p.totalPoints || 0), 0);
@@ -412,7 +412,7 @@ export default function SessionHistory() {
   const handleDeleteBinaryGame = async (gameId: string) => {
     setDeleting(true);
     try {
-      await deleteDoc(doc(db, 'binary_games', gameId));
+      await deleteDoc(doc(db, 'mini_games', gameId));
       setBinaryGames((prev) => prev.filter((g) => g.id !== gameId));
       addToast('success', 'Binary game deleted');
     } catch {
@@ -496,8 +496,8 @@ export default function SessionHistory() {
               : 'text-gray-500 dark:text-white/50 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
           }`}
         >
-          <Binary className="w-4 h-4" />
-          Binary Games
+          <Gamepad2 className="w-4 h-4" />
+          Mini Games
         </button>
       </div>
 
@@ -838,9 +838,9 @@ export default function SessionHistory() {
               <div className="w-20 h-20 bg-gray-100 dark:bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <Binary className="w-10 h-10 text-gray-300 dark:text-white/30" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No binary games found</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No mini games found</h3>
               <p className="text-gray-500 dark:text-white/50">
-                {binaryGames.length === 0 ? 'Host a Binary Challenge to see results here' : 'Try adjusting your filters'}
+                {binaryGames.length === 0 ? 'Host a mini game to see results here' : 'Try adjusting your filters'}
               </p>
             </div>
           ) : (
@@ -849,10 +849,10 @@ export default function SessionHistory() {
                 {sortedBinaryGames.map((g) => (
                   <div key={g.id} className="relative animate-fade-in">
                     <div
-                      onClick={() => navigate(`/binary-game/${g.id}/results`)}
+                      onClick={() => navigate(`/mini-game/${g.id}/results`)}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/binary-game/${g.id}/results`); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/mini-game/${g.id}/results`); }}
                       className="w-full bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-md hover:border-brand/20 transition-all p-6 text-left group cursor-pointer"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -915,7 +915,7 @@ export default function SessionHistory() {
 
                     {confirmDeleteId === g.id && (
                       <div className="absolute inset-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-sm rounded-2xl border border-danger/20 flex flex-col items-center justify-center gap-3 z-10 animate-fade-in">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this binary game?</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Delete this game?</p>
                         <p className="text-xs text-gray-500 dark:text-white/50">This action cannot be undone.</p>
                         <div className="flex gap-2">
                           <button
