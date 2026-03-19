@@ -25,6 +25,22 @@
       ]
     },
     {
+      "collectionGroup": "binary_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pinCode", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "binary_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "live_gradings",
       "queryScope": "COLLECTION",
       "fields": [
