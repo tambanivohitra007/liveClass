@@ -322,37 +322,35 @@ export interface LiveGradingPlayer {
   userId?: string;
 }
 
-// --- Binary Challenge Game ---
+// --- Mini Game Engine (modular game types) ---
 
-export type BinaryConversionType = 'dec2bin' | 'bin2dec' | 'dec2hex' | 'hex2dec' | 'hex2bin' | 'bin2hex';
-export type BinaryDifficulty = '4bit' | '8bit';
-export type BinaryGameStatus = 'lobby' | 'live' | 'ended';
+export type MiniGameStatus = 'lobby' | 'live' | 'ended';
 
-export interface BinaryRound {
-  type: BinaryConversionType;
-  prompt: string;        // The value to convert (e.g. "42", "00101010", "2A")
-  answer: string;        // Correct answer
-  bits: number;          // 4 or 8
+export interface MiniGameRound {
+  type: string;          // Game-specific sub-type (e.g. 'dec2bin', 'addition')
+  prompt: string;        // What to display
+  answer: string;        // Correct answer (normalized)
   timeLimitSec: number;
+  meta?: Record<string, unknown>; // Game-specific data (e.g. { bits: 8 }, { options: [...] })
 }
 
-export interface BinaryGame {
+export interface MiniGame {
   id: string;
+  gameType: string;      // Module key (e.g. 'binary', 'subnet', 'port_blitz')
   ownerId: string;
   pinCode: string;
   title: string;
-  status: BinaryGameStatus;
-  difficulty: BinaryDifficulty;
-  conversionTypes: BinaryConversionType[];
+  status: MiniGameStatus;
+  config: Record<string, unknown>; // Game-specific config (e.g. { difficulty: '8bit', conversionTypes: [...] })
   roundCount: number;
   timeLimitSec: number;
-  rounds: BinaryRound[];
+  rounds: MiniGameRound[];
   currentRoundIndex: number;
   roundState: 'waiting' | 'live' | 'reveal';
   roundStartedAt: number | null;
   timerPaused?: boolean;
   timerPausedAt?: number | null;
-  timerExtendedBy?: number; // seconds added via extend
+  timerExtendedBy?: number;
   joinLocked: boolean;
   createdAt: number;
   startedAt: number | null;
@@ -360,7 +358,7 @@ export interface BinaryGame {
   top10Snapshot?: { playerId: string; nickname: string; totalPoints: number; rank: number }[];
 }
 
-export interface BinaryGamePlayer {
+export interface MiniGamePlayer {
   id: string;
   nickname: string;
   avatar?: string;
@@ -372,7 +370,7 @@ export interface BinaryGamePlayer {
   joinedAt: number;
 }
 
-export interface BinaryGameAnswer {
+export interface MiniGameAnswer {
   playerId: string;
   nickname: string;
   roundIndex: number;
@@ -382,6 +380,13 @@ export interface BinaryGameAnswer {
   pointsAwarded: number;
   submittedAt: number;
 }
+
+// Legacy aliases for backward compatibility during migration
+export type BinaryConversionType = 'dec2bin' | 'bin2dec' | 'dec2hex' | 'hex2dec' | 'hex2bin' | 'bin2hex';
+export type BinaryDifficulty = '4bit' | '8bit';
+export type BinaryGame = MiniGame;
+export type BinaryGamePlayer = MiniGamePlayer;
+export type BinaryGameAnswer = MiniGameAnswer;
 
 export type NotificationType = 'new_assignment' | 'session_started' | 'class_joined' | 'class_removed';
 
