@@ -41,6 +41,15 @@
       ]
     },
     {
+      "collectionGroup": "binary_games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "endedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "live_gradings",
       "queryScope": "COLLECTION",
       "fields": [

@@ -67,6 +67,7 @@ const HostLiveGrading = lazy(() => import('./pages/teacher/HostLiveGrading'));
 const LiveGradingResults = lazy(() => import('./pages/teacher/LiveGradingResults'));
 const LiveGradingPlay = lazy(() => import('./pages/student/LiveGradingPlay'));
 const HostBinaryGame = lazy(() => import('./pages/teacher/HostBinaryGame'));
+const BinaryGameResults = lazy(() => import('./pages/teacher/BinaryGameResults'));
 const PlayBinaryGame = lazy(() => import('./pages/student/PlayBinaryGame'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
@@ -174,6 +175,7 @@ function AppContent() {
       else if (matchPath('/classroom/:id', path)) title = 'Classroom';
       else if (matchPath('/play/:sid/:pid', path)) title = 'Playing';
       else if (matchPath('/binary-game/host', path)) title = 'Binary Challenge';
+      else if (matchPath('/binary-game/:id/results', path)) title = 'Binary Results';
       else if (matchPath('/binary-game/:id/:pid', path)) title = 'Binary Challenge';
     }
     document.title = title ? `${title} - LiveClass` : 'LiveClass';
@@ -247,6 +249,7 @@ function AppContent() {
           <Route path="/rubric/:rubricId/host" element={<TeacherRoute><HostLiveGrading /></TeacherRoute>} />
           <Route path="/live-grading/:liveGradingId/results" element={<TeacherRoute><LiveGradingResults /></TeacherRoute>} />
           <Route path="/binary-game/host" element={<TeacherRoute><HostBinaryGame /></TeacherRoute>} />
+          <Route path="/binary-game/:binaryGameId/results" element={<TeacherRoute><BinaryGameResults /></TeacherRoute>} />
           <Route path="/rubric/:rubricId" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
           <Route path="/rosters" element={<TeacherRoute><RosterList /></TeacherRoute>} />
           <Route path="/roster/:rosterId" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />
