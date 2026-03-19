@@ -13,6 +13,14 @@ import sqlOutputModule from './sql-output';
 import baseConverterModule from './base-converter';
 import mentalMathModule from './mental-math';
 import fractionFighterModule from './fraction-fighter';
+import unitConverterModule from './unit-converter';
+import percentageProModule from './percentage-pro';
+import elementBlitzModule from './element-blitz';
+import capitalCitiesModule from './capital-cities';
+import vocabSprintModule from './vocab-sprint';
+import acronymDecoderModule from './acronym-decoder';
+import interestCalcModule from './interest-calc';
+import equationSolverModule from './equation-solver';
 
 /** All registered game modules, keyed by type */
 const GAME_REGISTRY: Record<string, GameModule> = {
@@ -30,6 +38,14 @@ const GAME_REGISTRY: Record<string, GameModule> = {
   [baseConverterModule.type]: baseConverterModule,
   [mentalMathModule.type]: mentalMathModule,
   [fractionFighterModule.type]: fractionFighterModule,
+  [unitConverterModule.type]: unitConverterModule,
+  [percentageProModule.type]: percentageProModule,
+  [elementBlitzModule.type]: elementBlitzModule,
+  [capitalCitiesModule.type]: capitalCitiesModule,
+  [vocabSprintModule.type]: vocabSprintModule,
+  [acronymDecoderModule.type]: acronymDecoderModule,
+  [interestCalcModule.type]: interestCalcModule,
+  [equationSolverModule.type]: equationSolverModule,
 };
 
 /** Get a game module by type, or null if not found */

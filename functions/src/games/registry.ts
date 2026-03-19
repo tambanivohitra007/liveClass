@@ -13,6 +13,14 @@ import sqlOutputModule from "./sqlOutput";
 import baseConverterModule from "./baseConverter";
 import mentalMathModule from "./mentalMath";
 import fractionFighterModule from "./fractionFighter";
+import unitConverterModule from "./unitConverter";
+import percentageProModule from "./percentagePro";
+import elementBlitzModule from "./elementBlitz";
+import capitalCitiesModule from "./capitalCities";
+import vocabSprintModule from "./vocabSprint";
+import acronymDecoderModule from "./acronymDecoder";
+import interestCalcModule from "./interestCalc";
+import equationSolverModule from "./equationSolver";
 
 const GAME_REGISTRY: Record<string, GameModuleServer> = {
   binary: binaryModule,
@@ -29,6 +37,14 @@ const GAME_REGISTRY: Record<string, GameModuleServer> = {
   base_converter: baseConverterModule,
   mental_math: mentalMathModule,
   fraction_fighter: fractionFighterModule,
+  unit_converter: unitConverterModule,
+  percentage_pro: percentageProModule,
+  element_blitz: elementBlitzModule,
+  capital_cities: capitalCitiesModule,
+  vocab_sprint: vocabSprintModule,
+  acronym_decoder: acronymDecoderModule,
+  interest_calc: interestCalcModule,
+  equation_solver: equationSolverModule,
 };
 
 export function getGameModule(gameType: string): GameModuleServer | null {
