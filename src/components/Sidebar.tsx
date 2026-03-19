@@ -18,6 +18,7 @@ import {
   Shield,
   ChevronsLeft,
   ChevronsRight,
+  Binary,
 } from 'lucide-react';
 
 interface NavItem {
@@ -106,6 +107,12 @@ const teacherSections: NavSection[] = [
       { label: 'Classes', icon: Users, path: '/classes', matchPrefix: '/class', color: 'orange' },
       { label: 'Quizzes', icon: BookOpen, path: '/library', matchPrefix: '/library', color: 'purple' },
       { label: 'Assignments', icon: FileText, path: '/assignment/new', matchPrefix: '/assignment', color: 'pink' },
+    ],
+  },
+  {
+    title: 'Games',
+    items: [
+      { label: 'Binary Challenge', icon: Binary, path: '/binary-game/host', exact: true, color: 'blue' },
     ],
   },
   {
