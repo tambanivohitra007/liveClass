@@ -381,12 +381,6 @@ export interface MiniGameAnswer {
   submittedAt: number;
 }
 
-// Legacy aliases for backward compatibility during migration
-export type BinaryConversionType = 'dec2bin' | 'bin2dec' | 'dec2hex' | 'hex2dec' | 'hex2bin' | 'bin2hex';
-export type BinaryDifficulty = '4bit' | '8bit';
-export type BinaryGame = MiniGame;
-export type BinaryGamePlayer = MiniGamePlayer;
-export type BinaryGameAnswer = MiniGameAnswer;
 
 export type NotificationType = 'new_assignment' | 'session_started' | 'class_joined' | 'class_removed';
 
