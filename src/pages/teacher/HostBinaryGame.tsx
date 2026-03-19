@@ -9,8 +9,8 @@ import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
 import { QRCodeSVG } from 'qrcode.react';
 import {
-  Users, Lock, Unlock, Play, Maximize2, X as XIcon, Award,
-  CheckCircle2, Clock, Binary, Zap, Trophy, Hash,
+  Lock, Unlock, Play, Maximize2, X as XIcon, Award,
+  CheckCircle2, Binary, Zap, Trophy, Hash,
 } from 'lucide-react';
 import type { BinaryGame, BinaryGamePlayer, BinaryConversionType, BinaryDifficulty } from '../../types/models';
 

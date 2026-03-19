@@ -12,7 +12,7 @@ import AiGenerateModal from '../../components/AiGenerateModal';
 import WaveBackground from '../../components/ui/WaveBackground';
 import {
   FileText, Users, HelpCircle, Play, Plus, ClipboardList, ClipboardCheck,
-  Sparkles, BarChart3, Clock, ArrowRight, BookOpen,
+  Sparkles, BarChart3, Clock, ArrowRight, BookOpen, Binary,
 } from 'lucide-react';
 import { addDoc, serverTimestamp } from 'firebase/firestore';
 import type { Quiz, Collection } from '../../types/models';
@@ -362,6 +362,27 @@ export default function Dashboard() {
       {activeSession && (
         <ActiveSessionBanner session={activeSession} onEnd={handleEndActiveSession} />
       )}
+
+      {/* Binary Challenge Card */}
+      <div className="mb-8 animate-fade-in">
+        <button
+          onClick={() => navigate('/binary-game/host')}
+          className="card-night card-night-hover p-4 flex items-center gap-3 w-full text-left group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
+            <Binary className="w-5 h-5 text-brand" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-brand transition-colors">
+              Binary Challenge
+            </p>
+            <p className="text-[11px] text-gray-400 dark:text-white/40">
+              Binary, decimal &amp; hex conversion game
+            </p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-white/40 group-hover:text-brand transition-colors" />
+        </button>
+      </div>
 
       {/* Quick Start */}
       {showQuickStart && (

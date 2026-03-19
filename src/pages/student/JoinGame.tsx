@@ -82,7 +82,7 @@ export default function JoinGame() {
   const [joining, setJoining] = useState(false);
   const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
-  const [sessionType, setSessionType] = useState<'session' | 'live_grading'>('session');
+  const [sessionType, setSessionType] = useState<'session' | 'live_grading' | 'binary_game'>('session');
   const [rejoinData, setRejoinData] = useState<{ playerId: string; nickname: string; avatar?: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -97,7 +97,7 @@ export default function JoinGame() {
       (async () => {
         // Check sessions collection first
         let resolvedSessionId = '';
-        let resolvedType: 'session' | 'live_grading' = 'session';
+        let resolvedType: 'session' | 'live_grading' | 'binary_game' = 'session';
         let joinLocked = false;
 
         const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pinParam), where('status', '!=', 'ended')));
@@ -111,6 +111,13 @@ export default function JoinGame() {
             resolvedSessionId = lgSnap.docs[0].id;
             resolvedType = 'live_grading';
             joinLocked = lgSnap.docs[0].data().joinLocked;
+          } else {
+            const bgSnap = await getDocs(query(collection(db, 'binary_games'), where('pinCode', '==', pinParam), where('status', '!=', 'ended')));
+            if (!bgSnap.empty) {
+              resolvedSessionId = bgSnap.docs[0].id;
+              resolvedType = 'binary_game';
+              joinLocked = bgSnap.docs[0].data().joinLocked;
+            }
           }
         }
 
@@ -120,7 +127,7 @@ export default function JoinGame() {
         }
 
         setSessionType(resolvedType);
-        const storageKey = resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
+        const storageKey = resolvedType === 'binary_game' ? `liveclass_bg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
         // Check localStorage for existing join data (rejoin recovery)
         try {
@@ -161,7 +168,7 @@ export default function JoinGame() {
 
     // Check sessions collection first, then live_gradings
     let resolvedSessionId = '';
-    let resolvedType: 'session' | 'live_grading' = 'session';
+    let resolvedType: 'session' | 'live_grading' | 'binary_game' = 'session';
     let joinLocked = false;
 
     const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pin), where('status', '!=', 'ended')));
@@ -175,6 +182,13 @@ export default function JoinGame() {
         resolvedSessionId = lgSnap.docs[0].id;
         resolvedType = 'live_grading';
         joinLocked = lgSnap.docs[0].data().joinLocked;
+      } else {
+        const bgSnap = await getDocs(query(collection(db, 'binary_games'), where('pinCode', '==', pin), where('status', '!=', 'ended')));
+        if (!bgSnap.empty) {
+          resolvedSessionId = bgSnap.docs[0].id;
+          resolvedType = 'binary_game';
+          joinLocked = bgSnap.docs[0].data().joinLocked;
+        }
       }
     }
 
@@ -184,7 +198,7 @@ export default function JoinGame() {
     }
 
     setSessionType(resolvedType);
-    const storageKey = resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
+    const storageKey = resolvedType === 'binary_game' ? `liveclass_bg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
     // Check localStorage for existing join data (rejoin recovery)
     try {
@@ -217,7 +231,28 @@ export default function JoinGame() {
       const joinNickname = existingPlayerId ? rejoinData?.nickname || nickname : nickname;
       const joinAvatar = existingPlayerId ? rejoinData?.avatar || avatar : avatar;
 
-      if (sessionType === 'live_grading') {
+      if (sessionType === 'binary_game') {
+        // Binary game join
+        const joinFn = httpsCallable<
+          { binaryGameId: string; nickname: string; avatar?: string; playerId?: string },
+          { playerId: string; nickname?: string; avatar?: string; rejoin?: boolean }
+        >(functions, 'joinBinaryGame');
+        const result = await joinFn({
+          binaryGameId: sessionId,
+          nickname: joinNickname,
+          avatar: joinAvatar,
+          ...(existingPlayerId ? { playerId: existingPlayerId } : {}),
+        });
+
+        const finalNickname = result.data.nickname || joinNickname;
+        const finalAvatar = result.data.avatar || joinAvatar;
+        localStorage.setItem(`liveclass_bg_${sessionId}`, JSON.stringify({
+          playerId: result.data.playerId,
+          nickname: finalNickname,
+          avatar: finalAvatar,
+        }));
+        navigate(`/binary-game/${sessionId}/${result.data.playerId}`);
+      } else if (sessionType === 'live_grading') {
         // Live grading join
         const joinFn = httpsCallable<
           { liveGradingId: string; nickname: string; avatar?: string; playerId?: string },
@@ -278,7 +313,7 @@ export default function JoinGame() {
   };
 
   const handleDeclineRejoin = () => {
-    const storageKey = sessionType === 'live_grading' ? `liveclass_lg_${sessionId}` : `liveclass_session_${sessionId}`;
+    const storageKey = sessionType === 'binary_game' ? `liveclass_bg_${sessionId}` : sessionType === 'live_grading' ? `liveclass_lg_${sessionId}` : `liveclass_session_${sessionId}`;
     localStorage.removeItem(storageKey);
     setRejoinData(null);
     setStep('verify');
