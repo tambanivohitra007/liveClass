@@ -269,7 +269,7 @@ export default function QuizLibrary() {
     } else {
       const { isConfirmed } = await confirmAction(
         'End current session?',
-        `You have an active session for "${activeSession.quizTitle}". It must be ended before starting a new one.`,
+        `You have an active session for "${activeSession.title}". It must be ended before starting a new one.`,
         'End & start new',
       );
       if (isConfirmed) {

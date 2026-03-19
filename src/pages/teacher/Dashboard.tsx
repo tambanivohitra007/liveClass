@@ -75,26 +75,10 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ totalQuizzes: 0, totalQuestions: 0, totalSessions: 0 });
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
   const navigate = useNavigate();
-  const { activeSession, endActiveSession } = useActiveSession();
+  const { activeSession, activeSessions, endActiveSession, endSession } = useActiveSession();
 
   // AI Quiz modal state
   const [showAiQuizModal, setShowAiQuizModal] = useState(false);
-
-  const handleEndActiveSession = async () => {
-    if (!activeSession) return;
-    const { isConfirmed } = await confirmAction(
-      'End active session?',
-      `This will end the session for "${activeSession.quizTitle}" (PIN: ${activeSession.pinCode}). All players will be disconnected.`,
-      'End session',
-    );
-    if (!isConfirmed) return;
-    try {
-      await endActiveSession();
-      addToast('success', 'Session ended successfully');
-    } catch {
-      addToast('error', 'Failed to end session. Please try again.');
-    }
-  };
 
   const handleHostLive = async (quizId: string) => {
     if (!activeSession) {
@@ -114,7 +98,7 @@ export default function Dashboard() {
     } else {
       const { isConfirmed } = await confirmAction(
         'End current session?',
-        `You have an active session for "${activeSession.quizTitle}". It must be ended before starting a new one.`,
+        `You have an active session for "${activeSession.title}". It must be ended before starting a new one.`,
         'End & start new',
       );
       if (isConfirmed) {
@@ -359,9 +343,9 @@ export default function Dashboard() {
       </div>
 
       {/* Active Session Banner */}
-      {activeSession && (
-        <ActiveSessionBanner session={activeSession} onEnd={handleEndActiveSession} />
-      )}
+      {activeSessions.map((s) => (
+        <ActiveSessionBanner key={s.id} session={s} onEnd={() => endSession(s.id)} />
+      ))}
 
       {/* Binary Challenge Card */}
       <div className="mb-8 animate-fade-in">
