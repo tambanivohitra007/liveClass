@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendGameStartNotification = exports.joinLiveGrading = exports.createLiveGrading = exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateRubric = exports.generateQuestions = exports.reportViolation = exports.emailSessionResults = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
+exports.submitBinaryAnswer = exports.joinBinaryGame = exports.createBinaryGame = exports.sendGameStartNotification = exports.joinLiveGrading = exports.createLiveGrading = exports.cleanupExpiredSessions = exports.onAssignmentCreated = exports.endStudentPacedSession = exports.regenerateJoinCode = exports.removeClassroomMember = exports.addCoTeacher = exports.joinClassroom = exports.createClassroom = exports.evaluateSession = exports.generateRubric = exports.generateQuestions = exports.reportViolation = exports.emailSessionResults = exports.exportCsv = exports.endQuestion = exports.processAnswer = exports.scoreAnswer = exports.startQuestion = exports.assignQuestionSubsets = exports.updatePlayerProfile = exports.joinSession = exports.createSession = void 0;
 const admin = __importStar(require("firebase-admin"));
 const crypto = __importStar(require("crypto"));
 const cheerio = __importStar(require("cheerio"));
@@ -201,11 +201,12 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
     let pinCode = generatePin();
     let pinCollision = true;
     while (pinCollision) {
-        const [sessSnap, lgSnap] = await Promise.all([
+        const [sessSnap, lgSnap, bgSnap] = await Promise.all([
             db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
             db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+            db.collection("binary_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
         ]);
-        if (sessSnap.empty && lgSnap.empty) {
+        if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
             pinCollision = false;
         }
         else {
@@ -237,12 +238,15 @@ exports.createSession = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => 
     // Fire-and-forget: notify classroom students about the live session
     if (classroomId) {
         const quizTitle = quizDoc.data()?.title || "a quiz";
+        // In-app notifications
         createNotificationsForClassroom(classroomId, request.auth.uid, {
             type: "session_started",
             title: "Live Session Started",
             message: `A live session for "${quizTitle}" has started! Join with PIN: ${pinCode}`,
             metadata: { sessionId: sessionRef.id, pinCode, quizTitle },
         }).catch((err) => console.warn("Notification error (non-fatal):", err));
+        // FCM push notifications
+        sendPushToClassroom(classroomId, request.auth.uid, "Live Session Started!", `"${quizTitle}" is live! Join with PIN: ${pinCode}`, { pin: pinCode, sessionId: sessionRef.id }).catch((err) => console.warn("FCM push error (non-fatal):", err));
     }
     return { sessionId: sessionRef.id };
 });
@@ -685,14 +689,27 @@ exports.processAnswer = (0, database_1.onValueCreated)({
         const scoreRef = rtdb.ref(`scores/${sessionId}/${playerId}`);
         const currentScoreSnap = await scoreRef.get();
         const currentScore = currentScoreSnap.val() || { totalPoints: 0, streak: 0 };
-        // Calculate points: base(1000) * timeRemaining% + streak bonus
+        // Calculate points based on scoring mode
+        const isAccuracyMode = session.scoringMode === "accuracy";
         let pointsAwarded = 0;
         let newStreak = 0;
         if (correct && !isPoll) {
-            const timeFactor = Math.max(0, (question.timeLimitSec * 1000 - data.timeMs) / (question.timeLimitSec * 1000));
-            pointsAwarded = Math.round(1000 * timeFactor);
+            if (isAccuracyMode) {
+                // Accuracy mode: flat 1000 points for correct, no speed bonus
+                pointsAwarded = 1000;
+            }
+            else {
+                // Speed mode: base(1000) * timeRemaining%
+                const timeFactor = Math.max(0, (question.timeLimitSec * 1000 - data.timeMs) / (question.timeLimitSec * 1000));
+                pointsAwarded = Math.round(1000 * timeFactor);
+            }
             newStreak = currentScore.streak + 1;
             pointsAwarded += newStreak * 50;
+            // Apply per-question point multiplier
+            const multiplier = question.pointMultiplier ?? 1;
+            if (multiplier > 1) {
+                pointsAwarded *= multiplier;
+            }
         }
         else if (correct) {
             // Poll: correct but 0 points
@@ -2370,11 +2387,12 @@ exports.createLiveGrading = (0, https_1.onCall)(FUNCTION_CONFIG, async (request)
     let pinCode = generatePin();
     let pinCollision = true;
     while (pinCollision) {
-        const [sessSnap, lgSnap] = await Promise.all([
+        const [sessSnap, lgSnap, bgSnap] = await Promise.all([
             db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
             db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+            db.collection("binary_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
         ]);
-        if (sessSnap.empty && lgSnap.empty) {
+        if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
             pinCollision = false;
         }
         else {
@@ -2458,26 +2476,23 @@ exports.joinLiveGrading = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) =
     return { playerId: playerRef.id };
 });
 // ─── Push Notification: Game Start Alert ───
-exports.sendGameStartNotification = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
-    if (!request.auth)
-        throw new https_1.HttpsError("unauthenticated", "Login required");
-    const { classroomId, pinCode, title } = request.data;
-    if (!classroomId || !pinCode) {
-        throw new https_1.HttpsError("invalid-argument", "classroomId and pinCode required");
-    }
-    // Get classroom members
-    const classDoc = await db.doc(`classrooms/${classroomId}`).get();
-    if (!classDoc.exists)
-        throw new https_1.HttpsError("not-found", "Classroom not found");
-    const classData = classDoc.data();
-    const memberIds = classData.studentIds || [];
-    if (memberIds.length === 0)
-        return { sent: 0 };
-    // Fetch FCM tokens for all members
+// Helper: send FCM push to classroom members
+async function sendPushToClassroom(classroomId, excludeUserId, title, body, data) {
+    const membersSnap = await db
+        .collection(`classrooms/${classroomId}/members`)
+        .where("role", "==", "student")
+        .get();
+    if (membersSnap.empty)
+        return 0;
+    const userIds = membersSnap.docs
+        .map((d) => d.data().userId)
+        .filter((id) => id !== excludeUserId);
+    if (userIds.length === 0)
+        return 0;
+    // Fetch FCM tokens in batches of 10
     const tokens = [];
-    const batchSize = 10;
-    for (let i = 0; i < memberIds.length; i += batchSize) {
-        const batch = memberIds.slice(i, i + batchSize);
+    for (let i = 0; i < userIds.length; i += 10) {
+        const batch = userIds.slice(i, i + 10);
         const userDocs = await db.getAll(...batch.map((id) => db.doc(`users/${id}`)));
         for (const userDoc of userDocs) {
             const fcmToken = userDoc.data()?.fcmToken;
@@ -2486,18 +2501,244 @@ exports.sendGameStartNotification = (0, https_1.onCall)(FUNCTION_CONFIG, async (
         }
     }
     if (tokens.length === 0)
-        return { sent: 0 };
+        return 0;
     const message = {
         tokens,
-        notification: {
-            title: title || "Game Starting!",
-            body: `Join with PIN: ${pinCode}`,
-        },
-        data: {
-            pin: String(pinCode),
-        },
+        notification: { title, body },
+        data,
     };
     const result = await admin.messaging().sendEachForMulticast(message);
-    return { sent: result.successCount };
+    return result.successCount;
+}
+exports.sendGameStartNotification = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth)
+        throw new https_1.HttpsError("unauthenticated", "Login required");
+    const { classroomId, pinCode, title } = request.data;
+    if (!classroomId || !pinCode) {
+        throw new https_1.HttpsError("invalid-argument", "classroomId and pinCode required");
+    }
+    const classDoc = await db.doc(`classrooms/${classroomId}`).get();
+    if (!classDoc.exists)
+        throw new https_1.HttpsError("not-found", "Classroom not found");
+    const sent = await sendPushToClassroom(classroomId, request.auth.uid, title || "Game Starting!", `Join with PIN: ${pinCode}`, { pin: String(pinCode) });
+    return { sent };
+});
+function generateBinaryRounds(conversionTypes, roundCount, bits, timeLimitSec) {
+    const maxVal = bits === 4 ? 15 : 255;
+    const rounds = [];
+    for (let i = 0; i < roundCount; i++) {
+        const type = conversionTypes[i % conversionTypes.length];
+        const value = Math.floor(Math.random() * (maxVal + 1));
+        const binStr = value.toString(2).padStart(bits, "0");
+        const hexStr = value.toString(16).toUpperCase().padStart(bits / 4, "0");
+        const decStr = value.toString(10);
+        let prompt;
+        let answer;
+        switch (type) {
+            case "dec2bin":
+                prompt = decStr;
+                answer = binStr;
+                break;
+            case "bin2dec":
+                prompt = binStr;
+                answer = decStr;
+                break;
+            case "dec2hex":
+                prompt = decStr;
+                answer = hexStr;
+                break;
+            case "hex2dec":
+                prompt = hexStr;
+                answer = decStr;
+                break;
+            case "hex2bin":
+                prompt = hexStr;
+                answer = binStr;
+                break;
+            case "bin2hex":
+                prompt = binStr;
+                answer = hexStr;
+                break;
+        }
+        rounds.push({ type, prompt, answer, bits, timeLimitSec });
+    }
+    return rounds;
+}
+exports.createBinaryGame = (0, https_1.onCall)(FUNCTION_CONFIG, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Must be logged in");
+    }
+    const { title, difficulty, conversionTypes, roundCount, timeLimitSec, } = request.data;
+    if (!difficulty || !conversionTypes?.length || !roundCount || !timeLimitSec) {
+        throw new https_1.HttpsError("invalid-argument", "Missing required fields");
+    }
+    if (roundCount < 1 || roundCount > 30) {
+        throw new https_1.HttpsError("invalid-argument", "roundCount must be 1-30");
+    }
+    if (timeLimitSec < 5 || timeLimitSec > 120) {
+        throw new https_1.HttpsError("invalid-argument", "timeLimitSec must be 5-120");
+    }
+    const bits = difficulty === "4bit" ? 4 : 8;
+    const rounds = generateBinaryRounds(conversionTypes, roundCount, bits, timeLimitSec);
+    // Generate unique PIN across sessions, live_gradings, and binary_games
+    let pinCode = generatePin();
+    let pinCollision = true;
+    while (pinCollision) {
+        const [sessSnap, lgSnap, bgSnap] = await Promise.all([
+            db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+            db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+            db.collection("binary_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+        ]);
+        if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
+            pinCollision = false;
+        }
+        else {
+            pinCode = generatePin();
+        }
+    }
+    const bgRef = db.collection("binary_games").doc();
+    await bgRef.set({
+        ownerId: request.auth.uid,
+        pinCode,
+        title: title || "Binary Challenge",
+        status: "lobby",
+        difficulty,
+        conversionTypes,
+        roundCount,
+        timeLimitSec,
+        rounds,
+        currentRoundIndex: -1,
+        roundState: "waiting",
+        roundStartedAt: null,
+        joinLocked: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        startedAt: null,
+        endedAt: null,
+        top10Snapshot: [],
+    });
+    return { binaryGameId: bgRef.id };
+});
+exports.joinBinaryGame = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
+    const { binaryGameId, nickname, avatar, playerId: existingPlayerId } = request.data;
+    if (!binaryGameId || !nickname) {
+        throw new https_1.HttpsError("invalid-argument", "binaryGameId and nickname are required");
+    }
+    if (nickname.length > 20) {
+        throw new https_1.HttpsError("invalid-argument", "Nickname too long");
+    }
+    const bgDoc = await db.doc(`binary_games/${binaryGameId}`).get();
+    if (!bgDoc.exists) {
+        throw new https_1.HttpsError("not-found", "Game not found");
+    }
+    const bg = bgDoc.data();
+    if (bg.status === "ended") {
+        throw new https_1.HttpsError("failed-precondition", "Game has ended");
+    }
+    // Rejoin: authenticated user by userId
+    if (request.auth?.uid) {
+        const existingByUser = await db
+            .collection(`binary_games/${binaryGameId}/players`)
+            .where("userId", "==", request.auth.uid)
+            .limit(1)
+            .get();
+        if (!existingByUser.empty) {
+            const doc = existingByUser.docs[0];
+            return { playerId: doc.id, nickname: doc.data().nickname, avatar: doc.data().avatar, rejoin: true };
+        }
+    }
+    // Rejoin: unauthenticated user by playerId + nickname
+    if (existingPlayerId) {
+        const existingDoc = await db
+            .doc(`binary_games/${binaryGameId}/players/${existingPlayerId}`)
+            .get();
+        if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
+            return { playerId: existingDoc.id, nickname, avatar: existingDoc.data()?.avatar, rejoin: true };
+        }
+    }
+    // Join lock
+    if (bg.joinLocked) {
+        throw new https_1.HttpsError("failed-precondition", "Game is locked");
+    }
+    // Nickname uniqueness
+    const dupCheck = await db
+        .collection(`binary_games/${binaryGameId}/players`)
+        .where("nickname", "==", nickname)
+        .get();
+    if (!dupCheck.empty) {
+        throw new https_1.HttpsError("already-exists", "Nickname already taken");
+    }
+    const playerRef = db.collection(`binary_games/${binaryGameId}/players`).doc();
+    await playerRef.set({
+        binaryGameId,
+        userId: request.auth?.uid || null,
+        nickname,
+        ...(avatar ? { avatar } : {}),
+        totalPoints: 0,
+        streak: 0,
+        answeredCount: 0,
+        correctCount: 0,
+        joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { playerId: playerRef.id };
+});
+exports.submitBinaryAnswer = (0, https_1.onCall)(HOT_PATH_CONFIG, async (request) => {
+    const { binaryGameId, playerId, roundIndex, submission, timeMs } = request.data;
+    if (!binaryGameId || !playerId || roundIndex === undefined || !submission) {
+        throw new https_1.HttpsError("invalid-argument", "Missing required fields");
+    }
+    const bgDoc = await db.doc(`binary_games/${binaryGameId}`).get();
+    if (!bgDoc.exists)
+        throw new https_1.HttpsError("not-found", "Game not found");
+    const bg = bgDoc.data();
+    if (bg.status !== "live" || bg.roundState !== "live" || bg.currentRoundIndex !== roundIndex) {
+        throw new https_1.HttpsError("failed-precondition", "Round is not active");
+    }
+    // Prevent duplicate answers
+    const answerId = `${roundIndex}_${playerId}`;
+    const existingAnswer = await db.doc(`binary_games/${binaryGameId}/answers/${answerId}`).get();
+    if (existingAnswer.exists) {
+        throw new https_1.HttpsError("already-exists", "Already answered this round");
+    }
+    const playerDoc = await db.doc(`binary_games/${binaryGameId}/players/${playerId}`).get();
+    if (!playerDoc.exists)
+        throw new https_1.HttpsError("not-found", "Player not found");
+    const player = playerDoc.data();
+    const round = bg.rounds[roundIndex];
+    const correct = submission.toUpperCase().replace(/^0+/, "") === round.answer.toUpperCase().replace(/^0+/, "")
+        || submission.toUpperCase() === round.answer.toUpperCase();
+    let pointsAwarded = 0;
+    let newStreak = correct ? (player.streak || 0) + 1 : 0;
+    if (correct) {
+        const timeFactor = Math.max(0, (round.timeLimitSec * 1000 - timeMs) / (round.timeLimitSec * 1000));
+        pointsAwarded = Math.round(1000 * timeFactor);
+        pointsAwarded += newStreak * 50; // streak bonus
+    }
+    const batch = db.batch();
+    // Write answer
+    batch.set(db.doc(`binary_games/${binaryGameId}/answers/${answerId}`), {
+        playerId,
+        nickname: player.nickname,
+        roundIndex,
+        submission,
+        correct,
+        timeMs,
+        pointsAwarded,
+        submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    // Update player stats
+    batch.update(db.doc(`binary_games/${binaryGameId}/players/${playerId}`), {
+        totalPoints: admin.firestore.FieldValue.increment(pointsAwarded),
+        streak: newStreak,
+        answeredCount: admin.firestore.FieldValue.increment(1),
+        ...(correct ? { correctCount: admin.firestore.FieldValue.increment(1) } : {}),
+    });
+    await batch.commit();
+    return {
+        correct,
+        pointsAwarded,
+        correctAnswer: round.answer,
+        totalPoints: (player.totalPoints || 0) + pointsAwarded,
+        streak: newStreak,
+    };
 });
 //# sourceMappingURL=index.js.map

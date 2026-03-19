@@ -56,7 +56,8 @@
       "Bash(npx knip --reporter compact)",
       "Bash(npx depcheck:*)",
       "Bash(del \"C:\\\\Users\\\\rindra\\\\Projects\\\\kahoot\\\\src\\\\hooks\\\\useKeyboardHeight.ts\")",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "WebFetch(domain:learningnetwork.cisco.com)"
     ]
   }
 }
