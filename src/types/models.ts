@@ -350,6 +350,9 @@ export interface BinaryGame {
   currentRoundIndex: number;
   roundState: 'waiting' | 'live' | 'reveal';
   roundStartedAt: number | null;
+  timerPaused?: boolean;
+  timerPausedAt?: number | null;
+  timerExtendedBy?: number; // seconds added via extend
   joinLocked: boolean;
   createdAt: number;
   startedAt: number | null;

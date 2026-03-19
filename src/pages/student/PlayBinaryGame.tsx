@@ -98,7 +98,7 @@ export default function PlayBinaryGame() {
     }
   }, [game?.currentRoundIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Countdown timer
+  // Countdown timer (handles pause + extend)
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -107,12 +107,20 @@ export default function PlayBinaryGame() {
       return;
     }
 
+    if (game.timerPaused) {
+      const elapsed = (game.timerPausedAt! - game.roundStartedAt) / 1000;
+      const totalTime = game.rounds[game.currentRoundIndex].timeLimitSec + (game.timerExtendedBy || 0);
+      setTimeLeft(Math.max(0, totalTime - elapsed));
+      return;
+    }
+
     roundStartRef.current = game.roundStartedAt;
     const round = game.rounds[game.currentRoundIndex];
+    const totalTime = round.timeLimitSec + (game.timerExtendedBy || 0);
 
     const updateTimer = () => {
       const elapsed = (Date.now() - roundStartRef.current) / 1000;
-      setTimeLeft(Math.max(0, round.timeLimitSec - elapsed));
+      setTimeLeft(Math.max(0, totalTime - elapsed));
     };
 
     updateTimer();
@@ -121,7 +129,7 @@ export default function PlayBinaryGame() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [game?.roundState, game?.roundStartedAt, game?.currentRoundIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game?.roundState, game?.roundStartedAt, game?.currentRoundIndex, game?.timerPaused, game?.timerExtendedBy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleBit = useCallback((index: number) => {
     if (answered || submitting) return;
@@ -435,19 +443,32 @@ export default function PlayBinaryGame() {
             </span>
           )}
           <span className="text-sm font-bold text-brand tabular-nums">{player.totalPoints || 0} pts</span>
-          <div className={`text-lg font-bold tabular-nums px-3 py-1 rounded-full ${
-            timeLeft <= 5 ? 'bg-danger/20 text-danger animate-pulse' : 'bg-white/10 text-white'
-          }`}>
-            {Math.ceil(timeLeft)}s
-          </div>
         </div>
       </header>
 
+      {/* Big Timer */}
+      <div className="flex flex-col items-center py-2 shrink-0">
+        <div className={`text-7xl sm:text-8xl font-bold tabular-nums leading-none ${
+          game.timerPaused ? 'text-warning' :
+          timeLeft <= 5 ? 'text-danger animate-pulse' :
+          timeLeft <= 10 ? 'text-warning' : 'text-white'
+        }`}>
+          {Math.ceil(timeLeft)}
+        </div>
+        <span className={`text-xs font-bold uppercase tracking-widest mt-1 ${
+          game.timerPaused ? 'text-warning' : 'text-white/30'
+        }`}>
+          {game.timerPaused ? 'Paused' : 'seconds'}
+        </span>
+      </div>
+
       {/* Timer Bar */}
-      <div className="w-full h-1 bg-white/10 shrink-0">
+      <div className="w-full h-1.5 bg-white/10 shrink-0">
         <div
-          className={`h-full transition-all duration-100 ${timeLeft <= 5 ? 'bg-danger' : 'bg-brand'}`}
-          style={{ width: `${currentRound.timeLimitSec > 0 ? (timeLeft / currentRound.timeLimitSec) * 100 : 0}%` }}
+          className={`h-full transition-all duration-100 ${
+            game.timerPaused ? 'bg-warning' : timeLeft <= 5 ? 'bg-danger' : 'bg-brand'
+          }`}
+          style={{ width: `${(currentRound.timeLimitSec + (game.timerExtendedBy || 0)) > 0 ? (timeLeft / (currentRound.timeLimitSec + (game.timerExtendedBy || 0))) * 100 : 0}%` }}
         />
       </div>
 

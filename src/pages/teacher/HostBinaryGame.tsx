@@ -10,7 +10,7 @@ import { confirmAction } from '../../lib/swal';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Lock, Unlock, Play, Maximize2, X as XIcon, Award,
-  CheckCircle2, Binary, Zap, Trophy, Hash,
+  CheckCircle2, Binary, Zap, Trophy, Hash, Pause, Timer, SkipForward,
 } from 'lucide-react';
 import type { BinaryGame, BinaryGamePlayer, BinaryConversionType, BinaryDifficulty } from '../../types/models';
 
@@ -89,7 +89,7 @@ export default function HostBinaryGame() {
     };
   }, []);
 
-  // Countdown timer
+  // Countdown timer (handles pause + extend)
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (!game || game.roundState !== 'live' || !game.roundStartedAt) {
@@ -97,15 +97,23 @@ export default function HostBinaryGame() {
       return;
     }
 
+    if (game.timerPaused) {
+      // Show frozen time
+      const elapsed = (game.timerPausedAt! - game.roundStartedAt) / 1000;
+      const totalTime = game.rounds[game.currentRoundIndex].timeLimitSec + (game.timerExtendedBy || 0);
+      setTimeLeft(Math.max(0, totalTime - elapsed));
+      return;
+    }
+
     const round = game.rounds[game.currentRoundIndex];
+    const totalTime = round.timeLimitSec + (game.timerExtendedBy || 0);
     const updateTimer = () => {
       const elapsed = (Date.now() - game.roundStartedAt!) / 1000;
-      const remaining = Math.max(0, round.timeLimitSec - elapsed);
+      const remaining = Math.max(0, totalTime - elapsed);
       setTimeLeft(remaining);
 
       if (remaining <= 0) {
         if (timerRef.current) clearInterval(timerRef.current);
-        // Auto-advance to reveal
         updateDoc(doc(db, 'binary_games', game.id), { roundState: 'reveal' }).catch(() => {});
       }
     };
@@ -116,7 +124,7 @@ export default function HostBinaryGame() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [game?.roundState, game?.roundStartedAt, game?.currentRoundIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [game?.roundState, game?.roundStartedAt, game?.currentRoundIndex, game?.timerPaused, game?.timerExtendedBy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const subscribe = (gameId: string) => {
     unsubscribesRef.current.forEach((u) => u());
@@ -188,6 +196,9 @@ export default function HostBinaryGame() {
       roundStartedAt: Date.now(),
       startedAt: Date.now(),
       joinLocked: true,
+      timerPaused: false,
+      timerPausedAt: null,
+      timerExtendedBy: 0,
     });
   };
 
@@ -216,6 +227,9 @@ export default function HostBinaryGame() {
         currentRoundIndex: nextIndex,
         roundState: 'live',
         roundStartedAt: Date.now(),
+        timerPaused: false,
+        timerPausedAt: null,
+        timerExtendedBy: 0,
       });
     }
   };
@@ -224,6 +238,42 @@ export default function HostBinaryGame() {
     if (!game) return;
     await updateDoc(doc(db, 'binary_games', game.id), {
       joinLocked: !game.joinLocked,
+    });
+  };
+
+  const handlePauseResume = async () => {
+    if (!game || game.roundState !== 'live') return;
+    if (game.timerPaused) {
+      // Resume: shift roundStartedAt forward by the paused duration
+      const pausedDuration = Date.now() - (game.timerPausedAt || Date.now());
+      await updateDoc(doc(db, 'binary_games', game.id), {
+        timerPaused: false,
+        timerPausedAt: null,
+        roundStartedAt: (game.roundStartedAt || 0) + pausedDuration,
+      });
+    } else {
+      // Pause
+      await updateDoc(doc(db, 'binary_games', game.id), {
+        timerPaused: true,
+        timerPausedAt: Date.now(),
+      });
+    }
+  };
+
+  const handleExtendTimer = async () => {
+    if (!game || game.roundState !== 'live') return;
+    await updateDoc(doc(db, 'binary_games', game.id), {
+      timerExtendedBy: (game.timerExtendedBy || 0) + 30,
+    });
+    addToast('info', '+30 seconds added');
+  };
+
+  const handleSkipRound = async () => {
+    if (!game) return;
+    await updateDoc(doc(db, 'binary_games', game.id), {
+      roundState: 'reveal',
+      timerPaused: false,
+      timerPausedAt: null,
     });
   };
 
@@ -644,9 +694,16 @@ export default function HostBinaryGame() {
                 </div>
                 <div className="flex items-center gap-3">
                   {game.roundState === 'live' && (
-                    <div className={`text-2xl sm:text-3xl font-bold tabular-nums ${timeLeft <= 5 ? 'text-danger animate-pulse' : 'text-white'}`}>
-                      {Math.ceil(timeLeft)}s
-                    </div>
+                    <>
+                      {game.timerPaused && (
+                        <span className="text-xs font-bold text-warning uppercase tracking-wider">Paused</span>
+                      )}
+                      <div className={`text-2xl sm:text-3xl font-bold tabular-nums ${
+                        game.timerPaused ? 'text-warning' : timeLeft <= 5 ? 'text-danger animate-pulse' : 'text-white'
+                      }`}>
+                        {Math.ceil(timeLeft)}s
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -685,6 +742,36 @@ export default function HostBinaryGame() {
                 />
               </div>
             </div>
+
+            {/* Timer Controls */}
+            {game.roundState === 'live' && (
+              <div className="flex items-center gap-2 mt-4">
+                <button
+                  onClick={handlePauseResume}
+                  className={`btn-3d-ghost px-4 py-2.5 text-sm flex items-center gap-1.5 ${game.timerPaused ? 'text-success' : 'text-warning'}`}
+                  title={game.timerPaused ? 'Resume timer' : 'Pause timer'}
+                >
+                  {game.timerPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                  {game.timerPaused ? 'Resume' : 'Pause'}
+                </button>
+                <button
+                  onClick={handleExtendTimer}
+                  className="btn-3d-ghost px-4 py-2.5 text-sm flex items-center gap-1.5"
+                  title="Add 30 seconds"
+                >
+                  <Timer className="w-4 h-4" />
+                  +30s
+                </button>
+                <button
+                  onClick={handleSkipRound}
+                  className="btn-3d-ghost px-4 py-2.5 text-sm flex items-center gap-1.5"
+                  title="End this round"
+                >
+                  <SkipForward className="w-4 h-4" />
+                  End Round
+                </button>
+              </div>
+            )}
 
             {/* Actions */}
             {game.roundState === 'reveal' && (
