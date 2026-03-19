@@ -200,11 +200,12 @@ export const createSession = onCall(FUNCTION_CONFIG, async (request) => {
   let pinCode = generatePin();
   let pinCollision = true;
   while (pinCollision) {
-    const [sessSnap, lgSnap] = await Promise.all([
+    const [sessSnap, lgSnap, bgSnap] = await Promise.all([
       db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
       db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("binary_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
     ]);
-    if (sessSnap.empty && lgSnap.empty) {
+    if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
       pinCollision = false;
     } else {
       pinCode = generatePin();
@@ -2921,11 +2922,12 @@ export const createLiveGrading = onCall(FUNCTION_CONFIG, async (request) => {
   let pinCode = generatePin();
   let pinCollision = true;
   while (pinCollision) {
-    const [sessSnap, lgSnap] = await Promise.all([
+    const [sessSnap, lgSnap, bgSnap] = await Promise.all([
       db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
       db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("binary_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
     ]);
-    if (sessSnap.empty && lgSnap.empty) {
+    if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
       pinCollision = false;
     } else {
       pinCode = generatePin();
@@ -3091,4 +3093,298 @@ export const sendGameStartNotification = onCall(FUNCTION_CONFIG, async (request)
   );
 
   return { sent };
+});
+
+// ═══════════════════════════════════════════════════════
+// ─── Binary Challenge Game ────────────────────────────
+// ═══════════════════════════════════════════════════════
+
+type BinaryConversionType = "dec2bin" | "bin2dec" | "dec2hex" | "hex2dec" | "hex2bin" | "bin2hex";
+
+interface BinaryRound {
+  type: BinaryConversionType;
+  prompt: string;
+  answer: string;
+  bits: number;
+  timeLimitSec: number;
+}
+
+function generateBinaryRounds(
+  conversionTypes: BinaryConversionType[],
+  roundCount: number,
+  bits: number,
+  timeLimitSec: number
+): BinaryRound[] {
+  const maxVal = bits === 4 ? 15 : 255;
+  const rounds: BinaryRound[] = [];
+
+  for (let i = 0; i < roundCount; i++) {
+    const type = conversionTypes[i % conversionTypes.length];
+    const value = Math.floor(Math.random() * (maxVal + 1));
+    const binStr = value.toString(2).padStart(bits, "0");
+    const hexStr = value.toString(16).toUpperCase().padStart(bits / 4, "0");
+    const decStr = value.toString(10);
+
+    let prompt: string;
+    let answer: string;
+
+    switch (type) {
+      case "dec2bin":
+        prompt = decStr;
+        answer = binStr;
+        break;
+      case "bin2dec":
+        prompt = binStr;
+        answer = decStr;
+        break;
+      case "dec2hex":
+        prompt = decStr;
+        answer = hexStr;
+        break;
+      case "hex2dec":
+        prompt = hexStr;
+        answer = decStr;
+        break;
+      case "hex2bin":
+        prompt = hexStr;
+        answer = binStr;
+        break;
+      case "bin2hex":
+        prompt = binStr;
+        answer = hexStr;
+        break;
+    }
+
+    rounds.push({ type, prompt, answer, bits, timeLimitSec });
+  }
+
+  return rounds;
+}
+
+export const createBinaryGame = onCall(FUNCTION_CONFIG, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in");
+  }
+
+  const {
+    title,
+    difficulty,
+    conversionTypes,
+    roundCount,
+    timeLimitSec,
+  } = request.data as {
+    title?: string;
+    difficulty: "4bit" | "8bit";
+    conversionTypes: BinaryConversionType[];
+    roundCount: number;
+    timeLimitSec: number;
+  };
+
+  if (!difficulty || !conversionTypes?.length || !roundCount || !timeLimitSec) {
+    throw new HttpsError("invalid-argument", "Missing required fields");
+  }
+  if (roundCount < 1 || roundCount > 30) {
+    throw new HttpsError("invalid-argument", "roundCount must be 1-30");
+  }
+  if (timeLimitSec < 5 || timeLimitSec > 120) {
+    throw new HttpsError("invalid-argument", "timeLimitSec must be 5-120");
+  }
+
+  const bits = difficulty === "4bit" ? 4 : 8;
+  const rounds = generateBinaryRounds(conversionTypes, roundCount, bits, timeLimitSec);
+
+  // Generate unique PIN across sessions, live_gradings, and binary_games
+  let pinCode = generatePin();
+  let pinCollision = true;
+  while (pinCollision) {
+    const [sessSnap, lgSnap, bgSnap] = await Promise.all([
+      db.collection("sessions").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("live_gradings").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+      db.collection("binary_games").where("pinCode", "==", pinCode).where("status", "!=", "ended").get(),
+    ]);
+    if (sessSnap.empty && lgSnap.empty && bgSnap.empty) {
+      pinCollision = false;
+    } else {
+      pinCode = generatePin();
+    }
+  }
+
+  const bgRef = db.collection("binary_games").doc();
+  await bgRef.set({
+    ownerId: request.auth.uid,
+    pinCode,
+    title: title || "Binary Challenge",
+    status: "lobby",
+    difficulty,
+    conversionTypes,
+    roundCount,
+    timeLimitSec,
+    rounds,
+    currentRoundIndex: -1,
+    roundState: "waiting",
+    roundStartedAt: null,
+    joinLocked: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    startedAt: null,
+    endedAt: null,
+    top10Snapshot: [],
+  });
+
+  return { binaryGameId: bgRef.id };
+});
+
+export const joinBinaryGame = onCall(HOT_PATH_CONFIG, async (request) => {
+  const { binaryGameId, nickname, avatar, playerId: existingPlayerId } = request.data as {
+    binaryGameId: string;
+    nickname: string;
+    avatar?: string;
+    playerId?: string;
+  };
+
+  if (!binaryGameId || !nickname) {
+    throw new HttpsError("invalid-argument", "binaryGameId and nickname are required");
+  }
+  if (nickname.length > 20) {
+    throw new HttpsError("invalid-argument", "Nickname too long");
+  }
+
+  const bgDoc = await db.doc(`binary_games/${binaryGameId}`).get();
+  if (!bgDoc.exists) {
+    throw new HttpsError("not-found", "Game not found");
+  }
+
+  const bg = bgDoc.data()!;
+  if (bg.status === "ended") {
+    throw new HttpsError("failed-precondition", "Game has ended");
+  }
+
+  // Rejoin: authenticated user by userId
+  if (request.auth?.uid) {
+    const existingByUser = await db
+      .collection(`binary_games/${binaryGameId}/players`)
+      .where("userId", "==", request.auth.uid)
+      .limit(1)
+      .get();
+    if (!existingByUser.empty) {
+      const doc = existingByUser.docs[0];
+      return { playerId: doc.id, nickname: doc.data().nickname, avatar: doc.data().avatar, rejoin: true };
+    }
+  }
+
+  // Rejoin: unauthenticated user by playerId + nickname
+  if (existingPlayerId) {
+    const existingDoc = await db
+      .doc(`binary_games/${binaryGameId}/players/${existingPlayerId}`)
+      .get();
+    if (existingDoc.exists && existingDoc.data()?.nickname === nickname) {
+      return { playerId: existingDoc.id, nickname, avatar: existingDoc.data()?.avatar, rejoin: true };
+    }
+  }
+
+  // Join lock
+  if (bg.joinLocked) {
+    throw new HttpsError("failed-precondition", "Game is locked");
+  }
+
+  // Nickname uniqueness
+  const dupCheck = await db
+    .collection(`binary_games/${binaryGameId}/players`)
+    .where("nickname", "==", nickname)
+    .get();
+  if (!dupCheck.empty) {
+    throw new HttpsError("already-exists", "Nickname already taken");
+  }
+
+  const playerRef = db.collection(`binary_games/${binaryGameId}/players`).doc();
+  await playerRef.set({
+    binaryGameId,
+    userId: request.auth?.uid || null,
+    nickname,
+    ...(avatar ? { avatar } : {}),
+    totalPoints: 0,
+    streak: 0,
+    answeredCount: 0,
+    correctCount: 0,
+    joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { playerId: playerRef.id };
+});
+
+export const submitBinaryAnswer = onCall(HOT_PATH_CONFIG, async (request) => {
+  const { binaryGameId, playerId, roundIndex, submission, timeMs } = request.data as {
+    binaryGameId: string;
+    playerId: string;
+    roundIndex: number;
+    submission: string;
+    timeMs: number;
+  };
+
+  if (!binaryGameId || !playerId || roundIndex === undefined || !submission) {
+    throw new HttpsError("invalid-argument", "Missing required fields");
+  }
+
+  const bgDoc = await db.doc(`binary_games/${binaryGameId}`).get();
+  if (!bgDoc.exists) throw new HttpsError("not-found", "Game not found");
+  const bg = bgDoc.data()!;
+
+  if (bg.status !== "live" || bg.roundState !== "live" || bg.currentRoundIndex !== roundIndex) {
+    throw new HttpsError("failed-precondition", "Round is not active");
+  }
+
+  // Prevent duplicate answers
+  const answerId = `${roundIndex}_${playerId}`;
+  const existingAnswer = await db.doc(`binary_games/${binaryGameId}/answers/${answerId}`).get();
+  if (existingAnswer.exists) {
+    throw new HttpsError("already-exists", "Already answered this round");
+  }
+
+  const playerDoc = await db.doc(`binary_games/${binaryGameId}/players/${playerId}`).get();
+  if (!playerDoc.exists) throw new HttpsError("not-found", "Player not found");
+  const player = playerDoc.data()!;
+
+  const round = bg.rounds[roundIndex] as BinaryRound;
+  const correct = submission.toUpperCase().replace(/^0+/, "") === round.answer.toUpperCase().replace(/^0+/, "")
+    || submission.toUpperCase() === round.answer.toUpperCase();
+
+  let pointsAwarded = 0;
+  let newStreak = correct ? (player.streak || 0) + 1 : 0;
+
+  if (correct) {
+    const timeFactor = Math.max(0, (round.timeLimitSec * 1000 - timeMs) / (round.timeLimitSec * 1000));
+    pointsAwarded = Math.round(1000 * timeFactor);
+    pointsAwarded += newStreak * 50; // streak bonus
+  }
+
+  const batch = db.batch();
+
+  // Write answer
+  batch.set(db.doc(`binary_games/${binaryGameId}/answers/${answerId}`), {
+    playerId,
+    nickname: player.nickname,
+    roundIndex,
+    submission,
+    correct,
+    timeMs,
+    pointsAwarded,
+    submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // Update player stats
+  batch.update(db.doc(`binary_games/${binaryGameId}/players/${playerId}`), {
+    totalPoints: admin.firestore.FieldValue.increment(pointsAwarded),
+    streak: newStreak,
+    answeredCount: admin.firestore.FieldValue.increment(1),
+    ...(correct ? { correctCount: admin.firestore.FieldValue.increment(1) } : {}),
+  });
+
+  await batch.commit();
+
+  return {
+    correct,
+    pointsAwarded,
+    correctAnswer: round.answer,
+    totalPoints: (player.totalPoints || 0) + pointsAwarded,
+    streak: newStreak,
+  };
 });
