@@ -1,0 +1,1 @@
+{"version":3,"file":"registry.js","sourceRoot":"","sources":["../../src/games/registry.ts"],"names":[],"mappings":";;;;;AAOA,sCAEC;AARD,sDAAoC;AAEpC,MAAM,aAAa,GAAqC;IACtD,MAAM,EAAE,gBAAY;CACrB,CAAC;AAEF,SAAgB,aAAa,CAAC,QAAgB;IAC5C,OAAO,aAAa,CAAC,QAAQ,CAAC,IAAI,IAAI,CAAC;AACzC,CAAC;AAED,kBAAe,aAAa,CAAC"}
