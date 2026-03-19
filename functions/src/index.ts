@@ -3102,7 +3102,7 @@ export const sendGameStartNotification = onCall(FUNCTION_CONFIG, async (request)
 import { getGameModule } from "./games/registry";
 import { GameRound } from "./games/types";
 
-export const createMiniGame = onCall(FUNCTION_CONFIG, async (request) => {
+export const createMiniGame = onCall({ ...FUNCTION_CONFIG, secrets: [geminiApiKey] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be logged in");
   }
@@ -3131,7 +3131,15 @@ export const createMiniGame = onCall(FUNCTION_CONFIG, async (request) => {
     catch (err) { throw new HttpsError("invalid-argument", (err as Error).message); }
   }
 
-  const rounds = gameModule.generateRounds(config, roundCount, timeLimitSec);
+  // Try AI generation first, fallback to static/procedural
+  let rounds: GameRound[];
+  if (gameModule.generateRoundsAI) {
+    const apiKey = geminiApiKey.value();
+    const aiRounds = apiKey ? await gameModule.generateRoundsAI(config, roundCount, timeLimitSec, apiKey) : null;
+    rounds = aiRounds || gameModule.generateRounds(config, roundCount, timeLimitSec);
+  } else {
+    rounds = gameModule.generateRounds(config, roundCount, timeLimitSec);
+  }
 
   // Generate unique PIN across sessions, live_gradings, and mini_games
   let pinCode = generatePin();

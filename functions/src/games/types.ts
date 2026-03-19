@@ -7,8 +7,11 @@ export interface GameRound {
 }
 
 export interface GameModuleServer {
-  /** Generate rounds from config */
+  /** Generate rounds from config (sync, uses static/procedural content) */
   generateRounds(config: Record<string, unknown>, roundCount: number, timeLimitSec: number): GameRound[];
+
+  /** Generate rounds with AI (optional). Returns null to fallback to generateRounds. */
+  generateRoundsAI?(config: Record<string, unknown>, roundCount: number, timeLimitSec: number, apiKey: string): Promise<GameRound[] | null>;
 
   /** Check if a submission is correct for a given round */
   checkAnswer(submission: string, round: GameRound): boolean;

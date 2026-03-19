@@ -1,4 +1,5 @@
 import { GameModuleServer, GameRound } from "./types";
+import { generateWithGemini } from "./geminiHelper";
 
 interface WordEntry {
   en: string;
@@ -169,8 +170,45 @@ function checkAnswer(submission: string, round: GameRound): boolean {
   return normalize(submission) === normalize(round.answer);
 }
 
+async function generateRoundsAI(config: Record<string, unknown>, roundCount: number, timeLimitSec: number, apiKey: string): Promise<GameRound[] | null> {
+  const language = (config.language as string) || "french";
+  const direction = (config.direction as string) || "both";
+  const langName = language.charAt(0).toUpperCase() + language.slice(1);
+
+  const result = await generateWithGemini<Array<{ english: string; translation: string }>>(
+    apiKey,
+    `Generate ${roundCount} unique English-${langName} vocabulary pairs for a language learning game.
+Mix everyday words: food, animals, colors, body parts, weather, emotions, travel, school, family, clothing, nature.
+${language === "japanese" ? "Use romaji for Japanese (e.g. 'neko' not 'ねこ')." : "Include accents where appropriate."}
+Avoid very obscure words — target A1-B1 level.
+Return JSON array: [{"english":"cat","translation":"${language === "french" ? "chat" : language === "spanish" ? "gato" : "neko"}"}, ...]`,
+    0.9,
+  );
+
+  if (!result || !Array.isArray(result) || result.length === 0) return null;
+
+  const rounds: GameRound[] = [];
+  for (let i = 0; i < Math.min(roundCount, result.length); i++) {
+    const item = result[i];
+    let type: string;
+    if (direction === "en2target") type = "en2target";
+    else if (direction === "target2en") type = "target2en";
+    else type = i % 2 === 0 ? "en2target" : "target2en";
+
+    rounds.push({
+      type,
+      prompt: type === "en2target" ? item.english : item.translation,
+      answer: type === "en2target" ? item.translation.toUpperCase() : item.english.toUpperCase(),
+      timeLimitSec,
+      meta: { english: item.english, translation: item.translation, language },
+    });
+  }
+  return rounds;
+}
+
 const vocabSprintModule: GameModuleServer = {
   generateRounds,
+  generateRoundsAI,
   checkAnswer,
   validateConfig(config) {
     const lang = config.language as string | undefined;

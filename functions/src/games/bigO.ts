@@ -1,4 +1,5 @@
 import { GameModuleServer, GameRound } from "./types";
+import { generateWithGemini } from "./geminiHelper";
 
 interface BigOItem {
   code: string;
@@ -56,8 +57,35 @@ function checkAnswer(submission: string, round: GameRound): boolean {
   return normalize(submission) === normalize(round.answer);
 }
 
+async function generateRoundsAI(config: Record<string, unknown>, roundCount: number, timeLimitSec: number, apiKey: string): Promise<GameRound[] | null> {
+  const result = await generateWithGemini<Array<{ code: string; complexity: string; description: string }>>(
+    apiKey,
+    `Generate ${roundCount} unique "identify the time complexity" questions for a CS quiz.
+Each should have a short code snippet (2-5 lines, pseudocode or Python-like) and its Big-O time complexity.
+Use these complexities: O(1), O(log n), O(n), O(n log n), O(n²), O(n³), O(2ⁿ), O(n!).
+Vary the patterns: loops, recursion, divide-and-conquer, nested loops, hash lookups, sorting, tree traversal, dynamic programming.
+Return JSON array: [{"code":"for i in range(n):\\n  for j in range(n):\\n    print(i,j)","complexity":"O(n²)","description":"nested loops"}, ...]`,
+    0.9,
+  );
+
+  if (!result || !Array.isArray(result) || result.length === 0) return null;
+
+  return result.slice(0, roundCount).map((item) => ({
+    type: "identify_complexity",
+    prompt: item.code,
+    answer: item.complexity,
+    timeLimitSec,
+    meta: {
+      description: item.description,
+      options: COMPLEXITIES.map((c) => ({ value: c, label: c })),
+      inputType: "mcq",
+    },
+  }));
+}
+
 const bigOModule: GameModuleServer = {
-  generateRounds: generateRounds,
+  generateRounds,
+  generateRoundsAI,
   checkAnswer,
 };
 

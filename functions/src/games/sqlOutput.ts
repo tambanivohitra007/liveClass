@@ -1,4 +1,5 @@
 import { GameModuleServer, GameRound } from "./types";
+import { generateWithGemini } from "./geminiHelper";
 
 interface SqlItem {
   table: string;
@@ -60,8 +61,32 @@ function checkAnswer(submission: string, round: GameRound): boolean {
   return sub.toUpperCase() === ans.toUpperCase();
 }
 
+async function generateRoundsAI(config: Record<string, unknown>, roundCount: number, timeLimitSec: number, apiKey: string): Promise<GameRound[] | null> {
+  const result = await generateWithGemini<Array<{ table: string; query: string; output: string; topic: string }>>(
+    apiKey,
+    `Generate ${roundCount} unique SQL "predict the output" questions for a quiz game.
+Mix of: aggregate functions (COUNT, SUM, AVG, MAX, MIN), WHERE clauses, JOINs, GROUP BY, HAVING, subqueries, string functions, date functions, CASE WHEN, DISTINCT, LIMIT, ORDER BY.
+For table-based questions, define a small table with 3-5 rows inline like: "employees: (1,'Alice','Sales',50000), (2,'Bob','IT',60000), (3,'Carol','Sales',55000)"
+For simple expression questions, set table to "(no table)".
+Each answer must be a single value (number or short string), not a result set.
+Return JSON array: [{"table":"...","query":"SELECT ...","output":"expected","topic":"COUNT+WHERE"}, ...]`,
+    0.9,
+  );
+
+  if (!result || !Array.isArray(result) || result.length === 0) return null;
+
+  return result.slice(0, roundCount).map((item) => ({
+    type: item.topic || "sql",
+    prompt: item.query,
+    answer: item.output,
+    timeLimitSec,
+    meta: { table: item.table, topic: item.topic, language: "sql" },
+  }));
+}
+
 const sqlOutputModule: GameModuleServer = {
-  generateRounds: generateRounds,
+  generateRounds,
+  generateRoundsAI,
   checkAnswer,
 };
 

@@ -1,4 +1,5 @@
 import { GameModuleServer, GameRound } from "./types";
+import { generateWithGemini } from "./geminiHelper";
 
 function generateRounds(config: Record<string, unknown>, roundCount: number, timeLimitSec: number): GameRound[] {
   const difficulty = (config.difficulty as string) || "medium";
@@ -78,8 +79,36 @@ function checkAnswer(submission: string, round: GameRound): boolean {
   return Math.abs(sub - ans) < 0.01;
 }
 
+async function generateRoundsAI(config: Record<string, unknown>, roundCount: number, timeLimitSec: number, apiKey: string): Promise<GameRound[] | null> {
+  const difficulty = (config.difficulty as string) || "medium";
+  const levelDesc = difficulty === "easy" ? "simple linear equations like 2x + 3 = 11"
+    : difficulty === "hard" ? "equations with fractions, parentheses, and multi-step solving like (2x+1)/3 = 5 or 2(x-3) + 4 = x + 7"
+    : "moderate equations like 3x - 7 = 2x + 5 or 4x + 2 = 18";
+
+  const result = await generateWithGemini<Array<{ equation: string; answer: number }>>(
+    apiKey,
+    `Generate ${roundCount} unique "solve for x" algebra equations for a math quiz.
+Difficulty: ${levelDesc}.
+All answers must be integers (no fractions or decimals as final answers).
+Use variety: addition, subtraction, multiplication, division, variables on both sides, parentheses.
+Return JSON array: [{"equation":"2x + 5 = 15","answer":5}, ...]`,
+    0.8,
+  );
+
+  if (!result || !Array.isArray(result) || result.length === 0) return null;
+
+  return result.slice(0, roundCount).map((item) => ({
+    type: difficulty,
+    prompt: item.equation,
+    answer: String(item.answer),
+    timeLimitSec,
+    meta: {},
+  }));
+}
+
 const equationSolverModule: GameModuleServer = {
   generateRounds,
+  generateRoundsAI,
   checkAnswer,
   validateConfig(config) {
     const d = config.difficulty as string | undefined;

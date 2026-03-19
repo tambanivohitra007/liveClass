@@ -1,4 +1,5 @@
 import { GameModuleServer, GameRound } from "./types";
+import { generateWithGemini } from "./geminiHelper";
 
 interface CodeSnippet {
   language: string;
@@ -75,8 +76,36 @@ function checkAnswer(submission: string, round: GameRound): boolean {
   return sub === ans;
 }
 
+async function generateRoundsAI(config: Record<string, unknown>, roundCount: number, timeLimitSec: number, apiKey: string): Promise<GameRound[] | null> {
+  const languages = (config.languages as string[]) || ["python", "javascript", "c"];
+  const langStr = languages.join(", ");
+
+  const result = await generateWithGemini<Array<{ language: string; code: string; output: string }>>(
+    apiKey,
+    `Generate ${roundCount} unique "predict the output" code snippet questions for a programming quiz game.
+Languages to use: ${langStr} (distribute evenly).
+Each snippet should be 1-4 lines of code that produces a single deterministic output.
+Focus on: type coercion, operator precedence, string operations, list/array methods, integer vs float division, boolean logic, indexing, slicing, built-in functions.
+Do NOT repeat patterns. Make them tricky but fair — a student who knows the language should get it.
+Return a JSON array: [{"language":"python","code":"print(...)","output":"expected output"}, ...]
+The output must be exactly what gets printed (no quotes around strings unless they are part of the output).`,
+    0.9,
+  );
+
+  if (!result || !Array.isArray(result) || result.length === 0) return null;
+
+  return result.slice(0, roundCount).map((item) => ({
+    type: item.language,
+    prompt: item.code,
+    answer: item.output,
+    timeLimitSec,
+    meta: { language: item.language, topic: "ai-generated" },
+  }));
+}
+
 const codeOutputModule: GameModuleServer = {
-  generateRounds: generateRounds,
+  generateRounds,
+  generateRoundsAI,
   checkAnswer,
 };
 
