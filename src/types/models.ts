@@ -322,6 +322,64 @@ export interface LiveGradingPlayer {
   userId?: string;
 }
 
+// --- Binary Challenge Game ---
+
+export type BinaryConversionType = 'dec2bin' | 'bin2dec' | 'dec2hex' | 'hex2dec' | 'hex2bin' | 'bin2hex';
+export type BinaryDifficulty = '4bit' | '8bit';
+export type BinaryGameStatus = 'lobby' | 'live' | 'ended';
+
+export interface BinaryRound {
+  type: BinaryConversionType;
+  prompt: string;        // The value to convert (e.g. "42", "00101010", "2A")
+  answer: string;        // Correct answer
+  bits: number;          // 4 or 8
+  timeLimitSec: number;
+}
+
+export interface BinaryGame {
+  id: string;
+  ownerId: string;
+  pinCode: string;
+  title: string;
+  status: BinaryGameStatus;
+  difficulty: BinaryDifficulty;
+  conversionTypes: BinaryConversionType[];
+  roundCount: number;
+  timeLimitSec: number;
+  rounds: BinaryRound[];
+  currentRoundIndex: number;
+  roundState: 'waiting' | 'live' | 'reveal';
+  roundStartedAt: number | null;
+  joinLocked: boolean;
+  createdAt: number;
+  startedAt: number | null;
+  endedAt: number | null;
+  top10Snapshot?: { playerId: string; nickname: string; totalPoints: number; rank: number }[];
+}
+
+export interface BinaryGamePlayer {
+  id: string;
+  nickname: string;
+  avatar?: string;
+  userId?: string;
+  totalPoints: number;
+  streak: number;
+  answeredCount: number;
+  correctCount: number;
+  joinedAt: number;
+}
+
+export interface BinaryGameAnswer {
+  playerId: string;
+  nickname: string;
+  roundIndex: number;
+  submission: string;
+  correct: boolean;
+  timeMs: number;
+  pointsAwarded: number;
+  submittedAt: number;
+}
+
 export type NotificationType = 'new_assignment' | 'session_started' | 'class_joined' | 'class_removed';
 
 export interface AppNotification {
