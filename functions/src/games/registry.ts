@@ -11,6 +11,7 @@ import booleanAlgebraModule from "./booleanAlgebra";
 import regexMatchModule from "./regexMatch";
 import sqlOutputModule from "./sqlOutput";
 import baseConverterModule from "./baseConverter";
+import mentalMathModule from "./mentalMath";
 
 const GAME_REGISTRY: Record<string, GameModuleServer> = {
   binary: binaryModule,
@@ -25,6 +26,7 @@ const GAME_REGISTRY: Record<string, GameModuleServer> = {
   regex_match: regexMatchModule,
   sql_output: sqlOutputModule,
   base_converter: baseConverterModule,
+  mental_math: mentalMathModule,
 };
 
 export function getGameModule(gameType: string): GameModuleServer | null {

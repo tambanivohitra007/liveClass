@@ -11,6 +11,7 @@ import booleanAlgebraModule from './boolean-algebra';
 import regexMatchModule from './regex-match';
 import sqlOutputModule from './sql-output';
 import baseConverterModule from './base-converter';
+import mentalMathModule from './mental-math';
 
 /** All registered game modules, keyed by type */
 const GAME_REGISTRY: Record<string, GameModule> = {
@@ -26,6 +27,7 @@ const GAME_REGISTRY: Record<string, GameModule> = {
   [regexMatchModule.type]: regexMatchModule,
   [sqlOutputModule.type]: sqlOutputModule,
   [baseConverterModule.type]: baseConverterModule,
+  [mentalMathModule.type]: mentalMathModule,
 };
 
 /** Get a game module by type, or null if not found */
