@@ -12,6 +12,7 @@ import regexMatchModule from "./regexMatch";
 import sqlOutputModule from "./sqlOutput";
 import baseConverterModule from "./baseConverter";
 import mentalMathModule from "./mentalMath";
+import fractionFighterModule from "./fractionFighter";
 
 const GAME_REGISTRY: Record<string, GameModuleServer> = {
   binary: binaryModule,
@@ -27,6 +28,7 @@ const GAME_REGISTRY: Record<string, GameModuleServer> = {
   sql_output: sqlOutputModule,
   base_converter: baseConverterModule,
   mental_math: mentalMathModule,
+  fraction_fighter: fractionFighterModule,
 };
 
 export function getGameModule(gameType: string): GameModuleServer | null {

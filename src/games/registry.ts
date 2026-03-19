@@ -12,6 +12,7 @@ import regexMatchModule from './regex-match';
 import sqlOutputModule from './sql-output';
 import baseConverterModule from './base-converter';
 import mentalMathModule from './mental-math';
+import fractionFighterModule from './fraction-fighter';
 
 /** All registered game modules, keyed by type */
 const GAME_REGISTRY: Record<string, GameModule> = {
@@ -28,6 +29,7 @@ const GAME_REGISTRY: Record<string, GameModule> = {
   [sqlOutputModule.type]: sqlOutputModule,
   [baseConverterModule.type]: baseConverterModule,
   [mentalMathModule.type]: mentalMathModule,
+  [fractionFighterModule.type]: fractionFighterModule,
 };
 
 /** Get a game module by type, or null if not found */
