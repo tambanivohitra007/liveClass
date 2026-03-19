@@ -555,6 +555,17 @@ export default function HostLiveGrading() {
                   {players.length > 0 && <span className="text-xs opacity-70">({players.length} students)</span>}
                 </button>
                 <p className="text-center text-white/30 text-xs">Press Space to start</p>
+                <button
+                  onClick={async () => {
+                    await updateDoc(doc(db, 'live_gradings', liveGrading.id), {
+                      status: 'ended', endedAt: Date.now(), currentStudentId: null,
+                    });
+                    navigate('/rubrics');
+                  }}
+                  className="btn-3d-ghost w-full py-2 text-sm text-danger hover:bg-danger/10 mt-2"
+                >
+                  Cancel Session
+                </button>
               </div>
             </aside>
           </main>
