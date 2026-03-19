@@ -179,7 +179,7 @@ export default function PlayMiniGame() {
   // ═══════════ ERROR ═══════════
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white" style={MESH_BG}>
+      <div className="h-dvh flex items-center justify-center text-white overflow-hidden" style={MESH_BG}>
         <div className="text-center">
           <p className="text-lg text-danger mb-4">{error}</p>
           <button onClick={() => navigate('/join')} className="btn-3d-ghost">Back</button>
@@ -191,7 +191,7 @@ export default function PlayMiniGame() {
   // ═══════════ LOADING ═══════════
   if (!game || !player || !module) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white" style={MESH_BG}>
+      <div className="h-dvh flex items-center justify-center text-white overflow-hidden" style={MESH_BG}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-3 border-brand/30 border-t-brand rounded-full animate-spin" />
           <p className="text-white/60 text-sm">Connecting...</p>
@@ -207,7 +207,7 @@ export default function PlayMiniGame() {
   // ═══════════ LOBBY (waiting) ═══════════
   if (game.status === 'lobby') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-white p-4" style={MESH_BG}>
+      <div className="h-dvh flex flex-col items-center justify-center text-white p-4 overflow-y-auto" style={MESH_BG}>
         <div className="text-center animate-fade-in">
           <div className="w-20 h-20 rounded-full bg-brand/20 flex items-center justify-center mx-auto mb-4">
             <IconComponent className="w-10 h-10 text-brand" />
@@ -236,24 +236,23 @@ export default function PlayMiniGame() {
     const myRank = top10.findIndex((e) => e.playerId === playerId);
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-white p-4" style={MESH_BG}>
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4">
-            <Trophy className="w-8 h-8 text-warning" />
+      <div className="h-dvh flex flex-col items-center justify-center text-white p-4 overflow-y-auto" style={MESH_BG}>
+        <div className="text-center mb-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-2">
+            <Trophy className="w-6 h-6 text-warning" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Game Over!</h2>
-          <p className="text-white/50 text-sm">
-            {player.correctCount || 0} / {player.answeredCount || 0} correct
+          <h2 className="text-xl font-bold mb-1">Game Over!</h2>
+          <p className="text-white/50 text-xs">
+            {player.correctCount || 0}/{player.answeredCount || 0} correct
           </p>
         </div>
 
         {/* Your Score */}
-        <div className="bg-white/[0.07] border border-white/12 rounded-2xl p-6 mb-6 text-center w-full max-w-sm">
-          <p className="text-xs font-bold text-white/40 uppercase tracking-wider mb-2">Your Score</p>
-          <span className="text-4xl font-bold text-brand">{player.totalPoints || 0}</span>
-          <span className="text-lg text-white/30 ml-2">pts</span>
+        <div className="bg-white/[0.07] border border-white/12 rounded-2xl p-4 mb-4 text-center w-full max-w-sm">
+          <span className="text-3xl font-bold text-brand">{player.totalPoints || 0}</span>
+          <span className="text-sm text-white/30 ml-1">pts</span>
           {myRank >= 0 && (
-            <p className="mt-2 text-sm text-warning font-bold">#{myRank + 1} on leaderboard</p>
+            <span className="ml-2 text-sm text-warning font-bold">#{myRank + 1}</span>
           )}
         </div>
 
@@ -304,7 +303,7 @@ export default function PlayMiniGame() {
   // Waiting between rounds
   if (game.roundState === 'waiting') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-white p-4" style={MESH_BG}>
+      <div className="h-dvh flex flex-col items-center justify-center text-white p-4 overflow-y-auto" style={MESH_BG}>
         <div className="text-center animate-fade-in">
           <Clock className="w-10 h-10 text-brand mx-auto mb-4 animate-pulse" />
           <h2 className="text-xl font-bold mb-2">Get Ready!</h2>
@@ -317,7 +316,7 @@ export default function PlayMiniGame() {
   // Reveal state — show feedback or waiting
   if (game.roundState === 'reveal') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-white p-4" style={MESH_BG}>
+      <div className="h-dvh flex flex-col items-center justify-center text-white p-4 overflow-y-auto" style={MESH_BG}>
         {feedback ? (
           <div className="text-center animate-fade-in w-full max-w-sm">
             <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
@@ -375,86 +374,85 @@ export default function PlayMiniGame() {
 
   // ═══════════ ACTIVE ROUND ═══════════
   const PlayerInput = module.PlayerInput;
+  const totalTimeSec = currentRound.timeLimitSec + (game.timerExtendedBy || 0);
 
   return (
-    <div className="min-h-screen flex flex-col text-white" style={MESH_BG}>
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <Hash className="w-4 h-4 text-brand" />
-          <span className="text-sm font-bold">Round {game.currentRoundIndex + 1}/{game.roundCount}</span>
+    <div className="h-dvh flex flex-col text-white overflow-hidden" style={MESH_BG}>
+      {/* Compact Header: round info + points + timer in one row */}
+      <header className="flex items-center justify-between px-3 py-1.5 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold text-white/50">{game.currentRoundIndex + 1}/{game.roundCount}</span>
           {roundLabel && (
-            <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold">
+            <span className="px-1.5 py-0.5 rounded-full bg-brand/10 text-brand text-[9px] font-bold">
               {roundLabel}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {player.streak > 1 && (
-            <span className="flex items-center gap-1 text-warning text-sm font-bold">
-              <Zap className="w-3.5 h-3.5" />{player.streak}
+            <span className="flex items-center gap-0.5 text-warning text-xs font-bold">
+              <Zap className="w-3 h-3" />{player.streak}
             </span>
           )}
-          <span className="text-sm font-bold text-brand tabular-nums">{player.totalPoints || 0} pts</span>
+          <span className="text-xs font-bold text-brand tabular-nums">{player.totalPoints || 0} pts</span>
+          <div className={`text-lg font-bold tabular-nums px-2 py-0.5 rounded-full min-w-[3rem] text-center ${
+            game.timerPaused ? 'bg-warning/20 text-warning' :
+            timeLeft <= 5 ? 'bg-danger/20 text-danger animate-pulse' :
+            'bg-white/10 text-white'
+          }`}>
+            {game.timerPaused ? '⏸' : `${Math.ceil(timeLeft)}s`}
+          </div>
         </div>
       </header>
 
-      {/* Big Timer */}
-      <div className="flex flex-col items-center py-2 shrink-0">
-        <div className={`text-7xl sm:text-8xl font-bold tabular-nums leading-none ${
-          game.timerPaused ? 'text-warning' :
-          timeLeft <= 5 ? 'text-danger animate-pulse' :
-          timeLeft <= 10 ? 'text-warning' : 'text-white'
-        }`}>
-          {Math.ceil(timeLeft)}
-        </div>
-        <span className={`text-xs font-bold uppercase tracking-widest mt-1 ${
-          game.timerPaused ? 'text-warning' : 'text-white/30'
-        }`}>
-          {game.timerPaused ? 'Paused' : 'seconds'}
-        </span>
-      </div>
-
       {/* Timer Bar */}
-      <div className="w-full h-1.5 bg-white/10 shrink-0">
+      <div className="w-full h-1 bg-white/10 shrink-0">
         <div
           className={`h-full transition-all duration-100 ${
             game.timerPaused ? 'bg-warning' : timeLeft <= 5 ? 'bg-danger' : 'bg-brand'
           }`}
-          style={{ width: `${(currentRound.timeLimitSec + (game.timerExtendedBy || 0)) > 0 ? (timeLeft / (currentRound.timeLimitSec + (game.timerExtendedBy || 0))) * 100 : 0}%` }}
+          style={{ width: `${totalTimeSec > 0 ? (timeLeft / totalTimeSec) * 100 : 0}%` }}
         />
       </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 gap-4">
-        {/* Player Input (handles its own prompt display and submit button) */}
-        <PlayerInput
-          round={currentRound}
-          onSubmit={handleSubmit}
-          disabled={answered || submitting}
-        />
+      {/* Main Content — fills remaining space, no scroll */}
+      <main className="flex-1 flex flex-col items-center justify-center px-3 py-2 gap-2 min-h-0 overflow-y-auto">
+        {/* Prompt — what the student needs to answer */}
+        <div className="text-center shrink-0">
+          <div className="text-2xl sm:text-4xl font-bold font-mono text-brand tracking-wider break-all leading-tight">
+            {currentRound.prompt}
+          </div>
+        </div>
 
-        {/* Already answered indicator */}
+        {/* Player Input */}
+        <div className="w-full shrink-0">
+          <PlayerInput
+            round={currentRound}
+            onSubmit={handleSubmit}
+            disabled={answered || submitting}
+          />
+        </div>
+
+        {/* Feedback / Status */}
         {answered && !feedback && (
-          <div className="flex items-center gap-2 text-success animate-fade-in">
-            <CheckCircle2 className="w-5 h-5" />
-            <span className="text-sm font-medium">Submitted! Waiting for results...</span>
+          <div className="flex items-center gap-2 text-success animate-fade-in shrink-0">
+            <CheckCircle2 className="w-4 h-4" />
+            <span className="text-xs font-medium">Submitted!</span>
           </div>
         )}
 
-        {/* Inline feedback (while round is still live, after submitting) */}
         {feedback && game.roundState === 'live' && (
-          <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl animate-fade-in ${
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-xl animate-fade-in shrink-0 ${
             feedback.correct ? 'bg-success/20 border border-success/30' : 'bg-danger/20 border border-danger/30'
           }`}>
             {feedback.correct
-              ? <CheckCircle2 className="w-5 h-5 text-success" />
-              : <XCircle className="w-5 h-5 text-danger" />}
-            <span className={`font-bold ${feedback.correct ? 'text-success' : 'text-danger'}`}>
-              {feedback.correct ? `+${feedback.pointsAwarded} pts` : 'Wrong!'}
+              ? <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+              : <XCircle className="w-4 h-4 text-danger shrink-0" />}
+            <span className={`text-sm font-bold ${feedback.correct ? 'text-success' : 'text-danger'}`}>
+              {feedback.correct ? `+${feedback.pointsAwarded}` : 'Wrong'}
             </span>
             {!feedback.correct && (
-              <span className="text-white/50 text-sm">Answer: <span className="font-mono font-bold text-white">{feedback.correctAnswer}</span></span>
+              <span className="text-white/50 text-xs truncate">= <span className="font-mono font-bold text-white">{feedback.correctAnswer}</span></span>
             )}
           </div>
         )}
