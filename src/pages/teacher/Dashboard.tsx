@@ -366,7 +366,7 @@ export default function Dashboard() {
       {/* Binary Challenge Card */}
       <div className="mb-8 animate-fade-in">
         <button
-          onClick={() => navigate('/binary-game/host')}
+          onClick={() => navigate('/mini-game/binary/host')}
           className="card-night card-night-hover p-4 flex items-center gap-3 w-full text-left group"
         >
           <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">

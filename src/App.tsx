@@ -66,9 +66,9 @@ const GradingResults = lazy(() => import('./pages/teacher/GradingResults'));
 const HostLiveGrading = lazy(() => import('./pages/teacher/HostLiveGrading'));
 const LiveGradingResults = lazy(() => import('./pages/teacher/LiveGradingResults'));
 const LiveGradingPlay = lazy(() => import('./pages/student/LiveGradingPlay'));
-const HostBinaryGame = lazy(() => import('./pages/teacher/HostBinaryGame'));
-const BinaryGameResults = lazy(() => import('./pages/teacher/BinaryGameResults'));
-const PlayBinaryGame = lazy(() => import('./pages/student/PlayBinaryGame'));
+const HostMiniGame = lazy(() => import('./pages/teacher/HostMiniGame'));
+const MiniGameResults = lazy(() => import('./pages/teacher/MiniGameResults'));
+const PlayMiniGame = lazy(() => import('./pages/student/PlayMiniGame'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 
@@ -174,9 +174,9 @@ function AppContent() {
       else if (matchPath('/session/:id/results', path)) title = 'Session Results';
       else if (matchPath('/classroom/:id', path)) title = 'Classroom';
       else if (matchPath('/play/:sid/:pid', path)) title = 'Playing';
-      else if (matchPath('/binary-game/host', path)) title = 'Binary Challenge';
-      else if (matchPath('/binary-game/:id/results', path)) title = 'Binary Results';
-      else if (matchPath('/binary-game/:id/:pid', path)) title = 'Binary Challenge';
+      else if (matchPath('/mini-game/:type/host', path)) title = 'Mini Game';
+      else if (matchPath('/mini-game/:id/results', path)) title = 'Game Results';
+      else if (matchPath('/mini-game/:id/:pid', path)) title = 'Mini Game';
     }
     document.title = title ? `${title} - LiveClass` : 'LiveClass';
   }, [location.pathname]);
@@ -190,7 +190,7 @@ function AppContent() {
   const isQuizEditor = location.pathname.startsWith('/quiz/') && !location.pathname.endsWith('/host') && !location.pathname.endsWith('/preview') && !location.pathname.endsWith('/worksheet') && !location.pathname.endsWith('/flashcards');
   const isGradingInterface = /^\/grading\/(?!new$)[^/]+$/.test(location.pathname);
   const isRubricEditor = location.pathname.startsWith('/rubric/');
-  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || location.pathname.startsWith('/binary-game/') || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
+  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || location.pathname.startsWith('/mini-game/') || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
   const showSidebar = !hideNavbar && !!firebaseUser;
 
@@ -216,7 +216,7 @@ function AppContent() {
           <Route path="/join" element={<JoinGame />} />
           <Route path="/play/:sessionId/:playerId" element={<PlayGame />} />
           <Route path="/live-grading/:liveGradingId/:playerId" element={<LiveGradingPlay />} />
-          <Route path="/binary-game/:binaryGameId/:playerId" element={<PlayBinaryGame />} />
+          <Route path="/mini-game/:miniGameId/:playerId" element={<PlayMiniGame />} />
           <Route path="/assignment/:assignmentId" element={<PlayAssignment />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -248,8 +248,8 @@ function AppContent() {
           <Route path="/rubrics" element={<TeacherRoute><RubricList /></TeacherRoute>} />
           <Route path="/rubric/:rubricId/host" element={<TeacherRoute><HostLiveGrading /></TeacherRoute>} />
           <Route path="/live-grading/:liveGradingId/results" element={<TeacherRoute><LiveGradingResults /></TeacherRoute>} />
-          <Route path="/binary-game/host" element={<TeacherRoute><HostBinaryGame /></TeacherRoute>} />
-          <Route path="/binary-game/:binaryGameId/results" element={<TeacherRoute><BinaryGameResults /></TeacherRoute>} />
+          <Route path="/mini-game/:gameType/host" element={<TeacherRoute><HostMiniGame /></TeacherRoute>} />
+          <Route path="/mini-game/:miniGameId/results" element={<TeacherRoute><MiniGameResults /></TeacherRoute>} />
           <Route path="/rubric/:rubricId" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />
           <Route path="/rosters" element={<TeacherRoute><RosterList /></TeacherRoute>} />
           <Route path="/roster/:rosterId" element={<TeacherRoute><RosterEditor /></TeacherRoute>} />

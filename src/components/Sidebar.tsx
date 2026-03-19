@@ -112,7 +112,7 @@ const teacherSections: NavSection[] = [
   {
     title: 'Games',
     items: [
-      { label: 'Binary Challenge', icon: Binary, path: '/binary-game/host', exact: true, color: 'blue' },
+      { label: 'Binary Challenge', icon: Binary, path: '/mini-game/binary/host', exact: true, color: 'blue' },
     ],
   },
   {

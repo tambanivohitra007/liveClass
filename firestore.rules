@@ -212,9 +212,9 @@ service cloud.firestore {
       }
     }
 
-    // Binary Challenge Games
+    // Mini Games (modular game engine)
     // Readable by anyone (students join via PIN without auth)
-    match /binary_games/{bgId} {
+    match /mini_games/{bgId} {
       allow read: if true;
       allow create: if request.auth != null;
       allow update, delete: if request.auth != null
@@ -225,14 +225,14 @@ service cloud.firestore {
         allow create: if true;
         allow update: if false; // Cloud Functions only
         allow delete: if request.auth != null
-          && get(/databases/$(database)/documents/binary_games/$(bgId)).data.ownerId == request.auth.uid;
+          && get(/databases/$(database)/documents/mini_games/$(bgId)).data.ownerId == request.auth.uid;
       }
 
       match /answers/{answerId} {
         allow read: if true;
         allow create, update: if false; // Cloud Functions only
         allow delete: if request.auth != null
-          && get(/databases/$(database)/documents/binary_games/$(bgId)).data.ownerId == request.auth.uid;
+          && get(/databases/$(database)/documents/mini_games/$(bgId)).data.ownerId == request.auth.uid;
       }
     }
 

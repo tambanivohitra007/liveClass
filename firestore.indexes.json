@@ -25,7 +25,7 @@
       ]
     },
     {
-      "collectionGroup": "binary_games",
+      "collectionGroup": "mini_games",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "pinCode", "order": "ASCENDING" },
@@ -33,7 +33,7 @@
       ]
     },
     {
-      "collectionGroup": "binary_games",
+      "collectionGroup": "mini_games",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "ownerId", "order": "ASCENDING" },
@@ -41,7 +41,7 @@
       ]
     },
     {
-      "collectionGroup": "binary_games",
+      "collectionGroup": "mini_games",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "ownerId", "order": "ASCENDING" },
