@@ -467,6 +467,9 @@ export default function HostLiveGrading() {
                         <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                       </div>
                     </button>
+                    <p className="text-xs text-white/50 font-medium select-all break-all text-center max-w-40">
+                      {`${APP_URL}/join?pin=${liveGrading.pinCode}`}
+                    </p>
                   </div>
                 </div>
               </div>
