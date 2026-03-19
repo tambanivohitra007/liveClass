@@ -383,8 +383,11 @@ export default function HostLiveGrading() {
       {/* QR Zoom Modal */}
       {qrZoomed && (
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setQrZoomed(false)}>
-          <div className="bg-white p-6 rounded-3xl" onClick={(e) => e.stopPropagation()}>
-            <QRCodeSVG value={`${APP_URL}/join?pin=${liveGrading.pinCode}`} size={300} level="M" />
+          <div className="flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white p-6 rounded-3xl">
+              <QRCodeSVG value={`${APP_URL}/join?pin=${liveGrading.pinCode}`} size={300} level="M" />
+            </div>
+            <p className="text-white/70 text-sm font-medium select-all">{`${APP_URL}/join?pin=${liveGrading.pinCode}`}</p>
           </div>
           <button onClick={() => setQrZoomed(false)} className="absolute top-4 right-4 p-2 text-white/60 hover:text-white">
             <XIcon className="w-8 h-8" />
