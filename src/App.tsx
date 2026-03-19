@@ -66,6 +66,7 @@ const GradingResults = lazy(() => import('./pages/teacher/GradingResults'));
 const HostLiveGrading = lazy(() => import('./pages/teacher/HostLiveGrading'));
 const LiveGradingResults = lazy(() => import('./pages/teacher/LiveGradingResults'));
 const LiveGradingPlay = lazy(() => import('./pages/student/LiveGradingPlay'));
+const MiniGamePicker = lazy(() => import('./pages/teacher/MiniGamePicker'));
 const HostMiniGame = lazy(() => import('./pages/teacher/HostMiniGame'));
 const MiniGameResults = lazy(() => import('./pages/teacher/MiniGameResults'));
 const PlayMiniGame = lazy(() => import('./pages/student/PlayMiniGame'));
@@ -248,6 +249,7 @@ function AppContent() {
           <Route path="/rubrics" element={<TeacherRoute><RubricList /></TeacherRoute>} />
           <Route path="/rubric/:rubricId/host" element={<TeacherRoute><HostLiveGrading /></TeacherRoute>} />
           <Route path="/live-grading/:liveGradingId/results" element={<TeacherRoute><LiveGradingResults /></TeacherRoute>} />
+          <Route path="/mini-games" element={<TeacherRoute><MiniGamePicker /></TeacherRoute>} />
           <Route path="/mini-game/:gameType/host" element={<TeacherRoute><HostMiniGame /></TeacherRoute>} />
           <Route path="/mini-game/:miniGameId/results" element={<TeacherRoute><MiniGameResults /></TeacherRoute>} />
           <Route path="/rubric/:rubricId" element={<TeacherRoute><RubricEditor /></TeacherRoute>} />

@@ -18,7 +18,6 @@ import {
   Shield,
   ChevronsLeft,
   ChevronsRight,
-  Binary,
 } from 'lucide-react';
 
 interface NavItem {
@@ -110,9 +109,9 @@ const teacherSections: NavSection[] = [
     ],
   },
   {
-    title: 'Games',
+    title: 'Mini Games',
     items: [
-      { label: 'Binary Challenge', icon: Binary, path: '/mini-game/binary/host', exact: true, color: 'blue' },
+      { label: 'All Games', icon: Gamepad2, path: '/mini-games', exact: true, color: 'blue' },
     ],
   },
   {
