@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // AI PDF uploads (temporary, cleaned up after processing)
+    match /ai_uploads/{userId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType == 'application/pdf';
+    }
+    // Existing: images
+    match /{allPaths=**} {
+      // Allow read access to everyone (public images)
+      allow read: if true;
+      // Allow write access only to authenticated users
+      // Added file metadata validation for basic security
+      allow write: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024 // 5MB limit matching client-side
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

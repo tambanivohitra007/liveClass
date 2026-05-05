@@ -1,0 +1,231 @@
+@import "tailwindcss";
+
+@variant dark (&:is(.dark *));
+
+/* ─── Semantic Theme Variables ─── */
+
+:root {
+  /* Light mode (default) */
+  --surface-bg: #F8F9FB;
+  --surface-card: #FFFFFF;
+  --surface-elevated: #F1F5F9;
+  --text-primary: #23262c;
+  --text-secondary: #475569;
+  --text-tertiary: #94A3B8;
+  --border-base: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --input-bg: #FFFFFF;
+  --input-border: #CBD5E1;
+  --scrollbar-track: #F1F5F9;
+  --scrollbar-thumb: #CBD5E1;
+  --scrollbar-thumb-hover: #94A3B8;
+
+  /* Comic-pop shadow colors */
+  --tone-accent: #FF4FA3;
+  --tone-neutral: #475569;
+  --tone-danger: #FF5A5F;
+  --tone-success: #2FD37A;
+  --tone-info: #3B82F6;
+  --tone-muted: rgba(71, 85, 105, 0.24);
+  --tone-accent-light: rgba(255, 79, 163, 0.2);
+  --tone-accent-mid: rgba(255, 79, 163, 0.38);
+}
+
+.dark {
+  /* Dark mode overrides */
+  --surface-bg: #0F1729;
+  --surface-card: #162033;
+  --surface-elevated: #1A2537;
+  --text-primary: #E2E8F0;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-tertiary: rgba(255, 255, 255, 0.4);
+  --border-base: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --scrollbar-track: #080F1E;
+  --scrollbar-thumb: #2A3548;
+  --scrollbar-thumb-hover: #384658;
+
+  /* Comic-pop shadow colors in dark mode */
+  --tone-accent: rgba(255, 97, 176, 0.55);
+  --tone-neutral: rgba(255, 255, 255, 0.16);
+  --tone-danger: rgba(255, 90, 95, 0.45);
+  --tone-success: rgba(47, 211, 122, 0.45);
+  --tone-info: rgba(59, 130, 246, 0.45);
+  --tone-muted: rgba(255, 255, 255, 0.09);
+  --tone-accent-light: rgba(255, 97, 176, 0.22);
+  --tone-accent-mid: rgba(255, 97, 176, 0.34);
+}
+
+@theme {
+  /* Brand — NZK-inspired cyan */
+  --color-brand: #009EE2;
+  --color-brand-dark: #0080B8;
+  --color-brand-light: #7DD3FC;
+
+  /* Accent — NZK purple */
+  --color-accent: #701EA8;
+  --color-accent-dark: #5A1886;
+
+  /* NZK gold */
+  --color-gold: #F4CF5D;
+
+  /* Functional */
+  --color-success: #22C55E;
+  --color-danger: #EF4444;
+  --color-warning: #F4CF5D;
+  --color-info: #60A5FA;
+
+  /* Answer button colors (unchanged) */
+  --color-answer-red: #E5484D;
+  --color-answer-blue: #3B82F6;
+  --color-answer-yellow: #F59E0B;
+  --color-answer-green: #22C55E;
+  --color-answer-purple: #8B5CF6;
+  --color-answer-orange: #F97316;
+
+  /* Surfaces — driven by CSS variables */
+  --color-surface: var(--surface-bg);
+  --color-surface-dark: var(--surface-bg);
+  --color-surface-card: var(--surface-card);
+
+  /* Radius */
+  --radius-pill: 1000px;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+
+  /* Shadows — neutral for light mode */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+
+@layer base {
+  body {
+    @apply bg-surface antialiased;
+    font-family: 'McLaren', Arial, sans-serif;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Acme', 'McLaren', Arial, sans-serif;
+    font-weight: 400;
+  }
+
+  /* Form elements — theme-aware */
+  input,
+  textarea,
+  select {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    border-color: #009EE2;
+  }
+
+  /* Global focus-visible ring for keyboard navigation (WCAG 2.1 AA) */
+  :focus-visible {
+    outline: 2px solid #009EE2;
+    outline-offset: 2px;
+  }
+
+  /* Dividers */
+  hr {
+    border-color: var(--border-base);
+  }
+
+  /* Scrollbar (Webkit) */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .px-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .py-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .p-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top, 0px);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  :root:not(.dark) .text-gray-900 {
+    color: rgb(17 24 39 / 0.82);
+  }
+}
+
+/* Shadow hover overrides — light uses standard, dark uses cyan glow */
+.hover\:shadow-md:hover {
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+}
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+}
+
+.dark .hover\:shadow-md:hover {
+  box-shadow: 0 6px 16px -3px rgba(0,158,226,0.18), 0 3px 6px -2px rgba(0,0,0,0.2);
+}
+.dark .hover\:shadow-xl:hover {
+  box-shadow: 0 24px 48px -10px rgba(0,158,226,0.22), 0 10px 20px -5px rgba(0,0,0,0.2);
+}
+
+/* SweetAlert2 — fix icon animation masks in dark mode */
+.dark .swal2-popup .swal2-success-circular-line-left,
+.dark .swal2-popup .swal2-success-circular-line-right,
+.dark .swal2-popup .swal2-success-fix {
+  background-color: var(--surface-card) !important;
+}

@@ -1,0 +1,136 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { useAuthStore } from '../../stores/authStore';
+import { useToastStore } from '../../stores/toastStore';
+import BackButton from '../../components/BackButton';
+import type { Quiz } from '../../types/models';
+
+export default function AssignmentCreate() {
+  const { user } = useAuthStore();
+  const { addToast } = useToastStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [classrooms, setClassrooms] = useState<{id: string; name: string}[]>([]);
+  const [selectedQuizId, setSelectedQuizId] = useState('');
+  const [selectedClassroomId, setSelectedClassroomId] = useState(searchParams.get('classroomId') || '');
+  const [startAt, setStartAt] = useState('');
+  const [endAt, setEndAt] = useState('');
+  const [attemptsAllowed, setAttemptsAllowed] = useState(1);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const loadData = async () => {
+      const q = query(collection(db, 'quizzes'), where('ownerId', '==', user.id));
+      setQuizzes((await getDocs(q)).docs.map((d) => ({ id: d.id, ...d.data() })) as Quiz[]);
+
+      const classSnap = await getDocs(
+        query(collection(db, 'classrooms'), where('ownerId', '==', user.id))
+      );
+      setClassrooms(classSnap.docs.map((d) => ({ id: d.id, name: d.data().name })));
+    };
+    loadData();
+  }, [user]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !selectedQuizId) return;
+    setSaving(true);
+    try {
+      await addDoc(collection(db, 'assignments'), {
+        quizId: selectedQuizId, ownerId: user.id,
+        startAt: new Date(startAt).getTime(), endAt: new Date(endAt).getTime(),
+        attemptsAllowed, createdAt: serverTimestamp(),
+        classroomId: selectedClassroomId || null,
+      });
+      navigate('/dashboard');
+    } catch {
+      addToast('error', 'Failed to create assignment. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark">
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="mb-4">
+        <BackButton to="/dashboard" />
+      </div>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Create Assignment</h1>
+
+      <form onSubmit={handleCreate} className="card-night p-6 space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Select Quiz</label>
+          <select
+            value={selectedQuizId}
+            onChange={(e) => setSelectedQuizId(e.target.value)}
+            required
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white/80"
+          >
+            <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">-- Choose a quiz --</option>
+            {quizzes.map((q) => (
+              <option key={q.id} value={q.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{q.title}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Assign to Class (optional)</label>
+          <select
+            value={selectedClassroomId}
+            onChange={(e) => setSelectedClassroomId(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white/80"
+          >
+            <option value="" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">All students (no class)</option>
+            {classrooms.map((c) => (
+              <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Start</label>
+            <input
+              type="datetime-local"
+              value={startAt}
+              onChange={(e) => setStartAt(e.target.value)}
+              required
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">End</label>
+            <input
+              type="datetime-local"
+              value={endAt}
+              onChange={(e) => setEndAt(e.target.value)}
+              required
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-1.5">Attempts Allowed</label>
+          <input
+            type="number"
+            min={1}
+            value={attemptsAllowed}
+            onChange={(e) => setAttemptsAllowed(parseInt(e.target.value) || 1)}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none text-gray-900 dark:text-white"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="btn-3d-pink w-full disabled:opacity-50"
+        >
+          {saving ? 'Creating...' : 'Create Assignment'}
+        </button>
+      </form>
+    </div>
+    </div>
+  );
+}

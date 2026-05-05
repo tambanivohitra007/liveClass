@@ -1,0 +1,326 @@
+import { Link, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
+import { useSidebarStore } from '../stores/sidebarStore';
+import { ADMIN_EMAIL } from '../lib/config';
+import logo from '../assets/logo.png';
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  BookOpen,
+  ClipboardCheck,
+  ListChecks,
+  UserCheck,
+  History,
+  BarChart3,
+  Compass,
+  Gamepad2,
+  Shield,
+  ChevronsLeft,
+  ChevronsRight,
+} from 'lucide-react';
+
+interface NavItem {
+  label: string;
+  icon: typeof LayoutDashboard;
+  path: string;
+  exact?: boolean;
+  matchPrefix?: string;
+  color?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const COLORS = {
+  blue: {
+    text: 'text-sky-400',
+    bg: 'bg-sky-400',
+    gradient: 'from-sky-400/20 via-sky-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(56,189,248,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(56,189,248,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(56,189,248,0.6)]'
+  },
+  purple: {
+    text: 'text-purple-400',
+    bg: 'bg-purple-400',
+    gradient: 'from-purple-400/20 via-purple-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(168,85,247,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(168,85,247,0.6)]'
+  },
+  orange: {
+    text: 'text-orange-400',
+    bg: 'bg-orange-400',
+    gradient: 'from-orange-400/20 via-orange-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(251,146,60,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(251,146,60,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(251,146,60,0.6)]'
+  },
+  pink: {
+    text: 'text-pink-400',
+    bg: 'bg-pink-400',
+    gradient: 'from-pink-400/20 via-pink-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(244,114,182,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(244,114,182,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(244,114,182,0.6)]'
+  },
+  emerald: {
+    text: 'text-emerald-400',
+    bg: 'bg-emerald-400',
+    gradient: 'from-emerald-400/20 via-emerald-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(52,211,153,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(52,211,153,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+  },
+  amber: {
+    text: 'text-amber-400',
+    bg: 'bg-amber-400',
+    gradient: 'from-amber-400/20 via-amber-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(251,191,36,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(251,191,36,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+  },
+  rose: {
+    text: 'text-rose-400',
+    bg: 'bg-rose-400',
+    gradient: 'from-rose-400/20 via-rose-400/10',
+    shadow: 'shadow-[0_0_15px_rgba(251,113,133,0.3)]',
+    dropShadow: 'drop-shadow-[0_0_3px_rgba(251,113,133,0.5)]',
+    pillShadow: 'shadow-[0_0_8px_rgba(251,113,133,0.6)]'
+  }
+};
+
+const teacherSections: NavSection[] = [
+  {
+    title: 'Main',
+    items: [
+      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', exact: true, color: 'blue' },
+    ],
+  },
+  {
+    title: 'Content',
+    items: [
+      { label: 'Classes', icon: Users, path: '/classes', matchPrefix: '/class', color: 'orange' },
+      { label: 'Quizzes', icon: BookOpen, path: '/library', matchPrefix: '/library', color: 'purple' },
+      { label: 'Assignments', icon: FileText, path: '/assignment/new', matchPrefix: '/assignment', color: 'pink' },
+    ],
+  },
+  {
+    title: 'Mini Games',
+    items: [
+      { label: 'All Games', icon: Gamepad2, path: '/mini-games', exact: true, color: 'blue' },
+    ],
+  },
+  {
+    title: 'Grading',
+    items: [
+      { label: 'Grade', icon: ClipboardCheck, path: '/grading/new', matchPrefix: '/grading', color: 'emerald' },
+      { label: 'Rubrics', icon: ListChecks, path: '/rubrics', matchPrefix: '/rubric', color: 'emerald' },
+      { label: 'Rosters', icon: UserCheck, path: '/rosters', matchPrefix: '/roster', color: 'emerald' },
+    ],
+  },
+  {
+    title: 'Activity',
+    items: [
+      { label: 'Discover', icon: Compass, path: '/discover', exact: true, color: 'amber' },
+      { label: 'History', icon: History, path: '/history', exact: true, color: 'amber' },
+      { label: 'Analytics', icon: BarChart3, path: '/analytics', exact: true, color: 'cyan' },
+      { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true, color: 'blue' },
+    ],
+  },
+];
+
+const studentItems: NavItem[] = [
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/student/dashboard', exact: true, color: 'blue' },
+  { label: 'My Classes', icon: Users, path: '/student/classes', matchPrefix: '/student/class', color: 'orange' },
+  { label: 'Discover', icon: Compass, path: '/discover', exact: true, color: 'amber' },
+  { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true, color: 'purple' },
+];
+
+const adminItem: NavItem = { label: 'Admin', icon: Shield, path: '/admin', matchPrefix: '/admin', color: 'rose' };
+
+export default function Sidebar() {
+  const { firebaseUser, user } = useAuthStore();
+  const { collapsed, toggleSidebar } = useSidebarStore();
+  const location = useLocation();
+
+  if (!firebaseUser) return null;
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isApprovedTeacher = user?.role === 'teacher' && (user.approvalStatus === 'approved' || isAdmin);
+
+  const isItemActive = (item: NavItem) => {
+    if (item.exact) return location.pathname === item.path;
+    if (item.matchPrefix) return location.pathname.startsWith(item.matchPrefix);
+    return location.pathname === item.path;
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const active = isItemActive(item);
+    const Icon = item.icon;
+    const colorTheme = COLORS[item.color as keyof typeof COLORS] || COLORS.blue;
+
+    return (
+      <div key={item.path} className="relative group px-2 mb-1">
+        <Link
+          to={item.path}
+          className={`relative flex items-center gap-3 no-underline transition-all duration-300 ${
+            collapsed
+              ? `w-10 h-10 mx-auto rounded-xl justify-center ${
+                  active 
+                    ? `text-white ${colorTheme.shadow}` 
+                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                }`
+              : `px-3.5 py-2.5 rounded-xl overflow-hidden ${
+                  active
+                    ? 'text-white shadow-sm'
+                    : 'text-white/50 hover:text-white hover:bg-white/5'
+                }`
+          }`}
+        >
+          {/* Active Background & Glow Effects */}
+          {active && (
+            <>
+              {/* Main gradient background */}
+              <div className={`absolute inset-0 bg-gradient-to-r ${colorTheme.gradient} to-transparent opacity-100 transition-opacity duration-300 ${collapsed ? 'rounded-xl' : 'rounded-xl'}`} />
+              
+              {/* Left accent pill (only when expanded) */}
+              {!collapsed && (
+                <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 ${colorTheme.bg} rounded-r-full ${colorTheme.pillShadow}`} />
+              )}
+
+              {/* Collapsed glowy circle bg */}
+              {collapsed && (
+                 <div className={`absolute inset-0 ${colorTheme.bg} opacity-20 rounded-xl`} />
+              )}
+            </>
+          )}
+
+          <div className="relative z-10 flex items-center gap-3">
+             <Icon className={`w-5 h-5 shrink-0 transition-all duration-300 ${active ? `${colorTheme.text} ${colorTheme.dropShadow}` : ''}`} />
+             {!collapsed && (
+              <span className={`text-sm tracking-wide transition-all duration-300 ${active ? 'font-semibold text-white' : 'font-medium'}`}>
+                {item.label}
+              </span>
+             )}
+          </div>
+        </Link>
+        {collapsed && (
+          <div className="fixed left-[72px] px-3 py-1.5 bg-[#1a2333] text-white text-xs font-medium rounded-lg border border-white/10 shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 translate-x-2 group-hover:translate-x-0">
+            {item.label}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderSection = (section: NavSection, index: number) => (
+    <div key={section.title} className={index > 0 ? 'mt-6' : 'mt-2'}>
+      {collapsed ? (
+        index > 0 && <hr className="mx-4 my-3 border-white/5 opacity-50" />
+      ) : (
+        <p className="px-5 mb-2 text-[11px] font-bold uppercase tracking-[0.15em] text-white/20 select-none bg-gradient-to-r from-white/20 to-transparent bg-clip-text text-transparent">
+          {section.title}
+        </p>
+      )}
+      <div className="flex flex-col gap-1">
+        {section.items.map(renderNavItem)}
+      </div>
+    </div>
+  );
+
+  return (
+    <aside
+      className={`hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-[#080F1E]/95 backdrop-blur-md border-r border-white/10 transition-[width] duration-300 ease-in-out ${
+        collapsed ? 'w-[68px]' : 'w-64'
+      }`}
+    >
+      {/* Logo area */}
+      <div className="h-14 flex items-center shrink-0 border-b border-white/10 px-4">
+        <Link to="/" className="flex items-center gap-2.5 no-underline group overflow-hidden">
+          <img
+            src={logo}
+            alt="LiveClass"
+            className="w-8 h-8 rounded-lg shadow-sm group-hover:scale-105 transition-transform shrink-0"
+          />
+          {!collapsed && (
+            <span className="font-bold text-xl text-white whitespace-nowrap">
+              Live<span className="text-brand">Class</span>
+            </span>
+          )}
+        </Link>
+      </div>
+
+      {/* Scrollable nav */}
+      <div className={`flex-1 overflow-y-auto overflow-x-hidden py-4 ${collapsed ? 'scrollbar-none' : 'scrollbar-thin'}`}>
+        {isApprovedTeacher ? (
+          <>
+            {teacherSections.map((section, i) => renderSection(section, i))}
+            {isAdmin && (
+              <div className="mt-4">
+                {collapsed ? (
+                  <hr className="mx-4 my-2 border-white/10" />
+                ) : (
+                  <p className="px-5 mb-1.5 text-[10px] uppercase tracking-widest text-white/30 select-none">
+                    System
+                  </p>
+                )}
+                <div className="flex flex-col gap-0.5">
+                  {renderNavItem(adminItem)}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            {studentItems.map(renderNavItem)}
+            {isAdmin && (
+              <>
+                {collapsed ? (
+                  <hr className="mx-4 my-3 border-white/10" />
+                ) : (
+                  <p className="px-5 mt-4 mb-1.5 text-[10px] uppercase tracking-widest text-white/30 select-none">
+                    System
+                  </p>
+                )}
+                {renderNavItem(adminItem)}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom pinned area */}
+      <div className="border-t border-white/10 p-2 shrink-0">
+        {/* Collapse toggle */}
+        <div className="relative group">
+          <button
+            onClick={toggleSidebar}
+            className={`flex items-center gap-3 text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors ${
+              collapsed
+                ? 'w-10 h-10 mx-auto rounded-xl justify-center'
+                : 'w-full px-3 py-2.5 rounded-xl'
+            }`}
+          >
+            {collapsed ? (
+              <ChevronsRight className="w-5 h-5 shrink-0" />
+            ) : (
+              <>
+                <ChevronsLeft className="w-5 h-5 shrink-0" />
+                <span className="text-sm font-medium">Collapse</span>
+              </>
+            )}
+          </button>
+          {collapsed && (
+            <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-surface-card text-white text-xs rounded-lg border border-white/10 shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+              Expand
+            </span>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}

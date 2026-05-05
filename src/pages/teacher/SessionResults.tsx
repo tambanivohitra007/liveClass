@@ -1,0 +1,1437 @@
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { httpsCallable } from 'firebase/functions';
+import { doc, getDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { db, functions } from '../../lib/firebase';
+import { confirmDelete } from '../../lib/swal';
+import { useToastStore } from '../../stores/toastStore';
+import { useSessionAnalytics } from '../../hooks/useSessionAnalytics';
+import { exportSessionExcel } from '../../lib/excelExport';
+import SlidePanel from '../../components/SlidePanel';
+import type { QuestionEvaluation } from '../../types/models';
+import {
+  Download, FileSpreadsheet, Users, Target,
+  ShieldAlert,
+  HelpCircle, CheckCircle2, XCircle, ListOrdered, AlignLeft,
+  ArrowLeftRight, PenLine, MessageSquare, Presentation, Code2,
+  Printer, Mail, Share2, Trash2, MoreVertical, Check, X,
+  Zap, ArrowUpDown, Sparkles, TrendingUp, AlertTriangle, Loader2, MinusCircle,
+  Clock
+} from 'lucide-react';
+import BackButton from '../../components/BackButton';
+
+type TabId = 'overview' | 'participants' | 'questions' | 'tags' | 'anti-cheating';
+
+const TABS: { id: TabId; label: string; count?: number; hasBadge?: boolean }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'participants', label: 'Participants' },
+  { id: 'questions', label: 'Questions' },
+  { id: 'tags', label: 'Tags', hasBadge: true },
+  { id: 'anti-cheating', label: 'Anti-cheating', count: 0 }, // count updated in component
+];
+
+const TYPE_LABELS: Record<string, string> = {
+  mcq: 'Multiple Choice',
+  tf: 'True / False',
+  short: 'Short Answer',
+  matching: 'Matching',
+  fill_blank: 'Fill in the Blank',
+  ordering: 'Ordering',
+  poll: 'Poll',
+  slide: 'Slide',
+  code_output: 'Code Output',
+};
+
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  mcq: <CheckCircle2 className="w-5 h-5" />,
+  tf: <XCircle className="w-5 h-5" />,
+  short: <AlignLeft className="w-5 h-5" />,
+  matching: <ArrowLeftRight className="w-5 h-5" />,
+  fill_blank: <PenLine className="w-5 h-5" />,
+  ordering: <ListOrdered className="w-5 h-5" />,
+  poll: <MessageSquare className="w-5 h-5" />,
+  slide: <Presentation className="w-5 h-5" />,
+  code_output: <Code2 className="w-5 h-5" />,
+};
+
+// Colors matching the screenshot design
+const COLORS = {
+  correct: '#00C985', // Green
+  incorrect: '#FF3B5C', // Red
+  partial: '#FF9500', // Orange
+  unattempted: '#E2E8F0', // Grey
+};
+
+export default function SessionResults() {
+  const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [exporting, setExporting] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
+  const [sortBy, setSortBy] = useState<'accuracy' | 'name' | 'score'>('accuracy');
+  const [sortAsc, setSortAsc] = useState(false);
+  const { addToast } = useToastStore();
+
+  // Print dropdown state
+  const [printMenuOpen, setPrintMenuOpen] = useState(false);
+  const [printMode, setPrintMode] = useState<'questions' | 'participants' | 'all-reports' | null>(null);
+  const printMenuRef = useRef<HTMLDivElement>(null);
+
+  // Email panel state
+  const [emailPanelOpen, setEmailPanelOpen] = useState(false);
+  const [emailMap, setEmailMap] = useState<Record<string, string>>({});
+  const [emailsLoading, setEmailsLoading] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<{
+    totalSent: number;
+    totalFailed: number;
+    failures: { playerId: string; email: string; error: string }[];
+  } | null>(null);
+
+  // Evaluation panel state
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelMode, setPanelMode] = useState<'participant' | 'question'>('participant');
+  const [panelTitle, setPanelTitle] = useState('');
+  const [panelSubtitle, setPanelSubtitle] = useState('');
+  const [evaluating, setEvaluating] = useState(false);
+  const [questionEval, setQuestionEval] = useState<QuestionEvaluation | null>(null);
+  const [playerBreakdown, setPlayerBreakdown] = useState<{
+    questionIndex: number;
+    questionText: string;
+    questionType: string;
+    status: 'correct' | 'incorrect' | 'unattempted';
+    studentAnswer: string | null;
+    correctAnswer: string;
+    points: number;
+    timeMs: number;
+  }[] | null>(null);
+
+  const {
+    loading,
+    sessionPin,
+    quizTitle,
+    analytics,
+    playerCount,
+    avgScore,
+    avgAccuracy,
+    quizId,
+    answerDistributions,
+    violations,
+    playerStats,
+    allAnswers,
+    sessionDuration,
+    sessionStartedAt,
+  } = useSessionAnalytics(sessionId);
+
+  // Client-side participant detail panel — no Cloud Function call needed
+  const handleViewDetails = useCallback((playerId: string, nickname: string) => {
+    const breakdown = answerDistributions.map((dist, idx) => {
+      const questionId = analytics[idx]?.questionId;
+      const answer = allAnswers.find(a => a.playerId === playerId && a.questionId === questionId);
+      return {
+        questionIndex: idx,
+        questionText: dist.questionText,
+        questionType: dist.questionType,
+        status: (answer ? (answer.correct ? 'correct' : 'incorrect') : 'unattempted') as 'correct' | 'incorrect' | 'unattempted',
+        studentAnswer: answer ? String(answer.selection) : null,
+        correctAnswer: dist.correctAnswers.join(', '),
+        points: answer?.pointsAwarded ?? 0,
+        timeMs: answer?.timeMs ?? 0,
+      };
+    });
+
+    setPlayerBreakdown(breakdown);
+    setPanelTitle(nickname);
+    setPanelSubtitle('Question Details');
+    setPanelMode('participant');
+    setPanelOpen(true);
+  }, [answerDistributions, analytics, allAnswers]);
+
+  // AI evaluation for questions (still uses Cloud Function)
+  const handleEvaluateQuestion = useCallback(async (questionIndex: number) => {
+    if (!sessionId) return;
+
+    setPanelMode('question');
+    setQuestionEval(null);
+    setPanelOpen(true);
+    setEvaluating(true);
+    setPanelTitle(`Question ${questionIndex + 1}`);
+    setPanelSubtitle('AI Quality Analysis');
+
+    try {
+      const fn = httpsCallable<
+        { sessionId: string; mode: string; questionIndex: number },
+        { evaluation: QuestionEvaluation; cached: boolean }
+      >(functions, 'evaluateSession');
+
+      const result = await fn({ sessionId, mode: 'question', questionIndex });
+      setQuestionEval(result.data.evaluation);
+
+      if (result.data.cached) {
+        addToast('info', 'Loaded cached evaluation');
+      }
+    } catch {
+      addToast('error', 'AI evaluation failed. Please try again.');
+      setPanelOpen(false);
+    } finally {
+      setEvaluating(false);
+    }
+  }, [sessionId, addToast]);
+
+  // Close print dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (printMenuRef.current && !printMenuRef.current.contains(e.target as Node)) {
+        setPrintMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Update tabs with violation count
+  const tabs = useMemo(() => TABS.map(t => 
+    t.id === 'anti-cheating' ? { ...t, count: violations.length } : t
+  ), [violations.length]);
+
+  // Build lookup: "questionId:playerId" → Answer for O(1) cell lookups
+  const answerLookup = useMemo(() => {
+    const map = new Map<string, { correct: boolean; pointsAwarded: number }>();
+    for (const a of allAnswers) {
+      map.set(`${a.questionId}:${a.playerId}`, { correct: a.correct, pointsAwarded: a.pointsAwarded });
+    }
+    return map;
+  }, [allAnswers]);
+
+  const completionRate = useMemo(() => {
+    if (!playerStats.length || !analytics.length) return 0;
+    const totalExpected = playerStats.length * analytics.length;
+    let totalAnswered = 0;
+    playerStats.forEach(p => {
+       totalAnswered += p.totalAnswers;
+    });
+    return Math.round((totalAnswered / totalExpected) * 100) || 0;
+  }, [playerStats, analytics]);
+
+  const sortedPlayerStats = useMemo(() => {
+    const sorted = [...playerStats].sort((a, b) => {
+      if (sortBy === 'name') return a.nickname.localeCompare(b.nickname);
+      if (sortBy === 'score') return b.totalPoints - a.totalPoints;
+      return b.accuracyPercent - a.accuracyPercent; // accuracy default
+    });
+    return sortAsc ? sorted.reverse() : sorted;
+  }, [playerStats, sortBy, sortAsc]);
+
+  // Group answer distributions by question type for Tags tab
+  const typeGroups = useMemo(() => {
+    const groups = new Map<string, {
+      questions: typeof answerDistributions;
+      totalCorrect: number;
+      totalAnswers: number;
+      totalTimeMs: number;
+    }>();
+
+    for (const dist of answerDistributions) {
+      const type = dist.questionType || 'mcq';
+      const existing = groups.get(type) || { questions: [], totalCorrect: 0, totalAnswers: 0, totalTimeMs: 0 };
+      existing.questions.push(dist);
+
+      // Aggregate stats from analytics
+      const analytic = analytics.find((a) => a.questionIndex === dist.questionIndex);
+      if (analytic) {
+        existing.totalCorrect += analytic.correctCount;
+        existing.totalAnswers += analytic.totalAnswers;
+        existing.totalTimeMs += analytic.avgTimeMs * analytic.totalAnswers;
+      }
+
+      groups.set(type, existing);
+    }
+
+    return groups;
+  }, [answerDistributions, analytics]);
+
+  const handleExportCsv = async () => {
+    if (!sessionId) return;
+    setExporting(true);
+    try {
+      const fn = httpsCallable<{ sessionId: string }, { csv: string }>(functions, 'exportCsv');
+      const result = await fn({ sessionId });
+      const blob = new Blob([result.data.csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `session_${sessionId}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      addToast('error', 'CSV export failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExportingExcel(true);
+    try {
+      await exportSessionExcel({
+        quizTitle,
+        sessionPin,
+        playerStats,
+        analytics,
+        answerDistributions,
+        allAnswers,
+        playerCount,
+        avgScore,
+        avgAccuracy,
+        sessionDuration,
+        sessionStartedAt,
+      });
+    } catch {
+      addToast('error', 'Excel export failed. Please try again.');
+    } finally {
+      setExportingExcel(false);
+    }
+  };
+
+  const handleDeleteSession = async () => {
+    if (!sessionId) return;
+    const { isConfirmed } = await confirmDelete(quizTitle || 'Session');
+    if (!isConfirmed) return;
+    try {
+      const subcollections = ['players', 'answers', 'analytics', 'violations', 'leaderboard_shards', 'evaluations'];
+      const batch = writeBatch(db);
+      for (const sub of subcollections) {
+        const snap = await getDocs(collection(db, `sessions/${sessionId}/${sub}`));
+        snap.docs.forEach((d) => batch.delete(d.ref));
+      }
+      batch.delete(doc(db, 'sessions', sessionId));
+      await batch.commit();
+      addToast('success', 'Session deleted.');
+      navigate('/history');
+    } catch {
+      addToast('error', 'Failed to delete session.');
+    }
+  };
+
+  const handlePrint = useCallback((mode: 'questions' | 'participants' | 'all-reports') => {
+    setPrintMenuOpen(false);
+    setPrintMode(mode);
+    requestAnimationFrame(() => {
+      window.print();
+      setPrintMode(null);
+    });
+  }, []);
+
+  const handleOpenEmailPanel = useCallback(async () => {
+    setEmailPanelOpen(true);
+    setEmailResult(null);
+    setEmailsLoading(true);
+    try {
+      const playersSnap = await getDocs(collection(db, `sessions/${sessionId}/players`));
+      const playerUserIds = new Map<string, string>();
+      playersSnap.docs.forEach((d) => {
+        const userId = d.data().userId;
+        if (userId) playerUserIds.set(d.id, userId);
+      });
+
+      const prefilled: Record<string, string> = {};
+
+      // Fetch User docs for linked players (in chunks of 10)
+      const entries = Array.from(playerUserIds.entries());
+      for (let i = 0; i < entries.length; i += 10) {
+        const chunk = entries.slice(i, i + 10);
+        const userDocs = await Promise.all(
+          chunk.map(([, uid]) => getDoc(doc(db, 'users', uid)))
+        );
+        userDocs.forEach((userDoc, idx) => {
+          if (userDoc.exists()) {
+            const email = userDoc.data()?.email;
+            if (email) prefilled[chunk[idx][0]] = email;
+          }
+        });
+      }
+
+      // If session has classroomId, cross-reference classroom member emails
+      const sessionSnap = await getDoc(doc(db, 'sessions', sessionId!));
+      const classroomId = sessionSnap.data()?.classroomId;
+      if (classroomId) {
+        const membersSnap = await getDocs(collection(db, `classrooms/${classroomId}/members`));
+        const memberEmailByUserId = new Map<string, string>();
+        membersSnap.docs.forEach((d) => {
+          const data = d.data();
+          if (data.email && data.userId) memberEmailByUserId.set(data.userId, data.email);
+        });
+        playerUserIds.forEach((userId, playerId) => {
+          if (!prefilled[playerId] && memberEmailByUserId.has(userId)) {
+            prefilled[playerId] = memberEmailByUserId.get(userId)!;
+          }
+        });
+      }
+
+      setEmailMap(prefilled);
+    } catch {
+      addToast('error', 'Failed to load email addresses');
+    } finally {
+      setEmailsLoading(false);
+    }
+  }, [sessionId, addToast]);
+
+  const handleSendEmails = useCallback(async () => {
+    if (!sessionId) return;
+    const recipients = Object.entries(emailMap)
+      .filter(([, email]) => email && email.includes('@'))
+      .map(([playerId, email]) => ({ playerId, email }));
+
+    if (recipients.length === 0) {
+      addToast('error', 'No valid email addresses to send to');
+      return;
+    }
+
+    setEmailSending(true);
+    setEmailResult(null);
+    try {
+      const fn = httpsCallable<
+        { sessionId: string; recipients: { playerId: string; email: string }[] },
+        { totalSent: number; totalFailed: number; failures: { playerId: string; email: string; error: string }[] }
+      >(functions, 'emailSessionResults');
+
+      const result = await fn({ sessionId, recipients });
+      setEmailResult(result.data);
+
+      if (result.data.totalFailed === 0) {
+        addToast('success', `Successfully sent ${result.data.totalSent} email(s)`);
+      } else {
+        addToast('warning', `Sent ${result.data.totalSent}, failed ${result.data.totalFailed}`);
+      }
+    } catch {
+      addToast('error', 'Failed to send emails. Please try again.');
+    } finally {
+      setEmailSending(false);
+    }
+  }, [sessionId, emailMap, addToast]);
+
+  if (!sessionId) return null;
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-24 bg-gray-200 dark:bg-white/10 rounded-xl" />
+            ))}
+          </div>
+          <div className="h-12 w-full bg-gray-200 dark:bg-white/10 rounded-lg" />
+          <div className="h-96 bg-gray-100 dark:bg-white/5 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark min-h-screen  dark:text-white print:hidden">
+      <div className="mb-6">
+        <BackButton to="/history" label="Back to History" />
+      </div>
+
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="card-night p-5 flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
+             <Target className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
+              Accuracy <HelpCircle className="w-3 h-3" />
+            </div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{Math.round(Number(avgAccuracy))}%</div>
+          </div>
+        </div>
+        
+        <div className="card-night p-5 flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
+             <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
+              Completion Rate <HelpCircle className="w-3 h-3" />
+            </div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{completionRate}%</div>
+          </div>
+        </div>
+
+        <div className="card-night p-5 flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
+             <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
+              Total Students
+            </div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{playerCount}</div>
+          </div>
+        </div>
+
+        <div className="card-night p-5 flex items-center gap-4">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-gray-600 dark:text-white/70">
+             <HelpCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-white/50 font-medium">
+              Questions
+            </div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.length}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
+        <button
+            onClick={() => navigate(`/quiz/${quizId || ''}`)}
+            className="btn-3d-purple btn-3d-sm flex items-center gap-2 text-sm self-start"
+        >
+          <Target className="w-4 h-4" /> View quiz
+        </button>
+
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex bg-white dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-0.5 sm:p-1">
+             <button onClick={handleDeleteSession} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md" title="Delete">
+               <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+             </button>
+             <div ref={printMenuRef} className="relative">
+               <button
+                 onClick={() => setPrintMenuOpen(prev => !prev)}
+                 className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md"
+                 title="Print"
+               >
+                 <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+               </button>
+               {printMenuOpen && (
+                 <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#162033] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down z-50">
+                   <div className="p-1.5">
+                     <button
+                       onClick={() => handlePrint('questions')}
+                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                     >
+                       <HelpCircle className="w-4 h-4 text-gray-400 dark:text-white/40" />
+                       Questions Summary
+                     </button>
+                     <button
+                       onClick={() => handlePrint('participants')}
+                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                     >
+                       <Users className="w-4 h-4 text-gray-400 dark:text-white/40" />
+                       Participant Summary
+                     </button>
+                     <button
+                       onClick={() => handlePrint('all-reports')}
+                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                     >
+                       <ListOrdered className="w-4 h-4 text-gray-400 dark:text-white/40" />
+                       All Participants Reports
+                     </button>
+                   </div>
+                 </div>
+               )}
+             </div>
+             <button onClick={handleExportCsv} disabled={exporting} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download CSV">
+               {exporting ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+             </button>
+              <button onClick={handleExportExcel} disabled={exportingExcel} className="p-1.5 sm:p-2 text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md disabled:opacity-50 disabled:pointer-events-none" title="Download Excel">
+               {exportingExcel ? <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+             </button>
+          </div>
+
+          <button onClick={handleOpenEmailPanel} className="btn-3d-ghost text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2" title="Email results">
+            <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Email results</span>
+          </button>
+
+          <button className="btn-3d-cyan text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2" title="Share report">
+            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Share report</span> <Zap className="w-3 h-3 fill-current" />
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white dark:bg-white/5 rounded-t-xl border-b border-gray-200 dark:border-white/10 px-6">
+        <div className="flex gap-8 overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`py-4 text-sm font-semibold whitespace-nowrap flex items-center gap-2 border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
+                  : 'border-transparent text-gray-500 dark:text-white/60 hover:text-gray-700 dark:hover:text-white'
+              }`}
+            >
+              {tab.label}
+              {tab.hasBadge && <Zap className="w-3 h-3 text-yellow-500 fill-current" />}
+              {typeof tab.count === 'number' && tab.count > 0 && (
+                <span className="px-1.5 py-0.5 bg-danger text-white text-xs rounded-full">
+                  {tab.count > 99 ? '99+' : tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="bg-white dark:bg-white/5 rounded-b-xl border border-t-0 border-gray-200 dark:border-white/10 min-h-125 p-6">
+        
+        {/* Controls Row (Sort/Search) */}
+        {(activeTab === 'overview' || activeTab === 'participants') && (
+           <div className="flex justify-end mb-6">
+             <div className="flex items-center gap-2">
+               <span className="text-sm text-gray-500 dark:text-white/50">Sort by:</span>
+               <div className="relative">
+                 <select
+                   value={sortBy}
+                   onChange={(e) => setSortBy(e.target.value as 'accuracy' | 'name' | 'score')}
+                   className="appearance-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/20 text-gray-700 dark:text-white/80 py-1.5 pl-3 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand/20"
+                 >
+                   <option value="accuracy" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Accuracy</option>
+                   <option value="name" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Name</option>
+                   <option value="score" className="bg-white dark:bg-slate-800 text-gray-700 dark:text-white">Score</option>
+                 </select>
+                 <ArrowUpDown className="w-3 h-3 text-gray-400 dark:text-white/40 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+               </div>
+               <button
+                 onClick={() => setSortAsc(prev => !prev)}
+                 className={`p-1.5 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 transition-colors ${sortAsc ? 'text-brand bg-brand/5' : 'text-gray-500 dark:text-white/60'}`}
+                 title={sortAsc ? 'Ascending' : 'Descending'}
+               >
+                 <ArrowUpDown className="w-4 h-4" />
+               </button>
+             </div>
+           </div>
+        )}
+
+        {/* OVERVIEW TAB */}
+        {activeTab === 'overview' && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-200">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-white/10">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-white w-64">
+                    Participant
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-900 dark:text-white w-32 border-l border-gray-100 dark:border-white/10">
+                     <div className="flex flex-col items-center">
+                       <span>Points</span>
+                       <span className="text-xs text-gray-400 dark:text-white/40 font-normal">Out of {analytics.length * 1000}</span>
+                     </div>
+                  </th>
+                  {analytics.map((q, i) => {
+                    const pct = playerCount > 0 ? (q.correctCount / playerCount) * 100 : 0;
+                    return (
+                      <th key={i} className="text-center py-3 px-2 w-24 border-l border-gray-100 dark:border-white/10">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="font-semibold text-gray-900 dark:text-white">Q{i + 1}</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded text-white ${
+                              pct >= 60 ? 'bg-warning' : 'bg-danger'
+                          }`}>
+                            {Math.round(pct)}%
+                          </span>
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPlayerStats.map((player) => (
+                  <tr key={player.playerId} className="border-b border-gray-50 dark:border-white/10 hover:bg-gray-50/50 dark:hover:bg-white/10">
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-gray-900 dark:text-white">{player.nickname}</div>
+                    </td>
+                    <td className="py-3 px-2 text-center border-l border-gray-100 dark:border-white/10">
+                      <div>
+                        <span className="font-bold text-gray-900 dark:text-white">{player.totalPoints.toLocaleString()}</span>
+                        <span className="text-gray-500 dark:text-white/50 text-sm ml-1">({player.accuracyPercent}%)</span>
+                      </div>
+                    </td>
+                    {analytics.map((q, i) => {
+                       const answer = answerLookup.get(`${q.questionId}:${player.playerId}`);
+                       const answered = answer !== undefined;
+                       const isCorrect = answered && answer.correct;
+                       return (
+                         <td key={i} className={`p-0 border-l border-white/20 ${
+                           !answered ? 'bg-gray-200' : isCorrect ? 'bg-success' : 'bg-danger'
+                         }`}>
+                           <div className="h-12 w-full flex items-center justify-center text-white">
+                             {!answered ? <span className="text-gray-500 dark:text-white/50 text-xs">—</span>
+                               : isCorrect ? <Check className="w-5 h-5" />
+                               : <X className="w-5 h-5" />}
+                           </div>
+                         </td>
+                       );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* PARTICIPANTS TAB */}
+        {activeTab === 'participants' && (
+           <div className="space-y-4">
+              <div className="flex justify-end gap-6 mb-2 text-sm text-gray-500 dark:text-white/50">
+                <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-success"></span> Correct</div>
+                <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-warning"></span> Partially correct</div>
+                <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-danger"></span> Incorrect</div>
+                <div className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-gray-300 dark:bg-white/30"></span> Unattempted</div>
+              </div>
+
+              {sortedPlayerStats.map((player) => (
+                <div key={player.playerId} className="flex items-center gap-4 py-4 border-b border-gray-100 dark:border-white/10 last:border-0 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                  {/* Avatar */}
+                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">
+                     {player.nickname.substring(0, 2).toUpperCase()}
+                   </div>
+
+                   {/* Name */}
+                   <div className="w-48 font-bold text-gray-900 dark:text-white shrink-0 truncate">
+                     {player.nickname}
+                   </div>
+
+                   {/* Progress Bar */}
+                   <div className="flex-1 h-3 flex rounded-full overflow-hidden bg-gray-100 dark:bg-white/10">
+                      <div style={{ width: `${player.accuracyPercent}%` }} className="bg-success h-full" />
+                      <div style={{ width: `${100 - player.accuracyPercent}%` }} className="bg-danger h-full" />
+                   </div>
+                   
+                   {/* Stats */}
+                   <div className="flex items-center gap-2 text-sm font-medium w-32 shrink-0">
+                      <span className="px-1.5 py-0.5 bg-success/10 text-success rounded text-xs flex items-center gap-0.5">
+                        <Check className="w-3 h-3" /> {player.correctAnswers}
+                      </span>
+                      <span className="px-1.5 py-0.5 bg-danger/10 text-danger rounded text-xs flex items-center gap-0.5">
+                         <X className="w-3 h-3" /> {player.totalAnswers - player.correctAnswers}
+                      </span>
+                       <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/60 rounded text-xs flex items-center gap-0.5">
+                         — {analytics.length - player.totalAnswers}
+                      </span>
+                   </div>
+
+                   {/* Accuracy Circle */}
+                   <div className="w-16 h-16 relative flex items-center justify-center shrink-0">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle cx="32" cy="32" r="28" stroke="#E2E8F0" strokeWidth="4" fill="none" />
+                        <circle 
+                          cx="32" cy="32" r="28" 
+                          stroke={player.accuracyPercent >= 50 ? COLORS.correct : COLORS.incorrect} 
+                          strokeWidth="4" 
+                          fill="none" 
+                          strokeDasharray={175} 
+                          strokeDashoffset={175 - (175 * player.accuracyPercent) / 100} 
+                        />
+                      </svg>
+                      <span className="absolute text-sm font-bold text-gray-900 dark:text-white">{player.accuracyPercent}%</span>
+                   </div>
+
+                   {/* Points/Score */}
+                   <div className="w-24 text-right shrink-0">
+                       <div className="font-bold text-gray-900 dark:text-white">{player.correctAnswers}/{analytics.length}</div>
+                       <div className="text-xs text-gray-400 dark:text-white/40">Correct</div>
+                   </div>
+                   <div className="w-24 text-right shrink-0">
+                       <div className="font-bold text-gray-900 dark:text-white">{player.totalPoints}</div>
+                       <div className="text-xs text-gray-400 dark:text-white/40">Score</div>
+                   </div>
+
+                   {/* Actions */}
+                   <button
+                      onClick={() => handleViewDetails(player.playerId, player.nickname)}
+                     className="btn-3d-purple text-sm px-3 py-1.5 flex items-center gap-1"
+                   >
+                      Evaluate <Target className="w-3 h-3" />
+                   </button>
+                   <button className="p-1 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/70">
+                      <MoreVertical className="w-4 h-4" />
+                   </button>
+                </div>
+              ))}
+           </div>
+        )}
+
+        {/* QUESTIONS TAB */}
+        {activeTab === 'questions' && (
+           <div className="space-y-8">
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-white/50 bg-gray-50 dark:bg-white/10 p-3 rounded-lg border border-gray-200 dark:border-white/10">
+                <HelpCircle className="w-4 h-4" />
+                Questions tab shows the accumulated data of all participant attempts.
+              </div>
+
+              {analytics.map((q, idx) => {
+                const dist = answerDistributions.find(d => d.questionIndex === idx);
+                const pct = playerCount > 0 ? (q.correctCount / playerCount) * 100 : 0;
+                const unanswered = playerCount - q.totalAnswers;
+
+                return (
+                <div key={idx} className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-6 shadow-sm">
+                   {/* Question Header */}
+                   <div className="flex justify-between items-start mb-6">
+                      <div className="flex gap-2">
+                        <span className="px-3 py-1 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white/70 text-xs font-semibold rounded-md flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> {dist ? TYPE_LABELS[dist.questionType] || 'Multiple Choice' : 'Multiple Choice'}
+                        </span>
+                        <span className="px-3 py-1 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white/70 text-xs font-semibold rounded-md flex items-center gap-1">
+                          <ListOrdered className="w-3 h-3" /> 1 point
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                           <div className={`w-3 h-3 rounded-full ${pct > 50 ? 'bg-warning' : 'bg-danger'}`} />
+                          <span className="font-bold text-gray-900 dark:text-white">{Math.round(pct)}%</span>
+                          <span className="text-sm text-gray-500 dark:text-white/50">Accuracy</span>
+                        </div>
+                        <div className="h-4 w-px bg-gray-200 dark:bg-white/10" />
+                        <div className="flex items-center gap-1">
+                          <span className="font-bold text-gray-900 dark:text-white">{(q.avgTimeMs/1000).toFixed(0)} s</span>
+                          <span className="text-sm text-gray-500 dark:text-white/50">Avg. time</span>
+                        </div>
+                        <button
+                           onClick={() => handleEvaluateQuestion(idx)}
+                          className="btn-3d-purple text-sm px-3 py-1.5 flex items-center gap-1"
+                        >
+                           Evaluate <Sparkles className="w-3 h-3" />
+                        </button>
+                      </div>
+                   </div>
+
+                   {/* Question Body */}
+                   <div className="mb-6">
+                      <h3 className="font-bold text-gray-900 dark:text-white mb-1">Question {idx + 1}</h3>
+                      <p className="text-gray-800 dark:text-white/80 text-lg">
+                        {dist?.questionText || 'Question text not available'}
+                      </p>
+                   </div>
+
+                   {/* Options & Stats */}
+                   <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+                      {/* Options List */}
+                      <div className="flex-1 space-y-3">
+                         {dist?.distribution.map((option, optIdx) => {
+                           const letters = ['A', 'B', 'C', 'D'];
+                           const colors = ['bg-red-100 text-red-700', 'bg-blue-100 text-blue-700', 'bg-green-100 text-green-700', 'bg-yellow-100 text-yellow-700'];
+
+                           return (
+                             <div key={optIdx} className="relative">
+                               <div className={`p-3 rounded-lg border ${option.count > 0 ? 'bg-gray-50 dark:bg-white/10 border-gray-200 dark:border-white/10' : 'bg-white dark:bg-white/5 border-gray-100 dark:border-white/10 opacity-60'} flex justify-between items-center z-10 relative`}>
+                                 <div className="flex items-center gap-3">
+                                   <div className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-sm ${colors[optIdx % 4] || 'bg-gray-100'}`}>
+                                     {letters[optIdx] || '?'}
+                                   </div>
+                                   <span className="font-medium text-gray-800 dark:text-white/80">{option.label}</span>
+                                 </div>
+
+                                 <div className="flex items-center gap-3">
+                                   {option.isCorrect && <Check className="w-5 h-5 text-success" />}
+                                   <span className="text-sm text-gray-500 dark:text-white/50">{option.count} answered</span>
+                                 </div>
+                               </div>
+                               {/* Progress Bar Background */}
+                               <div
+                                 className={`absolute top-0 bottom-0 left-0 rounded-lg opacity-10 z-0 ${option.isCorrect ? 'bg-success' : 'bg-danger'}`}
+                                 style={{ width: `${(option.count / (playerCount || 1)) * 100}%` }}
+                               />
+                             </div>
+                           )
+                         })}
+                      </div>
+
+                      {/* Right Stats (Correct / Incorrect / Unanswered) */}
+                      <div className="w-full sm:w-64 sm:shrink-0">
+                         <div className="space-y-6">
+                            <div>
+                               <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-success font-medium">Correct</span>
+                                   <span className="text-gray-900 dark:text-white font-bold">{q.correctCount} students</span>
+                               </div>
+                                 <div className="h-4 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                                  <div className="h-full bg-success" style={{ width: `${pct}%` }} />
+                               </div>
+                            </div>
+                            <div>
+                               <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-danger font-medium">Incorrect</span>
+                                   <span className="text-gray-900 dark:text-white font-bold">{q.totalAnswers - q.correctCount} students</span>
+                               </div>
+                                 <div className="h-4 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                                  <div className="h-full bg-danger" style={{ width: `${playerCount > 0 ? ((q.totalAnswers - q.correctCount) / playerCount) * 100 : 0}%` }} />
+                               </div>
+                            </div>
+                            {unanswered > 0 && (
+                            <div>
+                               <div className="flex justify-between text-sm mb-1">
+                                   <span className="text-gray-400 dark:text-white/40 font-medium">Unanswered</span>
+                                   <span className="text-gray-900 dark:text-white font-bold">{unanswered} students</span>
+                               </div>
+                                 <div className="h-4 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                                   <div className="h-full bg-gray-300 dark:bg-white/30" style={{ width: `${(unanswered / playerCount) * 100}%` }} />
+                               </div>
+                            </div>
+                            )}
+                         </div>
+                      </div>
+                   </div>
+                </div>
+                );
+              })}
+           </div>
+        )}
+
+        {/* TAGS TAB */}
+        {activeTab === 'tags' && (
+           <div className="space-y-6">
+             {/* Reused existing logic but improved UI */}
+             {Array.from(typeGroups.entries()).map(([type, group]) => {
+                const expectedAnswers = playerCount * group.questions.length;
+                const avgAcc = expectedAnswers > 0
+                  ? ((group.totalCorrect / expectedAnswers) * 100).toFixed(0)
+                  : '0';
+                
+                return (
+                  <div key={type} className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-6 flex justify-between items-center">
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+                          {TYPE_ICONS[type] || <HelpCircle />}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900 dark:text-white">{TYPE_LABELS[type] || type}</h3>
+                          <p className="text-gray-500 dark:text-white/50">{group.questions.length} questions</p>
+                        </div>
+                     </div>
+                     
+                     <div className="text-center">
+                        <div className="text-3xl font-bold text-gray-900 dark:text-white">{avgAcc}%</div>
+                        <div className="text-sm text-gray-400 dark:text-white/40">Accuracy</div>
+                     </div>
+
+                     <button
+                        onClick={() => handleEvaluateQuestion(group.questions[0]?.questionIndex ?? 0)}
+                      className="btn-3d-purple text-sm px-3 py-1.5 flex items-center gap-1"
+                     >
+                        Evaluate <Sparkles className="w-3 h-3" />
+                     </button>
+                  </div>
+                )
+             })}
+           </div>
+        )}
+
+        {/* ANTI-CHEATING TAB */}
+        {activeTab === 'anti-cheating' && (
+           <div className="space-y-6">
+                <h2 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                {violations.length} students with alerts
+              </h2>
+
+                <div className="overflow-hidden border border-gray-200 dark:border-white/10 rounded-xl">
+                 <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-white/10">
+                       <tr>
+                        <th className="text-left py-3 px-6 text-sm font-medium text-gray-500 dark:text-white/50">Name</th>
+                        <th className="text-left py-3 px-6 text-sm font-medium text-gray-500 dark:text-white/50">Alert type</th>
+                        <th className="text-right py-3 px-6 text-sm font-medium text-gray-500 dark:text-white/50">Total alerts</th>
+                        <th className="text-right py-3 px-6 text-sm font-medium text-gray-500 dark:text-white/50">Last alert</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-white/10">
+                       {violations.map((v) => (
+                       <tr key={v.playerId} className="hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                            <td className="py-4 px-6 flex items-center gap-3">
+                               <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xs font-bold">
+                                  {v.nickname.substring(0, 2).toUpperCase()}
+                               </div>
+                               <span className="font-bold text-gray-900 dark:text-white">{v.nickname}</span>
+                            </td>
+                            <td className="py-4 px-6">
+                               <span className="px-2 py-1 bg-red-50 text-red-600 border border-red-100 rounded text-xs font-medium flex items-center gap-1 w-fit">
+                                 <ShieldAlert className="w-3 h-3" /> Tab switch
+                               </span>
+                            </td>
+                             <td className="py-4 px-6 text-right font-bold text-gray-900 dark:text-white">
+                               {v.totalViolations}
+                            </td>
+                             <td className="py-4 px-6 text-right text-gray-500 dark:text-white/50 font-medium text-sm">
+                               {v.lastViolationAt ? new Date(v.lastViolationAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                            </td>
+                         </tr>
+                       ))}
+                       {violations.length === 0 && (
+                          <tr>
+                              <td colSpan={4} className="py-12 text-center text-gray-500 dark:text-white/50">
+                                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-success/50" />
+                                No suspicious activity detected
+                             </td>
+                          </tr>
+                       )}
+                    </tbody>
+                 </table>
+              </div>
+           </div>
+        )}
+
+      </div>
+
+      {/* Evaluation Slide Panel */}
+      <SlidePanel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title={panelTitle}
+        subtitle={panelSubtitle}
+        icon={panelMode === 'participant' ? <Target className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+      >
+        {panelMode === 'question' && evaluating ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <Loader2 className="w-8 h-8 text-brand animate-spin" />
+            <p className="text-gray-500 dark:text-white/50 font-medium">Analyzing with AI...</p>
+            <p className="text-gray-400 dark:text-white/40 text-sm">This may take a few seconds</p>
+          </div>
+        ) : panelMode === 'participant' && playerBreakdown ? (
+          <div className="space-y-6">
+            {/* Summary Header */}
+            {(() => {
+              const correctCount = playerBreakdown.filter(q => q.status === 'correct').length;
+              const totalQuestions = playerBreakdown.length;
+              const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+              const totalScore = playerBreakdown.reduce((sum, q) => sum + q.points, 0);
+              return (
+                <div className="flex items-center gap-4 bg-gray-50 dark:bg-white/10 rounded-xl p-4 border border-gray-100 dark:border-white/10">
+                  {/* Accuracy Circle */}
+                  <div className="w-16 h-16 relative flex items-center justify-center shrink-0">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="32" cy="32" r="28" stroke="#E2E8F0" strokeWidth="4" fill="none" />
+                      <circle
+                        cx="32" cy="32" r="28"
+                        stroke={accuracy >= 50 ? COLORS.correct : COLORS.incorrect}
+                        strokeWidth="4"
+                        fill="none"
+                        strokeDasharray={175}
+                        strokeDashoffset={175 - (175 * accuracy) / 100}
+                      />
+                    </svg>
+                    <span className="absolute text-sm font-bold text-gray-900 dark:text-white">{accuracy}%</span>
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900 dark:text-white text-lg">{totalScore.toLocaleString()} pts</div>
+                    <div className="text-sm text-gray-500 dark:text-white/50">
+                      {correctCount}/{totalQuestions} correct
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Per-question list */}
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-3">
+                <Target className="w-4 h-4 text-brand" /> Question Breakdown
+              </h3>
+              <div className="space-y-3">
+                {playerBreakdown.map((q) => (
+                  <div key={q.questionIndex} className={`rounded-xl border p-3 ${
+                    q.status === 'correct' ? 'border-green-200 bg-green-50/50' :
+                    q.status === 'incorrect' ? 'border-red-200 bg-red-50/50' :
+                    'border-gray-200 bg-gray-50/50'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      {q.status === 'correct' ? (
+                        <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" />
+                      ) : q.status === 'incorrect' ? (
+                        <XCircle className="w-5 h-5 text-danger mt-0.5 shrink-0" />
+                      ) : (
+                        <MinusCircle className="w-5 h-5 text-gray-400 dark:text-white/40 mt-0.5 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 dark:text-white text-sm">
+                            Q{q.questionIndex + 1}{' '}
+                            <span className="font-normal text-gray-600 dark:text-white/60">
+                              {q.questionText.length > 60 ? q.questionText.slice(0, 60) + '...' : q.questionText}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-white/50 rounded text-[10px] font-medium uppercase">
+                            {TYPE_LABELS[q.questionType] || q.questionType}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500 dark:text-white/50">
+                          {q.status === 'correct' ? (
+                            <span className="text-success font-medium">Correct</span>
+                          ) : q.status === 'incorrect' ? (
+                            <>
+                              <span>Answer: <span className="text-danger font-medium">{q.studentAnswer}</span></span>
+                              <span className="mx-1.5">·</span>
+                              <span>Correct: <span className="text-success font-medium">{q.correctAnswer}</span></span>
+                            </>
+                          ) : (
+                            <span className="text-gray-400 dark:text-white/40 font-medium">Unattempted</span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center gap-3 text-xs text-gray-400 dark:text-white/40">
+                          <span className="flex items-center gap-0.5">
+                            <Zap className="w-3 h-3" /> {q.points} pts
+                          </span>
+                          {q.status !== 'unattempted' && (
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="w-3 h-3" /> {(q.timeMs / 1000).toFixed(1)}s
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : panelMode === 'question' && questionEval ? (
+          <div className="space-y-6">
+            {/* Quality Score */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl bg-brand/10 flex items-center justify-center">
+                <span className="text-2xl font-bold text-brand">{questionEval.qualityScore}</span>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 dark:text-white/50">Quality Score</div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    questionEval.difficultyRating === 'appropriate' ? 'bg-success/10 text-success' :
+                    questionEval.difficultyRating === 'too_easy' ? 'bg-warning/10 text-warning' :
+                    'bg-danger/10 text-danger'
+                  }`}>
+                    {questionEval.difficultyRating === 'appropriate' ? 'Appropriate Difficulty' :
+                     questionEval.difficultyRating === 'too_easy' ? 'Too Easy' : 'Too Hard'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    questionEval.discriminationIndex === 'good' ? 'bg-success/10 text-success' :
+                    questionEval.discriminationIndex === 'fair' ? 'bg-warning/10 text-warning' :
+                    'bg-danger/10 text-danger'
+                  }`}>
+                    {questionEval.discriminationIndex} discrimination
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-gray-50 dark:bg-white/10 rounded-xl p-4 border border-gray-100 dark:border-white/10">
+              <p className="text-gray-700 dark:text-white/70 leading-relaxed">{questionEval.summary}</p>
+            </div>
+
+            {/* Common Mistakes */}
+            {questionEval.commonMistakes.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-danger" /> Common Mistakes
+                </h3>
+                <ul className="space-y-2">
+                  {questionEval.commonMistakes.map((m, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700 dark:text-white/70">
+                      <XCircle className="w-4 h-4 text-danger mt-0.5 shrink-0" />
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Suggestions */}
+            {questionEval.suggestions.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-blue-500" /> Suggestions
+                </h3>
+                <ul className="space-y-2">
+                  {questionEval.suggestions.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-gray-700 dark:text-white/70">
+                      <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </SlidePanel>
+
+      {/* Email Results Slide Panel */}
+      <SlidePanel
+        open={emailPanelOpen}
+        onClose={() => setEmailPanelOpen(false)}
+        title="Email Results"
+        subtitle={`${playerStats.length} participants`}
+        icon={<Mail className="w-5 h-5" />}
+        width="max-w-xl"
+      >
+        {emailsLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <Loader2 className="w-8 h-8 text-brand animate-spin" />
+            <p className="text-gray-500 dark:text-white/50 font-medium">Loading email addresses...</p>
+          </div>
+        ) : emailResult ? (
+          <div className="space-y-4">
+            <div className="bg-gray-50 dark:bg-white/10 rounded-xl p-4 border border-gray-100 dark:border-white/10 text-center">
+              <div className="text-3xl font-bold text-success mb-1">{emailResult.totalSent}</div>
+              <div className="text-sm text-gray-500 dark:text-white/50">emails sent successfully</div>
+              {emailResult.totalFailed > 0 && (
+                <div className="mt-2 text-sm text-danger font-medium">{emailResult.totalFailed} failed</div>
+              )}
+            </div>
+            {emailResult.failures.length > 0 && (
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-danger" /> Failed Deliveries
+                </h3>
+                <div className="space-y-2">
+                  {emailResult.failures.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-danger bg-danger/5 rounded-lg p-2">
+                      <XCircle className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{f.email}</span>
+                      <span className="text-xs text-gray-400 dark:text-white/40 ml-auto shrink-0">{f.error}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setEmailResult(null)}
+              className="btn-3d-ghost w-full py-2 text-sm"
+            >
+              Back to email list
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500 dark:text-white/50">
+                Enter email addresses for each participant.
+              </p>
+              <span className="px-2 py-0.5 bg-brand/10 text-brand rounded-full text-xs font-bold">
+                {Object.values(emailMap).filter(e => e && e.includes('@')).length} / {playerStats.length}
+              </span>
+            </div>
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {sortedPlayerStats.map((player) => (
+                <div key={player.playerId} className="flex items-center gap-3">
+                  <div className="w-32 shrink-0">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">
+                      {player.nickname}
+                    </span>
+                    <div className="text-xs text-gray-400 dark:text-white/40">
+                      {player.accuracyPercent}% accuracy
+                    </div>
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="email@example.com"
+                    value={emailMap[player.playerId] || ''}
+                    onChange={(e) => setEmailMap(prev => ({ ...prev, [player.playerId]: e.target.value }))}
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/20 bg-white dark:bg-surface text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none"
+                  />
+                  {emailMap[player.playerId]?.includes('@') && (
+                    <Check className="w-4 h-4 text-success shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleSendEmails}
+              disabled={emailSending || Object.values(emailMap).filter(e => e?.includes('@')).length === 0}
+              className="btn-3d-cyan w-full py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {emailSending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Sending emails...</>
+              ) : (
+                <><Mail className="w-4 h-4" /> Send {Object.values(emailMap).filter(e => e?.includes('@')).length} email(s)</>
+              )}
+            </button>
+          </div>
+        )}
+      </SlidePanel>
+    </div>
+
+    {/* ══════════════════ PRINT CONTENT (hidden on screen, visible when printing) ══════════════════ */}
+    {printMode && (
+      <div className="hidden print:block p-8 text-black bg-white">
+        {/* Print Header — App branding + session info */}
+        <div className="mb-6 pb-4 border-b-2 border-gray-300">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#009EE2] rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">LC</span>
+              </div>
+              <span className="text-lg font-bold text-gray-800 tracking-tight">LiveClass</span>
+            </div>
+            <div className="text-xs text-gray-400">
+              Printed {new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-black">{quizTitle}</h1>
+          <div className="flex gap-4 text-sm text-gray-600 mt-1">
+            <span>PIN: {sessionPin}</span>
+            <span>{playerCount} participants</span>
+            <span>{analytics.length} questions</span>
+            <span>Avg. Accuracy: {Math.round(Number(avgAccuracy))}%</span>
+            <span>Completion: {completionRate}%</span>
+          </div>
+        </div>
+
+        {/* Questions Summary */}
+        {printMode === 'questions' && (
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-black">Questions Summary</h2>
+            {analytics.map((q, idx) => {
+              const dist = answerDistributions.find(d => d.questionIndex === idx);
+              const pct = playerCount > 0 ? (q.correctCount / playerCount) * 100 : 0;
+              return (
+                <div key={idx} className="break-inside-avoid mb-6 border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-black">Q{idx + 1}: {dist?.questionText || 'N/A'}</h3>
+                    <div className="text-sm text-gray-600">
+                      {Math.round(pct)}% correct &middot; Avg: {(q.avgTimeMs / 1000).toFixed(1)}s
+                    </div>
+                  </div>
+                  {dist?.distribution.map((opt, optIdx) => (
+                    <div key={optIdx} className="flex items-center gap-2 py-1 text-sm">
+                      <span className="w-6 font-bold text-gray-700">{String.fromCharCode(65 + optIdx)}</span>
+                      <span className="flex-1 text-gray-800">{opt.label}</span>
+                      <span className="text-gray-600">
+                        {opt.count} ({playerCount > 0 ? Math.round((opt.count / playerCount) * 100) : 0}%)
+                      </span>
+                      {opt.isCorrect && <span className="font-bold text-green-700">&check;</span>}
+                    </div>
+                  ))}
+                  <div className="mt-2 text-xs text-gray-500">
+                    Correct: {q.correctCount} | Incorrect: {q.totalAnswers - q.correctCount} | Unanswered: {playerCount - q.totalAnswers}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Participant Summary */}
+        {printMode === 'participants' && (
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-black">Participant Summary</h2>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b-2 border-gray-400">
+                  <th className="text-left py-2 px-2 text-gray-700">#</th>
+                  <th className="text-left py-2 px-2 text-gray-700">Name</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Score</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Correct</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Answered</th>
+                  <th className="text-right py-2 px-2 text-gray-700">Accuracy</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPlayerStats.map((player, idx) => (
+                  <tr key={player.playerId} className="border-b border-gray-200">
+                    <td className="py-1.5 px-2 text-gray-600">{idx + 1}</td>
+                    <td className="py-1.5 px-2 font-medium text-black">{player.nickname}</td>
+                    <td className="py-1.5 px-2 text-right text-gray-800">{player.totalPoints.toLocaleString()}</td>
+                    <td className="py-1.5 px-2 text-right text-gray-800">{player.correctAnswers}</td>
+                    <td className="py-1.5 px-2 text-right text-gray-800">{player.totalAnswers}/{analytics.length}</td>
+                    <td className="py-1.5 px-2 text-right font-bold text-black">{player.accuracyPercent}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* All Participants Reports */}
+        {printMode === 'all-reports' && (
+          <div>
+            <h2 className="text-xl font-bold mb-4 text-black">Individual Participant Reports</h2>
+            {sortedPlayerStats.map((player, playerIdx) => {
+              const breakdown = answerDistributions.map((dist, idx) => {
+                const questionId = analytics[idx]?.questionId;
+                const answer = allAnswers.find(a => a.playerId === player.playerId && a.questionId === questionId);
+                return {
+                  questionIndex: idx,
+                  questionText: dist.questionText,
+                  status: answer ? (answer.correct ? 'correct' : 'incorrect') : 'unattempted',
+                  studentAnswer: answer ? String(answer.selection) : null,
+                  correctAnswer: dist.correctAnswers.join(', '),
+                  points: answer?.pointsAwarded ?? 0,
+                  timeMs: answer?.timeMs ?? 0,
+                };
+              });
+              const correctCount = breakdown.filter(q => q.status === 'correct').length;
+
+              return (
+                <div key={player.playerId} className={playerIdx > 0 ? 'break-before-page' : ''}>
+                  <div className="border-b-2 border-gray-300 pb-2 mb-3">
+                    <h3 className="text-lg font-bold text-black">{player.nickname}</h3>
+                    <p className="text-sm text-gray-600">
+                      Score: {player.totalPoints} | Accuracy: {player.accuracyPercent}% | {correctCount}/{analytics.length} correct
+                    </p>
+                  </div>
+                  <table className="w-full border-collapse text-xs mb-4">
+                    <thead>
+                      <tr className="border-b border-gray-300">
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-8">Q#</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700">Question</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-20">Result</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-28">Answer</th>
+                        <th className="text-left py-1 px-1.5 text-gray-700 w-28">Correct</th>
+                        <th className="text-right py-1 px-1.5 text-gray-700 w-12">Pts</th>
+                        <th className="text-right py-1 px-1.5 text-gray-700 w-12">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {breakdown.map((q) => (
+                        <tr key={q.questionIndex} className="border-b border-gray-100">
+                          <td className="py-1 px-1.5 font-medium text-gray-800">{q.questionIndex + 1}</td>
+                          <td className="py-1 px-1.5 text-gray-800">
+                            {q.questionText.length > 50 ? q.questionText.slice(0, 47) + '...' : q.questionText}
+                          </td>
+                          <td className="py-1 px-1.5">
+                            {q.status === 'correct' && <span className="text-green-700 font-bold">&#10003; Correct</span>}
+                            {q.status === 'incorrect' && <span className="text-red-700 font-bold">&#10007; Wrong</span>}
+                            {q.status === 'unattempted' && <span className="text-gray-400">&mdash; Skipped</span>}
+                          </td>
+                          <td className="py-1 px-1.5 text-gray-700">{q.studentAnswer || '\u2014'}</td>
+                          <td className="py-1 px-1.5 text-gray-700">{q.correctAnswer}</td>
+                          <td className="py-1 px-1.5 text-right text-gray-700">{q.points}</td>
+                          <td className="py-1 px-1.5 text-right text-gray-700">
+                            {q.status !== 'unattempted' ? `${(q.timeMs / 1000).toFixed(1)}s` : '\u2014'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Fixed print footer — repeats on every printed page */}
+        <div className="hidden print-page-footer">
+          <span>LiveClass &mdash; {quizTitle} &mdash; Session {sessionPin}</span>
+          <span className="page-num" />
+        </div>
+      </div>
+    )}
+    </>
+  );
+}
