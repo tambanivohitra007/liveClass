@@ -118,7 +118,6 @@
     font-family: 'Acme', 'McLaren', Arial, sans-serif;
     font-weight: 400;
   }
-
   /* Form elements — theme-aware */
   input,
   textarea,
@@ -228,4 +227,19 @@
 .dark .swal2-popup .swal2-success-circular-line-right,
 .dark .swal2-popup .swal2-success-fix {
   background-color: var(--surface-card) !important;
+}
+
+/* Desktop app (teachers): the Windows system font, as in Explorer, Office and Teams.
+   Installed on every Windows PC, so nothing to download; students' browsers keep the playful fonts.
+   Kept outside @layer so it also wins over the 3D buttons' font in App.css. */
+.desktop-app body {
+  font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+.desktop-app :is(h1, h2, h3, h4, h5, h6) {
+  font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+}
+.desktop-app [class*='btn-3d-'] {
+  font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
 }
