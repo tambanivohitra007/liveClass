@@ -14,10 +14,13 @@ export default function BinaryPlayerInput({ round, onSubmit, disabled }: PlayerI
   const [textInput, setTextInput] = useState('');
 
   // Reset when round changes
-  useEffect(() => {
+  const roundKey = `${round.prompt}|${bitCount}`;
+  const [prevRoundKey, setPrevRoundKey] = useState(roundKey);
+  if (prevRoundKey !== roundKey) {
+    setPrevRoundKey(roundKey);
     setBits(new Array(bitCount).fill(0));
     setTextInput('');
-  }, [round.prompt, bitCount]);
+  }
 
   const toggleBit = useCallback((index: number) => {
     if (disabled) return;

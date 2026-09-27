@@ -34,6 +34,16 @@ const AVATAR_COLORS = [
   { bg: 'bg-fuchsia-500/20', border: 'border-fuchsia-500/40', text: 'text-fuchsia-400' },
 ];
 
+// Accepts epoch millis or a Firestore Timestamp.
+function toMs(ts: unknown): number {
+  if (!ts) return 0;
+  if (typeof ts === 'number') return ts;
+  if (typeof ts === 'object' && ts !== null && 'toMillis' in ts && typeof (ts as { toMillis: () => number }).toMillis === 'function') {
+    return (ts as { toMillis: () => number }).toMillis();
+  }
+  return 0;
+}
+
 const MESH_BG: React.CSSProperties = {
   background: `
     radial-gradient(ellipse at 20% 0%, rgba(0,158,226,0.12) 0%, transparent 50%),
@@ -195,8 +205,7 @@ export default function HostSession() {
     // question ID now derived from session props in the subscription effect
     if (current?.timeLimitSec) {
       setCurrentTimeLimitSec(current.timeLimitSec);
-      const startedAt = session.questionStartedAt as any;
-      const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+      const startMs = toMs(session.questionStartedAt);
       if (startMs > 0) {
         const now = session.timerPaused && session.timerPausedAt
           ? (typeof session.timerPausedAt === 'number' ? session.timerPausedAt : Date.now())
@@ -444,8 +453,7 @@ export default function HostSession() {
 
   const extendTimer = async () => {
     if (!session) return;
-    const startedAt = session.questionStartedAt as any;
-    const startMs = startedAt?.toMillis ? startedAt.toMillis() : (typeof startedAt === 'number' ? startedAt : 0);
+    const startMs = toMs(session.questionStartedAt);
     if (startMs > 0) {
       await updateDoc(doc(db, 'sessions', session.id), { questionStartedAt: startMs + 30000 });
       setTimeLeft((t) => t + 30);
@@ -536,15 +544,6 @@ export default function HostSession() {
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, [isSessionActive]);
-
-  if (error) return (
-    <div className="min-h-dvh flex items-center justify-center" style={MESH_BG}>
-      <div className="text-center">
-        <p className="text-danger mb-4">{error}</p>
-        <button onClick={() => navigate('/dashboard')} className="text-brand underline">Back to Dashboard</button>
-      </div>
-    </div>
-  );
 
   const isLastQuestion = session ? session.currentQuestionIndex >= totalQuestions - 1 : false;
 
@@ -707,6 +706,16 @@ export default function HostSession() {
       addToast('error', 'Failed to update session setting');
     }
   };
+
+  // Early returns must stay below every hook call above.
+  if (error) return (
+    <div className="min-h-dvh flex items-center justify-center" style={MESH_BG}>
+      <div className="text-center">
+        <p className="text-danger mb-4">{error}</p>
+        <button onClick={() => navigate('/dashboard')} className="text-brand underline">Back to Dashboard</button>
+      </div>
+    </div>
+  );
 
   if (!session) return (
     <div className="min-h-dvh flex items-center justify-center" style={MESH_BG}>
@@ -1591,7 +1600,7 @@ export default function HostSession() {
               <div className="space-y-2">
                 {Array.from(violations.entries()).map(([pid, v]) => {
                   const player = players.find((p) => p.id === pid);
-                  const isDisqualified = (player as any)?.disqualified;
+                  const isDisqualified = player?.disqualified;
                   return (
                     <div key={pid} className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg">
                       <span className="text-xs text-white/80 flex-1">

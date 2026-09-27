@@ -34,9 +34,11 @@ export default function Navbar() {
   }, []);
 
   // Close dropdown on route change
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setProfileOpen(false);
-  }, [location.pathname]);
+  }
 
   const isActive = (path: string) => location.pathname === path;
 

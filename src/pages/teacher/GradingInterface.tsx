@@ -4,7 +4,8 @@ import { useGradingSession } from '../../hooks/useGradingSession';
 import { useGradingStore } from '../../stores/gradingStore';
 import { useToastStore } from '../../stores/toastStore';
 import CriterionInput from '../../components/CriterionInput';
-import StudentNavigator, { getStudentName, getStudentNumber } from '../../components/StudentNavigator';
+import StudentNavigator from '../../components/StudentNavigator';
+import { getStudentName, getStudentNumber } from '../../lib/students';
 import {
   ArrowLeft, ArrowRight, ChevronLeft, ChevronRight,
   Check, CloudOff,

@@ -58,9 +58,11 @@ export default function NotificationBell({ position = 'dropdown' }: { position?:
   }, []);
 
   // Close on route change
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setOpen(false);
-  }, [location.pathname]);
+  }
 
   const handleClick = async (n: AppNotification) => {
     if (!n.read) {

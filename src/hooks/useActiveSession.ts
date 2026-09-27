@@ -20,12 +20,14 @@ export interface ActiveSessionInfo {
 export function useActiveSession() {
   const { user } = useAuthStore();
   const [activeSessions, setActiveSessions] = useState<ActiveSessionInfo[]>([]);
+  const [prevUser, setPrevUser] = useState(user);
+  if (prevUser !== user) {
+    setPrevUser(user);
+    setActiveSessions([]);
+  }
 
   useEffect(() => {
-    if (!user) {
-      setActiveSessions([]);
-      return;
-    }
+    if (!user) return;
 
     const unsubs: (() => void)[] = [];
     const playerUnsubs: Map<string, () => void> = new Map();

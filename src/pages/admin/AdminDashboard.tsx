@@ -33,6 +33,7 @@ export default function AdminDashboard() {
     for (const d of snap.docs) {
       const status = d.data().status;
       if (status === 'lobby' || status === 'live') {
+        // eslint-disable-next-line react-hooks/purity -- runs in a click handler, not during render
         updates.push(updateDoc(doc(db, 'sessions', d.id), { status: 'ended', endedAt: Date.now() }));
       }
     }

@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import type { PlayerInputProps } from '../types';
 
 export default function TextInput({ round, onSubmit, disabled }: PlayerInputProps) {
   const [value, setValue] = useState('');
 
-  useEffect(() => { setValue(''); }, [round.prompt]);
+  const [prevPrompt, setPrevPrompt] = useState(round.prompt);
+  if (prevPrompt !== round.prompt) {
+    setPrevPrompt(round.prompt);
+    setValue('');
+  }
 
   const handleSubmit = () => {
     if (disabled || !value.trim()) return;

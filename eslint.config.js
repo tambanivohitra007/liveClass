@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'build', 'release']),
+  globalIgnores(['dist', 'build', 'release', 'login/vendor']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -19,11 +19,9 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-  },
-  {
-    // Firebase-compatible shims and the LAN server keep the SDK's parameter lists.
-    files: ['src/lan/**/*.ts', 'lan/**/*.ts'],
     rules: {
+      // `_`-prefixed names are intentionally unused (e.g. `const { id: _id, ...rest } = doc`,
+      // and Firebase-compatible shims that keep the SDK's parameter lists).
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },

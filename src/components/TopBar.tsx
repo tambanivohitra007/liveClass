@@ -69,9 +69,11 @@ export default function TopBar() {
   }, []);
 
   // Close dropdown on route change
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setProfileOpen(false);
-  }, [location.pathname]);
+  }
 
   if (!firebaseUser) return null;
 

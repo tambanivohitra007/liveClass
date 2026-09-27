@@ -154,7 +154,6 @@ const CPPNShaderMaterial = shaderMaterial(
 
 extend({ CPPNShaderMaterial });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ShaderPlane() {
   const meshRef = useRef<THREE.Mesh>(null!);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

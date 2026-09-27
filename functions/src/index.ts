@@ -3298,7 +3298,7 @@ export const submitMiniGameAnswer = onCall(HOT_PATH_CONFIG, async (request) => {
   const correct = gameModule ? gameModule.checkAnswer(submission, round) : submission === round.answer;
 
   let pointsAwarded = 0;
-  let newStreak = correct ? (player.streak || 0) + 1 : 0;
+  const newStreak = correct ? (player.streak || 0) + 1 : 0;
 
   if (correct) {
     const timeFactor = Math.max(0, (round.timeLimitSec * 1000 - timeMs) / (round.timeLimitSec * 1000));

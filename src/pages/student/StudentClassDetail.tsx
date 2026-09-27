@@ -115,6 +115,7 @@ export default function StudentClassDetail() {
     );
   }
 
+  // eslint-disable-next-line react-hooks/purity -- re-read the clock on each render so time windows stay current
   const now = Date.now();
   const activeAssignments = assignments.filter((a) => now >= a.startAt && now <= a.endAt);
   const upcomingAssignments = assignments.filter((a) => now < a.startAt);

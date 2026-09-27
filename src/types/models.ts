@@ -118,6 +118,7 @@ export interface SessionPlayer {
   teamIndex?: number;
   questionSubset?: number[];
   joinedAt: number;
+  disqualified?: boolean;
 }
 
 export interface Answer {

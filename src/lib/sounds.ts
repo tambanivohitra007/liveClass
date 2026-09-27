@@ -137,7 +137,6 @@ export function stopLobbyMusic() {
 // --- Countdown music: background pulse during live questions ---
 let countdownNodes: { osc: OscillatorNode; gain: GainNode }[] = [];
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
-let countdownBeat = 0;
 
 // Ambient pad that plays throughout the question
 function startCountdownPad() {
@@ -200,7 +199,6 @@ function countdownTick(timeLeft: number, total: number) {
     gain.gain.linearRampToValueAtTime(targetVol, now + 0.5);
   });
 
-  countdownBeat++;
 }
 
 // Time's up fanfare
@@ -213,7 +211,6 @@ function playTimesUp() {
 
 export function startCountdownMusic(totalSeconds: number) {
   stopCountdownMusic();
-  countdownBeat = 0;
   startCountdownPad();
   // Tick immediately for the first second
   countdownTick(totalSeconds, totalSeconds);
@@ -239,5 +236,4 @@ export function stopCountdownMusic() {
     });
   }
   countdownNodes = [];
-  countdownBeat = 0;
 }

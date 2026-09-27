@@ -12,22 +12,28 @@ interface SlidePanelProps {
 }
 
 export default function SlidePanel({ open, onClose, title, subtitle, icon, children, width = 'max-w-lg' }: SlidePanelProps) {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(open);
   const [exiting, setExiting] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(open);
 
-  useEffect(() => {
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
       setMounted(true);
       setExiting(false);
     } else if (mounted) {
       setExiting(true);
-      const timer = setTimeout(() => {
-        setMounted(false);
-        setExiting(false);
-      }, 250);
-      return () => clearTimeout(timer);
     }
-  }, [open, mounted]);
+  }
+
+  useEffect(() => {
+    if (!exiting) return;
+    const timer = setTimeout(() => {
+      setMounted(false);
+      setExiting(false);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [exiting]);
 
   const handleClose = useCallback(() => {
     onClose();

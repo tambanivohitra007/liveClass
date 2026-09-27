@@ -7,6 +7,7 @@ interface Particle {
   delay: number;
   size: number;
   drift: number;
+  round: boolean;
 }
 
 const COLORS = ['#D4566B', '#FF7F11', '#E8A308', '#3D6BAD', '#628141', '#7C3AED'];
@@ -23,6 +24,7 @@ export default function Confetti({ active }: { active: boolean }) {
       delay: Math.random() * 0.5,
       size: 6 + Math.random() * 6,
       drift: (Math.random() - 0.5) * 60,
+      round: Math.random() > 0.5,
     }));
     setParticles(p);
     const timer = setTimeout(() => setParticles([]), 2500);
@@ -43,7 +45,7 @@ export default function Confetti({ active }: { active: boolean }) {
             width: p.size,
             height: p.size,
             backgroundColor: p.color,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            borderRadius: p.round ? '50%' : '2px',
             animationDelay: `${p.delay}s`,
             '--drift': `${p.drift}px`,
           } as React.CSSProperties}

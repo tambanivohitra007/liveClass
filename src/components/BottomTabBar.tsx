@@ -121,9 +121,11 @@ export default function BottomTabBar() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Close sheet on route change
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setSheetOpen(false);
-  }, [location.pathname]);
+  }
 
   // Prevent body scroll when sheet is open
   useEffect(() => {

@@ -170,6 +170,7 @@ export default function PlayAssignment() {
     );
   }
 
+  // eslint-disable-next-line react-hooks/purity -- re-read the clock on each render so time windows stay current
   const now = Date.now();
   if (now < assignment.startAt) {
     return (

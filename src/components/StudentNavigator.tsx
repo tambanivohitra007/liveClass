@@ -1,22 +1,12 @@
 import { Check, Minus } from 'lucide-react';
 import type { RosterStudent, SessionPlayer, Evaluation } from '../types/models';
+import { getStudentName, getStudentNumber } from '../lib/students';
 
 interface Props {
   students: (RosterStudent | SessionPlayer)[];
   evaluations: Map<string, Evaluation>;
   currentIndex: number;
   onSelect: (index: number) => void;
-}
-
-function getStudentName(student: RosterStudent | SessionPlayer): string {
-  if ('name' in student) return student.name;
-  if ('nickname' in student) return student.nickname;
-  return 'Unknown';
-}
-
-function getStudentNumber(student: RosterStudent | SessionPlayer): string | undefined {
-  if ('studentNumber' in student) return student.studentNumber;
-  return undefined;
 }
 
 function getGradingStatus(evaluation: Evaluation | undefined): 'none' | 'partial' | 'complete' {
@@ -94,4 +84,3 @@ export default function StudentNavigator({ students, evaluations, currentIndex, 
   );
 }
 
-export { getStudentName, getStudentNumber };
