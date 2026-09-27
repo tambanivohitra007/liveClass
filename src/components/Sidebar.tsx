@@ -132,7 +132,7 @@ function WebSidebar() {
           </div>
         </Link>
         {collapsed && (
-          <div className="fixed left-[72px] px-3 py-1.5 bg-[#1a2333] text-white text-xs font-medium rounded-lg border border-white/10 shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 translate-x-2 group-hover:translate-x-0">
+          <div className="fixed left-[72px] px-3 py-1.5 bg-[#2A2A2A] text-white text-xs font-medium rounded-lg border border-white/10 shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-50 translate-x-2 group-hover:translate-x-0">
             {item.label}
           </div>
         )}
@@ -157,7 +157,7 @@ function WebSidebar() {
 
   return (
     <aside
-      className={`hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-[#080F1E]/95 backdrop-blur-md border-r border-white/10 transition-[width] duration-300 ease-in-out ${
+      className={`hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col bg-[#161616]/95 backdrop-blur-md border-r border-white/10 transition-[width] duration-300 ease-in-out ${
         collapsed ? 'w-[68px]' : 'w-64'
       }`}
     >

@@ -49,7 +49,7 @@ export default function TopBar() {
   if (!firebaseUser) return null;
 
   return (
-    <header className="hidden md:flex sticky top-0 z-40 h-14 items-center justify-between px-6 bg-white/80 dark:bg-[#0F1729]/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10 pt-safe">
+    <header className="hidden md:flex sticky top-0 z-40 h-14 items-center justify-between px-6 bg-white/80 dark:bg-[#1E1E1E]/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10 pt-safe">
       {/* Left: Page title */}
       <div>
         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{pageTitle}</h1>
@@ -79,7 +79,7 @@ export default function TopBar() {
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#162033] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down">
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#262626] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down">
               <div className="px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
                 <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{user?.displayName || 'User'}</p>
                 <p className="text-xs text-gray-500 dark:text-white/40 truncate">{firebaseUser.email}</p>

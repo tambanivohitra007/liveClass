@@ -509,7 +509,7 @@ export default function SessionResults() {
                  <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                </button>
                {printMenuOpen && (
-                 <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#162033] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down z-50">
+                 <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#262626] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down z-50">
                    <div className="p-1.5">
                      <button
                        onClick={() => handlePrint('questions')}

@@ -340,7 +340,7 @@ export default function AdminAssignments() {
       {/* Extend Deadline Modal */}
       {extendId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#162033] rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-[#262626] rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Extend Deadline</h3>
               <button

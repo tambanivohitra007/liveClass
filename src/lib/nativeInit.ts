@@ -9,6 +9,6 @@ export async function initNativePlugins() {
   ]);
 
   await StatusBar.setStyle({ style: Style.Dark });
-  await StatusBar.setBackgroundColor({ color: '#0F1729' });
+  await StatusBar.setBackgroundColor({ color: '#1E1E1E' });
   await SplashScreen.hide();
 }

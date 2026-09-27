@@ -6,14 +6,14 @@
   --danger: #e5484d;
 }
 [data-theme="dark"] {
-  --bar: #0b1220;
-  --bg: #0f1729;
-  --panel: #131c2e;
+  --bar: #191919;
+  --bg: #1e1e1e;
+  --panel: #262626;
   --panel-line: rgba(255, 255, 255, 0.09);
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
   --line: rgba(255, 255, 255, 0.07);
-  --text: #e2e8f0;
-  --muted: #8a97ab;
+  --text: #e6e6e6;
+  --muted: #9a9a9a;
   --hover: rgba(255, 255, 255, 0.08);
   --press: rgba(255, 255, 255, 0.13);
   --ok: #4ade80;

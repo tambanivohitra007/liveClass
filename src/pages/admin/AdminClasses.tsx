@@ -285,7 +285,7 @@ export default function AdminClasses() {
       {/* Transfer Modal */}
       {transferClassId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#162033] rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-[#262626] rounded-2xl border border-gray-200 dark:border-white/10 shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Transfer Classroom</h3>
               <button
@@ -302,7 +302,7 @@ export default function AdminClasses() {
               value={transferTargetId}
               onChange={(e) => setTransferTargetId(e.target.value)}
               aria-label="Select new classroom owner"
-              className="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/30 mb-4 [&>option]:bg-white [&>option]:dark:bg-[#162033] [&>option]:text-gray-900 [&>option]:dark:text-white"
+              className="w-full px-3 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/30 mb-4 [&>option]:bg-white [&>option]:dark:bg-[#262626] [&>option]:text-gray-900 [&>option]:dark:text-white"
             >
               <option value="">Select a teacher...</option>
               {approvedTeachers.map((t) => (

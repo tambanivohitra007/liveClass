@@ -28,7 +28,7 @@ export interface TitlebarColors {
 }
 
 export const TITLEBAR_COLORS: Record<'dark' | 'light', TitlebarColors> = {
-  dark: { background: '#0b1220', symbols: '#cbd5e1' },
+  dark: { background: '#191919', symbols: '#d4d4d4' },
   light: { background: '#f8fafc', symbols: '#334155' },
 };
 

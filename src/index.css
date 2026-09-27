@@ -32,20 +32,31 @@
 }
 
 .dark {
-  /* Dark mode overrides */
-  --surface-bg: #0F1729;
-  --surface-card: #162033;
-  --surface-elevated: #1A2537;
-  --text-primary: #E2E8F0;
+  /* Dark mode overrides: neutral charcoal (Windows 11-style), not navy */
+  --surface-bg: #1E1E1E;
+  --surface-card: #262626;
+  --surface-elevated: #2E2E2E;
+  --text-primary: #E6E6E6;
   --text-secondary: rgba(255, 255, 255, 0.6);
   --text-tertiary: rgba(255, 255, 255, 0.4);
   --border-base: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.2);
   --input-bg: rgba(255, 255, 255, 0.05);
   --input-border: rgba(255, 255, 255, 0.1);
-  --scrollbar-track: #080F1E;
-  --scrollbar-thumb: #2A3548;
-  --scrollbar-thumb-hover: #384658;
+  --scrollbar-track: #161616;
+  --scrollbar-thumb: #3A3A3A;
+  --scrollbar-thumb-hover: #4A4A4A;
+
+  /* Tailwind's slate/gray are blue-tinted; in dark mode their dark shades become plain charcoal,
+     so `dark:bg-slate-800` and friends match the surfaces above. */
+  --color-slate-700: #3D3D3D;
+  --color-slate-800: #2A2A2A;
+  --color-slate-900: #1E1E1E;
+  --color-slate-950: #161616;
+  --color-gray-700: #3D3D3D;
+  --color-gray-800: #2A2A2A;
+  --color-gray-900: #1E1E1E;
+  --color-gray-950: #161616;
 
   /* Comic-pop shadow colors in dark mode */
   --tone-accent: rgba(255, 97, 176, 0.55);

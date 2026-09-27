@@ -101,7 +101,7 @@ export default function DesktopSidebar() {
   return (
     <aside
       className={`hidden md:flex fixed left-0 top-0 bottom-0 z-40 flex-col select-none
-        bg-[#f8fafc] dark:bg-[#0b1220] border-r border-slate-200 dark:border-white/[0.07]
+        bg-[#f8fafc] dark:bg-[#191919] border-r border-slate-200 dark:border-white/[0.07]
         transition-[width] duration-200 ease-out ${collapsed ? 'w-[68px]' : 'w-64'}`}
     >
       {/* Pane toggle, where Windows 11 apps put it. The app icon already sits in the title bar. */}
