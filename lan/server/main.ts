@@ -22,6 +22,13 @@ function dataDirectory(): string {
   return path.join(base, 'liveclass-data');
 }
 
+/** Present when running inside the Electron desktop app (spawned with utilityProcess.fork). */
+interface ParentPort {
+  postMessage(message: unknown): void;
+  on(event: 'message', listener: (e: { data: unknown }) => void): void;
+}
+const parentPort = (process as NodeJS.Process & { parentPort?: ParentPort }).parentPort;
+
 const VIRTUAL_NIC = /vEthernet|WSL|Hyper-V|VirtualBox|VMware|Tailscale|ZeroTier|docker|Loopback|vpn|utun|tun\d/i;
 
 /** IPv4 addresses students can reach; virtual/VPN adapters are hidden unless nothing else exists. */
@@ -179,6 +186,14 @@ async function main(): Promise<void> {
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
+
+  // Desktop app: report the address, and save before exiting (Windows child processes get no SIGTERM).
+  if (parentPort) {
+    parentPort.on('message', (e) => {
+      if ((e.data as { type?: string } | null)?.type === 'shutdown') shutdown();
+    });
+    parentPort.postMessage({ type: 'ready', port: actual, urls, dataDir });
+  }
 }
 
 main().catch((err) => {

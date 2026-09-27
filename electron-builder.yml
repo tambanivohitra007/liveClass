@@ -1,0 +1,38 @@
+# Windows installer for the LiveClass desktop app: `npm run package:desktop` → release/desktop/
+appId: org.liveclass.desktop
+productName: LiveClass
+directories:
+  output: release/desktop
+
+# Only the bundled main process goes in app.asar; the web client and its npm packages are
+# already compiled into dist/ and build/server.cjs.
+files:
+  - build/desktop/**
+  - package.json
+  - '!node_modules/**'
+extraResources:
+  - from: build/server.cjs
+    to: server/server.cjs
+  - from: build/server.cjs.map
+    to: server/server.cjs.map
+  - from: dist
+    to: web
+  - from: public/pwa-512x512.png
+    to: icon.png
+  - from: lan/README-teachers.txt
+    to: README.txt
+
+win:
+  target: nsis
+  icon: public/pwa-512x512.png
+
+nsis:
+  oneClick: false
+  # Installing for all users needs admin rights, which the firewall rule needs anyway.
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: LiveClass
+  runAfterFinish: true
+  include: lan/desktop/installer.nsh

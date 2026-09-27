@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "LiveClass — offline classroom quizzes and games",
+  "author": "Rindra Ambinintsoa Razafinjatovo",
+  "main": "build/desktop/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && tsc -p tsconfig.server.json && vite build && node lan/build-server.mjs",
@@ -18,7 +21,10 @@
     "server": "node lan/build-server.mjs && node --enable-source-maps build/server.cjs",
     "dev:server": "node lan/build-server.mjs && node --enable-source-maps --watch build/server.cjs",
     "typecheck:server": "tsc -p tsconfig.server.json",
-    "package:exe": "npm run build && node lan/package-exe.mjs"
+    "package:exe": "npm run build && node lan/package-exe.mjs",
+    "build:desktop": "node lan/build-desktop.mjs",
+    "desktop": "npm run build && npm run build:desktop && electron .",
+    "package:desktop": "npm run build && npm run build:desktop && electron-builder --win"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.1.0",
@@ -64,6 +70,8 @@
     "@types/three": "^0.182.0",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.1.1",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
     "esbuild": "^0.28.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
