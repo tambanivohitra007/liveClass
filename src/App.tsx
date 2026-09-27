@@ -175,7 +175,8 @@ function AppContent() {
       <div className={`flex flex-col flex-1 min-w-0 min-h-dvh overflow-x-hidden transition-[margin-left] duration-300 ${
         showSidebar ? (collapsed ? 'md:ml-[68px]' : 'md:ml-64') : ''
       }`}>
-        {!hideNavbar && <Navbar />}
+        {/* The website header (Discover / Join Game / Sign In) is for visitors; the desktop app has its own title bar. */}
+        {!hideNavbar && !isDesktopApp && <Navbar />}
         {showSidebar && <TopBar />}
         <ToastContainer />
         <main className={`flex-1 pattern-dots ${!hideNavbar && firebaseUser ? 'pb-20 md:pb-0' : ''}`}>
@@ -185,7 +186,7 @@ function AppContent() {
           </div>
         }>
         <Routes>
-          <Route path="/" element={user ? <Navigate to={user.role === 'student' ? '/student/dashboard' : '/dashboard'} replace /> : <Home />} />
+          <Route path="/" element={user ? <Navigate to={user.role === 'student' ? '/student/dashboard' : '/dashboard'} replace /> : isDesktopApp ? <Navigate to="/login" replace /> : <Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/join" element={<JoinGame />} />

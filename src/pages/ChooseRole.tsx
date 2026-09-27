@@ -10,13 +10,16 @@ import logo from '../assets/logo.png';
 import { isDesktopApp } from '../lib/platform';
 
 export default function ChooseRole() {
-  const { firebaseUser } = useAuthStore();
+  const { firebaseUser, user } = useAuthStore();
   const [role, setRole] = useState<'teacher' | 'student'>(isDesktopApp ? 'teacher' : 'student');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   if (!firebaseUser) return <Navigate to="/login" replace />;
+  // Sign-up creates the account, then its profile a moment later; if the app briefly routed here in
+  // between, move on once the profile exists.
+  if (user) return <Navigate to={user.role === 'student' ? '/student/dashboard' : '/dashboard'} replace />;
 
   const handleContinue = async () => {
     setError('');
