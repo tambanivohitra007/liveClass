@@ -74,6 +74,7 @@ export default function QuizPreview() {
     if (questions.length === 0) return;
     const q = questions[currentIndex];
     if (q) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the preview state for each new question
       setTimeLeft(q.timeLimitSec);
       setSelectedAnswer('');
       setSelectedAnswers([]);

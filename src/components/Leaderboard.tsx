@@ -150,7 +150,10 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
     return () => off(scoresRef, 'value', handler);
   }, [sessionId, top10Snapshot, nicknameMap]);
 
-  // Compute overtakers and new-leader detection
+  // Compute overtakers and new-leader detection.
+  // Reads the previous entries from a ref on purpose: it is updated after each GSAP animation,
+  // so it always holds the ranking the viewer last saw.
+  /* eslint-disable react-hooks/refs */
   const { overtakers, isNewLeader, rankDeltas } = useMemo(() => {
     const prev = prevEntriesRef.current;
     const overtakerSet = new Set<string>();
@@ -181,6 +184,7 @@ export default function Leaderboard({ sessionId, top10Snapshot, compact, current
 
     return { overtakers: overtakerSet, isNewLeader: newLeader, rankDeltas: deltas };
   }, [entries]);
+  /* eslint-enable react-hooks/refs */
 
   // Capture Flip state BEFORE React updates the DOM
   // We use useEffect with a layout trick: capture state before render via ref update

@@ -12,21 +12,29 @@ interface Particle {
 
 const COLORS = ['#D4566B', '#FF7F11', '#E8A308', '#3D6BAD', '#628141', '#7C3AED'];
 
+function makeParticles(): Particle[] {
+  return Array.from({ length: 40 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    delay: Math.random() * 0.5,
+    size: 6 + Math.random() * 6,
+    drift: (Math.random() - 0.5) * 60,
+    round: Math.random() > 0.5,
+  }));
+}
+
 export default function Confetti({ active }: { active: boolean }) {
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [prevActive, setPrevActive] = useState(false);
+
+  if (prevActive !== active) {
+    setPrevActive(active);
+    setParticles(active ? makeParticles() : []);
+  }
 
   useEffect(() => {
-    if (!active) { setParticles([]); return; }
-    const p: Particle[] = Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      delay: Math.random() * 0.5,
-      size: 6 + Math.random() * 6,
-      drift: (Math.random() - 0.5) * 60,
-      round: Math.random() > 0.5,
-    }));
-    setParticles(p);
+    if (!active) return;
     const timer = setTimeout(() => setParticles([]), 2500);
     return () => clearTimeout(timer);
   }, [active]);

@@ -40,6 +40,7 @@ export default function GradingInterface() {
     if (!currentStudent) return;
     const existing = evaluations.get(currentStudent.id);
     if (existing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- load the saved form when the student or saved evaluations change
       setCurrentScores(existing.scores);
       setComment(existing.comment);
     } else {
