@@ -13,6 +13,17 @@ html.desktop-app :is(h1, h2, h3, h4, h5, h6) {
   font-weight: 600;
 }
 
+/* Corner radii: Windows 11 proportions (8px cards and panels) instead of the web's soft 12–28px.
+   Tailwind's rounded-* utilities read these variables, so every card, panel and input follows;
+   rounded-full pills and avatars are unaffected. */
+html.desktop-app {
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
+}
+html.desktop-app .card-night { border-radius: 8px; }
+
 /* Navigation pane: scrollbar only while the pointer is over it, as in Windows. */
 html.desktop-app .nav-scroll::-webkit-scrollbar-thumb { background-color: transparent; }
 html.desktop-app .nav-scroll:hover::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); }

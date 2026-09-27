@@ -71,7 +71,7 @@
       align-items: center;
       gap: 7px;
       height: 26px;
-      padding: 0 10px 0 9px;
+      padding: 0 10px 0 12px;
       margin-right: 2px;
       border-radius: 999px;
       border: 1px solid var(--ok-line);
@@ -80,22 +80,12 @@
       transition: filter 0.12s, border-color 0.12s;
     }
     .pill:hover { filter: brightness(1.12); }
-    .pill .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 0 3px var(--ok-bg);
-      animation: pulse 2.4s ease-in-out infinite;
-    }
     .pill .label { color: var(--muted); }
     .pill .url { font-weight: 600; font-variant-numeric: tabular-nums; }
     .pill svg { width: 13px; height: 13px; color: var(--muted); }
     .pill.copied .url { color: var(--ok); }
     .pill.offline { border-color: var(--warn-line); background: var(--warn-bg); }
-    .pill.offline .dot { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-bg); animation: none; }
     .pill[hidden] { display: none; }
-    @keyframes pulse { 50% { opacity: 0.45; } }
 
     /* App buttons (theme, notifications, account), shown while a teacher is signed in. */
     .app-actions { display: flex; align-items: center; gap: 2px; margin: 0 2px 0 4px; }
@@ -214,7 +204,6 @@
     </button>
     <div class="title" id="title"></div>
     <button class="pill" id="address" hidden>
-      <span class="dot"></span>
       <span class="label" id="address-label">Students join at</span>
       <span class="url" id="address-url"></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
