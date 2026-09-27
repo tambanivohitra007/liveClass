@@ -61,6 +61,8 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 function start(): void {
+  // Lets the web client recognise the desktop app (isDesktopApp in src/lib/platform.ts).
+  app.userAgentFallback = `${app.userAgentFallback} LiveClassDesktop/${app.getVersion()}`;
   Menu.setApplicationMenu(buildMenu());
   startServer();
 }

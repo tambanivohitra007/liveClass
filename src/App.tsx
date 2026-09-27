@@ -9,6 +9,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Footer from './components/Footer';
+import { isDesktopApp } from './lib/platform';
 import BottomTabBar from './components/BottomTabBar';
 import { useSidebarStore } from './stores/sidebarStore';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -277,7 +278,7 @@ function AppContent() {
         </Routes>
         </Suspense>
         </main>
-        {!hideNavbar && (
+        {!hideNavbar && !isDesktopApp && (
           <div className={firebaseUser ? 'hidden md:block' : undefined}>
             <Footer />
           </div>
