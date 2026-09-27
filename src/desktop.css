@@ -1,0 +1,173 @@
+/* ─── Desktop app (teachers) ───────────────────────────────────────────────────────────────────
+   Everything here applies only inside the LiveClass desktop app, where main.tsx puts the
+   `desktop-app` class on <html>. Students' browsers keep the playful web styling.
+   Selectors start with `html.desktop-app` so they outrank App.css (including its `.dark` rules)
+   whatever order the stylesheets load in. */
+
+/* Fonts: the Windows system font, as in Explorer, Office and Teams. Installed on every Windows PC. */
+html.desktop-app body {
+  font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+html.desktop-app :is(h1, h2, h3, h4, h5, h6) {
+  font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+}
+
+/* Navigation pane: scrollbar only while the pointer is over it, as in Windows. */
+html.desktop-app .nav-scroll::-webkit-scrollbar-thumb { background-color: transparent; }
+html.desktop-app .nav-scroll:hover::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); }
+
+/* ─── Buttons ──────────────────────────────────────────────────────────────────────────────────
+   The web app's chunky 3D pill buttons (.btn-3d-*, App.css) redrawn in Ant Design's button style:
+   flat fills, 1px borders, 6–8px corners, antd's 32/40px heights and hover/pressed colours.
+     cyan, blue                    → primary (brand)
+     emerald, success              → primary, green
+     danger                        → primary, red
+     ghost, purple, orange, gold, pink → default (outlined); one solid button per screen reads calmer. */
+html.desktop-app {
+  --btn-primary: #009ee2;
+  --btn-primary-hover: #26b0ec;
+  --btn-primary-active: #0082bd;
+  --btn-success: #16a34a;
+  --btn-success-hover: #25b85a;
+  --btn-success-active: #11843b;
+  --btn-danger: #e5484d;
+  --btn-danger-hover: #ec6b6f;
+  --btn-danger-active: #c7343a;
+
+  --btn-default-bg: #ffffff;
+  --btn-default-border: #d5dae1;
+  --btn-default-text: #1f2937;
+  --btn-default-hover: #009ee2;
+  --btn-default-active: #0082bd;
+  --btn-default-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
+
+  --btn-disabled-bg: rgba(0, 0, 0, 0.04);
+  --btn-disabled-border: #d9d9d9;
+  --btn-disabled-text: rgba(0, 0, 0, 0.25);
+}
+html.desktop-app.dark {
+  --btn-default-bg: rgba(255, 255, 255, 0.04);
+  --btn-default-border: rgba(255, 255, 255, 0.16);
+  --btn-default-text: rgba(255, 255, 255, 0.88);
+  --btn-default-hover: #3dbbf0;
+  --btn-default-active: #0ea5e9;
+  --btn-default-shadow: none;
+
+  --btn-disabled-bg: rgba(255, 255, 255, 0.06);
+  --btn-disabled-border: rgba(255, 255, 255, 0.12);
+  --btn-disabled-text: rgba(255, 255, 255, 0.3);
+}
+
+/* Shared shape: antd "large" (40px) by default; btn-3d-sm → antd "middle" (32px). */
+html.desktop-app :is(.btn-3d-cyan, .btn-3d-blue, .btn-3d-purple, .btn-3d-gold, .btn-3d-orange,
+  .btn-3d-pink, .btn-3d-emerald, .btn-3d-rose, .btn-3d-ghost, .btn-3d-danger, .btn-3d-success) {
+  min-height: 40px;
+  padding: 7px 15px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-shadow: none;
+  cursor: default;
+  transform: none;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+html.desktop-app :is(.btn-3d-cyan, .btn-3d-blue, .btn-3d-purple, .btn-3d-gold, .btn-3d-orange,
+  .btn-3d-pink, .btn-3d-emerald, .btn-3d-rose, .btn-3d-ghost, .btn-3d-danger, .btn-3d-success):is(:hover, :active) {
+  transform: none;
+}
+html.desktop-app [class*='btn-3d-']:focus-visible {
+  outline: 3px solid rgba(0, 158, 226, 0.35);
+  outline-offset: 1px;
+}
+
+/* Primary */
+html.desktop-app :is(.btn-3d-cyan, .btn-3d-blue) {
+  background: var(--btn-primary);
+  color: #fff;
+  box-shadow: 0 2px 0 rgba(0, 158, 226, 0.1);
+}
+html.desktop-app :is(.btn-3d-cyan, .btn-3d-blue):hover:not(:disabled) {
+  background: var(--btn-primary-hover);
+  box-shadow: 0 2px 0 rgba(0, 158, 226, 0.1);
+}
+html.desktop-app :is(.btn-3d-cyan, .btn-3d-blue):active:not(:disabled) {
+  background: var(--btn-primary-active);
+  box-shadow: none;
+}
+
+/* Success */
+html.desktop-app :is(.btn-3d-emerald, .btn-3d-success) {
+  background: var(--btn-success);
+  color: #fff;
+  box-shadow: 0 2px 0 rgba(22, 163, 74, 0.1);
+}
+html.desktop-app :is(.btn-3d-emerald, .btn-3d-success):hover:not(:disabled) {
+  background: var(--btn-success-hover);
+  box-shadow: 0 2px 0 rgba(22, 163, 74, 0.1);
+}
+html.desktop-app :is(.btn-3d-emerald, .btn-3d-success):active:not(:disabled) {
+  background: var(--btn-success-active);
+  box-shadow: none;
+}
+
+/* Danger */
+html.desktop-app .btn-3d-danger {
+  background: var(--btn-danger);
+  color: #fff;
+  box-shadow: 0 2px 0 rgba(229, 72, 77, 0.1);
+}
+html.desktop-app .btn-3d-danger:hover:not(:disabled) {
+  background: var(--btn-danger-hover);
+  box-shadow: 0 2px 0 rgba(229, 72, 77, 0.1);
+}
+html.desktop-app .btn-3d-danger:active:not(:disabled) {
+  background: var(--btn-danger-active);
+  box-shadow: none;
+}
+
+/* Default (outlined) */
+html.desktop-app :is(.btn-3d-ghost, .btn-3d-purple, .btn-3d-gold, .btn-3d-orange, .btn-3d-pink, .btn-3d-rose) {
+  background: var(--btn-default-bg);
+  border-color: var(--btn-default-border);
+  color: var(--btn-default-text);
+  box-shadow: var(--btn-default-shadow);
+}
+html.desktop-app :is(.btn-3d-ghost, .btn-3d-purple, .btn-3d-gold, .btn-3d-orange, .btn-3d-pink, .btn-3d-rose):hover:not(:disabled) {
+  background: var(--btn-default-bg);
+  border-color: var(--btn-default-hover);
+  color: var(--btn-default-hover);
+  box-shadow: var(--btn-default-shadow);
+}
+html.desktop-app :is(.btn-3d-ghost, .btn-3d-purple, .btn-3d-gold, .btn-3d-orange, .btn-3d-pink, .btn-3d-rose):active:not(:disabled) {
+  border-color: var(--btn-default-active);
+  color: var(--btn-default-active);
+  box-shadow: none;
+}
+
+/* Disabled (all variants), as antd: greyed fill and text rather than a faded colour. */
+html.desktop-app [class*='btn-3d-']:disabled {
+  background: var(--btn-disabled-bg);
+  border-color: var(--btn-disabled-border);
+  color: var(--btn-disabled-text);
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+/* Sizes (after the variants so they win). */
+html.desktop-app .btn-3d-sm {
+  min-height: 32px;
+  padding: 4px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+html.desktop-app .btn-3d-lg {
+  min-height: 44px;
+  padding: 9px 22px;
+  border-radius: 8px;
+  font-size: 16px;
+}
