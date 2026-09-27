@@ -97,6 +97,53 @@
     .pill[hidden] { display: none; }
     @keyframes pulse { 50% { opacity: 0.45; } }
 
+    /* App buttons (theme, notifications, account), shown while a teacher is signed in. */
+    .app-actions { display: flex; align-items: center; gap: 2px; margin: 0 2px 0 4px; }
+    .app-actions[hidden] { display: none; }
+    .badge-wrap { position: relative; }
+    .badge {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      min-width: 15px;
+      height: 15px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 9.5px;
+      font-weight: 700;
+      line-height: 15px;
+      text-align: center;
+      pointer-events: none;
+    }
+    .badge[hidden] { display: none; }
+    .avatar-btn {
+      height: 28px;
+      padding: 0 4px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+    }
+    .avatar-btn:hover { background: var(--hover); }
+    .avatar-btn:active { background: var(--press); }
+    .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--brand), #e8a308);
+      color: #fff;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .theme-light-icon, [data-theme="light"] .theme-dark-icon { display: none; }
+    [data-theme="light"] .theme-light-icon { display: block; }
+
     .progress {
       position: absolute;
       left: 0;
@@ -172,6 +219,21 @@
       <span class="url" id="address-url"></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
     </button>
+    <div class="app-actions" id="app-actions" hidden>
+      <button class="icon-btn" id="theme" title="Switch to light mode" aria-label="Switch theme">
+        <svg class="theme-dark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
+        <svg class="theme-light-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+      </button>
+      <div class="badge-wrap">
+        <button class="icon-btn" id="bell" title="Notifications" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+        </button>
+        <span class="badge" id="badge" hidden></span>
+      </div>
+      <button class="avatar-btn" id="account" aria-label="Account">
+        <span class="avatar" id="avatar"></span>
+      </button>
+    </div>
     <button class="icon-btn" id="menu" title="Menu" aria-label="Menu" aria-haspopup="menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
     </button>

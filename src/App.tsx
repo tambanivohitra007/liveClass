@@ -8,6 +8,7 @@ import { ADMIN_EMAIL } from './lib/config';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
+import DesktopTitlebarActions from './components/DesktopTitlebarActions';
 import Footer from './components/Footer';
 import { isDesktopApp } from './lib/platform';
 import { getPageTitle } from './lib/pageTitles';
@@ -177,7 +178,9 @@ function AppContent() {
       }`}>
         {/* The website header (Discover / Join Game / Sign In) is for visitors; the desktop app has its own title bar. */}
         {!hideNavbar && !isDesktopApp && <Navbar />}
-        {showSidebar && <TopBar />}
+        {/* Desktop app: the top bar's page title, theme, notifications and account live in the window's title bar. */}
+        {showSidebar && !isDesktopApp && <TopBar />}
+        {isDesktopApp && <DesktopTitlebarActions />}
         <ToastContainer />
         <main className={`flex-1 pattern-dots ${!hideNavbar && firebaseUser ? 'pb-20 md:pb-0' : ''}`}>
         <Suspense fallback={

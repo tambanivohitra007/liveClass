@@ -1,18 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import NotificationBell from './NotificationBell';
-import { Sun, Moon, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { Sun, Moon, ChevronDown } from 'lucide-react';
+import AccountMenu from './AccountMenu';
 import { getPageTitle } from '../lib/pageTitles';
 
 export default function TopBar() {
   const { firebaseUser, user } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
-  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -21,12 +19,6 @@ export default function TopBar() {
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    setProfileOpen(false);
-    navigate('/');
-  };
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -79,34 +71,10 @@ export default function TopBar() {
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#262626] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down">
-              <div className="px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
-                <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{user?.displayName || 'User'}</p>
-                <p className="text-xs text-gray-500 dark:text-white/40 truncate">{firebaseUser.email}</p>
-                {user?.role && (
-                  <span className="inline-block mt-1.5 text-xs px-2 py-0.5 bg-brand/20 text-brand rounded-full font-medium capitalize">
-                    {user.role}
-                  </span>
-                )}
-              </div>
-              <div className="p-1.5">
-                <button
-                  onClick={() => { setProfileOpen(false); navigate('/profile'); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
-                >
-                  <Settings className="w-4 h-4 text-gray-400 dark:text-white/40" />
-                  Profile Settings
-                </button>
-                <hr className="my-1 border-gray-200 dark:border-white/10" />
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-danger hover:bg-danger/10 transition-colors text-left"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Log out
-                </button>
-              </div>
-            </div>
+            <AccountMenu
+              onClose={() => setProfileOpen(false)}
+              className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#262626] rounded-xl shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down"
+            />
           )}
         </div>
       </div>

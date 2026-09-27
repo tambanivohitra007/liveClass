@@ -31,8 +31,11 @@ import {
   MENU_STAYS_OPEN,
   TITLEBAR_COLORS,
   TITLEBAR_HEIGHT,
+  type AppAccountState,
+  type AppCommand,
   type MenuAction,
   type MenuState,
+  type TitlebarAppAction,
   type TitlebarState,
 } from './shared';
 import { loadWindowState, trackWindowState } from './windowState';
@@ -105,6 +108,8 @@ const state: TitlebarState = {
   studentUrls: [],
   platform: process.platform,
   menuOpen: false,
+  account: null,
+  unread: 0,
 };
 
 if (!app.requestSingleInstanceLock()) {
@@ -466,6 +471,22 @@ function registerIpc(): void {
   });
   ipcMain.on('menu:close', (e) => {
     if (fromMenu(e)) closeMenu();
+  });
+  // Title bar buttons that belong to the web app (theme, notifications, account): forward the click,
+  // with the button's position so the app can open its panel right under it.
+  const appActions = new Set<string>(['toggle-theme', 'notifications', 'account'] satisfies TitlebarAppAction[]);
+  ipcMain.on('titlebar:app-action', (e, action: unknown, x: unknown) => {
+    if (!fromTitlebar(e) || !win || !view || typeof action !== 'string' || !appActions.has(action)) return;
+    const [width] = win.getContentSize();
+    const command: AppCommand = { type: action as TitlebarAppAction, right: Math.max(0, width - (Number(x) || 0)) };
+    view.webContents.send('app:command', command);
+  });
+  ipcMain.on('app:account', (e, account: AppAccountState) => {
+    if (!view || e.sender !== view.webContents || typeof account !== 'object' || account === null) return;
+    update({
+      account: account.signedIn ? { initials: String(account.initials).slice(0, 3), name: String(account.name) } : null,
+      unread: Math.max(0, Number(account.unread) || 0),
+    });
   });
   ipcMain.on('app:theme', (e, dark: unknown) => {
     if (view && e.sender === view.webContents && typeof dark === 'boolean') update({ dark });

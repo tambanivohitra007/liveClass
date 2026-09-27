@@ -17,6 +17,12 @@ const address = el<HTMLButtonElement>('address');
 const addressLabel = el('address-label');
 const addressUrl = el('address-url');
 const menu = el<HTMLButtonElement>('menu');
+const appActions = el('app-actions');
+const theme = el<HTMLButtonElement>('theme');
+const bell = el<HTMLButtonElement>('bell');
+const badge = el('badge');
+const account = el<HTMLButtonElement>('account');
+const avatar = el('avatar');
 
 let studentUrl = '';
 let copiedTimer: number | undefined;
@@ -27,6 +33,13 @@ menu.addEventListener('click', () => {
   const r = menu.getBoundingClientRect();
   window.desktop.openMenu(Math.round(r.right), Math.round(r.bottom + 4));
 });
+// Theme, notifications and account belong to the web app: pass the click (and where the button is) on.
+const passToApp = (button: HTMLElement, action: 'toggle-theme' | 'notifications' | 'account') =>
+  button.addEventListener('click', () => window.desktop.appAction(action, Math.round(button.getBoundingClientRect().right)));
+passToApp(theme, 'toggle-theme');
+passToApp(bell, 'notifications');
+passToApp(account, 'account');
+
 address.addEventListener('click', () => {
   if (!studentUrl) return;
   window.desktop.copyText(studentUrl);
@@ -45,6 +58,14 @@ function render(s: TitlebarState): void {
   root.classList.toggle('app-ready', s.appReady);
   root.classList.toggle('blurred', !s.focused);
   document.body.classList.toggle('loading', s.loading && s.appReady);
+
+  appActions.hidden = !s.appReady || !s.account;
+  theme.title = s.dark ? 'Switch to light mode' : 'Switch to dark mode';
+  badge.hidden = s.unread === 0;
+  badge.textContent = s.unread > 99 ? '99+' : String(s.unread);
+  bell.title = s.unread ? `Notifications (${s.unread} unread)` : 'Notifications';
+  avatar.textContent = s.account?.initials ?? '';
+  account.title = s.account ? `${s.account.name} — account` : 'Account';
 
   menu.classList.toggle('open', s.menuOpen);
   menu.setAttribute('aria-expanded', String(s.menuOpen));

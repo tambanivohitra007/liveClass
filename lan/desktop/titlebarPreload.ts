@@ -7,6 +7,7 @@ const bridge: DesktopBridge = {
   forward: () => ipcRenderer.send('titlebar:forward'),
   openMenu: (x, y) => ipcRenderer.send('titlebar:menu', x, y),
   copyText: (text) => ipcRenderer.send('titlebar:copy', text),
+  appAction: (action, right) => ipcRenderer.send('titlebar:app-action', action, right),
   onState: (listener) => {
     ipcRenderer.on('titlebar:state', (_e, state: TitlebarState) => listener(state));
   },

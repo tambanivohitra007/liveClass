@@ -20,6 +20,10 @@ export interface TitlebarState {
   platform: NodeJS.Platform;
   /** The ⋯ menu is showing. */
   menuOpen: boolean;
+  /** Signed-in teacher, shown as the avatar button; null when signed out. */
+  account: { initials: string; name: string } | null;
+  /** Unread notifications, shown on the bell. */
+  unread: number;
 }
 
 export interface TitlebarColors {
@@ -39,7 +43,28 @@ export interface DesktopBridge {
   /** Opens the ⋯ menu with its top-right corner at (right, top), in window CSS pixels. */
   openMenu(right: number, top: number): void;
   copyText(text: string): void;
+  /** Forwards a title bar button to the web app; `right` is the button's right edge, in window CSS pixels. */
+  appAction(action: TitlebarAppAction, right: number): void;
   onState(listener: (state: TitlebarState) => void): void;
+}
+
+export type TitlebarAppAction = 'toggle-theme' | 'notifications' | 'account';
+
+// Messages between the web app and the main process (app preload ↔ main). The web app's side of
+// these types is src/lib/desktopBridge.ts; keep the two in sync.
+
+/** Sent by the web app whenever the signed-in teacher or the unread count changes. */
+export interface AppAccountState {
+  signedIn: boolean;
+  initials: string;
+  name: string;
+  unread: number;
+}
+
+/** Sent to the web app when a title bar button is clicked. `right` is the distance from the window's right edge. */
+export interface AppCommand {
+  type: TitlebarAppAction;
+  right: number;
 }
 
 /** Everything the ⋯ menu (menu.html) needs to draw itself. */

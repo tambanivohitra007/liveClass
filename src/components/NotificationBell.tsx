@@ -41,10 +41,8 @@ function getNotificationRoute(n: AppNotification): string {
 export default function NotificationBell({ position = 'dropdown' }: { position?: 'dropdown' | 'right' }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const location = useLocation();
-  const { notifications, unreadCount, markAsRead, markAllRead } = useNotificationStore();
-  const user = useAuthStore((s) => s.user);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   // Close on outside click
   useEffect(() => {
@@ -64,22 +62,6 @@ export default function NotificationBell({ position = 'dropdown' }: { position?:
     setOpen(false);
   }
 
-  const handleClick = async (n: AppNotification) => {
-    if (!n.read) {
-      markAsRead(n.id);
-      markNotificationRead(n.id).catch(() => {});
-    }
-    setOpen(false);
-    navigate(getNotificationRoute(n));
-  };
-
-  const handleMarkAllRead = () => {
-    markAllRead();
-    if (user?.id) {
-      markAllNotificationsRead(user.id).catch(() => {});
-    }
-  };
-
   return (
     <div ref={ref} className="relative">
       <button
@@ -95,56 +77,95 @@ export default function NotificationBell({ position = 'dropdown' }: { position?:
       </button>
 
       {open && (
-        <div className={`absolute w-80 bg-gradient-to-b from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] rounded-sm shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down ${
-          position === 'right' ? 'left-full top-0 ml-2' : 'right-0 top-full mt-2'
-        }`}>
-          <div className="px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
-            <p className="font-semibold text-white text-sm">Notifications</p>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                className="text-xs text-brand hover:text-brand-dark transition-colors"
-              >
-                Mark all read
-              </button>
-            )}
-          </div>
-
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <Bell className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                <p className="text-sm text-gray-400 dark:text-white/40">No notifications yet</p>
-              </div>
-            ) : (
-              notifications.map((n) => {
-                const Icon = ICON_MAP[n.type] || Bell;
-                return (
-                  <button
-                    key={n.id}
-                    onClick={() => handleClick(n)}
-                    className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors border-b border-white/5 ${
-                      !n.read ? 'bg-white/[0.03]' : ''
-                    }`}
-                  >
-                    <div className="mt-0.5 w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 text-gray-500 dark:text-white/60" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white/90 truncate">{n.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-white/50 line-clamp-2">{n.message}</p>
-                      <p className="text-[10px] text-gray-300 dark:text-white/30 mt-1">{getRelativeTime(n.createdAt)}</p>
-                    </div>
-                    {!n.read && (
-                      <div className="mt-2 w-2 h-2 rounded-full bg-brand shrink-0" />
-                    )}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
+        <NotificationPanel
+          onDone={() => setOpen(false)}
+          className={`absolute w-80 bg-gradient-to-b from-[#1A3263] via-[#1E2A5E] to-[#2A1F5E] rounded-sm shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden animate-slide-down ${
+            position === 'right' ? 'left-full top-0 ml-2' : 'right-0 top-full mt-2'
+          }`}
+        />
       )}
+    </div>
+  );
+}
+
+/**
+ * The notification list. The web bell shows it on its navy gradient (white text); the desktop app
+ * shows it under the title bar's bell with `themed`, following light/dark mode.
+ */
+export function NotificationPanel({ className, onDone, themed = false }: { className: string; onDone: () => void; themed?: boolean }) {
+  const navigate = useNavigate();
+  const { notifications, unreadCount, markAsRead, markAllRead } = useNotificationStore();
+  const user = useAuthStore((s) => s.user);
+
+  const handleClick = async (n: AppNotification) => {
+    if (!n.read) {
+      markAsRead(n.id);
+      markNotificationRead(n.id).catch(() => {});
+    }
+    onDone();
+    navigate(getNotificationRoute(n));
+  };
+
+  const handleMarkAllRead = () => {
+    markAllRead();
+    if (user?.id) {
+      markAllNotificationsRead(user.id).catch(() => {});
+    }
+  };
+
+  const text = themed ? 'text-gray-900 dark:text-white' : 'text-white';
+  const itemText = themed ? 'text-gray-800 dark:text-white/90' : 'text-white/90';
+  const emptyIcon = themed ? 'text-gray-300 dark:text-white/20' : 'text-white/20';
+  const itemHover = themed ? 'hover:bg-gray-50 dark:hover:bg-white/5 border-gray-100 dark:border-white/5' : 'hover:bg-white/5 border-white/5';
+  const unreadBg = themed ? 'bg-brand/[0.04] dark:bg-white/[0.03]' : 'bg-white/[0.03]';
+
+  return (
+    <div className={className} role="dialog" aria-label="Notifications">
+      <div className="px-4 py-3 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
+        <p className={`font-semibold text-sm ${text}`}>Notifications</p>
+        {unreadCount > 0 && (
+          <button
+            onClick={handleMarkAllRead}
+            className="text-xs text-brand hover:text-brand-dark transition-colors"
+          >
+            Mark all read
+          </button>
+        )}
+      </div>
+
+      <div className="max-h-80 overflow-y-auto">
+        {notifications.length === 0 ? (
+          <div className="px-4 py-8 text-center">
+            <Bell className={`w-8 h-8 mx-auto mb-2 ${emptyIcon}`} />
+            <p className="text-sm text-gray-400 dark:text-white/40">No notifications yet</p>
+          </div>
+        ) : (
+          notifications.map((n) => {
+            const Icon = ICON_MAP[n.type] || Bell;
+            return (
+              <button
+                key={n.id}
+                onClick={() => handleClick(n)}
+                className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b ${itemHover} ${
+                  !n.read ? unreadBg : ''
+                }`}
+              >
+                <div className="mt-0.5 w-8 h-8 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-gray-500 dark:text-white/60" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${itemText}`}>{n.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-white/50 line-clamp-2">{n.message}</p>
+                  <p className="text-[10px] text-gray-300 dark:text-white/30 mt-1">{getRelativeTime(n.createdAt)}</p>
+                </div>
+                {!n.read && (
+                  <div className="mt-2 w-2 h-2 rounded-full bg-brand shrink-0" />
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
