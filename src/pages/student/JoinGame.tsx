@@ -6,6 +6,7 @@ import { db, functions } from '../../lib/firebase';
 import { Shuffle, Triangle, Diamond, Circle, Square, ArrowLeft, Gamepad2, ShieldCheck, User, RefreshCw, Dices } from 'lucide-react';
 import WaveBackground from '../../components/ui/WaveBackground';
 import { AVATARS } from '../../lib/avatars';
+import { isDesktopApp } from '../../lib/platform';
 import boy5 from '../../assets/optimized/boy_5.png';
 
 const ShaderBackground = lazy(() => import('../../components/ui/ShaderBackground'));
@@ -358,14 +359,20 @@ export default function JoinGame() {
   };
 
   return (
-    <div className="gradient-hero min-h-[calc(100vh-4rem)] flex items-start justify-center px-4 pt-6 sm:pt-2 relative overflow-hidden">
-      <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
-        <ShaderBackground />
-      </Suspense>
-      <WaveBackground variant="dark" position="both" />
-      <div className="absolute inset-0 pattern-stars pointer-events-none" />
+    <div className={`${isDesktopApp ? 'bg-surface' : 'gradient-hero'} min-h-[calc(100vh-4rem)] flex items-start justify-center px-4 pt-6 sm:pt-2 relative overflow-hidden`}>
+      {/* Animated always-dark stage for students' devices. The desktop app keeps the plain,
+          theme-aware background of its other pages (and never loads the WebGL shader). */}
+      {!isDesktopApp && (
+        <>
+          <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
+            <ShaderBackground />
+          </Suspense>
+          <WaveBackground variant="dark" position="both" />
+          <div className="absolute inset-0 pattern-stars pointer-events-none" />
+        </>
+      )}
 
-      <div className="relative z-10 w-full max-w-md animate-bounce-in">
+      <div className={`relative z-10 w-full max-w-md ${isDesktopApp ? '' : 'animate-bounce-in'}`}>
         {/* Header */}
         <div className="text-center mb-8">
           <img

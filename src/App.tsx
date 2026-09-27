@@ -267,9 +267,10 @@ function App() {
   const { theme, setTheme } = useThemeStore();
   const { firebaseUser, loading } = useAuthStore();
 
-  // Force dark mode when not logged in (and reset on logout)
+  // Force dark mode when not logged in (and reset on logout). Not in the desktop app, where the
+  // teacher's own light/dark choice is kept across sign-out.
   useEffect(() => {
-    if (loading) return;
+    if (loading || isDesktopApp) return;
     if (!firebaseUser && theme !== 'dark') {
       setTheme('dark');
     }
