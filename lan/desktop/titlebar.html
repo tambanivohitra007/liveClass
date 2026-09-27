@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self'" />
+  <title>LiveClass</title>
+  <style>
+    :root {
+      --h: 40px;
+      --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+      --brand: #009ee2;
+      --accent: #d4566b;
+    }
+    [data-theme="dark"] {
+      --bar: #0b1220;
+      --bg: #0f1729;
+      --line: rgba(255, 255, 255, 0.07);
+      --text: #e2e8f0;
+      --muted: #8a97ab;
+      --hover: rgba(255, 255, 255, 0.08);
+      --press: rgba(255, 255, 255, 0.13);
+      --ok: #4ade80;
+      --ok-bg: rgba(74, 222, 128, 0.1);
+      --ok-line: rgba(74, 222, 128, 0.22);
+      --warn: #fbbf24;
+      --warn-bg: rgba(251, 191, 36, 0.1);
+      --warn-line: rgba(251, 191, 36, 0.25);
+    }
+    [data-theme="light"] {
+      --bar: #f8fafc;
+      --bg: #eef2f7;
+      --line: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --hover: rgba(15, 23, 42, 0.06);
+      --press: rgba(15, 23, 42, 0.1);
+      --ok: #15803d;
+      --ok-bg: rgba(22, 163, 74, 0.08);
+      --ok-line: rgba(22, 163, 74, 0.25);
+      --warn: #b45309;
+      --warn-bg: rgba(217, 119, 6, 0.08);
+      --warn-line: rgba(217, 119, 6, 0.3);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font: 12.5px/1 var(--font);
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Full-width strip behind the window controls, so the bar's colour and hairline run edge to edge. */
+    .bar-bg {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: var(--h);
+      background: var(--bar);
+      border-bottom: 1px solid var(--line);
+      transition: background-color 0.2s;
+    }
+
+    .bar {
+      position: fixed;
+      top: 0;
+      left: env(titlebar-area-x, 0);
+      width: env(titlebar-area-width, calc(100% - 138px));
+      height: var(--h);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 6px 1px 12px;
+      -webkit-app-region: drag;
+    }
+    .bar > * { flex-shrink: 0; }
+    button { -webkit-app-region: no-drag; font: inherit; color: inherit; }
+
+    .brand { display: flex; align-items: center; padding: 0 2px; }
+    .brand img { width: 18px; height: 18px; display: block; }
+
+    .icon-btn {
+      width: 30px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      transition: background-color 0.12s, color 0.12s;
+    }
+    .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+    .icon-btn:active:not(:disabled) { background: var(--press); }
+    .icon-btn:disabled { opacity: 0.35; }
+    .icon-btn svg { width: 16px; height: 16px; }
+
+    .divider { width: 1px; height: 16px; background: var(--line); margin: 0 6px; }
+
+    .title {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: var(--muted);
+      padding-left: 4px;
+      transition: color 0.15s;
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      height: 26px;
+      padding: 0 10px 0 9px;
+      margin-right: 2px;
+      border-radius: 999px;
+      border: 1px solid var(--ok-line);
+      background: var(--ok-bg);
+      color: var(--text);
+      transition: filter 0.12s, border-color 0.12s;
+    }
+    .pill:hover { filter: brightness(1.12); }
+    .pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 0 3px var(--ok-bg);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    .pill .label { color: var(--muted); }
+    .pill .url { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .pill svg { width: 13px; height: 13px; color: var(--muted); }
+    .pill.copied .url { color: var(--ok); }
+    .pill.offline { border-color: var(--warn-line); background: var(--warn-bg); }
+    .pill.offline .dot { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-bg); animation: none; }
+    .pill[hidden] { display: none; }
+    @keyframes pulse { 50% { opacity: 0.45; } }
+
+    .progress {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .progress::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 35%;
+      background: linear-gradient(90deg, transparent, var(--brand), transparent);
+      animation: slide 1.1s ease-in-out infinite;
+    }
+    .loading .progress { opacity: 1; }
+    @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
+    .blurred .brand, .blurred .title, .blurred .icon-btn { opacity: 0.55; }
+
+    @media (max-width: 1000px) { .pill .label { display: none; } }
+    @media (max-width: 760px) { .title { display: none; } }
+
+    /* Splash, visible below the bar until the app view is attached. */
+    .splash {
+      position: fixed;
+      inset: var(--h) 0 0 0;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 14px;
+      background:
+        radial-gradient(60% 50% at 50% 38%, rgba(0, 158, 226, 0.12), transparent 70%),
+        var(--bg);
+      transition: opacity 0.3s;
+    }
+    .splash img { width: 64px; height: 64px; animation: float 3s ease-in-out infinite; }
+    .splash .name { font-size: 22px; font-weight: 600; letter-spacing: 0.01em; }
+    .splash .status { color: var(--muted); font-size: 13px; }
+    .splash .track { width: 160px; height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; position: relative; margin-top: 4px; }
+    .splash .track::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 40%;
+      border-radius: 3px;
+      background: var(--brand);
+      animation: slide 1.1s ease-in-out infinite;
+    }
+    .app-ready .splash { opacity: 0; pointer-events: none; }
+    @keyframes float { 50% { transform: translateY(-4px); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar-bg"></div>
+  <header class="bar" id="bar">
+    <div class="brand" title="LiveClass"><img src="icon.png" alt="LiveClass" /></div>
+    <div class="divider"></div>
+    <button class="icon-btn" id="back" title="Back (Alt+Left)" aria-label="Back" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+    </button>
+    <button class="icon-btn" id="forward" title="Forward (Alt+Right)" aria-label="Forward" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+    </button>
+    <div class="title" id="title"></div>
+    <button class="pill" id="address" hidden>
+      <span class="dot"></span>
+      <span class="label" id="address-label">Students join at</span>
+      <span class="url" id="address-url"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+    </button>
+    <button class="icon-btn" id="menu" title="Menu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
+    </button>
+    <div class="progress"></div>
+  </header>
+
+  <main class="splash">
+    <img src="icon.png" alt="" />
+    <div class="name">LiveClass</div>
+    <div class="status">Starting your classroom…</div>
+    <div class="track"></div>
+  </main>
+
+  <script src="titlebar.js"></script>
+</body>
+</html>
