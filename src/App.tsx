@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, matchPath } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
 import { useNotificationListener } from './hooks/useNotificationListener';
 import { useThemeStore } from './stores/themeStore';
@@ -10,6 +10,7 @@ import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Footer from './components/Footer';
 import { isDesktopApp } from './lib/platform';
+import { getPageTitle } from './lib/pageTitles';
 import BottomTabBar from './components/BottomTabBar';
 import { useSidebarStore } from './stores/sidebarStore';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -151,39 +152,7 @@ function AppContent() {
 
   // Dynamic page title
   useEffect(() => {
-    const titles: Record<string, string> = {
-      '/': 'LiveClass',
-      '/login': 'Sign In',
-      '/signup': 'Sign Up',
-      '/join': 'Join Game',
-      '/dashboard': 'Dashboard',
-      '/library': 'Quiz Library',
-      '/history': 'Session History',
-      '/analytics': 'Analytics',
-      '/classes': 'Classrooms',
-      '/rubrics': 'Rubrics',
-      '/rosters': 'Rosters',
-      '/discover': 'Discover',
-      '/profile': 'Profile',
-      '/assignment/new': 'New Assignment',
-      '/grading/new': 'New Grading',
-      '/student/dashboard': 'Dashboard',
-      '/student/classes': 'My Classes',
-    };
-    const path = location.pathname;
-    let title = titles[path];
-    if (!title) {
-      if (matchPath('/quiz/:id', path)) title = 'Quiz Editor';
-      else if (matchPath('/quiz/:id/host', path)) title = 'Host Session';
-      else if (matchPath('/quiz/:id/preview', path)) title = 'Quiz Preview';
-      else if (matchPath('/session/:id/results', path)) title = 'Session Results';
-      else if (matchPath('/classroom/:id', path)) title = 'Classroom';
-      else if (matchPath('/play/:sid/:pid', path)) title = 'Playing';
-      else if (matchPath('/mini-game/:type/host', path)) title = 'Mini Game';
-      else if (matchPath('/mini-game/:id/results', path)) title = 'Game Results';
-      else if (matchPath('/mini-game/:id/:pid', path)) title = 'Mini Game';
-      else if (matchPath('/arcade/*', path)) title = 'Arcade';
-    }
+    const title = getPageTitle(location.pathname);
     document.title = title ? `${title} - LiveClass` : 'LiveClass';
   }, [location.pathname]);
 

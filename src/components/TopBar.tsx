@@ -6,36 +6,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import NotificationBell from './NotificationBell';
 import { Sun, Moon, LogOut, Settings, ChevronDown } from 'lucide-react';
-
-function getPageTitle(pathname: string): string {
-  const titles: Record<string, string> = {
-    '/dashboard': 'Dashboard',
-    '/library': 'My Quizzes',
-    '/classes': 'Classes',
-    '/assignment/new': 'Create Assignment',
-    '/grading/new': 'New Grading Session',
-    '/rubrics': 'Rubrics',
-    '/rosters': 'Rosters',
-    '/history': 'Session History',
-    '/analytics': 'Analytics',
-    '/discover': 'Discover',
-    '/join': 'Join Game',
-    '/profile': 'Profile Settings',
-    '/student/dashboard': 'Dashboard',
-    '/student/classes': 'My Classes',
-    '/admin': 'Admin Panel',
-  };
-  if (titles[pathname]) return titles[pathname];
-
-  if (pathname.startsWith('/collection/')) return 'Collection';
-  if (pathname.startsWith('/classroom/')) return 'Classroom';
-  if (pathname.startsWith('/student/classroom/')) return 'Classroom';
-  if (pathname.startsWith('/session/') && pathname.endsWith('/results')) return 'Session Results';
-  if (pathname.startsWith('/grading/') && pathname.endsWith('/results')) return 'Grading Results';
-  if (pathname.startsWith('/admin/')) return 'Admin Panel';
-
-  return 'LiveClass';
-}
+import { getPageTitle } from '../lib/pageTitles';
 
 export default function TopBar() {
   const { firebaseUser, user } = useAuthStore();
@@ -45,7 +16,7 @@ export default function TopBar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const pageTitle = getPageTitle(location.pathname);
+  const pageTitle = getPageTitle(location.pathname) || 'LiveClass';
 
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
