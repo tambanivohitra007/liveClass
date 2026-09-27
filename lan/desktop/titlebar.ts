@@ -25,8 +25,7 @@ back.addEventListener('click', () => window.desktop.back());
 forward.addEventListener('click', () => window.desktop.forward());
 menu.addEventListener('click', () => {
   const r = menu.getBoundingClientRect();
-  // Windows shifts the menu left by itself when it would run off the screen.
-  window.desktop.openMenu(Math.round(r.left), Math.round(r.bottom + 4));
+  window.desktop.openMenu(Math.round(r.right), Math.round(r.bottom + 4));
 });
 address.addEventListener('click', () => {
   if (!studentUrl) return;
@@ -46,6 +45,9 @@ function render(s: TitlebarState): void {
   root.classList.toggle('app-ready', s.appReady);
   root.classList.toggle('blurred', !s.focused);
   document.body.classList.toggle('loading', s.loading && s.appReady);
+
+  menu.classList.toggle('open', s.menuOpen);
+  menu.setAttribute('aria-expanded', String(s.menuOpen));
 
   back.disabled = !s.canGoBack;
   forward.disabled = !s.canGoForward;

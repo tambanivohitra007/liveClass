@@ -1,0 +1,61 @@
+/* Colour tokens shared by the desktop title bar (titlebar.html) and menu (menu.html).
+   The main process sets data-theme to follow the web app's light/dark theme. */
+:root {
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --brand: #009ee2;
+  --danger: #e5484d;
+}
+[data-theme="dark"] {
+  --bar: #0b1220;
+  --bg: #0f1729;
+  --panel: #131c2e;
+  --panel-line: rgba(255, 255, 255, 0.09);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --line: rgba(255, 255, 255, 0.07);
+  --text: #e2e8f0;
+  --muted: #8a97ab;
+  --hover: rgba(255, 255, 255, 0.08);
+  --press: rgba(255, 255, 255, 0.13);
+  --ok: #4ade80;
+  --ok-bg: rgba(74, 222, 128, 0.1);
+  --ok-line: rgba(74, 222, 128, 0.22);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.1);
+  --warn-line: rgba(251, 191, 36, 0.25);
+  --danger-bg: rgba(229, 72, 77, 0.14);
+}
+[data-theme="light"] {
+  --bar: #f8fafc;
+  --bg: #eef2f7;
+  --panel: #ffffff;
+  --panel-line: rgba(15, 23, 42, 0.1);
+  --shadow: 0 16px 40px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08);
+  --line: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --hover: rgba(15, 23, 42, 0.06);
+  --press: rgba(15, 23, 42, 0.1);
+  --ok: #15803d;
+  --ok-bg: rgba(22, 163, 74, 0.08);
+  --ok-line: rgba(22, 163, 74, 0.25);
+  --warn: #b45309;
+  --warn-bg: rgba(217, 119, 6, 0.08);
+  --warn-line: rgba(217, 119, 6, 0.3);
+  --danger-bg: rgba(229, 72, 77, 0.1);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  color: var(--text);
+  font: 12.5px/1 var(--font);
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

@@ -24,7 +24,17 @@ import {
 } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
-import { TITLEBAR_COLORS, TITLEBAR_HEIGHT, type TitlebarState } from './shared';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { QRCodeSVG } from 'qrcode.react';
+import {
+  MENU_STAYS_OPEN,
+  TITLEBAR_COLORS,
+  TITLEBAR_HEIGHT,
+  type MenuAction,
+  type MenuState,
+  type TitlebarState,
+} from './shared';
 import { loadWindowState, trackWindowState } from './windowState';
 
 interface ReadyMessage {
@@ -76,6 +86,11 @@ let server: UtilityProcess | null = null;
 let ready: ReadyMessage | null = null;
 let win: BrowserWindow | null = null;
 let view: WebContentsView | null = null;
+/** Transparent overlay holding the ⋯ menu; hidden while the menu is closed. */
+let menuView: WebContentsView | null = null;
+let menuAnchor = { right: 0, top: TITLEBAR_HEIGHT };
+let menuOpenedAt = 0;
+let qrSvg: string | null = null;
 let tray: Tray | null = null;
 let quitting = false;
 
@@ -89,6 +104,7 @@ const state: TitlebarState = {
   focused: true,
   studentUrls: [],
   platform: process.platform,
+  menuOpen: false,
 };
 
 if (!app.requestSingleInstanceLock()) {
@@ -131,6 +147,9 @@ function startServer(): void {
   server.on('message', (msg: ReadyMessage) => {
     if (msg?.type !== 'ready') return;
     ready = msg;
+    qrSvg = msg.urls[0]
+      ? renderToStaticMarkup(createElement(QRCodeSVG, { value: msg.urls[0], size: 176, level: 'M', marginSize: 0 }))
+      : null;
     update({ studentUrls: msg.urls });
     createTray();
     void createAppView();
@@ -201,10 +220,17 @@ function createWindow(): void {
   void win.loadFile(path.join(desktopDir, 'titlebar.html'));
 
   win.on('focus', () => update({ focused: true }));
-  win.on('blur', () => update({ focused: false }));
-  win.on('resize', layoutView);
-  win.on('enter-full-screen', layoutView);
-  win.on('leave-full-screen', layoutView);
+  win.on('blur', () => {
+    closeMenu();
+    update({ focused: false });
+  });
+  const relayout = () => {
+    closeMenu();
+    layoutView();
+  };
+  win.on('resize', relayout);
+  win.on('enter-full-screen', relayout);
+  win.on('leave-full-screen', relayout);
 
   win.on('close', (e) => {
     if (quitting) return;
@@ -228,6 +254,7 @@ function createWindow(): void {
   win.on('closed', () => {
     win = null;
     view = null;
+    menuView = null;
   });
 }
 
@@ -263,6 +290,7 @@ async function createAppView(): Promise<void> {
     if (!win || !view) return;
     win.contentView.addChildView(view);
     layoutView();
+    createMenuView();
     update({ appReady: true });
   });
 
@@ -275,6 +303,85 @@ function layoutView(): void {
   const [width, height] = win.getContentSize();
   const top = win.isFullScreen() ? 0 : TITLEBAR_HEIGHT;
   view.setBounds({ x: 0, y: top, width, height: Math.max(0, height - top) });
+}
+
+// ---------------------------------------------------------------------------------------------
+// ⋯ menu: an HTML menu (menu.html) in a transparent view stacked over the whole window, so it can
+// overlap the app and match its theme. It stays loaded and is only shown and hidden.
+
+function createMenuView(): void {
+  if (!win || menuView) return;
+  menuView = new WebContentsView({
+    webPreferences: {
+      preload: path.join(desktopDir, 'menuPreload.cjs'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+    },
+  });
+  menuView.setBackgroundColor('#00000000');
+  menuView.setVisible(false);
+  win.contentView.addChildView(menuView); // Added after the app view, so it stacks on top.
+  void menuView.webContents.loadFile(path.join(desktopDir, 'menu.html'));
+}
+
+function openMenu(right: number, top: number): void {
+  if (!win || !menuView) return;
+  const [width, height] = win.getContentSize();
+  menuAnchor = { right, top };
+  menuOpenedAt = Date.now();
+  menuView.setBounds({ x: 0, y: 0, width, height });
+  menuView.setVisible(true);
+  menuView.webContents.focus();
+  sendMenu();
+  update({ menuOpen: true });
+}
+
+function closeMenu(): void {
+  if (!menuView || !state.menuOpen) return;
+  menuView.setVisible(false);
+  update({ menuOpen: false });
+  view?.webContents.focus();
+}
+
+function sendMenu(): void {
+  if (!menuView || !win) return;
+  const menu: MenuState = {
+    anchorRight: menuAnchor.right,
+    anchorTop: menuAnchor.top,
+    dark: state.dark,
+    studentUrls: state.studentUrls,
+    qrSvg,
+    zoomPercent: Math.round((view?.webContents.getZoomFactor() ?? 1) * 100),
+    fullScreen: win.isFullScreen(),
+    version: app.getVersion(),
+    openedAt: menuOpenedAt,
+  };
+  menuView.webContents.send('menu:show', menu);
+}
+
+function runMenuAction(action: MenuAction): void {
+  const run: Record<MenuAction, () => void> = {
+    'copy-address': () => ready?.urls[0] && clipboard.writeText(ready.urls[0]),
+    'full-screen': actions.fullScreen,
+    reload: actions.reload,
+    'zoom-in': () => actions.zoom(ZOOM_STEP),
+    'zoom-out': () => actions.zoom(-ZOOM_STEP),
+    'zoom-reset': () => actions.zoom(0),
+    'data-folder': () => void shell.openPath(dataDir),
+    'server-log': () => void shell.openPath(logFile),
+    'dev-tools': actions.devTools,
+    about: showAbout,
+    quit: () => app.quit(),
+  };
+  if (MENU_STAYS_OPEN.includes(action)) {
+    run[action]();
+    sendMenu();
+  } else {
+    // Close first, so full screen, dialogs and focus changes act on the app rather than the overlay.
+    closeMenu();
+    run[action]();
+  }
 }
 
 function showWindow(): void {
@@ -317,6 +424,7 @@ function update(patch: Partial<TitlebarState>): void {
   Object.assign(state, patch);
   if (themeChanged) applyTheme();
   sendState();
+  if (themeChanged && state.menuOpen) sendMenu();
 }
 
 function sendState(): void {
@@ -342,9 +450,21 @@ function registerIpc(): void {
   ipcMain.on('titlebar:copy', (e, text: unknown) => {
     if (fromTitlebar(e) && typeof text === 'string') clipboard.writeText(text);
   });
-  ipcMain.on('titlebar:menu', (e, x: unknown, y: unknown) => {
-    if (!fromTitlebar(e) || !win) return;
-    appMenu().popup({ window: win, x: Number(x) || 0, y: Number(y) || TITLEBAR_HEIGHT });
+  ipcMain.on('titlebar:menu', (e, right: unknown, top: unknown) => {
+    if (!fromTitlebar(e)) return;
+    if (state.menuOpen) closeMenu();
+    else openMenu(Number(right) || 0, Number(top) || TITLEBAR_HEIGHT);
+  });
+  const fromMenu = (e: Electron.IpcMainEvent) => !!menuView && e.sender === menuView.webContents;
+  const menuActions = new Set<string>([
+    'copy-address', 'full-screen', 'reload', 'zoom-in', 'zoom-out', 'zoom-reset',
+    'data-folder', 'server-log', 'dev-tools', 'about', 'quit',
+  ] satisfies MenuAction[]);
+  ipcMain.on('menu:run', (e, action: unknown) => {
+    if (fromMenu(e) && typeof action === 'string' && menuActions.has(action)) runMenuAction(action as MenuAction);
+  });
+  ipcMain.on('menu:close', (e) => {
+    if (fromMenu(e)) closeMenu();
   });
   ipcMain.on('app:theme', (e, dark: unknown) => {
     if (view && e.sender === view.webContents && typeof dark === 'boolean') update({ dark });
@@ -352,7 +472,7 @@ function registerIpc(): void {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Menu and shortcuts
+// Shortcuts
 
 const actions = {
   reload: () => view?.webContents.reload(),
@@ -366,37 +486,6 @@ const actions = {
   fullScreen: () => win?.setFullScreen(!win.isFullScreen()),
   devTools: () => view?.webContents.toggleDevTools(),
 };
-
-function appMenu(): Menu {
-  // Accelerators here are labels only; handleShortcuts() does the work so they reach the app view.
-  const item = (label: string, accelerator: string, click: () => void): MenuItemConstructorOptions => ({
-    label,
-    accelerator,
-    registerAccelerator: false,
-    click,
-  });
-  return Menu.buildFromTemplate([
-    ...studentAddressItems(),
-    { type: 'separator' },
-    item('Reload', 'Ctrl+R', actions.reload),
-    item('Full screen', 'F11', actions.fullScreen),
-    {
-      label: 'Zoom',
-      submenu: [
-        item('Zoom in', 'Ctrl+=', () => actions.zoom(ZOOM_STEP)),
-        item('Zoom out', 'Ctrl+-', () => actions.zoom(-ZOOM_STEP)),
-        item('Actual size', 'Ctrl+0', () => actions.zoom(0)),
-      ],
-    },
-    { type: 'separator' },
-    { label: 'Open data folder', click: () => void shell.openPath(dataDir) },
-    { label: 'Show server log', click: () => void shell.openPath(logFile) },
-    item('Developer tools', 'Ctrl+Shift+I', actions.devTools),
-    { type: 'separator' },
-    { label: 'About LiveClass', click: showAbout },
-    { label: 'Quit LiveClass', click: () => app.quit() },
-  ]);
-}
 
 function handleShortcuts(wc: WebContents): void {
   wc.on('before-input-event', (e, input) => {
