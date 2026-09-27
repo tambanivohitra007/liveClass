@@ -65,6 +65,7 @@ export type MenuAction =
   | 'zoom-in'
   | 'zoom-out'
   | 'zoom-reset'
+  | 'help'
   | 'data-folder'
   | 'server-log'
   | 'dev-tools'

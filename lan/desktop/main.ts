@@ -368,6 +368,7 @@ function runMenuAction(action: MenuAction): void {
     'zoom-in': () => actions.zoom(ZOOM_STEP),
     'zoom-out': () => actions.zoom(-ZOOM_STEP),
     'zoom-reset': () => actions.zoom(0),
+    help: () => void view?.webContents.executeJavaScript("window.dispatchEvent(new Event('liveclass:open-help'))"),
     'data-folder': () => void shell.openPath(dataDir),
     'server-log': () => void shell.openPath(logFile),
     'dev-tools': actions.devTools,
@@ -458,7 +459,7 @@ function registerIpc(): void {
   const fromMenu = (e: Electron.IpcMainEvent) => !!menuView && e.sender === menuView.webContents;
   const menuActions = new Set<string>([
     'copy-address', 'full-screen', 'reload', 'zoom-in', 'zoom-out', 'zoom-reset',
-    'data-folder', 'server-log', 'dev-tools', 'about', 'quit',
+    'help', 'data-folder', 'server-log', 'dev-tools', 'about', 'quit',
   ] satisfies MenuAction[]);
   ipcMain.on('menu:run', (e, action: unknown) => {
     if (fromMenu(e) && typeof action === 'string' && menuActions.has(action)) runMenuAction(action as MenuAction);

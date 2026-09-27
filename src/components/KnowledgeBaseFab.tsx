@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   BookOpen,
   Rocket,
@@ -14,6 +14,7 @@ import {
   Search,
 } from 'lucide-react';
 import SlidePanel from './SlidePanel';
+import { isDesktopApp } from '../lib/platform';
 import { knowledgeBase, type KBArticle, type KBCategory } from '../data/knowledgeBase';
 
 const categoryIcons: Record<string, typeof Rocket> = {
@@ -25,6 +26,8 @@ const categoryIcons: Record<string, typeof Rocket> = {
   'classes': Users,
   'for-students': GraduationCap,
 };
+
+const OPEN_HELP_EVENT = 'liveclass:open-help';
 
 export default function KnowledgeBaseFab() {
   const [open, setOpen] = useState(false);
@@ -60,6 +63,24 @@ export default function KnowledgeBaseFab() {
     setActiveArticle(null);
   };
 
+  // Desktop app: no floating button. Help opens with F1 (the Windows convention) or from the
+  // title bar's ⋯ menu, which dispatches OPEN_HELP_EVENT (see lan/desktop/main.ts).
+  useEffect(() => {
+    if (!isDesktopApp) return;
+    const show = () => setOpen(true);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'F1') return;
+      e.preventDefault();
+      show();
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener(OPEN_HELP_EVENT, show);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener(OPEN_HELP_EVENT, show);
+    };
+  }, []);
+
   const handleClose = () => {
     setOpen(false);
     setActiveArticle(null);
@@ -70,13 +91,13 @@ export default function KnowledgeBaseFab() {
   return (
     <>
       {/* FAB */}
-      <button
+      {!isDesktopApp && <button
         onClick={() => setOpen(true)}
         title="Help & Knowledge Base"
         className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-12 h-12 rounded-full bg-[#DC143C] hover:bg-[#B01030] text-white flex items-center justify-center shadow-lg transition-colors"
       >
         <span className="text-xl font-bold">?</span>
-      </button>
+      </button>}
 
       {/* Panel */}
       <SlidePanel
