@@ -2,38 +2,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useSidebarStore } from '../stores/sidebarStore';
 import { ADMIN_EMAIL } from '../lib/config';
+import { isDesktopApp } from '../lib/platform';
 import logo from '../assets/logo.png';
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  BookOpen,
-  ClipboardCheck,
-  ListChecks,
-  UserCheck,
-  History,
-  BarChart3,
-  Compass,
-  Gamepad2,
-  Shield,
-  ChevronsLeft,
-  ChevronsRight,
-  Trophy,
-} from 'lucide-react';
-
-interface NavItem {
-  label: string;
-  icon: typeof LayoutDashboard;
-  path: string;
-  exact?: boolean;
-  matchPrefix?: string;
-  color?: string;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { adminItem, isNavItemActive, studentItems, teacherSections, type NavItem, type NavSection } from './sidebarNav';
+import DesktopSidebar from './DesktopSidebar';
 
 const COLORS = {
   blue: {
@@ -94,57 +67,11 @@ const COLORS = {
   }
 };
 
-const teacherSections: NavSection[] = [
-  {
-    title: 'Main',
-    items: [
-      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', exact: true, color: 'blue' },
-    ],
-  },
-  {
-    title: 'Content',
-    items: [
-      { label: 'Classes', icon: Users, path: '/classes', matchPrefix: '/class', color: 'orange' },
-      { label: 'Quizzes', icon: BookOpen, path: '/library', matchPrefix: '/library', color: 'purple' },
-      { label: 'Assignments', icon: FileText, path: '/assignment/new', matchPrefix: '/assignment', color: 'pink' },
-    ],
-  },
-  {
-    title: 'Mini Games',
-    items: [
-      { label: 'Arcade', icon: Trophy, path: '/arcade', matchPrefix: '/arcade', color: 'amber' },
-      { label: 'All Games', icon: Gamepad2, path: '/mini-games', exact: true, color: 'blue' },
-    ],
-  },
-  {
-    title: 'Grading',
-    items: [
-      { label: 'Grade', icon: ClipboardCheck, path: '/grading/new', matchPrefix: '/grading', color: 'emerald' },
-      { label: 'Rubrics', icon: ListChecks, path: '/rubrics', matchPrefix: '/rubric', color: 'emerald' },
-      { label: 'Rosters', icon: UserCheck, path: '/rosters', matchPrefix: '/roster', color: 'emerald' },
-    ],
-  },
-  {
-    title: 'Activity',
-    items: [
-      { label: 'Discover', icon: Compass, path: '/discover', exact: true, color: 'amber' },
-      { label: 'History', icon: History, path: '/history', exact: true, color: 'amber' },
-      { label: 'Analytics', icon: BarChart3, path: '/analytics', exact: true, color: 'cyan' },
-      { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true, color: 'blue' },
-    ],
-  },
-];
-
-const studentItems: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/student/dashboard', exact: true, color: 'blue' },
-  { label: 'My Classes', icon: Users, path: '/student/classes', matchPrefix: '/student/class', color: 'orange' },
-  { label: 'Discover', icon: Compass, path: '/discover', exact: true, color: 'amber' },
-  { label: 'Join Game', icon: Gamepad2, path: '/join', exact: true, color: 'purple' },
-];
-
-const adminItem: NavItem = { label: 'Admin', icon: Shield, path: '/admin', matchPrefix: '/admin', color: 'rose' };
-
 export default function Sidebar() {
+  return isDesktopApp ? <DesktopSidebar /> : <WebSidebar />;
+}
+
+function WebSidebar() {
   const { firebaseUser, user } = useAuthStore();
   const { collapsed, toggleSidebar } = useSidebarStore();
   const location = useLocation();
@@ -154,14 +81,8 @@ export default function Sidebar() {
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isApprovedTeacher = user?.role === 'teacher' && (user.approvalStatus === 'approved' || isAdmin);
 
-  const isItemActive = (item: NavItem) => {
-    if (item.exact) return location.pathname === item.path;
-    if (item.matchPrefix) return location.pathname.startsWith(item.matchPrefix);
-    return location.pathname === item.path;
-  };
-
   const renderNavItem = (item: NavItem) => {
-    const active = isItemActive(item);
+    const active = isNavItemActive(item, location.pathname);
     const Icon = item.icon;
     const colorTheme = COLORS[item.color as keyof typeof COLORS] || COLORS.blue;
 
