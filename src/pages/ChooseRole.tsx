@@ -7,10 +7,11 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import WaveBackground from '../components/ui/WaveBackground';
 import { GraduationCap, BookOpen } from 'lucide-react';
 import logo from '../assets/logo.png';
+import { isDesktopApp } from '../lib/platform';
 
 export default function ChooseRole() {
   const { firebaseUser } = useAuthStore();
-  const [role, setRole] = useState<'teacher' | 'student'>('student');
+  const [role, setRole] = useState<'teacher' | 'student'>(isDesktopApp ? 'teacher' : 'student');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export default function ChooseRole() {
   const roles = [
     { key: 'teacher' as const, label: 'Teacher', description: 'Create quizzes and host live sessions', icon: GraduationCap },
     { key: 'student' as const, label: 'Student', description: 'Join games and complete assignments', icon: BookOpen },
-  ];
+  ].filter((r) => !isDesktopApp || r.key === 'teacher'); // Desktop accounts are always teachers.
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-linear-to-b from-[#E8EAF0] to-surface dark:from-surface-dark dark:to-surface-dark relative overflow-hidden">

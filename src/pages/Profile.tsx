@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { confirmAction } from '../lib/swal';
 import { Camera, Save, KeyRound, Mail, Shield, Eye, EyeOff, Phone, MapPin } from 'lucide-react';
 import BackButton from '../components/BackButton';
+import { isDesktopApp } from '../lib/platform';
 
 export default function Profile() {
   const { firebaseUser, user, setUser } = useAuthStore();
@@ -303,7 +304,8 @@ export default function Profile() {
               />
             </div>
           </div>
-          <div>
+          {/* Role switch: web only. Desktop accounts are always teachers. */}
+          {!isDesktopApp && <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-white/70 mb-2">Role</label>
             <div className="grid grid-cols-2 gap-3">
               {(['teacher', 'student'] as const).map((r) => (
@@ -325,7 +327,7 @@ export default function Profile() {
             {user?.approvalStatus === 'pending' && (
               <p className="text-xs text-amber-600 mt-1.5">Role is locked while your teacher account is pending approval.</p>
             )}
-          </div>
+          </div>}
           <button
             onClick={handleSaveProfile}
             disabled={saving}

@@ -9,6 +9,7 @@ import ValidatedInput from '../components/ValidatedInput';
 import WaveBackground from '../components/ui/WaveBackground';
 import { GraduationCap, BookOpen } from 'lucide-react';
 import logo from '../assets/logo.png';
+import { isDesktopApp } from '../lib/platform';
 
 export default function Signup() {
   const [displayName, setDisplayName] = useState('');
@@ -108,8 +109,9 @@ export default function Signup() {
               minLength={6}
             />
 
-            {/* Role selector */}
-            <div>
+            {/* Role selector. The desktop app is the teacher's computer (students join from their own
+                devices), so every account created there is a teacher account. */}
+            {!isDesktopApp && <div>
               <label className="block text-sm font-bold text-gray-500 dark:text-white/60 mb-2">I am a</label>
               <div className="grid grid-cols-2 gap-3">
                 {([
@@ -135,7 +137,7 @@ export default function Signup() {
                   );
                 })}
               </div>
-            </div>
+            </div>}
 
             <button
               type="submit"
