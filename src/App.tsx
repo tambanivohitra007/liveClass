@@ -70,6 +70,9 @@ const MiniGamePicker = lazy(() => import('./pages/teacher/MiniGamePicker'));
 const HostMiniGame = lazy(() => import('./pages/teacher/HostMiniGame'));
 const MiniGameResults = lazy(() => import('./pages/teacher/MiniGameResults'));
 const PlayMiniGame = lazy(() => import('./pages/student/PlayMiniGame'));
+const ArcadePicker = lazy(() => import('./pages/arcade/ArcadePicker'));
+const ArcadeHost = lazy(() => import('./pages/arcade/ArcadeHost'));
+const ArcadePlay = lazy(() => import('./pages/arcade/ArcadePlay'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 
@@ -178,6 +181,7 @@ function AppContent() {
       else if (matchPath('/mini-game/:type/host', path)) title = 'Mini Game';
       else if (matchPath('/mini-game/:id/results', path)) title = 'Game Results';
       else if (matchPath('/mini-game/:id/:pid', path)) title = 'Mini Game';
+      else if (matchPath('/arcade/*', path)) title = 'Arcade';
     }
     document.title = title ? `${title} - LiveClass` : 'LiveClass';
   }, [location.pathname]);
@@ -191,7 +195,7 @@ function AppContent() {
   const isQuizEditor = location.pathname.startsWith('/quiz/') && !location.pathname.endsWith('/host') && !location.pathname.endsWith('/preview') && !location.pathname.endsWith('/worksheet') && !location.pathname.endsWith('/flashcards');
   const isGradingInterface = /^\/grading\/(?!new$)[^/]+$/.test(location.pathname);
   const isRubricEditor = location.pathname.startsWith('/rubric/');
-  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || location.pathname.startsWith('/mini-game/') || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
+  const hideNavbar = location.pathname.startsWith('/play/') || (location.pathname.startsWith('/live-grading/') && !location.pathname.endsWith('/results')) || location.pathname.startsWith('/mini-game/') || /^\/arcade\/[^/]+\/(host|play)/.test(location.pathname) || isQuizEditor || isRubricEditor || isGradingInterface || (location.pathname.startsWith('/quiz/') && (location.pathname.endsWith('/host') || location.pathname.endsWith('/preview') || location.pathname.endsWith('/worksheet')));
 
   const showSidebar = !hideNavbar && !!firebaseUser;
 
@@ -218,6 +222,7 @@ function AppContent() {
           <Route path="/play/:sessionId/:playerId" element={<PlayGame />} />
           <Route path="/live-grading/:liveGradingId/:playerId" element={<LiveGradingPlay />} />
           <Route path="/mini-game/:miniGameId/:playerId" element={<PlayMiniGame />} />
+          <Route path="/arcade/:gameId/play/:playerId" element={<ArcadePlay />} />
           <Route path="/assignment/:assignmentId" element={<PlayAssignment />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -235,6 +240,8 @@ function AppContent() {
           </Route>
 
           <Route path="/dashboard" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
+          <Route path="/arcade" element={<TeacherRoute><ArcadePicker /></TeacherRoute>} />
+          <Route path="/arcade/:gameId/host" element={<TeacherRoute><ArcadeHost /></TeacherRoute>} />
           <Route path="/library" element={<TeacherRoute><QuizLibrary /></TeacherRoute>} />
           <Route path="/quiz/:quizId" element={<TeacherRoute><QuizEditor /></TeacherRoute>} />
           <Route path="/quiz/:quizId/host" element={<TeacherRoute><HostSession /></TeacherRoute>} />

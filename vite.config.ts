@@ -2,14 +2,33 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath } from 'node:url'
+
+// Offline/LAN build: every Firebase SDK entry point is served by the local LiveClass server.
+const lan = (file: string) => fileURLToPath(new URL(`./src/lan/${file}`, import.meta.url))
+const firebaseShims = [
+  { find: /^firebase\/app$/, replacement: lan('app.ts') },
+  { find: /^firebase\/auth$/, replacement: lan('auth.ts') },
+  { find: /^firebase\/firestore$/, replacement: lan('firestore.ts') },
+  { find: /^firebase\/functions$/, replacement: lan('functions.ts') },
+  { find: /^firebase\/storage$/, replacement: lan('storage.ts') },
+  { find: /^firebase\/database$/, replacement: lan('database.ts') },
+  { find: /^@capacitor-firebase\/authentication$/, replacement: lan('capacitor-firebase-auth.ts') },
+]
 
 export default defineConfig({
+  resolve: { alias: firebaseShims },
+  server: {
+    proxy: {
+      '/ws': { target: 'ws://localhost:8080', ws: true },
+      '/api': 'http://localhost:8080',
+      '/uploads': 'http://localhost:8080',
+    },
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/functions', 'firebase/storage'],
-          'firebase-db': ['firebase/database'],
           vendor: ['react', 'react-dom', 'react-router-dom', 'zustand'],
           three: ['three', '@react-three/fiber', '@react-three/drei'],
           gsap: ['gsap', 'gsap/all', '@gsap/react'],
@@ -67,22 +86,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallbackDenylist: [/^\/__\/.*/],
+        navigateFallbackDenylist: [/^\/__\/.*/, /^\/api\//, /^\/uploads\//, /^\/ws/],
         skipWaiting: true,
         clientsClaim: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'firestore-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60, // 1 hour
-              },
-            },
-          },
-        ],
       },
     }),
   ],

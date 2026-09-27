@@ -1,11 +1,11 @@
 {
-  "name": "kahoot",
+  "name": "liveclass-lan",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && tsc -p tsconfig.server.json && vite build && node lan/build-server.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -14,7 +14,11 @@
     "cap:sync": "cap sync",
     "cap:android": "cap open android",
     "cap:ios": "cap open ios",
-    "build:mobile": "tsc -b && vite build && cap sync"
+    "build:mobile": "tsc -b && vite build && cap sync",
+    "server": "node lan/build-server.mjs && node --enable-source-maps build/server.cjs",
+    "dev:server": "node lan/build-server.mjs && node --enable-source-maps --watch build/server.cjs",
+    "typecheck:server": "tsc -p tsconfig.server.json",
+    "package:exe": "npm run build && node lan/package-exe.mjs"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.1.0",
@@ -26,6 +30,8 @@
     "@capacitor/push-notifications": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",
+    "@fontsource/acme": "^5.3.0",
+    "@fontsource/mclaren": "^5.3.0",
     "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
@@ -41,6 +47,7 @@
     "react-router-dom": "^7.13.0",
     "sweetalert2": "^11.26.18",
     "three": "^0.182.0",
+    "ws": "^8.22.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
@@ -55,12 +62,16 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.182.0",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.1.1",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "jsdom": "^28.1.0",
+    "postject": "^1.0.0-alpha.6",
+    "rcedit": "^5.0.2",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",

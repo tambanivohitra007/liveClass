@@ -82,7 +82,7 @@ export default function JoinGame() {
   const [joining, setJoining] = useState(false);
   const [step, setStep] = useState<'pin' | 'verify' | 'nickname'>('pin');
   const [sessionId, setSessionId] = useState('');
-  const [sessionType, setSessionType] = useState<'session' | 'live_grading' | 'mini_game'>('session');
+  const [sessionType, setSessionType] = useState<'session' | 'live_grading' | 'mini_game' | 'arcade'>('session');
   const [rejoinData, setRejoinData] = useState<{ playerId: string; nickname: string; avatar?: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -97,7 +97,7 @@ export default function JoinGame() {
       (async () => {
         // Check sessions collection first
         let resolvedSessionId = '';
-        let resolvedType: 'session' | 'live_grading' | 'mini_game' = 'session';
+        let resolvedType: 'session' | 'live_grading' | 'mini_game' | 'arcade' = 'session';
         let joinLocked = false;
 
         const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pinParam), where('status', '!=', 'ended')));
@@ -118,6 +118,14 @@ export default function JoinGame() {
               resolvedType = 'mini_game';
               joinLocked = bgSnap.docs[0].data().joinLocked;
             }
+            if (!resolvedSessionId) {
+              const arcadeSnap = await getDocs(query(collection(db, 'arcade_games'), where('pinCode', '==', pinParam), where('status', 'in', ['lobby', 'live'])));
+              if (!arcadeSnap.empty) {
+                resolvedSessionId = arcadeSnap.docs[0].id;
+                resolvedType = 'arcade';
+                joinLocked = !!arcadeSnap.docs[0].data().joinLocked;
+              }
+            }
           }
         }
 
@@ -127,7 +135,7 @@ export default function JoinGame() {
         }
 
         setSessionType(resolvedType);
-        const storageKey = resolvedType === 'mini_game' ? `liveclass_mg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
+        const storageKey = resolvedType === 'arcade' ? `liveclass_arcade_${resolvedSessionId}` : resolvedType === 'mini_game' ? `liveclass_mg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
         // Check localStorage for existing join data (rejoin recovery)
         try {
@@ -168,7 +176,7 @@ export default function JoinGame() {
 
     // Check sessions collection first, then live_gradings
     let resolvedSessionId = '';
-    let resolvedType: 'session' | 'live_grading' | 'mini_game' = 'session';
+    let resolvedType: 'session' | 'live_grading' | 'mini_game' | 'arcade' = 'session';
     let joinLocked = false;
 
     const sessSnap = await getDocs(query(collection(db, 'sessions'), where('pinCode', '==', pin), where('status', '!=', 'ended')));
@@ -189,6 +197,14 @@ export default function JoinGame() {
           resolvedType = 'mini_game';
           joinLocked = bgSnap.docs[0].data().joinLocked;
         }
+        if (!resolvedSessionId) {
+          const arcadeSnap = await getDocs(query(collection(db, 'arcade_games'), where('pinCode', '==', pin), where('status', 'in', ['lobby', 'live'])));
+          if (!arcadeSnap.empty) {
+            resolvedSessionId = arcadeSnap.docs[0].id;
+            resolvedType = 'arcade';
+            joinLocked = !!arcadeSnap.docs[0].data().joinLocked;
+          }
+        }
       }
     }
 
@@ -198,7 +214,7 @@ export default function JoinGame() {
     }
 
     setSessionType(resolvedType);
-    const storageKey = resolvedType === 'mini_game' ? `liveclass_mg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
+    const storageKey = resolvedType === 'arcade' ? `liveclass_arcade_${resolvedSessionId}` : resolvedType === 'mini_game' ? `liveclass_mg_${resolvedSessionId}` : resolvedType === 'live_grading' ? `liveclass_lg_${resolvedSessionId}` : `liveclass_session_${resolvedSessionId}`;
 
     // Check localStorage for existing join data (rejoin recovery)
     try {
@@ -231,7 +247,29 @@ export default function JoinGame() {
       const joinNickname = existingPlayerId ? rejoinData?.nickname || nickname : nickname;
       const joinAvatar = existingPlayerId ? rejoinData?.avatar || avatar : avatar;
 
-      if (sessionType === 'mini_game') {
+      if (sessionType === 'arcade') {
+        const joinFn = httpsCallable<
+          { gameId: string; nickname: string; avatar?: string; playerId?: string; token?: string },
+          { playerId: string; nickname: string; avatar?: string; token: string }
+        >(functions, 'arcadeJoin');
+        let storedToken: string | undefined;
+        try {
+          storedToken = JSON.parse(localStorage.getItem(`liveclass_arcade_${sessionId}`) || '{}').token;
+        } catch { /* ignore */ }
+        const result = await joinFn({
+          gameId: sessionId,
+          nickname: joinNickname,
+          avatar: joinAvatar,
+          ...(existingPlayerId ? { playerId: existingPlayerId, token: storedToken } : {}),
+        });
+        localStorage.setItem(`liveclass_arcade_${sessionId}`, JSON.stringify({
+          playerId: result.data.playerId,
+          nickname: result.data.nickname,
+          avatar: result.data.avatar,
+          token: result.data.token,
+        }));
+        navigate(`/arcade/${sessionId}/play/${result.data.playerId}`);
+      } else if (sessionType === 'mini_game') {
         // Mini game join
         const joinFn = httpsCallable<
           { miniGameId: string; nickname: string; avatar?: string; playerId?: string },
@@ -313,7 +351,7 @@ export default function JoinGame() {
   };
 
   const handleDeclineRejoin = () => {
-    const storageKey = sessionType === 'mini_game' ? `liveclass_mg_${sessionId}` : sessionType === 'live_grading' ? `liveclass_lg_${sessionId}` : `liveclass_session_${sessionId}`;
+    const storageKey = sessionType === 'arcade' ? `liveclass_arcade_${sessionId}` : sessionType === 'mini_game' ? `liveclass_mg_${sessionId}` : sessionType === 'live_grading' ? `liveclass_lg_${sessionId}` : `liveclass_session_${sessionId}`;
     localStorage.removeItem(storageKey);
     setRejoinData(null);
     setStep('verify');

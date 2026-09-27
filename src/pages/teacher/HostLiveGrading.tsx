@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, updateDoc, setDoc, getDocs, query, orderBy, where, limit } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
-import { APP_URL } from '../../lib/config';
+import { APP_URL, APP_HOST } from '../../lib/config';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
@@ -478,7 +478,7 @@ export default function HostLiveGrading() {
               </div>
 
               <p className="text-center text-white/40 text-sm font-medium -mt-1 sm:-mt-2 shrink-0">
-                Or go to <span className="text-white/70 font-semibold select-all">{window.location.host}</span> and enter the PIN
+                Or go to <span className="text-white/70 font-semibold select-all">{APP_HOST}</span> and enter the PIN
               </p>
 
               {/* Players Grid */}

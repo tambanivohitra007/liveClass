@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [
+      "node"
+    ],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "paths": {
+      "firebase-admin": [
+        "./lan/server/shims/firebase-admin.ts"
+      ],
+      "firebase-functions/*": [
+        "./lan/server/shims/firebase-functions.ts"
+      ],
+      "cheerio": [
+        "./lan/shims-node/offline-stubs.ts"
+      ],
+      "nodemailer": [
+        "./lan/shims-node/offline-stubs.ts"
+      ]
+    }
+  },
+  "include": [
+    "lan/**/*.ts",
+    "lan/types/*.d.ts"
+  ]
+}

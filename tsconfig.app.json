@@ -22,7 +22,18 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Offline/LAN build: Firebase SDKs are replaced by src/lan (see vite.config.ts) */
+    "paths": {
+      "firebase/app": ["./src/lan/app.ts"],
+      "firebase/auth": ["./src/lan/auth.ts"],
+      "firebase/firestore": ["./src/lan/firestore.ts"],
+      "firebase/functions": ["./src/lan/functions.ts"],
+      "firebase/storage": ["./src/lan/storage.ts"],
+      "firebase/database": ["./src/lan/database.ts"],
+      "@capacitor-firebase/authentication": ["./src/lan/capacitor-firebase-auth.ts"]
+    }
   },
   "include": ["src"]
 }

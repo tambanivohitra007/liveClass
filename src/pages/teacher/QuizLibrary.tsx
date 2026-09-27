@@ -7,12 +7,12 @@ import { confirmDelete, confirmAction } from '../../lib/swal';
 import { useNavigate } from 'react-router-dom';
 import { useActiveSession } from '../../hooks/useActiveSession';
 import { SkeletonCard } from '../../components/Skeleton';
-import AiGenerateModal from '../../components/AiGenerateModal';
+import ImportQuestionsModal from '../../components/ImportQuestionsModal';
 import WaveBackground from '../../components/ui/WaveBackground';
 import {
   Trash2, Search, Play, Plus,
-  Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Sparkles, Printer,
-  LayoutGrid, List, Table2,
+  Eye, Copy, X as XIcon, BookOpen, MoreHorizontal, Pencil, Printer,
+  LayoutGrid, List, Table2, FileUp
 } from 'lucide-react';
 import { EmptyQuizzes, EmptySearch } from '../../components/EmptyStates';
 import { COLLECTION_COLORS } from '../../types/models';
@@ -289,16 +289,17 @@ export default function QuizLibrary() {
     try {
       const quizRef = await addDoc(collection(db, 'quizzes'), {
         ownerId: user.id,
-        title: data.title || 'AI Generated Quiz',
+        title: data.title || 'Imported questions',
         description: data.description || '',
         visibility: 'private',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
 
-      for (const q of data.questions) {
+      for (const [order, q] of data.questions.entries()) {
         await addDoc(collection(db, 'questions'), {
           quizId: quizRef.id,
+          order,
           type: q.type || 'mcq',
           text: q.text || '',
           options: q.options || [],
@@ -461,8 +462,8 @@ export default function QuizLibrary() {
               onClick={() => setShowAiQuizModal(true)}
               className="btn-3d-purple btn-3d-sm flex items-center gap-2 text-sm"
             >
-              <Sparkles className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Generate</span>
+              <FileUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Import</span>
             </button>
             <button
               onClick={() => navigate('/quiz/new')}
@@ -833,7 +834,7 @@ export default function QuizLibrary() {
         )}
 
         {/* AI Quiz Modal */}
-        <AiGenerateModal
+        <ImportQuestionsModal
           open={showAiQuizModal}
           onClose={() => setShowAiQuizModal(false)}
           generateMeta={true}

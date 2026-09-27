@@ -18,6 +18,7 @@ import {
   Shield,
   ChevronsLeft,
   ChevronsRight,
+  Trophy,
 } from 'lucide-react';
 
 interface NavItem {
@@ -111,6 +112,7 @@ const teacherSections: NavSection[] = [
   {
     title: 'Mini Games',
     items: [
+      { label: 'Arcade', icon: Trophy, path: '/arcade', matchPrefix: '/arcade', color: 'amber' },
       { label: 'All Games', icon: Gamepad2, path: '/mini-games', exact: true, color: 'blue' },
     ],
   },

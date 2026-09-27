@@ -1,16 +1,6 @@
-import { GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
-import { auth } from './firebase';
-import { isNative } from './platform';
+import { signInWithPopup } from 'firebase/auth';
 
+/** Google sign-in needs internet; in LAN mode this always rejects with an explanatory error. */
 export async function signInWithGoogle() {
-  if (isNative) {
-    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-    const result = await FirebaseAuthentication.signInWithGoogle();
-    const idToken = result.credential?.idToken;
-    if (!idToken) throw new Error('Google sign-in failed: no ID token');
-    const credential = GoogleAuthProvider.credential(idToken);
-    return signInWithCredential(auth, credential);
-  }
-
-  return signInWithPopup(auth, new GoogleAuthProvider());
+  return signInWithPopup();
 }

@@ -23,6 +23,7 @@ import {
   Sun,
   Moon,
   LogOut,
+  Trophy,
 } from 'lucide-react';
 
 interface Tab {
@@ -62,6 +63,7 @@ const teacherSheetSections = (isAdmin: boolean): SheetSection[] => {
       title: 'Content',
       items: [
         { label: 'Assignments', icon: FileText, path: '/assignment/new' },
+        { label: 'Arcade Games', icon: Trophy, path: '/arcade' },
       ],
     },
     {

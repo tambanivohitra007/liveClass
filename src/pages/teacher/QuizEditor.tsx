@@ -5,14 +5,15 @@ import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import ImageUpload from '../../components/ImageUpload';
-import AiGenerateModal from '../../components/AiGenerateModal';
+import ImportQuestionsModal from '../../components/ImportQuestionsModal';
+import { exportQuestionSetCsv, exportQuestionSetJson } from '../../lib/questionFiles';
 import CodeBlock from '../../components/CodeBlock';
 import { confirmAction } from '../../lib/swal';
 import {
   GripVertical, ChevronUp, ChevronDown, Copy, Trash2, Check, Eye, Plus, Minus,
-  Sparkles, X as XIcon, ArrowLeft, Upload, Download,
+  X as XIcon, ArrowLeft, Upload, Download,
   Clock, Image as ImageIcon, Type, FileText,
-  List, Pencil, Settings,
+  List, Pencil, Settings, FileUp
 } from 'lucide-react';
 import { COLLECTION_COLORS } from '../../types/models';
 import type { Quiz, Question, QuestionType, Collection, CollectionColor } from '../../types/models';
@@ -363,6 +364,7 @@ export default function QuizEditor() {
           imageUrl: question.imageUrl || null, videoUrl: question.videoUrl || null,
           options: question.options || [],
           correctAnswers: question.correctAnswers || [], timeLimitSec: question.timeLimitSec ?? 20,
+          order: i,
         };
         if (question.type === 'matching') {
           questionData.matchOptions = question.matchOptions || [];
@@ -722,8 +724,8 @@ export default function QuizEditor() {
             onClick={() => setShowAiModal(true)}
             className="px-3 md:px-4 py-2 bg-linear-to-r from-red-500 to-pink-400 text-white font-medium rounded-xl hover:brightness-110 transition-all flex items-center gap-2 text-sm"
           >
-            <Sparkles className="w-4 h-4" />
-            <span className="hidden md:inline">AI Generate</span>
+            <FileUp className="w-4 h-4" />
+            <span className="hidden md:inline">Import</span>
           </button>
           {!isNew && (
             <button
@@ -733,6 +735,35 @@ export default function QuizEditor() {
               <Eye className="w-4 h-4" />
               Preview
             </button>
+          )}
+          {questions.length > 0 && (
+            <div className="relative group hidden md:block">
+              <button
+                type="button"
+                className="px-4 py-2 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white/70 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 transition-colors flex items-center gap-2 text-sm"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </button>
+              <div className="absolute right-0 top-full pt-1 hidden group-hover:block group-focus-within:block z-30">
+                <div className="rounded-xl bg-white dark:bg-[#1a2236] border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden min-w-44">
+                  <button
+                    type="button"
+                    onClick={() => exportQuestionSetJson({ title, description, questions })}
+                    className="block w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/10"
+                  >
+                    LiveClass file (.json)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => exportQuestionSetCsv({ title, description, questions })}
+                    className="block w-full text-left px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-white/80 hover:bg-gray-50 dark:hover:bg-white/10"
+                  >
+                    Spreadsheet (.csv)
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
           <button
             onClick={handleSave}
@@ -1278,8 +1309,8 @@ export default function QuizEditor() {
         </div>
       </div>
 
-      {/* ── AI Generate Modal ── */}
-      <AiGenerateModal
+      {/* ── Import questions (offline) ── */}
+      <ImportQuestionsModal
         open={showAiModal}
         onClose={() => setShowAiModal(false)}
         generateMeta={false}

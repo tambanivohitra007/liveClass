@@ -4,7 +4,7 @@ import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { ref, onValue, off } from 'firebase/database';
 import { db, functions, rtdb } from '../../lib/firebase';
-import { APP_URL } from '../../lib/config';
+import { APP_URL, APP_HOST } from '../../lib/config';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
@@ -745,7 +745,7 @@ export default function HostSession() {
               level="M"
             />
             <p className="text-gray-800 dark:text-gray-800 font-bold text-lg">PIN: <span className="text-brand tracking-widest text-2xl">{session.pinCode}</span></p>
-            <p className="text-gray-400 dark:text-gray-400 text-sm font-medium text-center">Or go to <span className="text-gray-600 dark:text-gray-600 font-semibold">{window.location.host}</span> and enter the PIN</p>
+            <p className="text-gray-400 dark:text-gray-400 text-sm font-medium text-center">Or go to <span className="text-gray-600 dark:text-gray-600 font-semibold">{APP_HOST}</span> and enter the PIN</p>
           </div>
           <button
             onClick={() => setQrZoomed(false)}
@@ -863,7 +863,7 @@ export default function HostSession() {
 
               {/* Join URL */}
               <p className="text-center text-white/40 text-sm font-medium -mt-1 sm:-mt-2 shrink-0">
-                Or go to <span className="text-white/70 font-semibold select-all">{window.location.host}</span> and enter the PIN
+                Or go to <span className="text-white/70 font-semibold select-all">{APP_HOST}</span> and enter the PIN
               </p>
 
               {/* Players Grid */}

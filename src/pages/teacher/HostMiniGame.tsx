@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, collection, updateDoc, getDocs, query, where, limit } from 'firebase/firestore';
 import { db, functions } from '../../lib/firebase';
-import { APP_URL } from '../../lib/config';
+import { APP_URL, APP_HOST } from '../../lib/config';
 import { useAuthStore } from '../../stores/authStore';
 import { useToastStore } from '../../stores/toastStore';
 import { confirmAction } from '../../lib/swal';
@@ -243,7 +243,7 @@ export default function HostMiniGame() {
                 </div>
               </div>
             </div>
-            <p className="text-center text-white/40 text-sm font-medium -mt-1 sm:-mt-2 shrink-0">Or go to <span className="text-white/70 font-semibold select-all">{window.location.host}</span> and enter the PIN</p>
+            <p className="text-center text-white/40 text-sm font-medium -mt-1 sm:-mt-2 shrink-0">Or go to <span className="text-white/70 font-semibold select-all">{APP_HOST}</span> and enter the PIN</p>
             <div className="flex-1 flex flex-col animate-fade-in min-h-0">
               <div className="flex items-center justify-between mb-2 shrink-0"><h3 className="text-lg font-bold">Players</h3><span className="text-lg font-bold tabular-nums">{players.length} <span className="text-sm font-medium text-white/40">joined</span></span></div>
               <div className="flex-1 min-h-0 overflow-y-auto pr-1">
